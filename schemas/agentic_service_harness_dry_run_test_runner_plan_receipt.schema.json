@@ -1,0 +1,304 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-dry-run-test-runner-plan-receipt:1",
+  "title": "Agentic Service Harness Dry-Run Test Runner Plan Receipt",
+  "description": "Foundation Mode plan receipt for harness-selected test commands. This contract records planned commands, evidence refs, redaction rules, and denial boundaries while keeping command execution, test execution, raw output capture, receipt-store append, adapter execution, filesystem writes, branch writes, secret serialization, and terminal closure blocked.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_contract_refs",
+    "scope",
+    "test_runner_plan",
+    "redaction_policy",
+    "authority_denials",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "const": "agentic_service_harness_dry_run_test_runner_plan_receipt"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "SolvedVerified"
+    },
+    "source_contract_refs": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": { "$ref": "#/$defs/scope" },
+    "test_runner_plan": { "$ref": "#/$defs/test_runner_plan" },
+    "redaction_policy": { "$ref": "#/$defs/redaction_policy" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "task_creation_preflight_id",
+        "approved_workspace_preflight_id",
+        "test_runner_plan_id",
+        "foundation_phase",
+        "dry_run_only",
+        "read_only_sources",
+        "command_execution_enabled",
+        "test_execution_enabled",
+        "raw_output_serialized",
+        "receipt_store_append_enabled",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "task_creation_preflight_id": { "$ref": "#/$defs/identifier" },
+        "approved_workspace_preflight_id": { "$ref": "#/$defs/identifier" },
+        "test_runner_plan_id": { "$ref": "#/$defs/identifier" },
+        "foundation_phase": {
+          "type": "string",
+          "const": "foundation_dry_run_test_runner_plan_receipt"
+        },
+        "dry_run_only": { "type": "boolean", "const": true },
+        "read_only_sources": { "type": "boolean", "const": true },
+        "command_execution_enabled": { "type": "boolean", "const": false },
+        "test_execution_enabled": { "type": "boolean", "const": false },
+        "raw_output_serialized": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false }
+      }
+    },
+    "test_runner_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested_action",
+        "requested_route_ref",
+        "runner_mode",
+        "approved_branch_workspace_preflight_valid",
+        "operator_approval_collected",
+        "uao_admission_collected",
+        "test_execution_admitted",
+        "selected_commands",
+        "required_before_execution_refs",
+        "blocked_reason_refs",
+        "next_required_evidence_refs"
+      ],
+      "properties": {
+        "requested_action": {
+          "type": "string",
+          "const": "plan_dry_run_test_runner"
+        },
+        "requested_route_ref": {
+          "type": "string",
+          "const": "route://harness/test-runner/dry-run/not-admitted"
+        },
+        "runner_mode": {
+          "type": "string",
+          "const": "dry_run_plan_only"
+        },
+        "approved_branch_workspace_preflight_valid": {
+          "type": "boolean",
+          "const": true
+        },
+        "operator_approval_collected": { "type": "boolean", "const": false },
+        "uao_admission_collected": { "type": "boolean", "const": false },
+        "test_execution_admitted": { "type": "boolean", "const": false },
+        "selected_commands": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/command_plan" }
+        },
+        "required_before_execution_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "next_required_evidence_refs": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "command_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command_id",
+        "command",
+        "purpose",
+        "allowlist_ref",
+        "expected_evidence_ref",
+        "timeout_seconds",
+        "execution_admitted",
+        "raw_output_capture_allowed"
+      ],
+      "properties": {
+        "command_id": { "$ref": "#/$defs/identifier" },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "pattern": "^python (?:-m pytest|scripts/)[A-Za-z0-9_./ -]+$"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "allowlist_ref": { "$ref": "#/$defs/evidence_ref" },
+        "expected_evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1800
+        },
+        "execution_admitted": { "type": "boolean", "const": false },
+        "raw_output_capture_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "redaction_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_stdout_stored",
+        "raw_stderr_stored",
+        "environment_values_stored",
+        "secret_patterns_blocked",
+        "allowed_receipt_fields"
+      ],
+      "properties": {
+        "raw_stdout_stored": { "type": "boolean", "const": false },
+        "raw_stderr_stored": { "type": "boolean", "const": false },
+        "environment_values_stored": { "type": "boolean", "const": false },
+        "secret_patterns_blocked": { "$ref": "#/$defs/evidence_ref_list" },
+        "allowed_receipt_fields": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "command_id",
+              "command",
+              "purpose",
+              "allowlist_ref",
+              "expected_evidence_ref",
+              "timeout_seconds"
+            ]
+          }
+        }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "test_execution_enabled",
+        "command_execution_enabled",
+        "adapter_execution_enabled",
+        "connector_calls_enabled",
+        "filesystem_write_enabled",
+        "branch_write_enabled",
+        "receipt_store_append_enabled",
+        "runtime_state_write_enabled",
+        "mutation_route_enabled",
+        "raw_output_serialized",
+        "secret_values_serialized",
+        "terminal_closure",
+        "default_high_risk_authority"
+      ],
+      "properties": {
+        "test_execution_enabled": { "type": "boolean", "const": false },
+        "command_execution_enabled": { "type": "boolean", "const": false },
+        "adapter_execution_enabled": { "type": "boolean", "const": false },
+        "connector_calls_enabled": { "type": "boolean", "const": false },
+        "filesystem_write_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "raw_output_serialized": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "default_high_risk_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

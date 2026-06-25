@@ -520,6 +520,9 @@ jobs:
       - name: Test Agentic Service Harness task creation admission preflight
         run: python -m pytest tests/test_validate_agentic_service_harness_task_creation_admission_preflight.py -q
 
+      - name: Test Agentic Service Harness dry-run test runner plan receipt
+        run: python -m pytest tests/test_validate_agentic_service_harness_dry_run_test_runner_plan_receipt.py -q
+
 
       - name: Test Agentic Service Harness actual diff collection admission preflight
         run: python -m pytest tests/test_validate_agentic_service_harness_actual_diff_collection_admission_preflight.py -q

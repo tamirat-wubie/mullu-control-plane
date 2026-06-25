@@ -97,6 +97,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_approved_branch_works
     assert workspace_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_dry_run_test_runner_plan_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    test_runner_entry = entries[
+        "agentic-service-harness-dry-run-test-runner-plan-receipt"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert test_runner_entry["path"] == (
+        "schemas/agentic_service_harness_dry_run_test_runner_plan_receipt.schema.json"
+    )
+    assert test_runner_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-dry-run-test-runner-plan-receipt:1"
+    )
+    assert test_runner_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_evidence_bundle_projection() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
