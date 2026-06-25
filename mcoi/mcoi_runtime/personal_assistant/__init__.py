@@ -99,6 +99,12 @@ from .read_only import (
     summarize_calendar_day_read_only,
     summarize_inbox_read_only,
 )
+from .read_only_projection import (
+    DEFAULT_READ_ONLY_PROJECTION_GENERATED_AT,
+    DEFAULT_READ_ONLY_PROJECTION_SET_ID,
+    build_default_personal_assistant_read_only_projection,
+    build_personal_assistant_read_only_projection_envelope,
+)
 from .skill_registry import (
     PersonalAssistantSkillRegistry,
     load_default_skill_registry,
@@ -147,6 +153,8 @@ __all__ = (
     "PersonalAssistantMemoryObservationLedger",
     "PersonalAssistantPlanningEnvelope",
     "PlanningScheduleProjection",
+    "DEFAULT_READ_ONLY_PROJECTION_GENERATED_AT",
+    "DEFAULT_READ_ONLY_PROJECTION_SET_ID",
     "MathReasoningProjection",
     "ReadOnlyAssistantProjection",
     "RedactedCalendarEvent",
@@ -168,6 +176,8 @@ __all__ = (
     "build_personal_assistant_intake_chain_read_model",
     "build_personal_assistant_console_read_model",
     "build_personal_assistant_preview_plan",
+    "build_default_personal_assistant_read_only_projection",
+    "build_personal_assistant_read_only_projection_envelope",
     "draft_calendar_event",
     "draft_email_response",
     "draft_task",

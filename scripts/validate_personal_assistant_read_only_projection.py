@@ -33,12 +33,9 @@ for candidate in (REPO_ROOT, MCOI_ROOT):
         sys.path.insert(0, str(candidate))
 
 from mcoi_runtime.personal_assistant import (  # noqa: E402
-    ConnectorProofRef,
-    RedactedCalendarEvent,
-    RedactedInboxMessage,
-    interpret_user_request,
-    summarize_calendar_day_read_only,
-    summarize_inbox_read_only,
+    DEFAULT_READ_ONLY_PROJECTION_GENERATED_AT,
+    build_default_personal_assistant_read_only_projection,
+    build_personal_assistant_read_only_projection_envelope,
 )
 from scripts.validate_personal_assistant_receipt import validate_personal_assistant_receipt_payload  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
@@ -46,7 +43,7 @@ from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 DEFAULT_PROJECTION = REPO_ROOT / "examples" / "personal_assistant_read_only_projection.json"
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "personal_assistant_read_only_projection.schema.json"
 DEFAULT_RECEIPT_SCHEMA = REPO_ROOT / "schemas" / "personal_assistant_receipt.schema.json"
-RUNTIME_GENERATED_AT = "2026-06-14T00:02:00+00:00"
+RUNTIME_GENERATED_AT = DEFAULT_READ_ONLY_PROJECTION_GENERATED_AT
 
 FALSE_EFFECT_BOUNDARY_FIELDS = frozenset(
     {
@@ -171,90 +168,7 @@ def validate_personal_assistant_read_only_projection(
 
 def build_runtime_read_only_projection() -> dict[str, Any]:
     """Build a deterministic runtime envelope from redacted fixture inputs."""
-    inbox_intent = interpret_user_request(
-        "Check my inbox today and summarize important items.",
-        request_id="pa_request_readonly_inbox_001",
-        submitted_at="2026-06-14T00:00:00+00:00",
-        connector_refs=(
-            ConnectorProofRef(
-                connector_id="connector:gmail:operator",
-                connector_name="gmail",
-                proof_state="Pass",
-                private_data_allowed=True,
-                scopes=("gmail.readonly",),
-            ),
-        ),
-    )
-    calendar_intent = interpret_user_request(
-        "Summarize my calendar today.",
-        request_id="pa_request_readonly_calendar_001",
-        submitted_at="2026-06-14T00:00:00+00:00",
-        connector_refs=(
-            ConnectorProofRef(
-                connector_id="connector:google-calendar:operator",
-                connector_name="google_calendar",
-                proof_state="Pass",
-                private_data_allowed=True,
-                scopes=("calendar.readonly",),
-            ),
-        ),
-    )
-    inbox_projection = summarize_inbox_read_only(
-        inbox_intent,
-        (
-            RedactedInboxMessage(
-                message_ref="msg:001",
-                received_at="2026-06-14T08:00:00+00:00",
-                sender_label="operator-visible sender A",
-                subject_digest="deadline digest",
-                snippet_digest="redacted summary digest only",
-                priority_signals=("urgent", "deadline"),
-                needs_reply=True,
-                has_attachment=True,
-            ),
-            RedactedInboxMessage(
-                message_ref="msg:002",
-                received_at="2026-06-14T09:00:00+00:00",
-                sender_label="operator-visible sender B",
-                subject_digest="FYI digest",
-                snippet_digest="redacted FYI digest only",
-            ),
-        ),
-        generated_at=RUNTIME_GENERATED_AT,
-    )
-    calendar_projection = summarize_calendar_day_read_only(
-        calendar_intent,
-        (
-            RedactedCalendarEvent(
-                event_ref="event:001",
-                starts_at="2026-06-14T10:00:00+00:00",
-                ends_at="2026-06-14T10:30:00+00:00",
-                title_digest="planning digest",
-                organizer_label="operator-visible organizer",
-                location_label="redacted location label",
-                attendee_count=3,
-                conflict_ref="conflict:001",
-                preparation_signals=("agenda_needed",),
-            ),
-            RedactedCalendarEvent(
-                event_ref="event:002",
-                starts_at="2026-06-14T11:00:00+00:00",
-                ends_at="2026-06-14T11:45:00+00:00",
-                title_digest="check-in digest",
-                organizer_label="operator-visible organizer",
-                location_label="",
-                attendee_count=2,
-            ),
-        ),
-        generated_at=RUNTIME_GENERATED_AT,
-    )
-    return build_read_only_projection_envelope(
-        generated_at=RUNTIME_GENERATED_AT,
-        projections=(
-            ("pa_read_only_projection_item_inbox_001", inbox_projection.as_dict()),
-            ("pa_read_only_projection_item_calendar_001", calendar_projection.as_dict()),
-        ),
-    )
+    return build_default_personal_assistant_read_only_projection(generated_at=RUNTIME_GENERATED_AT)
 
 
 def build_read_only_projection_envelope(
@@ -263,89 +177,10 @@ def build_read_only_projection_envelope(
     projections: tuple[tuple[str, Mapping[str, Any]], ...],
 ) -> dict[str, Any]:
     """Build a schema-shaped no-effect envelope around read-only projections."""
-    projection_items: list[dict[str, Any]] = []
-    receipt_ids: list[str] = []
-    connector_names: list[str] = []
-    projection_ids: list[str] = []
-    for projection_id, projection in projections:
-        receipt = _mapping(projection.get("receipt"))
-        summary = _mapping(projection.get("summary"))
-        projection_ids.append(projection_id)
-        receipt_id = str(receipt.get("receipt_id", ""))
-        if receipt_id and receipt_id not in receipt_ids:
-            receipt_ids.append(receipt_id)
-        for connector_name in receipt.get("connectors_used", ()):
-            if isinstance(connector_name, str) and connector_name not in connector_names:
-                connector_names.append(connector_name)
-        projection_items.append(
-            {
-                "projection_id": projection_id,
-                "request_id": str(projection.get("request_id", "")),
-                "skill_id": str(projection.get("skill_id", "")),
-                "summary_type": str(summary.get("summary_type", "")),
-                "summary": dict(summary),
-                "receipt": dict(receipt),
-            }
-        )
-    return {
-        "projection_set_id": "pa_read_only_projection_foundation_001",
-        "generated_at": generated_at,
-        "governed": True,
-        "source_projection": "operator_supplied_redacted_projection",
-        "projection_count": len(projection_items),
-        "projection_ids": projection_ids,
-        "receipt_ids": receipt_ids,
-        "connectors_used": connector_names,
-        "projections": projection_items,
-        "effect_boundary": {
-            "execution_allowed": False,
-            "live_connector_execution_allowed": False,
-            "mailbox_read_allowed": False,
-            "mailbox_mutation_allowed": False,
-            "external_send_allowed": False,
-            "calendar_write_allowed": False,
-            "task_write_allowed": False,
-            "memory_write_allowed": False,
-            "connector_mutation_allowed": False,
-            "deployment_mutation_allowed": False,
-            "public_readiness_claim_allowed": False,
-        },
-        "private_payload_policy": {
-            "raw_private_payload_serialized": False,
-            "secret_values_serialized": False,
-            "connector_payload_projection": "redacted_summary",
-            "body_projection": "redacted_summary",
-        },
-        "assurance": {
-            "assurance_id": "personal_assistant_read_only_projection_no_effect_assurance",
-            "outcome": "SolvedVerified",
-            "foundation_only": True,
-            "ready_for_live_execution": False,
-            "ready_for_customer_readiness_claim": False,
-            "authority_drift_detected": False,
-            "checked_controls": [
-                "operator_redacted_projection_only",
-                "no_live_connector_execution",
-                "no_mailbox_mutation",
-                "no_calendar_write",
-                "no_external_send",
-                "no_raw_private_payload_serialization",
-                "no_secret_value_serialization",
-                "receipt_actions_not_taken_recorded",
-            ],
-            "blocking_reasons": [],
-            "next_action": "continue read-only evidence hardening before any live connector witness",
-        },
-        "metadata": {
-            "foundation_only": True,
-            "projection_contract": "read_only_redacted_evidence",
-            "runtime_boundary": "no_live_connector_calls",
-            "live_connector_execution_allowed": False,
-            "connector_mutation_allowed": False,
-            "external_send_allowed": False,
-            "system_of_record_write_allowed": False,
-        },
-    }
+    return build_personal_assistant_read_only_projection_envelope(
+        generated_at=generated_at,
+        projections=projections,
+    )
 
 
 def _validate_projection_semantics(
