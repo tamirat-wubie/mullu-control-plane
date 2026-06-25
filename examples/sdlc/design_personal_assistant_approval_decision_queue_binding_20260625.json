@@ -1,0 +1,43 @@
+{
+  "design_id": "sdlc_design_personal_assistant_approval_decision_queue_binding_20260625",
+  "requirement_id": "sdlc_req_personal_assistant_approval_decision_queue_binding_20260625",
+  "architecture_summary": "Bind Personal Assistant approval decision evidence to the requested pre-decision approval queue state using a digest-only queue_precondition_ref while preserving the no-effect approval decision boundary.",
+  "affected_modules": [
+    "schemas/personal_assistant_approval_decision.schema.json",
+    "examples/personal_assistant_approval_decision_evidence.json",
+    "scripts/validate_personal_assistant_approval_decision.py",
+    "tests/test_validate_personal_assistant_approval_decision.py"
+  ],
+  "data_model_changes": [
+    "Add queue_precondition_ref to every approval decision evidence item.",
+    "Represent queue_precondition_ref as source projection, approval id, request id, plan id, requested queue state, request receipt id, review packet id, review packet digest, digest-only flag, precondition flag, no-effect flags, and queue_precondition_sha256.",
+    "Compute queue_precondition_sha256 from the queue precondition fields excluding the digest field itself.",
+    "Keep packet and receipt evidence unchanged so approval decisions continue to record operator evidence without executing proposed actions."
+  ],
+  "schema_changes": [
+    "schemas/personal_assistant_approval_decision.schema.json"
+  ],
+  "validator_changes": [
+    "Runtime approval decision evidence captures the queue record before record_decision and emits a digest-only queue precondition ref.",
+    "Validator confirms queue_precondition_ref identity matches the decision item, source state is requested, source receipt is the request receipt, source review packet digest matches the checked-in approval review packet, no-effect flags remain false, and queue_precondition_sha256 is stable.",
+    "Focused tests assert runtime queue refs and reject queue precondition drift."
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove queue_precondition_ref from the approval decision schema, runtime builder, fixture, validator checks, tests, and SDLC artifacts; then rerun approval decision validation, focused approval queue tests, schema validation, SDLC validation, and diff checks.",
+  "migration_plan": "No persisted migration is required. This changes a checked-in Foundation Mode evidence schema, deterministic fixture, validator, and tests only.",
+  "test_plan": [
+    "python scripts/validate_personal_assistant_approval_decision.py --json",
+    "python -m pytest tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_approval_queue.py -q",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check --ignore-space-at-eol"
+  ],
+  "uao_ref": "uao://local-foundation/personal-assistant-approval-decision-queue-binding/20260625",
+  "causal_decision_trace_ref": "trace://sdlc/personal-assistant-approval-decision-queue-binding/20260625",
+  "receipt_ref": "examples/personal_assistant_approval_decision_evidence.json"
+}

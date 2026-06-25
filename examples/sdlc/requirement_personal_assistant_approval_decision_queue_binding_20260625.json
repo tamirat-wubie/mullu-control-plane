@@ -1,0 +1,51 @@
+{
+  "requirement_id": "sdlc_req_personal_assistant_approval_decision_queue_binding_20260625",
+  "request_id": "personal_assistant_approval_decision_queue_binding_20260625",
+  "problem_statement": "Personal Assistant approval decision evidence validates packets and receipts, but each decision must also prove which requested approval queue state it reviewed before recording an operator decision.",
+  "success_criteria": [
+    "Approval decision schema requires a digest-only queue_precondition_ref on every decision item.",
+    "Runtime-generated approval decision evidence emits queue_precondition_ref from the requested pre-decision queue record.",
+    "The checked-in approval decision fixture validates with queue refs that bind approval id, request id, plan id, requested queue state, request receipt id, approval review packet id, approval review packet digest, and no-effect flags.",
+    "Validator rejects queue state drift, request receipt drift, review packet digest drift, payload digest flag drift, execution flag drift, and queue precondition digest drift.",
+    "Approval decisions remain evidence records only and do not execute external sends, connector mutation, memory writes, system-of-record writes, deployment changes, or customer-readiness claims."
+  ],
+  "non_goals": [
+    "Do not prepare or execute the approved action.",
+    "Do not call Gmail, Calendar, task, messaging, browser, memory, or payment connectors.",
+    "Do not grant live connector, external-send, system-of-record, deployment, customer-readiness, or production-readiness authority.",
+    "Do not serialize raw private connector payloads, message bodies, secrets, or credentials."
+  ],
+  "constraints": [
+    "Foundation Mode remains active.",
+    "Decision evidence must bind to queue preconditions without embedding the full source queue record.",
+    "Queue precondition digest material must be deterministic and auditable.",
+    "No-effect decision receipt semantics remain unchanged: approved and revised defer, rejected and expired block.",
+    "Mfidel atomicity must be preserved."
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "schemas/personal_assistant_approval_decision.schema.json",
+    "examples/personal_assistant_approval_decision_evidence.json",
+    "scripts/validate_personal_assistant_approval_decision.py",
+    "tests/test_validate_personal_assistant_approval_decision.py",
+    "examples/sdlc/requirement_personal_assistant_approval_decision_queue_binding_20260625.json",
+    "examples/sdlc/design_personal_assistant_approval_decision_queue_binding_20260625.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_personal_assistant_approval_decision.py --json",
+    "python -m pytest tests/test_validate_personal_assistant_approval_decision.py tests/test_personal_assistant_approval_queue.py -q",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check --ignore-space-at-eol"
+  ],
+  "evidence_required": [
+    "schemas/personal_assistant_approval_decision.schema.json",
+    "examples/personal_assistant_approval_decision_evidence.json",
+    "scripts/validate_personal_assistant_approval_decision.py",
+    "tests/test_validate_personal_assistant_approval_decision.py",
+    "examples/personal_assistant_approval_review_packet.json"
+  ],
+  "uao_ref": "uao://local-foundation/personal-assistant-approval-decision-queue-binding/20260625",
+  "causal_decision_trace_ref": "trace://sdlc/personal-assistant-approval-decision-queue-binding/20260625",
+  "receipt_ref": "examples/personal_assistant_approval_decision_evidence.json"
+}
