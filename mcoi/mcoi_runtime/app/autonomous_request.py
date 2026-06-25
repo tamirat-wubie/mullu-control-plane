@@ -36,6 +36,64 @@ class RequestActionBoundary(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
+class AutonomousRequestPlanStep:
+    """One planned request stage inside an autonomous request episode."""
+
+    stage_id: str
+    request: OperatorRequest
+    predecessors: tuple[str, ...] = ()
+    verification_keys: tuple[str, ...] = ("operator_run_report",)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "stage_id", ensure_non_empty_text("stage_id", self.stage_id))
+        if not isinstance(self.request, OperatorRequest):
+            raise RuntimeCoreInvariantError("plan step request must be an OperatorRequest")
+        object.__setattr__(
+            self,
+            "predecessors",
+            tuple(ensure_non_empty_text("predecessor", value) for value in self.predecessors),
+        )
+        if self.stage_id in self.predecessors:
+            raise RuntimeCoreInvariantError("plan step cannot depend on itself")
+        object.__setattr__(
+            self,
+            "verification_keys",
+            tuple(ensure_non_empty_text("verification_key", value) for value in self.verification_keys),
+        )
+        if not self.verification_keys:
+            raise RuntimeCoreInvariantError("plan step verification_keys must be non-empty")
+
+
+@dataclass(frozen=True, slots=True)
+class AutonomousRequestPlan:
+    """Validated directed acyclic plan over local operator requests."""
+
+    plan_id: str
+    steps: tuple[AutonomousRequestPlanStep, ...]
+    terminal_condition: str = "all planned stages settled or blocked with receipts"
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "plan_id", ensure_non_empty_text("plan_id", self.plan_id))
+        if not isinstance(self.steps, tuple) or not self.steps:
+            raise RuntimeCoreInvariantError("plan steps must be a non-empty tuple")
+        for step in self.steps:
+            if not isinstance(step, AutonomousRequestPlanStep):
+                raise RuntimeCoreInvariantError("plan steps must contain AutonomousRequestPlanStep values")
+        object.__setattr__(
+            self,
+            "terminal_condition",
+            ensure_non_empty_text("terminal_condition", self.terminal_condition),
+        )
+        object.__setattr__(self, "steps", _ordered_plan_steps(self.steps))
+
+    @property
+    def requests(self) -> tuple[OperatorRequest, ...]:
+        """Return planned requests in validated execution order."""
+
+        return tuple(step.request for step in self.steps)
+
+
+@dataclass(frozen=True, slots=True)
 class AutonomousRequestEpisode:
     """Input envelope for one user request mapped to governed operator steps."""
 
@@ -46,6 +104,7 @@ class AutonomousRequestEpisode:
     has_approval: bool = False
     max_local_retries: int = 0
     retry_requests: Mapping[str, tuple[OperatorRequest, ...]] = field(default_factory=dict)
+    plan: AutonomousRequestPlan | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "episode_id", ensure_non_empty_text("episode_id", self.episode_id))
@@ -53,6 +112,11 @@ class AutonomousRequestEpisode:
         object.__setattr__(self, "goal_id", ensure_non_empty_text("goal_id", self.goal_id))
         if not isinstance(self.requests, tuple) or not self.requests:
             raise RuntimeCoreInvariantError("requests must be a non-empty tuple")
+        if self.plan is not None:
+            if not isinstance(self.plan, AutonomousRequestPlan):
+                raise RuntimeCoreInvariantError("plan must be an AutonomousRequestPlan")
+            if self.requests != self.plan.requests:
+                raise RuntimeCoreInvariantError("episode requests must match plan execution order")
         for request in self.requests:
             if not isinstance(request, OperatorRequest):
                 raise RuntimeCoreInvariantError("requests must contain OperatorRequest values")
@@ -78,6 +142,31 @@ class AutonomousRequestEpisode:
                 )
                 for request_id, retries in self.retry_requests.items()
             },
+        )
+
+    @classmethod
+    def from_plan(
+        cls,
+        *,
+        episode_id: str,
+        subject_id: str,
+        goal_id: str,
+        plan: AutonomousRequestPlan,
+        has_approval: bool = False,
+        max_local_retries: int = 0,
+        retry_requests: Mapping[str, tuple[OperatorRequest, ...]] | None = None,
+    ) -> "AutonomousRequestEpisode":
+        """Build an episode from a validated plan without duplicating request order."""
+
+        return cls(
+            episode_id=episode_id,
+            subject_id=subject_id,
+            goal_id=goal_id,
+            requests=plan.requests,
+            plan=plan,
+            has_approval=has_approval,
+            max_local_retries=max_local_retries,
+            retry_requests={} if retry_requests is None else retry_requests,
         )
 
 
@@ -150,6 +239,9 @@ class AutonomousRequestStepReceipt:
     attempt_count: int = 1
     retry_count: int = 0
     repair_receipts: tuple[AutonomousRequestRepairReceipt, ...] = ()
+    plan_id: str | None = None
+    plan_stage_id: str | None = None
+    plan_predecessors: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -192,6 +284,19 @@ class AutonomousRequestStepReceipt:
         object.__setattr__(self, "repair_receipts", tuple(self.repair_receipts))
         if len(self.repair_receipts) != self.retry_count:
             raise RuntimeCoreInvariantError("repair_receipts length must match retry_count")
+        if self.plan_id is not None:
+            object.__setattr__(self, "plan_id", ensure_non_empty_text("plan_id", self.plan_id))
+        if self.plan_stage_id is not None:
+            object.__setattr__(
+                self,
+                "plan_stage_id",
+                ensure_non_empty_text("plan_stage_id", self.plan_stage_id),
+            )
+        object.__setattr__(
+            self,
+            "plan_predecessors",
+            tuple(ensure_non_empty_text("plan_predecessor", value) for value in self.plan_predecessors),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -221,6 +326,10 @@ class AutonomousRequestEpisodeReceipt:
     solver_outcome: str
     rollback_ref: str
     no_bypass: bool = True
+    plan_id: str | None = None
+    planned_stage_count: int = 0
+    blocked_dependency_count: int = 0
+    plan_receipt_ref: str | None = None
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -248,10 +357,20 @@ class AutonomousRequestEpisodeReceipt:
             "prompt_count",
             "repair_attempt_count",
             "repaired_step_count",
+            "planned_stage_count",
+            "blocked_dependency_count",
         ):
             value = getattr(self, field_name)
             if not isinstance(value, int) or value < 0:
                 raise RuntimeCoreInvariantError(f"{field_name} must be a non-negative int")
+        if self.plan_id is not None:
+            object.__setattr__(self, "plan_id", ensure_non_empty_text("plan_id", self.plan_id))
+        if self.plan_receipt_ref is not None:
+            object.__setattr__(
+                self,
+                "plan_receipt_ref",
+                ensure_non_empty_text("plan_receipt_ref", self.plan_receipt_ref),
+            )
         if not isinstance(self.no_bypass, bool):
             raise RuntimeCoreInvariantError("no_bypass must be a bool")
         object.__setattr__(self, "step_receipts", tuple(self.step_receipts))
@@ -293,8 +412,21 @@ class AutonomousRequestExecutor:
         started_at = self._operator_loop.runtime.clock()
         step_receipts: list[AutonomousRequestStepReceipt] = []
         run_reports: list[OperatorRunReport] = []
+        settled_stage_ids: set[str] = set()
 
-        for request in episode.requests:
+        for plan_step, request in _episode_execution_steps(episode):
+            failed_predecessors = _failed_predecessors(plan_step, settled_stage_ids)
+            if failed_predecessors:
+                step_receipts.append(
+                    _blocked_dependency_step_receipt(
+                        request=request,
+                        plan=episode.plan,
+                        plan_step=plan_step,
+                        failed_predecessors=failed_predecessors,
+                    )
+                )
+                continue
+
             action_class = _action_class_for_request(request)
             boundary = _boundary_for_action_class(action_class)
             decision = self._operator_loop.runtime.autonomy.evaluate(
@@ -318,8 +450,12 @@ class AutonomousRequestExecutor:
                         decision=decision,
                         report=report,
                         repair_receipts=repair_receipts,
+                        plan=episode.plan,
+                        plan_step=plan_step,
                     )
                 )
+                if _step_settled(step_receipts[-1], report):
+                    settled_stage_ids.add(plan_step.stage_id)
             else:
                 step_receipts.append(
                     _blocked_step_receipt(
@@ -327,6 +463,8 @@ class AutonomousRequestExecutor:
                         action_class=action_class,
                         boundary=boundary,
                         decision=decision,
+                        plan=episode.plan,
+                        plan_step=plan_step,
                     )
                 )
 
@@ -400,6 +538,79 @@ def run_autonomous_request_episode(
     """Convenience entry point for request-episode execution."""
 
     return AutonomousRequestExecutor(operator_loop).run_episode(episode)
+
+
+def _ordered_plan_steps(
+    steps: tuple[AutonomousRequestPlanStep, ...],
+) -> tuple[AutonomousRequestPlanStep, ...]:
+    stage_by_id: dict[str, AutonomousRequestPlanStep] = {}
+    request_ids: set[str] = set()
+    for step in steps:
+        if step.stage_id in stage_by_id:
+            raise RuntimeCoreInvariantError("plan steps must declare unique stage_id values")
+        if step.request.request_id in request_ids:
+            raise RuntimeCoreInvariantError("plan step requests must declare unique request_id values")
+        stage_by_id[step.stage_id] = step
+        request_ids.add(step.request.request_id)
+
+    for step in steps:
+        for predecessor_id in step.predecessors:
+            if predecessor_id not in stage_by_id:
+                raise RuntimeCoreInvariantError("plan predecessors must reference declared stage_id values")
+
+    ordered: list[AutonomousRequestPlanStep] = []
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(stage_id: str) -> None:
+        if stage_id in visited:
+            return
+        if stage_id in visiting:
+            raise RuntimeCoreInvariantError("plan stage graph must not contain cycles")
+        visiting.add(stage_id)
+        for predecessor_id in stage_by_id[stage_id].predecessors:
+            visit(predecessor_id)
+        visiting.remove(stage_id)
+        visited.add(stage_id)
+        ordered.append(stage_by_id[stage_id])
+
+    for step in steps:
+        visit(step.stage_id)
+    return tuple(ordered)
+
+
+def _episode_execution_steps(
+    episode: AutonomousRequestEpisode,
+) -> tuple[tuple[AutonomousRequestPlanStep, OperatorRequest], ...]:
+    if episode.plan is not None:
+        return tuple((step, step.request) for step in episode.plan.steps)
+    return tuple(
+        (
+            AutonomousRequestPlanStep(stage_id=request.request_id, request=request),
+            request,
+        )
+        for request in episode.requests
+    )
+
+
+def _failed_predecessors(
+    plan_step: AutonomousRequestPlanStep,
+    settled_stage_ids: set[str],
+) -> tuple[str, ...]:
+    return tuple(
+        predecessor_id
+        for predecessor_id in plan_step.predecessors
+        if predecessor_id not in settled_stage_ids
+    )
+
+
+def _step_settled(step_receipt: AutonomousRequestStepReceipt, report: OperatorRunReport) -> bool:
+    return (
+        step_receipt.dispatched
+        and report.validation_error is None
+        and step_receipt.validation_error is None
+        and step_receipt.autonomy_status == AutonomyDecisionStatus.ALLOWED.value
+    )
 
 
 def _validated_retry_requests(
@@ -481,6 +692,8 @@ def _step_receipt_from_report(
     decision: AutonomyDecision,
     report: OperatorRunReport,
     repair_receipts: tuple[AutonomousRequestRepairReceipt, ...],
+    plan: AutonomousRequestPlan | None,
+    plan_step: AutonomousRequestPlanStep,
 ) -> AutonomousRequestStepReceipt:
     receipt_ref = stable_identifier(
         "request-step-receipt",
@@ -505,6 +718,9 @@ def _step_receipt_from_report(
         attempt_count=1 + len(repair_receipts),
         retry_count=len(repair_receipts),
         repair_receipts=repair_receipts,
+        plan_id=None if plan is None else plan.plan_id,
+        plan_stage_id=None if plan is None else plan_step.stage_id,
+        plan_predecessors=() if plan is None else plan_step.predecessors,
     )
 
 
@@ -597,6 +813,8 @@ def _blocked_step_receipt(
     action_class: ActionClass,
     boundary: RequestActionBoundary,
     decision: AutonomyDecision,
+    plan: AutonomousRequestPlan | None = None,
+    plan_step: AutonomousRequestPlanStep | None = None,
 ) -> AutonomousRequestStepReceipt:
     receipt_ref = stable_identifier(
         "request-step-receipt",
@@ -618,6 +836,44 @@ def _blocked_step_receipt(
         validation_error=None,
         structured_error_codes=(),
         receipt_ref=f"receipt://{receipt_ref}",
+        plan_id=None if plan is None else plan.plan_id,
+        plan_stage_id=None if plan is None or plan_step is None else plan_step.stage_id,
+        plan_predecessors=() if plan is None or plan_step is None else plan_step.predecessors,
+    )
+
+
+def _blocked_dependency_step_receipt(
+    *,
+    request: OperatorRequest,
+    plan: AutonomousRequestPlan | None,
+    plan_step: AutonomousRequestPlanStep,
+    failed_predecessors: tuple[str, ...],
+) -> AutonomousRequestStepReceipt:
+    action_class = _action_class_for_request(request)
+    boundary = _boundary_for_action_class(action_class)
+    receipt_ref = stable_identifier(
+        "request-step-receipt",
+        {
+            "request_id": request.request_id,
+            "stage_id": plan_step.stage_id,
+            "failed_predecessors": failed_predecessors,
+        },
+    )
+    return AutonomousRequestStepReceipt(
+        request_id=request.request_id,
+        action_class=action_class.value,
+        boundary=boundary.value,
+        autonomy_decision_id=f"dependency-blocked:{plan_step.stage_id}",
+        autonomy_status=AutonomyDecisionStatus.REJECTED.value,
+        autonomy_reason="predecessor stage did not settle",
+        dispatched=False,
+        execution_id=None,
+        validation_error="dependency_blocked:" + ",".join(failed_predecessors),
+        structured_error_codes=("dependency_blocked",),
+        receipt_ref=f"receipt://{receipt_ref}",
+        plan_id=None if plan is None else plan.plan_id,
+        plan_stage_id=plan_step.stage_id,
+        plan_predecessors=plan_step.predecessors,
     )
 
 
@@ -648,6 +904,11 @@ def _episode_receipt(
     validation_errors = tuple(
         step.validation_error for step in step_receipts if step.validation_error is not None
     )
+    blocked_dependency_count = sum(
+        1
+        for step in step_receipts
+        if "dependency_blocked" in step.structured_error_codes
+    )
     repair_receipt_refs = tuple(
         repair.receipt_ref
         for step in step_receipts
@@ -659,6 +920,7 @@ def _episode_receipt(
         if step.retry_count > 0 and step.dispatched and step.validation_error is None
     )
     receipt_refs = tuple(step.receipt_ref for step in step_receipts)
+    plan_receipt_ref = _plan_receipt_ref(episode=episode, step_receipts=step_receipts)
     solver_outcome = _solver_outcome(
         action_count=len(step_receipts),
         dispatched_count=dispatched_count,
@@ -701,9 +963,32 @@ def _episode_receipt(
         repair_attempt_count=len(repair_receipt_refs),
         repaired_step_count=repaired_step_count,
         repair_receipt_refs=repair_receipt_refs,
+        plan_id=None if episode.plan is None else episode.plan.plan_id,
+        planned_stage_count=0 if episode.plan is None else len(episode.plan.steps),
+        blocked_dependency_count=blocked_dependency_count,
+        plan_receipt_ref=plan_receipt_ref,
         solver_outcome=solver_outcome.value,
         rollback_ref=rollback_ref,
     )
+
+
+def _plan_receipt_ref(
+    *,
+    episode: AutonomousRequestEpisode,
+    step_receipts: tuple[AutonomousRequestStepReceipt, ...],
+) -> str | None:
+    if episode.plan is None:
+        return None
+    plan_ref = stable_identifier(
+        "autonomous-request-plan-receipt",
+        {
+            "episode_id": episode.episode_id,
+            "plan_id": episode.plan.plan_id,
+            "stages": tuple(step.plan_stage_id for step in step_receipts),
+            "receipts": tuple(step.receipt_ref for step in step_receipts),
+        },
+    )
+    return f"receipt://{plan_ref}"
 
 
 def _solver_outcome(
@@ -732,6 +1017,8 @@ __all__ = [
     "AutonomousRequestEpisode",
     "AutonomousRequestEpisodeReceipt",
     "AutonomousRequestExecutor",
+    "AutonomousRequestPlan",
+    "AutonomousRequestPlanStep",
     "AutonomousRequestRepairReceipt",
     "AutonomousRequestStepReceipt",
     "RequestActionBoundary",

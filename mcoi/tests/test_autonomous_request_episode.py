@@ -14,6 +14,8 @@ from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.app.autonomous_request import (
     AutonomousRequestEpisode,
     AutonomousRequestExecutor,
+    AutonomousRequestPlan,
+    AutonomousRequestPlanStep,
     RequestActionBoundary,
 )
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
@@ -27,9 +29,11 @@ from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningKnow
 @dataclass
 class FakeExecutor:
     calls: int = 0
+    argv_history: tuple[tuple[str, ...], ...] = ()
 
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
         self.calls += 1
+        self.argv_history = self.argv_history + (tuple(request.argv),)
         return ExecutionResult(
             execution_id=request.execution_id,
             goal_id=request.goal_id,
@@ -135,6 +139,119 @@ def test_autonomous_request_episode_records_local_retry_repair() -> None:
     assert receipt.step_receipts[0].validation_error is None
     assert receipt.step_receipts[0].repair_receipts[0].request_id == "request-repair"
     assert receipt.step_receipts[0].repair_receipts[0].trigger.startswith("missing_parameter")
+
+
+def test_autonomous_request_episode_runs_validated_plan_in_dependency_order() -> None:
+    executor = FakeExecutor()
+    loop = _loop(executor)
+    analyze_request = _local_request(
+        request_id="request-analyze",
+        bindings={"message": "analyze"},
+    )
+    apply_request = _local_request(
+        request_id="request-apply",
+        bindings={"message": "apply"},
+    )
+    plan = AutonomousRequestPlan(
+        plan_id="plan-two-step",
+        steps=(
+            AutonomousRequestPlanStep(
+                stage_id="stage-apply",
+                request=apply_request,
+                predecessors=("stage-analyze",),
+            ),
+            AutonomousRequestPlanStep(
+                stage_id="stage-analyze",
+                request=analyze_request,
+            ),
+        ),
+    )
+
+    receipt = AutonomousRequestExecutor(loop).run_episode(
+        AutonomousRequestEpisode.from_plan(
+            episode_id="episode-plan",
+            subject_id="operator-1",
+            goal_id="goal-autonomous-request",
+            plan=plan,
+        )
+    )
+
+    assert executor.calls == 2
+    assert executor.argv_history[0][-1] == "print('analyze')"
+    assert executor.argv_history[1][-1] == "print('apply')"
+    assert receipt.solver_outcome == SolverOutcome.SOLVED_UNVERIFIED.value
+    assert receipt.plan_id == "plan-two-step"
+    assert receipt.planned_stage_count == 2
+    assert receipt.blocked_dependency_count == 0
+    assert receipt.plan_receipt_ref is not None
+    assert tuple(step.plan_stage_id for step in receipt.step_receipts) == (
+        "stage-analyze",
+        "stage-apply",
+    )
+    assert receipt.step_receipts[1].plan_predecessors == ("stage-analyze",)
+    assert len(receipt.receipt_refs) == 2
+
+
+def test_autonomous_request_episode_blocks_plan_dependent_stage_after_failed_predecessor() -> None:
+    executor = FakeExecutor()
+    loop = _loop(executor)
+    failing_request = _local_request(request_id="request-fail", bindings={})
+    dependent_request = _local_request(request_id="request-dependent", bindings={"message": "unused"})
+    plan = AutonomousRequestPlan(
+        plan_id="plan-block-dependent",
+        steps=(
+            AutonomousRequestPlanStep(stage_id="stage-fail", request=failing_request),
+            AutonomousRequestPlanStep(
+                stage_id="stage-dependent",
+                request=dependent_request,
+                predecessors=("stage-fail",),
+            ),
+        ),
+    )
+
+    receipt = AutonomousRequestExecutor(loop).run_episode(
+        AutonomousRequestEpisode.from_plan(
+            episode_id="episode-plan-blocked",
+            subject_id="operator-1",
+            goal_id="goal-autonomous-request",
+            plan=plan,
+        )
+    )
+
+    assert executor.calls == 0
+    assert receipt.solver_outcome == SolverOutcome.GOVERNANCE_BLOCKED.value
+    assert receipt.plan_id == "plan-block-dependent"
+    assert receipt.planned_stage_count == 2
+    assert receipt.blocked_dependency_count == 1
+    assert receipt.dispatched_count == 0
+    assert receipt.validation_errors[0].startswith("missing_parameter")
+    assert receipt.validation_errors[1] == "dependency_blocked:stage-fail"
+    assert receipt.step_receipts[1].autonomy_status == AutonomyDecisionStatus.REJECTED.value
+    assert receipt.step_receipts[1].autonomy_reason == "predecessor stage did not settle"
+    assert receipt.step_receipts[1].structured_error_codes == ("dependency_blocked",)
+    assert receipt.step_receipts[1].plan_predecessors == ("stage-fail",)
+
+
+def test_autonomous_request_plan_rejects_cycles_before_execution() -> None:
+    first_request = _local_request(request_id="request-cycle-a", bindings={"message": "a"})
+    second_request = _local_request(request_id="request-cycle-b", bindings={"message": "b"})
+
+    with pytest.raises(Exception, match="plan stage graph must not contain cycles"):
+        AutonomousRequestPlan(
+            plan_id="plan-cycle",
+            steps=(
+                AutonomousRequestPlanStep(
+                    stage_id="stage-a",
+                    request=first_request,
+                    predecessors=("stage-b",),
+                ),
+                AutonomousRequestPlanStep(
+                    stage_id="stage-b",
+                    request=second_request,
+                    predecessors=("stage-a",),
+                ),
+            ),
+        )
 
 
 def test_autonomous_request_episode_respects_retry_ceiling() -> None:
