@@ -16,7 +16,7 @@ Invariants:
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable, Mapping
 
 from mcoi_runtime.contracts.effect_assurance import (
@@ -44,6 +44,8 @@ from mcoi_runtime.contracts.life_meaning import (
     Delta,
     FeelingStatus,
     ImpactLevel,
+    LifeMeaningDecision,
+    LifeMeaningJudgment,
     LifeStatus,
 )
 from mcoi_runtime.contracts.goal import GoalDescriptor, GoalPriority
@@ -253,6 +255,7 @@ class UniversalActionResult:
     dispatch_result: GovernedDispatchResult | None = None
     terminal_certificate: TerminalClosureCertificate | None = None
     learning_decision: LearningAdmissionDecision | None = None
+    life_meaning_judgment: LifeMeaningJudgment | None = None
     proof_hash: str = ""
 
     @property
@@ -427,6 +430,43 @@ class UniversalActionKernel:
                 governed_action=governed_action,
             )
 
+        life_meaning_judgment = self._build_life_meaning_preflight_judgment(
+            action_id=action_id,
+            request=request,
+            issued_at=now,
+            trace_ref=trace_ref,
+            goal_certificate=goal_certificate,
+            world_certificate=world_certificate,
+            plan_certificate=plan_certificate,
+            simulation_certificate=simulation_certificate,
+            effect_prediction_certificate=effect_prediction_certificate,
+            recovery_plan_certificate=recovery_plan_certificate,
+            intent_certificate=intent_certificate,
+            operating_substrate_certificate=operating_substrate_certificate,
+            capability_decision=capability_decision,
+            governed_action=governed_action,
+        )
+        if life_meaning_judgment.decision is not LifeMeaningDecision.PASS:
+            return self._blocked(
+                action_id=action_id,
+                request=request,
+                issued_at=now,
+                trace_ref=trace_ref,
+                block_reason=f"life_meaning_judgment_{life_meaning_judgment.decision.value}",
+                goal_certificate=goal_certificate,
+                world_certificate=world_certificate,
+                plan_certificate=plan_certificate,
+                simulation_certificate=simulation_certificate,
+                effect_prediction_certificate=effect_prediction_certificate,
+                recovery_plan_certificate=recovery_plan_certificate,
+                intent_certificate=intent_certificate,
+                operating_substrate_certificate=operating_substrate_certificate,
+                capability_decision=capability_decision,
+                governed_action=governed_action,
+                decision_status=_life_meaning_decision_status(life_meaning_judgment),
+                life_meaning_judgment=life_meaning_judgment,
+            )
+
         dispatch_result = self._governed_dispatcher.governed_dispatch(
             GovernedDispatchContext(
                 actor_id=request.actor_id,
@@ -455,6 +495,7 @@ class UniversalActionKernel:
                 action_id=action_id,
                 trace_ref=trace_ref,
                 decision_status="block" if dispatch_result.blocked else "allow",
+                life_meaning_judgment_id=life_meaning_judgment.judgment_id,
             ),
             execution_receipt_ref=_build_execution_receipt_ref(
                 request=request,
@@ -479,6 +520,7 @@ class UniversalActionKernel:
             dispatch_result=dispatch_result,
             terminal_certificate=terminal_certificate,
             learning_decision=learning_decision,
+            life_meaning_judgment=life_meaning_judgment,
         )
         return self._with_proof_hash(result)
 
@@ -710,6 +752,8 @@ class UniversalActionKernel:
         governed_action: GovernedAction | None = None,
         intent_certificate: IntentCompilationCertificate | None = None,
         operating_substrate_certificate: OperatingSubstrateSupportCertificate | None = None,
+        decision_status: str = "block",
+        life_meaning_judgment: LifeMeaningJudgment | None = None,
     ) -> UniversalActionResult:
         result = UniversalActionResult(
             action_id=action_id,
@@ -724,14 +768,78 @@ class UniversalActionKernel:
             admission_receipt_ref=_build_admission_receipt_ref(
                 action_id=action_id,
                 trace_ref=trace_ref,
-                decision_status="block",
+                decision_status=decision_status,
+                life_meaning_judgment_id=f"life-meaning:{action_id}",
             ),
             execution_receipt_ref=None,
-            closure_state=_build_closure_state(
-                blocked=True,
-                dispatch_result=None,
-                terminal_certificate=None,
+            closure_state=_blocked_closure_state(decision_status),
+            goal_certificate=goal_certificate,
+            world_certificate=world_certificate,
+            plan_certificate=plan_certificate,
+            simulation_certificate=simulation_certificate,
+            effect_prediction_certificate=effect_prediction_certificate,
+            recovery_plan_certificate=recovery_plan_certificate,
+            intent_certificate=intent_certificate,
+            operating_substrate_certificate=operating_substrate_certificate,
+            capability_decision=capability_decision,
+            governed_action=governed_action,
+            life_meaning_judgment=life_meaning_judgment,
+        )
+        if result.life_meaning_judgment is not None:
+            result = replace(
+                result,
+                life_meaning_judgment=_life_meaning_judgment_with_admission_ref(
+                    result.life_meaning_judgment,
+                    result.admission_receipt_ref,
+                ),
+            )
+        if result.life_meaning_judgment is None:
+            result = replace(
+                result,
+                life_meaning_judgment=self._build_life_meaning_result_judgment(
+                    request=request,
+                    result=result,
+                    decision=_uao_record_decision(result),
+                ),
+            )
+        return self._with_proof_hash(result)
+
+    def _build_life_meaning_preflight_judgment(
+        self,
+        *,
+        action_id: str,
+        request: UniversalActionRequest,
+        issued_at: str,
+        trace_ref: str,
+        goal_certificate: GoalCertificate,
+        world_certificate: WorldSupportCertificate,
+        plan_certificate: PlanCertificate,
+        simulation_certificate: SimulationCertificate,
+        effect_prediction_certificate: EffectPredictionCertificate,
+        recovery_plan_certificate: RecoveryPlanCertificate,
+        intent_certificate: IntentCompilationCertificate,
+        operating_substrate_certificate: OperatingSubstrateSupportCertificate | None,
+        capability_decision: CommandCapabilityAdmissionDecision,
+        governed_action: GovernedAction,
+    ) -> LifeMeaningJudgment:
+        provisional_result = UniversalActionResult(
+            action_id=action_id,
+            blocked=False,
+            block_reason="",
+            action_envelope=_build_action_envelope(
+                request=request,
+                issued_at=issued_at,
+                capability_decision=capability_decision,
             ),
+            trace_ref=trace_ref,
+            admission_receipt_ref=_build_admission_receipt_ref(
+                action_id=action_id,
+                trace_ref=trace_ref,
+                decision_status="allow",
+                life_meaning_judgment_id=f"life-meaning:{action_id}",
+            ),
+            execution_receipt_ref=None,
+            closure_state="closed_deferred",
             goal_certificate=goal_certificate,
             world_certificate=world_certificate,
             plan_certificate=plan_certificate,
@@ -743,7 +851,41 @@ class UniversalActionKernel:
             capability_decision=capability_decision,
             governed_action=governed_action,
         )
-        return self._with_proof_hash(result)
+        return self._build_life_meaning_result_judgment(
+            request=request,
+            result=provisional_result,
+            decision={
+                "status": "allow",
+                "reason_code": "life_meaning_preflight",
+                "proof_state": "Pass",
+                "solver_outcome": "SolvedUnverified",
+                "next_action": "governed_dispatch",
+                "execution_allowed": True,
+            },
+        )
+
+    def _build_life_meaning_result_judgment(
+        self,
+        *,
+        request: UniversalActionRequest,
+        result: UniversalActionResult,
+        decision: Mapping[str, Any],
+    ) -> LifeMeaningJudgment:
+        action_envelope = _uao_record_action_envelope(request=request, result=result)
+        evidence_refs = _uao_record_evidence_refs(
+            result=result,
+            action_envelope=action_envelope,
+        )
+        policy_refs = _uao_record_policy_refs(request=request, result=result)
+        effect_classes = _uao_record_effect_classes(result)
+        return _build_life_meaning_judgment(
+            request=request,
+            result=result,
+            decision=decision,
+            effect_classes=effect_classes,
+            evidence_refs=evidence_refs,
+            policy_refs=policy_refs,
+        )
 
     def _compile_intent(
         self,
@@ -1106,6 +1248,11 @@ class UniversalActionKernel:
             else "",
             "reconciliation_ref": _uao_record_reconciliation_ref(result) or "",
             "memory_ref": _uao_record_memory_ref(result) or "",
+            "life_meaning_judgment": (
+                result.life_meaning_judgment.as_dict()
+                if result.life_meaning_judgment is not None
+                else {}
+            ),
         }
         encoded = json.dumps(
             payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")
@@ -1133,6 +1280,7 @@ class UniversalActionKernel:
             dispatch_result=result.dispatch_result,
             terminal_certificate=result.terminal_certificate,
             learning_decision=result.learning_decision,
+            life_meaning_judgment=result.life_meaning_judgment,
             proof_hash=proof_hash,
         )
 
@@ -1489,7 +1637,11 @@ def _build_trace_ref(*, request: UniversalActionRequest, action_id: str) -> str:
 
 
 def _build_admission_receipt_ref(
-    *, action_id: str, trace_ref: str, decision_status: str
+    *,
+    action_id: str,
+    trace_ref: str,
+    decision_status: str,
+    life_meaning_judgment_id: str = "",
 ) -> str:
     return stable_identifier(
         "universal-action-admission-receipt",
@@ -1497,6 +1649,7 @@ def _build_admission_receipt_ref(
             "action_id": action_id,
             "trace_ref": trace_ref,
             "decision_status": decision_status,
+            "life_meaning_judgment_id": life_meaning_judgment_id,
         },
     )
 
@@ -1534,6 +1687,59 @@ def _build_closure_state(
     if dispatch_result is not None:
         return "closed_allowed"
     return "closed_deferred"
+
+
+def _blocked_closure_state(decision_status: str) -> str:
+    if decision_status == "defer":
+        return "closed_deferred"
+    if decision_status == "escalate":
+        return "closed_escalated"
+    return "closed_blocked"
+
+
+def _life_meaning_decision_status(judgment: LifeMeaningJudgment) -> str:
+    if judgment.decision is LifeMeaningDecision.PAUSE:
+        return "defer"
+    if judgment.decision is LifeMeaningDecision.ESCALATE:
+        return "escalate"
+    return "block"
+
+
+def _life_meaning_judgment_with_admission_ref(
+    judgment: LifeMeaningJudgment,
+    admission_receipt_ref: str,
+) -> LifeMeaningJudgment:
+    evidence_refs = tuple(
+        ref
+        for ref in judgment.evidence_refs
+        if not ref.startswith("universal-action-admission-receipt-")
+        or ref == admission_receipt_ref
+    )
+    if admission_receipt_ref not in evidence_refs:
+        evidence_refs = (*evidence_refs, admission_receipt_ref)
+    return LifeMeaningJudgment(
+        judgment_id=judgment.judgment_id,
+        action_id=judgment.action_id,
+        decision=judgment.decision,
+        affected_symbols=judgment.affected_symbols,
+        life_impact=judgment.life_impact,
+        feeling_impact=judgment.feeling_impact,
+        meaning_impact=judgment.meaning_impact,
+        truth_preserved=judgment.truth_preserved,
+        dignity_boundary=judgment.dignity_boundary,
+        consent_required=judgment.consent_required,
+        consent_present=judgment.consent_present,
+        love_delta=judgment.love_delta,
+        resonance_delta=judgment.resonance_delta,
+        domination_risk=judgment.domination_risk,
+        justice_repair_required=judgment.justice_repair_required,
+        continuity_delta=judgment.continuity_delta,
+        irreversible=judgment.irreversible,
+        reasons=judgment.reasons,
+        evidence_refs=evidence_refs,
+        approval_required=judgment.approval_required,
+        rollback_required=judgment.rollback_required,
+    )
 
 
 def _uao_closure_state_from_terminal(disposition: TerminalClosureDisposition) -> str:
@@ -2112,6 +2318,33 @@ def _uao_record_life_meaning_judgment(
     policy_refs: list[str],
 ) -> dict[str, Any]:
     """Build the canonical LifeMeaningJudgment for a UAO record."""
+    if result.life_meaning_judgment is not None and not _result_requires_review(result):
+        if result.life_meaning_judgment.action_id != result.action_id:
+            raise RuntimeCoreInvariantError(
+                "life_meaning_judgment action binding does not match result"
+            )
+        return result.life_meaning_judgment.as_dict()
+
+    return _build_life_meaning_judgment(
+        request=request,
+        result=result,
+        decision=decision,
+        effect_classes=effect_classes,
+        evidence_refs=evidence_refs,
+        policy_refs=policy_refs,
+    ).as_dict()
+
+
+def _build_life_meaning_judgment(
+    *,
+    request: UniversalActionRequest,
+    result: UniversalActionResult,
+    decision: Mapping[str, Any],
+    effect_classes: list[str],
+    evidence_refs: list[str],
+    policy_refs: list[str],
+) -> LifeMeaningJudgment:
+    """Build the canonical LifeMeaningJudgment object for runtime and UAO."""
 
     override = request.metadata.get("life_meaning_judgment", {})
     if override is None:
@@ -2258,7 +2491,7 @@ def _uao_record_life_meaning_judgment(
         raise RuntimeCoreInvariantError(
             "life_meaning_judgment must escalate when action decision escalates"
         )
-    return judgment.as_dict()
+    return judgment
 
 
 def _uao_record_life_continuity_judgment(
@@ -2733,6 +2966,36 @@ def _uao_record_decision(result: UniversalActionResult) -> dict[str, Any]:
             "next_action": "operator_review",
             "execution_allowed": False,
         }
+    if result.life_meaning_judgment is not None and result.block_reason.startswith(
+        "life_meaning_judgment_"
+    ):
+        judgment_decision = result.life_meaning_judgment.decision
+        if judgment_decision is LifeMeaningDecision.ESCALATE:
+            return {
+                "status": "escalate",
+                "reason_code": result.block_reason,
+                "proof_state": "Unknown",
+                "solver_outcome": "AwaitingEvidence",
+                "next_action": "operator_review",
+                "execution_allowed": False,
+            }
+        if judgment_decision is LifeMeaningDecision.PAUSE:
+            return {
+                "status": "defer",
+                "reason_code": result.block_reason,
+                "proof_state": "Unknown",
+                "solver_outcome": "AwaitingEvidence",
+                "next_action": "operator_review",
+                "execution_allowed": False,
+            }
+        return {
+            "status": "block",
+            "reason_code": result.block_reason,
+            "proof_state": "Fail",
+            "solver_outcome": "GovernanceBlocked",
+            "next_action": "operator_review",
+            "execution_allowed": False,
+        }
     if result.dispatched:
         return {
             "status": "allow",
@@ -3081,10 +3344,11 @@ def _uao_record_admission_guards(
     guards: list[dict[str, Any]] = []
     for guard_name, reason_code, refs in guard_specs:
         if guard_name == blocked_guard:
-            verdict = "escalated" if _result_requires_review(result) else "blocked"
+            verdict = _blocked_admission_guard_verdict(result)
             proof_state = (
                 "Unknown"
                 if result.block_reason == "operating_substrate_self_model_missing"
+                or verdict in {"deferred", "escalated"}
                 else "Fail"
             )
             guards.append(
@@ -3111,6 +3375,19 @@ def _uao_record_admission_guards(
             }
         )
     return guards
+
+
+def _blocked_admission_guard_verdict(result: UniversalActionResult) -> str:
+    if _result_requires_review(result):
+        return "escalated"
+    if result.life_meaning_judgment is not None and result.block_reason.startswith(
+        "life_meaning_judgment_"
+    ):
+        if result.life_meaning_judgment.decision is LifeMeaningDecision.PAUSE:
+            return "deferred"
+        if result.life_meaning_judgment.decision is LifeMeaningDecision.ESCALATE:
+            return "escalated"
+    return "blocked"
 
 
 def _uao_record_blocked_guard(result: UniversalActionResult) -> str | None:

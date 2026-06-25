@@ -233,6 +233,8 @@ def test_finance_ops_plan_blocks_without_active_payment_consent() -> None:
     assert "active_consent_required:payment.execute.with_approval" in body["plan"]["blocked_reasons"]
     assert body["operator_queue_item"]["state"] == "blocked"
     assert body["operator_queue_item"]["execution_authority_granted"] is False
+    assert body["operator_queue_item"]["life_meaning_judgment_required"] is True
+    assert body["operator_queue_item"]["life_meaning_judgment_ref"] == body["plan"]["metadata"]["life_meaning_judgment_ref"]
     assert body["plan"]["steps"] == []
 
 
@@ -250,6 +252,8 @@ def test_finance_ops_plan_with_consent_projects_dispatch_ready_controls() -> Non
     assert body["plan"]["blocked"] is False
     assert body["operator_queue_item"]["state"] == "ready_for_governed_dispatch"
     assert body["operator_queue_item"]["execution_authority_granted"] is False
+    assert body["operator_queue_item"]["life_meaning_judgment_required"] is True
+    assert body["operator_queue_item"]["life_meaning_judgment_ref"] == body["plan"]["metadata"]["life_meaning_judgment_ref"]
     assert "active_consent" in body["plan"]["required_controls"]
     assert "temporal_idempotency" in body["plan"]["required_controls"]
     assert "effect_reconciliation" in body["plan"]["required_controls"]
@@ -300,6 +304,8 @@ def test_team_ops_plan_blocks_without_active_external_send_consent() -> None:
     assert "active_consent_required:email.send.with_approval" in body["plan"]["blocked_reasons"]
     assert body["operator_queue_item"]["state"] == "blocked"
     assert body["operator_queue_item"]["execution_authority_granted"] is False
+    assert body["operator_queue_item"]["life_meaning_judgment_required"] is True
+    assert body["operator_queue_item"]["life_meaning_judgment_ref"] == body["plan"]["metadata"]["life_meaning_judgment_ref"]
     assert body["plan"]["steps"] == []
 
 
@@ -318,6 +324,8 @@ def test_team_ops_plan_with_consent_projects_dispatch_ready_controls() -> None:
     assert body["plan"]["blocked"] is False
     assert body["operator_queue_item"]["state"] == "ready_for_governed_dispatch"
     assert body["operator_queue_item"]["execution_authority_granted"] is False
+    assert body["operator_queue_item"]["life_meaning_judgment_required"] is True
+    assert body["operator_queue_item"]["life_meaning_judgment_ref"] == body["plan"]["metadata"]["life_meaning_judgment_ref"]
     assert "active_consent" in body["plan"]["required_controls"]
     assert "temporal_idempotency" in body["plan"]["required_controls"]
     assert "effect_reconciliation" in body["plan"]["required_controls"]

@@ -66,6 +66,7 @@ class UniversalCommandProofView:
     closure_state: str
     reconciliation_ref: str
     memory_ref: str
+    life_meaning_judgment: Mapping[str, Any]
     whqr_replay_binding: Mapping[str, Any]
     proof_hash: str
     capability_id: str
@@ -422,6 +423,9 @@ def universal_command_proof_view(
         closure_state=str(universal_detail.get("closure_state", "")),
         reconciliation_ref=_text_detail(universal_detail.get("reconciliation_ref")),
         memory_ref=_text_detail(universal_detail.get("memory_ref")),
+        life_meaning_judgment=_mapping_detail(
+            universal_detail.get("life_meaning_judgment")
+        ),
         whqr_replay_binding=whqr_replay_binding,
         proof_hash=str(universal_detail.get("proof_hash", "")),
         capability_id=str(universal_detail.get("capability_id", "")),
@@ -942,6 +946,9 @@ def _recomputed_universal_action_proof_hash(
     )
     if whqr_replay_binding is None:
         return None
+    life_meaning_judgment = universal_detail.get("life_meaning_judgment")
+    if not isinstance(life_meaning_judgment, Mapping):
+        return None
     payload = {
         "action_id": universal_detail["action_id"],
         "blocked": universal_detail["blocked"],
@@ -987,6 +994,7 @@ def _recomputed_universal_action_proof_hash(
         "learning_admission_id": universal_detail["learning_admission_id"],
         "reconciliation_ref": universal_detail["reconciliation_ref"],
         "memory_ref": universal_detail["memory_ref"],
+        "life_meaning_judgment": dict(life_meaning_judgment),
     }
     try:
         encoded = json.dumps(
@@ -1460,6 +1468,11 @@ def _universal_action_transition_detail(
         else "",
         "reconciliation_ref": _universal_action_reconciliation_ref(result),
         "memory_ref": _universal_action_memory_ref(result),
+        "life_meaning_judgment": (
+            result.life_meaning_judgment.as_dict()
+            if result.life_meaning_judgment is not None
+            else {}
+        ),
     }
 
 

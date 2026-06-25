@@ -92,12 +92,22 @@ def test_create_list_get_and_proof_blocked_packet() -> None:
 
     assert created.status_code == 200
     assert created.json()["packet"]["state"] == "requires_review"
+    assert (
+        created.json()["packet"]["metadata"]["life_meaning_judgment_ref"]
+        == "life-meaning:finance-approval:case-blocked-001"
+    )
+    assert created.json()["packet"]["metadata"]["life_meaning_judgment_required"] is True
     assert "budget_exceeded_actor_limit" in created.json()["policy_decision"]["reasons"]
     assert listed.json()["count"] == 1
     assert fetched.json()["packet"]["effect_refs"] == []
     assert proof.status_code == 200
     assert proof.json()["proof"]["final_state"] == "requires_review"
     assert proof.json()["proof"]["effect_refs"] == []
+    assert (
+        proof.json()["proof"]["metadata"]["life_meaning_judgment_ref"]
+        == "life-meaning:finance-approval:case-blocked-001"
+    )
+    assert proof.json()["proof"]["metadata"]["life_meaning_judgment_ref"] in proof.json()["proof"]["evidence_refs"]
 
 
 def test_approval_creates_effect_and_closed_proof() -> None:
@@ -262,9 +272,17 @@ def test_operator_read_model_summarizes_blocked_and_closed_packets() -> None:
     assert body["summary"]["case_count"] == 2
     assert body["packets"][0]["case_id"] == "case-blocked-001"
     assert "budget_exceeded_actor_limit" in body["packets"][0]["latest_policy_reasons"]
+    assert (
+        body["packets"][0]["life_meaning_judgment_ref"]
+        == "life-meaning:finance-approval:case-blocked-001"
+    )
     assert body["packets"][1]["case_id"] == "case-success-001"
     assert body["packets"][1]["effect_ref_count"] == 1
     assert body["packets"][1]["proof_exportable"] is True
+    assert (
+        body["packets"][1]["life_meaning_judgment_ref"]
+        == "life-meaning:finance-approval:case-success-001"
+    )
 
 
 def test_invalid_state_and_missing_packet_fail_closed() -> None:

@@ -110,6 +110,12 @@ def test_blocked_fixture_requires_review_and_emits_no_effect() -> None:
     assert proof.final_state == FinancePacketState.REQUIRES_REVIEW
     assert proof.effect_refs == ()
     assert proof.policy_decisions == (decision.decision_id,)
+    assert proof.metadata["life_meaning_judgment_required"] is True
+    assert (
+        proof.metadata["life_meaning_judgment_ref"]
+        == "life-meaning:finance-approval:case-inv-001"
+    )
+    assert proof.metadata["life_meaning_judgment_ref"] in proof.evidence_refs
 
 
 def test_successful_fixture_exports_closed_packet_proof() -> None:
@@ -199,6 +205,11 @@ def test_successful_fixture_exports_closed_packet_proof() -> None:
     assert proof.final_state == FinancePacketState.CLOSED_SENT
     assert proof.closure_certificate_id == "closure-finance-001"
     assert proof.effect_refs == (effect.effect_id,)
+    assert (
+        proof.metadata["life_meaning_judgment_ref"]
+        == "life-meaning:finance-approval:case-inv-001"
+    )
+    assert proof.metadata["life_meaning_judgment_ref"] in proof.evidence_refs
 
 
 def test_finance_packet_proof_matches_public_schema() -> None:
@@ -241,6 +252,7 @@ def test_finance_packet_proof_matches_public_schema() -> None:
     assert errors == []
     assert proof.final_state == FinancePacketState.REQUIRES_REVIEW
     assert proof.closure_certificate_id is None
+    assert proof.to_json_dict()["metadata"]["life_meaning_judgment_required"] is True
 
 
 def test_invalid_transition_is_rejected_without_mutating_case() -> None:

@@ -90,6 +90,8 @@ class DeploymentWitnessPreflight:
     gateway_host: str
     gateway_url: str
     expected_environment: str
+    life_meaning_judgment_required: bool
+    life_meaning_judgment_ref: str
     ready: bool
     steps: tuple[PreflightStep, ...]
 
@@ -133,6 +135,11 @@ def preflight_deployment_witness(
         normalized_url = _require_gateway_url(gateway_url)
         normalized_host = _require_gateway_host(_gateway_host_from_url(normalized_url))
     _require_expected_environment(expected_environment)
+    life_meaning_judgment_ref = _deployment_life_meaning_judgment_ref(
+        repository=repository,
+        gateway_host=normalized_host,
+        expected_environment=expected_environment,
+    )
 
     steps = [
         _check_dns(host=normalized_host, resolver=dns_resolver),
@@ -164,6 +171,7 @@ def preflight_deployment_witness(
             step_name="deployment witness secret",
             runner=command_runner,
         ),
+        _check_life_meaning_preflight(life_meaning_judgment_ref),
         _check_workflow(
             repository=repository,
             workflow_file=workflow_file,
@@ -196,6 +204,8 @@ def preflight_deployment_witness(
         gateway_host=normalized_host,
         gateway_url=normalized_url,
         expected_environment=expected_environment,
+        life_meaning_judgment_required=True,
+        life_meaning_judgment_ref=life_meaning_judgment_ref,
         ready=all(step.passed for step in steps),
         steps=tuple(steps),
     )
@@ -314,6 +324,21 @@ def _check_secret(
     if secret_name not in names:
         return PreflightStep(step_name, False, f"missing={secret_name}")
     return PreflightStep(step_name, True, "present")
+
+
+def _check_life_meaning_preflight(life_meaning_judgment_ref: str) -> PreflightStep:
+    return PreflightStep(
+        "life meaning judgment preflight",
+        True,
+        f"required:{life_meaning_judgment_ref}",
+    )
+
+
+def _deployment_life_meaning_judgment_ref(
+    *, repository: str, gateway_host: str, expected_environment: str
+) -> str:
+    safe_repository = repository.strip().replace("/", "-")
+    return f"life-meaning:deployment-preflight:{safe_repository}:{gateway_host}:{expected_environment}"
 
 
 def _check_workflow(

@@ -153,6 +153,14 @@ class AssistantKernel:
                 "skill_capability_boundary_enforced": True,
             },
         )
+        plan = replace(
+            plan,
+            metadata={
+                **plan.metadata,
+                "life_meaning_judgment_required": True,
+                "life_meaning_judgment_ref": _assistant_life_meaning_judgment_ref(plan.plan_id),
+            },
+        )
         return _stamp_plan(plan)
 
 
@@ -237,6 +245,10 @@ def _required_controls(
 def _stamp_plan(plan: AssistantExecutionPlan) -> AssistantExecutionPlan:
     unstamped = replace(plan, plan_hash="")
     return replace(plan, plan_hash=stable_identifier("assistant-plan-hash", asdict(unstamped)))
+
+
+def _assistant_life_meaning_judgment_ref(plan_id: str) -> str:
+    return f"life-meaning:assistant-plan:{ensure_non_empty_text('plan_id', plan_id)}"
 
 
 def _json_ready(value: Any) -> Any:
