@@ -7,7 +7,7 @@ boundary actions emit receipt evidence instead of silent skips.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from typing import Mapping
 
@@ -44,6 +44,8 @@ class AutonomousRequestEpisode:
     goal_id: str
     requests: tuple[OperatorRequest, ...]
     has_approval: bool = False
+    max_local_retries: int = 0
+    retry_requests: Mapping[str, tuple[OperatorRequest, ...]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "episode_id", ensure_non_empty_text("episode_id", self.episode_id))
@@ -60,6 +62,74 @@ class AutonomousRequestEpisode:
                 raise RuntimeCoreInvariantError("request goal_id must match episode goal_id")
         if not isinstance(self.has_approval, bool):
             raise RuntimeCoreInvariantError("has_approval must be a bool")
+        if not isinstance(self.max_local_retries, int) or self.max_local_retries < 0:
+            raise RuntimeCoreInvariantError("max_local_retries must be a non-negative int")
+        if not isinstance(self.retry_requests, Mapping):
+            raise RuntimeCoreInvariantError("retry_requests must be a mapping")
+        object.__setattr__(
+            self,
+            "retry_requests",
+            {
+                ensure_non_empty_text("request_id", request_id): _validated_retry_requests(
+                    request_id=request_id,
+                    retries=retries,
+                    subject_id=self.subject_id,
+                    goal_id=self.goal_id,
+                )
+                for request_id, retries in self.retry_requests.items()
+            },
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class AutonomousRequestRepairReceipt:
+    """Receipt for one bounded local retry or repair candidate."""
+
+    request_id: str
+    attempt_index: int
+    trigger: str
+    autonomy_decision_id: str
+    autonomy_status: str
+    dispatched: bool
+    execution_id: str | None
+    validation_error: str | None
+    structured_error_codes: tuple[str, ...]
+    receipt_ref: str
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "request_id",
+            "trigger",
+            "autonomy_decision_id",
+            "autonomy_status",
+            "receipt_ref",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                ensure_non_empty_text(field_name, getattr(self, field_name)),
+            )
+        if not isinstance(self.attempt_index, int) or self.attempt_index < 1:
+            raise RuntimeCoreInvariantError("attempt_index must be a positive int")
+        if not isinstance(self.dispatched, bool):
+            raise RuntimeCoreInvariantError("dispatched must be a bool")
+        if self.execution_id is not None:
+            object.__setattr__(
+                self,
+                "execution_id",
+                ensure_non_empty_text("execution_id", self.execution_id),
+            )
+        if self.validation_error is not None:
+            object.__setattr__(
+                self,
+                "validation_error",
+                ensure_non_empty_text("validation_error", self.validation_error),
+            )
+        object.__setattr__(
+            self,
+            "structured_error_codes",
+            tuple(ensure_non_empty_text("structured_error_code", code) for code in self.structured_error_codes),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,6 +147,9 @@ class AutonomousRequestStepReceipt:
     validation_error: str | None
     structured_error_codes: tuple[str, ...]
     receipt_ref: str
+    attempt_count: int = 1
+    retry_count: int = 0
+    repair_receipts: tuple[AutonomousRequestRepairReceipt, ...] = ()
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -112,6 +185,13 @@ class AutonomousRequestStepReceipt:
             "structured_error_codes",
             tuple(ensure_non_empty_text("structured_error_code", code) for code in self.structured_error_codes),
         )
+        if not isinstance(self.attempt_count, int) or self.attempt_count < 1:
+            raise RuntimeCoreInvariantError("attempt_count must be a positive int")
+        if not isinstance(self.retry_count, int) or self.retry_count < 0:
+            raise RuntimeCoreInvariantError("retry_count must be a non-negative int")
+        object.__setattr__(self, "repair_receipts", tuple(self.repair_receipts))
+        if len(self.repair_receipts) != self.retry_count:
+            raise RuntimeCoreInvariantError("repair_receipts length must match retry_count")
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,6 +215,9 @@ class AutonomousRequestEpisodeReceipt:
     receipt_refs: tuple[str, ...]
     execution_ids: tuple[str, ...]
     validation_errors: tuple[str, ...]
+    repair_attempt_count: int
+    repaired_step_count: int
+    repair_receipt_refs: tuple[str, ...]
     solver_outcome: str
     rollback_ref: str
     no_bypass: bool = True
@@ -163,6 +246,8 @@ class AutonomousRequestEpisodeReceipt:
             "blocked_count",
             "pending_approval_count",
             "prompt_count",
+            "repair_attempt_count",
+            "repaired_step_count",
         ):
             value = getattr(self, field_name)
             if not isinstance(value, int) or value < 0:
@@ -186,6 +271,11 @@ class AutonomousRequestEpisodeReceipt:
             self,
             "validation_errors",
             tuple(ensure_non_empty_text("validation_error", value) for value in self.validation_errors),
+        )
+        object.__setattr__(
+            self,
+            "repair_receipt_refs",
+            tuple(ensure_non_empty_text("receipt_ref", value) for value in self.repair_receipt_refs),
         )
 
 
@@ -213,7 +303,12 @@ class AutonomousRequestExecutor:
                 action_description=str(request.template.get("action_type", action_class.value)),
             )
             if decision.status is AutonomyDecisionStatus.ALLOWED:
-                report = self._operator_loop.run_step(_dispatchable_request(request))
+                report, repair_receipts = self._run_with_local_retries(
+                    request=request,
+                    action_class=action_class,
+                    boundary=boundary,
+                    episode=episode,
+                )
                 run_reports.append(report)
                 step_receipts.append(
                     _step_receipt_from_report(
@@ -222,6 +317,7 @@ class AutonomousRequestExecutor:
                         boundary=boundary,
                         decision=decision,
                         report=report,
+                        repair_receipts=repair_receipts,
                     )
                 )
             else:
@@ -244,6 +340,58 @@ class AutonomousRequestExecutor:
             run_reports=tuple(run_reports),
         )
 
+    def _run_with_local_retries(
+        self,
+        *,
+        request: OperatorRequest,
+        action_class: ActionClass,
+        boundary: RequestActionBoundary,
+        episode: AutonomousRequestEpisode,
+    ) -> tuple[OperatorRunReport, tuple[AutonomousRequestRepairReceipt, ...]]:
+        report = self._operator_loop.run_step(_dispatchable_request(request))
+        if not _local_retry_allowed(boundary=boundary, report=report, episode=episode):
+            return report, ()
+
+        repair_receipts: list[AutonomousRequestRepairReceipt] = []
+        retry_candidates = episode.retry_requests.get(request.request_id, ())
+        for retry_request in retry_candidates[: episode.max_local_retries]:
+            retry_action_class = _action_class_for_request(retry_request)
+            retry_boundary = _boundary_for_action_class(retry_action_class)
+            retry_decision = self._operator_loop.runtime.autonomy.evaluate(
+                retry_action_class,
+                has_approval=episode.has_approval,
+                action_description=str(retry_request.template.get("action_type", retry_action_class.value)),
+            )
+            if (
+                retry_decision.status is not AutonomyDecisionStatus.ALLOWED
+                or retry_boundary is not RequestActionBoundary.LOCAL_REVERSIBLE
+            ):
+                repair_receipts.append(
+                    _repair_receipt_from_blocked_retry(
+                        request=retry_request,
+                        attempt_index=len(repair_receipts) + 1,
+                        trigger=_retry_trigger(report),
+                        decision=retry_decision,
+                    )
+                )
+                break
+
+            retry_report = self._operator_loop.run_step(_dispatchable_request(retry_request))
+            repair_receipts.append(
+                _repair_receipt_from_report(
+                    request=retry_request,
+                    attempt_index=len(repair_receipts) + 1,
+                    trigger=_retry_trigger(report),
+                    decision=retry_decision,
+                    report=retry_report,
+                )
+            )
+            report = retry_report
+            if report.dispatched and report.validation_error is None:
+                break
+
+        return report, tuple(repair_receipts)
+
 
 def run_autonomous_request_episode(
     operator_loop: object,
@@ -252,6 +400,27 @@ def run_autonomous_request_episode(
     """Convenience entry point for request-episode execution."""
 
     return AutonomousRequestExecutor(operator_loop).run_episode(episode)
+
+
+def _validated_retry_requests(
+    *,
+    request_id: str,
+    retries: tuple[OperatorRequest, ...],
+    subject_id: str,
+    goal_id: str,
+) -> tuple[OperatorRequest, ...]:
+    if not isinstance(retries, tuple):
+        raise RuntimeCoreInvariantError("retry request values must be tuples")
+    for retry in retries:
+        if not isinstance(retry, OperatorRequest):
+            raise RuntimeCoreInvariantError("retry request values must contain OperatorRequest values")
+        if retry.request_id == request_id:
+            raise RuntimeCoreInvariantError("retry request_id must differ from source request_id")
+        if retry.subject_id != subject_id:
+            raise RuntimeCoreInvariantError("retry subject_id must match episode subject_id")
+        if retry.goal_id != goal_id:
+            raise RuntimeCoreInvariantError("retry goal_id must match episode goal_id")
+    return retries
 
 
 def _action_class_for_request(request: OperatorRequest) -> ActionClass:
@@ -311,6 +480,7 @@ def _step_receipt_from_report(
     boundary: RequestActionBoundary,
     decision: AutonomyDecision,
     report: OperatorRunReport,
+    repair_receipts: tuple[AutonomousRequestRepairReceipt, ...],
 ) -> AutonomousRequestStepReceipt:
     receipt_ref = stable_identifier(
         "request-step-receipt",
@@ -331,6 +501,92 @@ def _step_receipt_from_report(
         execution_id=report.execution_id,
         validation_error=report.validation_error,
         structured_error_codes=tuple(error.error_code for error in report.structured_errors),
+        receipt_ref=f"receipt://{receipt_ref}",
+        attempt_count=1 + len(repair_receipts),
+        retry_count=len(repair_receipts),
+        repair_receipts=repair_receipts,
+    )
+
+
+def _local_retry_allowed(
+    *,
+    boundary: RequestActionBoundary,
+    report: OperatorRunReport,
+    episode: AutonomousRequestEpisode,
+) -> bool:
+    if episode.max_local_retries == 0:
+        return False
+    if boundary is not RequestActionBoundary.LOCAL_REVERSIBLE:
+        return False
+    return (not report.dispatched) or report.validation_error is not None
+
+
+def _retry_trigger(report: OperatorRunReport) -> str:
+    if report.validation_error:
+        return report.validation_error
+    if not report.dispatched:
+        return "local_step_not_dispatched"
+    return "local_step_requires_repair"
+
+
+def _repair_receipt_from_report(
+    *,
+    request: OperatorRequest,
+    attempt_index: int,
+    trigger: str,
+    decision: AutonomyDecision,
+    report: OperatorRunReport,
+) -> AutonomousRequestRepairReceipt:
+    receipt_ref = stable_identifier(
+        "request-repair-receipt",
+        {
+            "request_id": request.request_id,
+            "attempt_index": attempt_index,
+            "decision_id": decision.decision_id,
+            "execution_id": report.execution_id,
+            "validation_error": report.validation_error,
+        },
+    )
+    return AutonomousRequestRepairReceipt(
+        request_id=request.request_id,
+        attempt_index=attempt_index,
+        trigger=trigger,
+        autonomy_decision_id=decision.decision_id,
+        autonomy_status=decision.status.value,
+        dispatched=report.dispatched,
+        execution_id=report.execution_id,
+        validation_error=report.validation_error,
+        structured_error_codes=tuple(error.error_code for error in report.structured_errors),
+        receipt_ref=f"receipt://{receipt_ref}",
+    )
+
+
+def _repair_receipt_from_blocked_retry(
+    *,
+    request: OperatorRequest,
+    attempt_index: int,
+    trigger: str,
+    decision: AutonomyDecision,
+) -> AutonomousRequestRepairReceipt:
+    receipt_ref = stable_identifier(
+        "request-repair-receipt",
+        {
+            "request_id": request.request_id,
+            "attempt_index": attempt_index,
+            "decision_id": decision.decision_id,
+            "status": decision.status.value,
+        },
+    )
+    return AutonomousRequestRepairReceipt(
+        request_id=request.request_id,
+        attempt_index=attempt_index,
+        trigger=trigger,
+        autonomy_decision_id=decision.decision_id,
+        autonomy_status=decision.status.value,
+        dispatched=False,
+        execution_id=None,
+        validation_error=None,
+        structured_error_codes=(),
         receipt_ref=f"receipt://{receipt_ref}",
     )
 
@@ -392,6 +648,16 @@ def _episode_receipt(
     validation_errors = tuple(
         step.validation_error for step in step_receipts if step.validation_error is not None
     )
+    repair_receipt_refs = tuple(
+        repair.receipt_ref
+        for step in step_receipts
+        for repair in step.repair_receipts
+    )
+    repaired_step_count = sum(
+        1
+        for step in step_receipts
+        if step.retry_count > 0 and step.dispatched and step.validation_error is None
+    )
     receipt_refs = tuple(step.receipt_ref for step in step_receipts)
     solver_outcome = _solver_outcome(
         action_count=len(step_receipts),
@@ -432,6 +698,9 @@ def _episode_receipt(
         receipt_refs=receipt_refs,
         execution_ids=execution_ids,
         validation_errors=validation_errors,
+        repair_attempt_count=len(repair_receipt_refs),
+        repaired_step_count=repaired_step_count,
+        repair_receipt_refs=repair_receipt_refs,
         solver_outcome=solver_outcome.value,
         rollback_ref=rollback_ref,
     )
@@ -463,6 +732,7 @@ __all__ = [
     "AutonomousRequestEpisode",
     "AutonomousRequestEpisodeReceipt",
     "AutonomousRequestExecutor",
+    "AutonomousRequestRepairReceipt",
     "AutonomousRequestStepReceipt",
     "RequestActionBoundary",
     "run_autonomous_request_episode",
