@@ -17,6 +17,7 @@ from mcoi_runtime.contracts.autonomy import (
     AutonomyDecisionStatus,
 )
 from mcoi_runtime.contracts.solver_outcome import SolverOutcome
+from mcoi_runtime.contracts.workflow import StageType, WorkflowDescriptor, WorkflowStage
 from mcoi_runtime.core.invariants import (
     RuntimeCoreInvariantError,
     ensure_non_empty_text,
@@ -101,6 +102,24 @@ class AutonomousRequestPlan:
         """Return planned requests in validated execution order."""
 
         return tuple(step.request for step in self.steps)
+
+    def to_workflow_descriptor(
+        self,
+        *,
+        created_at: str,
+        workflow_id: str | None = None,
+        name: str = "autonomous-request-continuation",
+        has_approval: bool = False,
+    ) -> WorkflowDescriptor:
+        """Compile the autonomous plan into a governed workflow descriptor."""
+
+        return WorkflowDescriptor(
+            workflow_id=workflow_id or f"workflow-{self.plan_id}",
+            name=name,
+            description=self.terminal_condition,
+            stages=_workflow_stages_for_plan(self, has_approval=has_approval),
+            created_at=created_at,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -378,6 +397,40 @@ class AutonomousRequestEpisode:
             has_approval=has_approval,
             max_local_retries=max_local_retries,
             retry_requests={} if retry_requests is None else retry_requests,
+        )
+
+    def to_workflow_descriptor(
+        self,
+        *,
+        created_at: str,
+        workflow_id: str | None = None,
+        name: str = "autonomous-request-continuation",
+    ) -> WorkflowDescriptor:
+        """Compile this episode into a workflow descriptor using episode approval state."""
+
+        plan = self.plan
+        if plan is None:
+            plan = AutonomousRequestPlan(
+                plan_id=stable_identifier(
+                    "autonomous-request-plan",
+                    {
+                        "episode_id": self.episode_id,
+                        "request_ids": tuple(request.request_id for request in self.requests),
+                    },
+                ),
+                steps=tuple(
+                    AutonomousRequestPlanStep(
+                        stage_id=request.request_id,
+                        request=request,
+                    )
+                    for request in self.requests
+                ),
+            )
+        return plan.to_workflow_descriptor(
+            created_at=created_at,
+            workflow_id=workflow_id,
+            name=name,
+            has_approval=self.has_approval,
         )
 
 
@@ -815,6 +868,78 @@ def _ordered_plan_steps(
     for step in steps:
         visit(step.stage_id)
     return tuple(ordered)
+
+
+def _workflow_stages_for_plan(
+    plan: AutonomousRequestPlan,
+    *,
+    has_approval: bool,
+) -> tuple[WorkflowStage, ...]:
+    stages: list[WorkflowStage] = []
+    for plan_step in plan.steps:
+        action_class = _action_class_for_request(plan_step.request)
+        boundary = _boundary_for_action_class(action_class)
+        stage_predecessors = plan_step.predecessors
+
+        if boundary is RequestActionBoundary.EXTERNAL_COMMUNICATION and not has_approval:
+            approval_stage_id = _workflow_approval_stage_id(plan_step.stage_id)
+            stages.append(
+                WorkflowStage(
+                    stage_id=approval_stage_id,
+                    stage_type=StageType.APPROVAL_GATE,
+                    description="approval required before external communication",
+                    predecessors=stage_predecessors,
+                )
+            )
+            stage_predecessors = stage_predecessors + (approval_stage_id,)
+
+        stages.append(
+            WorkflowStage(
+                stage_id=plan_step.stage_id,
+                stage_type=_workflow_stage_type_for_action(action_class),
+                skill_id=_workflow_skill_id_for_request(plan_step.request),
+                description=_workflow_stage_description(plan_step.request),
+                predecessors=stage_predecessors,
+            )
+        )
+    return tuple(stages)
+
+
+def _workflow_approval_stage_id(stage_id: str) -> str:
+    return f"approval-{ensure_non_empty_text('stage_id', stage_id)}"
+
+
+def _workflow_stage_type_for_action(action_class: ActionClass) -> StageType:
+    if action_class is ActionClass.OBSERVE:
+        return StageType.OBSERVATION
+    if action_class is ActionClass.COMMUNICATE:
+        return StageType.COMMUNICATION
+    if action_class is ActionClass.APPROVE:
+        return StageType.APPROVAL_GATE
+    return StageType.SKILL_EXECUTION
+
+
+def _workflow_skill_id_for_request(request: OperatorRequest) -> str | None:
+    for field_name in ("skill_id", "template_id", "action_type"):
+        raw_value = request.template.get(field_name)
+        if raw_value is None:
+            continue
+        value = str(raw_value).strip()
+        if value:
+            return value
+    return None
+
+
+def _workflow_stage_description(request: OperatorRequest) -> str:
+    action_type = str(request.template.get("action_type", "")).strip()
+    template_id = str(request.template.get("template_id", "")).strip()
+    if action_type and template_id:
+        return f"{action_type} via {template_id}"
+    if action_type:
+        return action_type
+    if template_id:
+        return template_id
+    return "autonomous request stage"
 
 
 def _episode_execution_steps(
