@@ -2081,6 +2081,12 @@
       "urn": "urn:mullusi:schema:replay-record:1"
     },
     {
+      "path": "schemas/repository_observation_evidence_packet.schema.json",
+      "schema_id": "repository-observation-evidence-packet",
+      "surface": "repository_observation",
+      "urn": "urn:mullusi:schema:repository-observation-evidence-packet:1"
+    },
+    {
       "path": "schemas/research_epistemics_profile.schema.json",
       "schema_id": "research-epistemics-profile",
       "surface": "research",
