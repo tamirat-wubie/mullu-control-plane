@@ -56,6 +56,7 @@ from .intake import (
     RequestInterface,
     interpret_user_request,
 )
+from .intake_chain import build_personal_assistant_intake_chain_read_model
 from .github_codex import (
     GitHubCodexReviewProjection,
     plan_github_codex_review,
@@ -164,6 +165,7 @@ __all__ = (
     "SkillMode",
     "SkillRiskLevel",
     "build_clarification_requests",
+    "build_personal_assistant_intake_chain_read_model",
     "build_personal_assistant_console_read_model",
     "build_personal_assistant_preview_plan",
     "draft_calendar_event",
