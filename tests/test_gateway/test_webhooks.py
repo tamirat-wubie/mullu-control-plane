@@ -218,6 +218,7 @@ def _bind_uao_fixture_to_universal_action_detail(
         "learning_admission_id": f"learning-admission://{record['action_id']}",
         "reconciliation_ref": record["closure"]["reconciliation_ref"] or "",
         "memory_ref": record["closure"]["memory_ref"] or "",
+        "life_meaning_judgment": copy.deepcopy(record["life_meaning_judgment"]),
     }
     proof_hash = _uao_fixture_proof_hash(universal_detail)
     universal_detail["proof_hash"] = proof_hash
@@ -291,6 +292,7 @@ def _uao_fixture_proof_hash(universal_detail: dict) -> str:
         "learning_admission_id": universal_detail["learning_admission_id"],
         "reconciliation_ref": universal_detail["reconciliation_ref"],
         "memory_ref": universal_detail["memory_ref"],
+        "life_meaning_judgment": dict(universal_detail["life_meaning_judgment"]),
     }
     encoded = json.dumps(
         payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")
