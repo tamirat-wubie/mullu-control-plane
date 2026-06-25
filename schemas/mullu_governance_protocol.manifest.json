@@ -2681,6 +2681,72 @@
       "urn": "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-evidence-receipt:1"
     },
     {
+      "path": "schemas/universal_symbol_receipt_store_durability_replay_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-durability-replay-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-durability-replay-read-model:1"
+    },
+    {
+      "path": "schemas/universal_symbol_receipt_store_lifecycle_audit_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-lifecycle-audit-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-audit-read-model:1"
+    },
+    {
+      "path": "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json",
+      "schema_id": "universal-symbol-receipt-store-lifecycle-evidence-bundle",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-evidence-bundle:1"
+    },
+    {
+      "path": "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-lifecycle-evidence-bundle-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-evidence-bundle-read-model:1"
+    },
+    {
+      "path": "schemas/universal_symbol_receipt_store_path_confinement_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-path-confinement-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-path-confinement-read-model:1"
+    },
+    {
+      "path": "schemas/universal_symbol_receipt_store_recovery_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-recovery-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-recovery-read-model:1"
+    },
+    {
+      "path": "schemas/universal_symbol_receipt_store_replacement_decision_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-replacement-decision-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-replacement-decision-read-model:1"
+    },
+    {
+      "path": "schemas/universal_symbol_receipt_store_replacement_decision_replay_idempotency_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-replacement-decision-replay-idempotency-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-replacement-decision-replay-idempotency-read-model:1"
+    },
+    {
+      "path": "schemas/universal_symbol_receipt_store_tenant_scope_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-tenant-scope-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-tenant-scope-read-model:1"
+    },
+    {
+      "path": "schemas/universal_symbol_receipt_store_write_path_idempotency_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-write-path-idempotency-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-write-path-idempotency-read-model:1"
+    },
+    {
+      "path": "schemas/universal_symbol_receipt_store_writer_duty_scope_read_model.schema.json",
+      "schema_id": "universal-symbol-receipt-store-writer-duty-scope-read-model",
+      "surface": "symbol",
+      "urn": "urn:mullusi:schema:universal-symbol-receipt-store-writer-duty-scope-read-model:1"
+    },
+    {
       "path": "schemas/universal_symbol_receipt_store_operator_approval_decision_witness.schema.json",
       "schema_id": "universal-symbol-receipt-store-operator-approval-decision-witness",
       "surface": "symbol",

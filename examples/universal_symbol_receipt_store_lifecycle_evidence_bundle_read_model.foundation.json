@@ -1,0 +1,122 @@
+{
+  "read_model_id": "universal-symbol-receipt-store-lifecycle-evidence-bundle-read-model-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-19T00:00:00Z",
+  "read_model_scope": "foundation-mode-universal-symbol-receipt-store-lifecycle-evidence-bundle-read-model",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "read_model_is_not_lifecycle_authority": true,
+  "operator_status_summary": {
+    "primary_status": "Evidence bundle visible",
+    "bundle_status": "Non-authorizing",
+    "recording_status": "Blocked",
+    "raw_detail_visibility": "hidden_by_default",
+    "operator_action": "Collect live content witnesses"
+  },
+  "bundle_projection": {
+    "bundle_ref": "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json",
+    "verifier_status": "all_refs_structurally_verified_non_authorizing",
+    "evidence_entry_count": 7,
+    "content_verified_entry_count": 0,
+    "placeholder_entry_count": 0,
+    "authority_granted": false
+  },
+  "evidence_kind_rows": [
+    {
+      "evidence_kind": "active_grant_identity",
+      "operator_status": "Needs live content",
+      "content_verified": false,
+      "placeholder_ref": false,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "reapproval_window",
+      "operator_status": "Needs live content",
+      "content_verified": false,
+      "placeholder_ref": false,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "expiry_evidence",
+      "operator_status": "Needs live content",
+      "content_verified": false,
+      "placeholder_ref": false,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "revocation_request",
+      "operator_status": "Needs live content",
+      "content_verified": false,
+      "placeholder_ref": false,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "revocation_effect_boundary",
+      "operator_status": "Needs live content",
+      "content_verified": false,
+      "placeholder_ref": false,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "replacement_decision",
+      "operator_status": "Needs live content",
+      "content_verified": false,
+      "placeholder_ref": false,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "lifecycle_audit_receipt",
+      "operator_status": "Needs live content",
+      "content_verified": false,
+      "placeholder_ref": false,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    }
+  ],
+  "effective_denials": {
+    "lifecycle_authority_granted": false,
+    "receipt_store_reapproval_recorded": false,
+    "receipt_store_revocation_recorded": false,
+    "approval_grant_extended": false,
+    "replacement_decision_recorded": false,
+    "lifecycle_audit_committed": false,
+    "receipt_store_append_performed": false,
+    "raw_payload_exposed": false,
+    "raw_secret_exposed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "read_model_constraints": {
+    "read_only_projection": true,
+    "no_state_mutation": true,
+    "no_receipt_store_append": true,
+    "no_raw_payload": true,
+    "no_raw_secret": true,
+    "no_lifecycle_recording": true,
+    "no_terminal_closure": true
+  },
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.foundation.json",
+    "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py",
+    "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+    "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle_read_model.py",
+    "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "evidence_kind_row_count": 7,
+    "effective_denial_count": 11,
+    "read_model_constraint_count": 7,
+    "evidence_ref_count": 10
+  }
+}
