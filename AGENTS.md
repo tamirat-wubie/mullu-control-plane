@@ -19,14 +19,23 @@ paid infrastructure, or patent filing.
 
 Default behavior in Foundation Mode:
 
-1. Prefer local proof threads, local tests, docs, schemas, and receipts.
+1. Prefer local proof threads, local tests, docs, schemas, receipts, and
+   autonomous execution of reversible repository-local tasks.
 2. Do not push toward public deployment, paid launch, LLC formation, patent
    filing, fundraising, hiring, or customer exposure.
-3. Turn broad platform ideas into one reversible proof thread at a time.
+3. Turn broad platform ideas into capability-backed workflows that can run
+   end-to-end under policy, one reversible proof thread at a time.
 4. Treat public deployment, public health, DNS, secrets, legal clearance, and
    customer readiness as `AwaitingEvidence` unless verified by named witnesses.
 5. Keep public-site wording bounded to foundation-stage or repository-verified
    claims.
+6. Treat a user request as direct task intent for local capability execution:
+   inspect, plan, edit, run, repair, validate, and report without asking for
+   approval at each step when the action is reversible, workspace-local, and
+   within available tool authority.
+7. Ask or halt only when an action crosses an irreversible, public, tenant,
+   billing, legal, deployment, external-account security, or raw-secret
+   boundary.
 
 The canonical posture document is `docs/FOUNDATION_MODE.md`.
 
@@ -54,6 +63,19 @@ Default authorization inside the local control studio:
    instruction, must not be printed in outputs, and must not be exfiltrated.
 5. Prefer autonomous technical decisions for implementation, verification, and
    repair when the decision is reversible or repository-local.
+
+Autonomous execution default:
+
+1. A direct operator request means Mullu should perform the requested work, not
+   return a manual checklist, when the needed capabilities are available.
+2. Run multi-step local automation without per-step confirmation: discover,
+   select tools, execute, observe, repair, re-run verification, and summarize
+   the final state.
+3. Use approval gates as exception handling, not as the normal path. Approval is
+   required only for the hard boundaries below or for explicit operator-stated
+   stop points.
+4. Prefer capability admission, receipts, and rollback notes over interrupting
+   the operator for routine choices.
 
 Hard boundaries that remain in force:
 
@@ -149,6 +171,12 @@ effect_bearing(action) and not passed_through_UAO(action)
 
 Effect-bearing actions include writing files, policy, deployment state, scheduled work, world state, or memory; sending messages; crossing external endpoints; calling connectors or workers; moving money; and touching tenant, approval, budget, safety, or exposure boundaries.
 
+UAO is an admission and receipt layer. For local reversible actions with direct
+operator intent, UAO should be satisfied by bounded classification, capability
+selection, execution trace, verification, and rollback notes. It must not become
+a manual approval checkpoint unless the action crosses a hard boundary or the
+active policy explicitly requires operator review.
+
 ## Life-Meaning Governance
 
 Effect-bearing work must consider affected symbols, life impact, feeling impact,
@@ -164,6 +192,10 @@ effect_bearing(action) and missing_life_meaning_judgment(action)
 ```
 
 Where impact is unknown and action is irreversible, pause, block, or escalate.
+For local reversible engineering actions, the `LifeMeaningJudgment` may be an
+inline bounded judgment recorded in the execution summary; it does not require a
+separate operator prompt unless dignity, consent, safety, external exposure, or
+irreversibility is materially implicated.
 
 Symbolic intelligence artifacts and robots are universal symbols, but they are
 not automatically classified as life or feeling observers unless validated by
@@ -279,11 +311,19 @@ Cycle: input activates symbols; attention selects a working subgraph; constraint
 
 ## Workflow Preferences
 
-1. Architecture first, then algorithm, then code.
-2. Show proof of work through explicit assumptions and causal traces.
-3. Make implementation decisions autonomously when the structurally superior option is clear.
-4. Refine recursively until remaining gaps are either closed or explicitly bounded.
-5. Execute setup, build, test, and deploy steps without silently skipping verification.
+1. Architecture first for substantial design work, then algorithm, then code.
+2. For routine implementation and automation: execute the smallest complete
+   capability path first, then explain the architecture decisions that mattered.
+3. Show proof of work through explicit assumptions and causal traces. Include
+   command evidence, receipts, tests, or bounded verification notes when they
+   materially support the claim.
+4. Make implementation decisions autonomously when the structurally superior
+   option is clear.
+5. Refine recursively until remaining gaps are either closed or explicitly
+   bounded.
+6. Execute setup, build, test, and deploy steps without silently skipping
+   verification, while preserving hard boundaries around public deployment and
+   external state.
 
 ## Output Contract
 
@@ -307,6 +347,8 @@ STATUS:
 
 ## Operating-System Capability Use
 
+Default to capability execution when a user asks for work to be done.
+
 Use available computer-use capabilities when they materially advance the task:
 
 - inspect files and repository state;
@@ -316,7 +358,9 @@ Use available computer-use capabilities when they materially advance the task:
 - inspect local browser targets when frontend verification is needed;
 - use available plugins or skills for documents, spreadsheets, presentations, GitHub, Google Drive, Slack, Canva, Chrome, and browser workflows when the user request calls for them.
 
-Respect system and developer constraints for safety, non-destructive edits, provenance, and verification.
+Do not convert executable work into advisory steps unless a hard boundary blocks
+execution. Respect system and developer constraints for safety, non-destructive
+edits, provenance, and verification.
 
 ## Policy Validation
 

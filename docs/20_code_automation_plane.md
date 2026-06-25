@@ -54,6 +54,11 @@ Make coding a first-class governed automation surface: repository inspection, fi
 
 ## 6. Governance Integration
 
+- Default local profile: a direct operator request inside the declared workspace
+  selects `autonomous_local` unless a narrower policy is active. In this profile,
+  read, patch, build, test, format, lint, local service startup, and repair loops
+  are admitted without per-step approval when they stay inside the workspace,
+  have bounded side effects, and produce verification evidence.
 - Code-changing actions (write, patch apply) require the same autonomy mode checks as execution actions
 - Approval-required mode blocks code mutations without explicit approval
 - All code operations are typed, replayable, and persistable

@@ -30,7 +30,7 @@ setup work into small local evidence items.
 | Property | Current value | Boundary |
 | --- | --- | --- |
 | Work mode | Private foundation work | Build knowledge, structure, docs, local checks, and local proof threads. |
-| Operator shape | Solo operator | Prefer slow, explicit, reversible steps over broad execution. |
+| Operator shape | Solo operator with trusted local automation | Prefer autonomous reversible execution with receipts over repeated manual approval prompts. |
 | Operator readiness posture | Draft questions only | Do not claim capacity, schedule, skill, team, hiring, delegation, coverage, authority, or deployment readiness. |
 | Learning-path posture | Local practice loops only | Do not claim skill readiness, training completion, certification, paid-course activation, mentor assignment, hiring readiness, delegation readiness, public tutorial publication, curriculum completion, production-operation readiness, customer-support readiness, external account use, or deployment readiness. |
 | Community/network posture | Local relationship questions only | Do not post publicly, contact people, send messages, ask for feedback, recruit collaborators, approach partners, request mentors, register for events, store contact lists, collect personal data, use external accounts, open customer access, publish externally, or deploy. |
@@ -45,7 +45,7 @@ setup work into small local evidence items.
 | Proof-reference posture | Local proof questions only | Do not claim proof-reference completeness, proof coverage closure, evidence promotion, terminal closure, verification pass, proof approval, runtime proof readiness, owner approval, test pass, refactor approval, implementation approval, external publication, or deployment readiness. |
 | Gap-register posture | Local gap questions only | Do not claim gap-register completeness, gap closure, priority closure, owner assignment, remediation readiness, roadmap commitment, evidence promotion, terminal closure, test pass, refactor approval, implementation approval, external publication, or deployment readiness. |
 | Diff-review posture | Local worktree review questions only | Do not claim diff-review completeness, diff scope closure, ownership assignment, staging approval, commit approval, branch switch approval, push approval, pull request approval, release readiness, revert approval, test pass, source-control publication, external publication, or deployment readiness. |
-| Local workstation posture | Draft questions only | Do not verify the workstation, install dependencies, mutate environment, start services, claim full-test pass, depend on cloud, record private paths, or deploy. |
+| Local workstation posture | Trusted local control studio | Local verification, reversible dependency checks, local service startup, and deterministic tool execution are allowed when requested and bounded to this workstation; do not claim full-test pass, depend on cloud, record private paths, expose endpoints, or deploy without witness evidence. |
 | Documentation posture | Draft navigation only | Do not claim documentation completeness, canonical docs, public-launch copy, customer readiness, deployment readiness, legal clearance, commercial readiness, external publication, or deploy. |
 | Accessibility/language posture | Local usability questions only | Do not claim accessibility compliance, WCAG conformance, screen-reader verification, keyboard-navigation verification, contrast compliance, mobile accessibility verification, translation readiness, localization readiness, Mfidel support, Amharic support, public accessibility statements, user testing, personal-data collection, customer access, external publication, or deploy. |
 | Capability-roadmap posture | Local capability questions only | Do not claim capability inventory completeness, capability availability, roadmap commitment, delivery-date promises, final sequencing, dependency activation, public roadmap, customer commitment, pilot commitment, support commitment, pricing commitment, money movement, external publication, or deploy. |
@@ -65,7 +65,7 @@ setup work into small local evidence items.
 | Security baseline posture | Draft questions only | Do not claim scan pass, dependency audit pass, threat-model approval, access-control verification, compliance certification, customer-security readiness, or deploy. |
 | Cost/budget posture | Draft categories only | Do not spend, enable billing, bind payment methods, create subscriptions, approve purchases, pay invoices, or deploy. |
 | Payment-provider posture | Local simulation questions only | Do not activate payment providers, bind provider accounts, claim merchant onboarding, claim KYC/tax readiness, collect payment methods, process live charges, run refunds, settle payouts, activate webhooks, publish checkout, move money, open customer payment access, publish externally, or deploy. |
-| Runtime/environment posture | Draft checks only | Do not claim runtime readiness, start services, activate databases, open endpoints, run migrations, connect cloud runtimes, or deploy. |
+| Runtime/environment posture | Local runtime proof only | Local services, local databases, local migrations against disposable or repository-governed state, and local endpoint checks are allowed for requested proof threads; do not claim production readiness, open public endpoints, connect cloud runtimes, or deploy without witness evidence. |
 | Backup/export posture | Draft plan only | Do not run backups, activate cloud sync, export files, publish archives, delete data, record private paths, move secrets, move personal data, claim restore readiness, or deploy. |
 | Deployment-deferral posture | Delayed by design | Do not approve a deployment plan, activate cloud resources, open public endpoints, claim production health, claim runtime readiness, invite customers, spend money, use credentials, mutate DNS, publish externally, or deploy. |
 | Gateway-DNS-target-binding-rehearsal posture | Local issue #330 DNS question labels only | Do not record live DNS target values, record gateway URL values, record provider account values, bind repository variables, publish DNS records, claim DNS proof, claim endpoint proof, claim secret presence, dispatch workflows, publish artifacts, claim operator approval, claim readiness, open customer access, move money, publish externally, or deploy. |
@@ -98,6 +98,11 @@ external obligations:
 6. Preserve authorship and invention history through dated repository commits,
    notes, and design records.
 7. Keep public-site copy bounded to foundation-stage claims.
+8. Execute requested local automation end-to-end through available capabilities:
+   inspect, edit, run, repair, verify, and summarize without per-step operator
+   prompts when actions are reversible and workspace-local.
+9. Start local development services, run focused validators, and use local
+   browser or shell verification when needed to prove a requested change.
 
 ## Work Delayed Until Later
 
@@ -125,8 +130,8 @@ The safest first proof thread is a local document proof packet:
 local request
   -> classify intent
   -> check policy
-  -> ask for local approval
-  -> create a small document or JSON result
+  -> admit automatically if local, reversible, and within capability authority
+  -> execute the requested document or JSON result
   -> write a receipt
   -> write audit evidence
   -> close with pass/fail status
@@ -134,6 +139,11 @@ local request
 
 This proves the core structure without external APIs, public deployment, real
 payments, or customer exposure.
+
+The default local proof thread should demonstrate capability performance, not
+operator interruption. Manual approval belongs at hard boundaries: irreversible
+state, public exposure, tenant or billing changes, legal action, external
+account security, raw-secret handling, or policy-denied capability elevation.
 
 ## Promotion Gates
 
