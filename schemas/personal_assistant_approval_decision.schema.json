@@ -78,6 +78,7 @@
         "decision",
         "decided_at",
         "reason_codes",
+        "queue_precondition_ref",
         "packet",
         "receipt"
       ],
@@ -106,6 +107,7 @@
           "items": {"type": "string", "minLength": 1},
           "uniqueItems": true
         },
+        "queue_precondition_ref": {"$ref": "#/$defs/queue_precondition_ref"},
         "packet": {
           "type": "object",
           "additionalProperties": true
@@ -113,6 +115,64 @@
         "receipt": {
           "type": "object",
           "additionalProperties": true
+        }
+      }
+    },
+    "queue_precondition_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_projection",
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "source_queue_state",
+        "source_receipt_id",
+        "source_review_packet_id",
+        "source_review_packet_sha256",
+        "payload_digest_only",
+        "decision_precondition_met",
+        "execution_allowed",
+        "approval_is_execution",
+        "external_send_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "queue_precondition_sha256"
+      ],
+      "properties": {
+        "source_projection": {"const": "personal_assistant_approval_queue_read_model"},
+        "approval_id": {
+          "type": "string",
+          "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "plan_id": {
+          "type": "string",
+          "pattern": "^pa_plan_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "source_queue_state": {"const": "requested"},
+        "source_receipt_id": {
+          "type": "string",
+          "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*_request$"
+        },
+        "source_review_packet_id": {"const": "pa_approval_review_approval_review_packet_001"},
+        "source_review_packet_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "payload_digest_only": {"const": true},
+        "decision_precondition_met": {"const": true},
+        "execution_allowed": {"const": false},
+        "approval_is_execution": {"const": false},
+        "external_send_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "queue_precondition_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
         }
       }
     },

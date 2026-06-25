@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import asdict, dataclass
+import hashlib
 import json
 import re
 import sys
@@ -37,6 +38,7 @@ from mcoi_runtime.personal_assistant import (  # noqa: E402
     ApprovalScope,
     PersonalAssistantApprovalQueue,
 )
+from scripts.personal_assistant_source_digest import canonical_source_sha256  # noqa: E402
 from scripts.validate_personal_assistant_receipt import validate_personal_assistant_receipt_payload  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
@@ -44,6 +46,7 @@ DEFAULT_DECISION = REPO_ROOT / "examples" / "personal_assistant_approval_decisio
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "personal_assistant_approval_decision.schema.json"
 DEFAULT_APPROVAL_SCHEMA = REPO_ROOT / "schemas" / "personal_assistant_approval.schema.json"
 DEFAULT_RECEIPT_SCHEMA = REPO_ROOT / "schemas" / "personal_assistant_receipt.schema.json"
+DEFAULT_APPROVAL_REVIEW_PACKET = REPO_ROOT / "examples" / "personal_assistant_approval_review_packet.json"
 RUNTIME_CREATED_AT = "2026-06-14T00:00:00+00:00"
 RUNTIME_DECIDED_AT = "2026-06-14T00:03:00+00:00"
 
@@ -107,6 +110,7 @@ ALLOWED_POLICY_FIELD_NAMES = frozenset(
         "secret_values_serialized",
         "connector_payload_projection",
         "decision_payload_projection",
+        "payload_digest_only",
     }
 )
 
@@ -175,7 +179,7 @@ def validate_personal_assistant_approval_decision(
 
 def build_runtime_approval_decision_evidence() -> dict[str, Any]:
     """Build deterministic approval decision evidence for all decision states."""
-    decision_records: list[tuple[str, Mapping[str, Any]]] = []
+    decision_records: list[tuple[str, Mapping[str, Any], Mapping[str, Any]]] = []
     for index, decision in enumerate(DECISION_VALUES, start=1):
         queue = PersonalAssistantApprovalQueue()
         approval_id = f"pa_approval_decision_{decision}_{index:03d}"
@@ -198,6 +202,7 @@ def build_runtime_approval_decision_evidence() -> dict[str, Any]:
             created_at=RUNTIME_CREATED_AT,
             approval_id=approval_id,
         )
+        source_record = record.as_dict()
         updated = queue.record_decision(
             record.approval_id,
             decision=ApprovalDecision.coerce(decision),
@@ -206,7 +211,7 @@ def build_runtime_approval_decision_evidence() -> dict[str, Any]:
             decision_evidence_ref=f"proof://personal-assistant/approval/operator-{decision}-{index:03d}",
             revision_request="Revise the draft before any future approval." if decision == "revised" else "",
         )
-        decision_records.append((f"pa_approval_decision_{decision}_{index:03d}", updated.as_dict()))
+        decision_records.append((f"pa_approval_decision_{decision}_{index:03d}", source_record, updated.as_dict()))
     return build_approval_decision_evidence_envelope(
         generated_at=RUNTIME_DECIDED_AT,
         decision_records=tuple(decision_records),
@@ -216,14 +221,14 @@ def build_runtime_approval_decision_evidence() -> dict[str, Any]:
 def build_approval_decision_evidence_envelope(
     *,
     generated_at: str,
-    decision_records: tuple[tuple[str, Mapping[str, Any]], ...],
+    decision_records: tuple[tuple[str, Mapping[str, Any], Mapping[str, Any]], ...],
 ) -> dict[str, Any]:
     """Build a schema-shaped no-effect envelope around approval decisions."""
     decisions: list[dict[str, Any]] = []
     decision_ids: list[str] = []
     approval_ids: list[str] = []
     receipt_ids: list[str] = []
-    for decision_id, record in decision_records:
+    for decision_id, source_record, record in decision_records:
         packet = _mapping(record.get("packet"))
         receipts = record.get("receipts", ())
         if not isinstance(receipts, Sequence) or isinstance(receipts, (str, bytes)) or not receipts:
@@ -247,6 +252,7 @@ def build_approval_decision_evidence_envelope(
                 "decision": str(decision_record.get("decision", "")),
                 "decided_at": str(decision_record.get("decided_at", "")),
                 "reason_codes": list(decision_record.get("reason_codes", ())),
+                "queue_precondition_ref": _queue_precondition_ref(source_record),
                 "packet": dict(packet),
                 "receipt": dict(receipt),
             }
@@ -364,6 +370,7 @@ def _validate_decision_semantics(
             approval_ids.append(approval_id)
         packet = _mapping(item.get("packet"))
         receipt = _mapping(item.get("receipt"))
+        queue_precondition_ref = _mapping(item.get("queue_precondition_ref"))
         if approval_schema:
             errors.extend(
                 f"decisions[{index}].packet {message}"
@@ -389,6 +396,14 @@ def _validate_decision_semantics(
             errors.append(f"decisions[{index}].request_id must match packet.request_id")
         if packet.get("plan_id") != item.get("plan_id"):
             errors.append(f"decisions[{index}].plan_id must match packet.plan_id")
+        errors.extend(
+            _validate_queue_precondition_ref(
+                queue_precondition_ref,
+                item,
+                source_review_packet_path=DEFAULT_APPROVAL_REVIEW_PACKET,
+                label=f"decisions[{index}].queue_precondition_ref",
+            )
+        )
         if receipt.get("approval_ref") != item.get("approval_id"):
             errors.append(f"decisions[{index}].receipt.approval_ref must match approval_id")
         if receipt.get("approval_required") is not True:
@@ -421,6 +436,97 @@ def _validate_decision_semantics(
     if sorted(decision.get("receipt_ids", ())) != sorted(receipt_ids):
         errors.append("receipt_ids must match embedded receipts")
     return tuple(errors)
+
+
+def _queue_precondition_ref(source_record: Mapping[str, Any]) -> dict[str, Any]:
+    source_packet = _mapping(source_record.get("packet"))
+    source_metadata = _mapping(source_packet.get("metadata"))
+    source_receipts = source_record.get("receipts", ())
+    if isinstance(source_receipts, Sequence) and not isinstance(source_receipts, (str, bytes)) and source_receipts:
+        source_receipt = _mapping(source_receipts[-1])
+    else:
+        source_receipt = {}
+    review_packet_ref = _mapping(source_record.get("review_packet_ref"))
+    ref = {
+        "source_projection": "personal_assistant_approval_queue_read_model",
+        "approval_id": str(source_record.get("approval_id", source_packet.get("approval_id", ""))),
+        "request_id": str(source_packet.get("request_id", "")),
+        "plan_id": str(source_packet.get("plan_id", "")),
+        "source_queue_state": str(source_metadata.get("queue_state", source_packet.get("approval_state", ""))),
+        "source_receipt_id": str(source_receipt.get("receipt_id", "")),
+        "source_review_packet_id": str(review_packet_ref.get("review_packet_id", "")),
+        "source_review_packet_sha256": str(review_packet_ref.get("source_sha256", "")),
+        "payload_digest_only": True,
+        "decision_precondition_met": True,
+        "execution_allowed": False,
+        "approval_is_execution": False,
+        "external_send_allowed": False,
+        "connector_mutation_allowed": False,
+        "system_of_record_write_allowed": False,
+    }
+    ref["queue_precondition_sha256"] = _queue_precondition_sha256(ref)
+    return ref
+
+
+def _validate_queue_precondition_ref(
+    ref: Mapping[str, Any],
+    item: Mapping[str, Any],
+    *,
+    source_review_packet_path: Path,
+    label: str,
+) -> tuple[str, ...]:
+    errors: list[str] = []
+    if not ref:
+        return (f"{label} must be an object",)
+    expected_pairs = {
+        "source_projection": "personal_assistant_approval_queue_read_model",
+        "approval_id": item.get("approval_id"),
+        "request_id": item.get("request_id"),
+        "plan_id": item.get("plan_id"),
+        "source_queue_state": "requested",
+        "source_review_packet_id": "pa_approval_review_approval_review_packet_001",
+    }
+    for field_name, expected in expected_pairs.items():
+        if ref.get(field_name) != expected:
+            errors.append(f"{label}.{field_name} must be {expected}")
+    source_receipt_id = ref.get("source_receipt_id")
+    if not isinstance(source_receipt_id, str) or not source_receipt_id.startswith("pa_receipt_"):
+        errors.append(f"{label}.source_receipt_id must be a receipt id")
+    elif not source_receipt_id.endswith("_request"):
+        errors.append(f"{label}.source_receipt_id must bind the requested queue receipt")
+    if source_receipt_id == _mapping(item.get("receipt")).get("receipt_id"):
+        errors.append(f"{label}.source_receipt_id must differ from decision receipt")
+    if source_review_packet_path.exists():
+        observed_sha256 = canonical_source_sha256(source_review_packet_path)
+        if ref.get("source_review_packet_sha256") != observed_sha256:
+            errors.append(f"{label}.source_review_packet_sha256 does not match approval review packet")
+    else:
+        errors.append(f"{label}.source_review_packet source does not exist")
+    for field_name in (
+        "payload_digest_only",
+        "decision_precondition_met",
+    ):
+        if ref.get(field_name) is not True:
+            errors.append(f"{label}.{field_name} must be true")
+    for field_name in (
+        "execution_allowed",
+        "approval_is_execution",
+        "external_send_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+    ):
+        if ref.get(field_name) is not False:
+            errors.append(f"{label}.{field_name} must be false")
+    expected_digest = _queue_precondition_sha256(ref)
+    if ref.get("queue_precondition_sha256") != expected_digest:
+        errors.append(f"{label}.queue_precondition_sha256 does not match queue precondition fields")
+    return tuple(errors)
+
+
+def _queue_precondition_sha256(ref: Mapping[str, Any]) -> str:
+    material = {key: value for key, value in ref.items() if key != "queue_precondition_sha256"}
+    encoded = json.dumps(material, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _require_false_fields(payload: Mapping[str, Any], fields: frozenset[str], label: str, errors: list[str]) -> None:
