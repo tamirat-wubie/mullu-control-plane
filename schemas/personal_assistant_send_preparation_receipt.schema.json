@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-send-preparation-receipt:1",
+  "title": "Personal Assistant Send Preparation Receipt",
+  "description": "No-effect receipt that binds approved personal-assistant approval decision evidence to redacted send-preparation evidence without drafting or sending.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "workflow_id",
+    "source_approval_decision_ref",
+    "source_decision_set_id",
+    "source_decision_id",
+    "approval_decision_valid",
+    "approval_decision_ready",
+    "approval_id",
+    "request_id",
+    "plan_id",
+    "decision",
+    "receipt_decision",
+    "queue_precondition_sha256",
+    "source_queue_state",
+    "source_queue_receipt_id",
+    "source_review_packet_id",
+    "source_review_packet_sha256",
+    "status",
+    "solver_outcome",
+    "proof_state",
+    "prepared_at",
+    "send_preparation_state",
+    "send_preparation_ready",
+    "send_preparation_ref",
+    "prepared_message_ref",
+    "recipient_hash",
+    "prepared_message_hash",
+    "send_preparation_authorized_by_decision",
+    "external_send_authorized_by_decision",
+    "send_execution_performed_by_producer",
+    "requires_separate_send_execution_receipt",
+    "draft_created_by_producer",
+    "external_mailbox_write_performed",
+    "external_message_sent",
+    "connector_mutation_performed",
+    "system_of_record_write_performed",
+    "memory_write_performed",
+    "raw_message_content_serialized",
+    "raw_recipient_serialized",
+    "raw_subject_serialized",
+    "raw_body_serialized",
+    "no_secret_values_serialized",
+    "evidence_refs",
+    "blocked_until",
+    "recovery_actions",
+    "validation_commands"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^pa_send_preparation_receipt_[0-9a-f]{16}$"
+    },
+    "schema_version": {"type": "integer", "const": 1},
+    "workflow_id": {"const": "personal_assistant.email_send_with_approval"},
+    "source_approval_decision_ref": {"type": "string", "minLength": 1},
+    "source_decision_set_id": {
+      "type": "string",
+      "pattern": "^pa_approval_decision_set_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "source_decision_id": {
+      "type": "string",
+      "pattern": "^$|^pa_approval_decision_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "approval_decision_valid": {"type": "boolean"},
+    "approval_decision_ready": {"type": "boolean"},
+    "approval_id": {
+      "type": "string",
+      "pattern": "^$|^pa_approval_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^$|^pa_request_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^$|^pa_plan_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "decision": {"enum": ["", "approved", "rejected", "revised", "expired"]},
+    "receipt_decision": {"enum": ["", "deferred", "blocked"]},
+    "queue_precondition_sha256": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "source_queue_state": {"enum": ["", "requested"]},
+    "source_queue_receipt_id": {
+      "type": "string",
+      "pattern": "^$|^pa_receipt_[a-z0-9][a-z0-9_:-]*_request$"
+    },
+    "source_review_packet_id": {"enum": ["", "pa_approval_review_approval_review_packet_001"]},
+    "source_review_packet_sha256": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "status": {"enum": ["blocked", "failed", "passed"]},
+    "solver_outcome": {"enum": ["AwaitingEvidence", "GovernanceBlocked", "SolvedVerified"]},
+    "proof_state": {"enum": ["Unknown", "Fail", "Pass"]},
+    "prepared_at": {"type": "string", "format": "date-time"},
+    "send_preparation_state": {"enum": ["missing", "prepared", "not_authorized"]},
+    "send_preparation_ready": {"type": "boolean"},
+    "send_preparation_ref": {"type": "string"},
+    "prepared_message_ref": {"type": "string"},
+    "recipient_hash": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "prepared_message_hash": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "send_preparation_authorized_by_decision": {"type": "boolean"},
+    "external_send_authorized_by_decision": {"const": false},
+    "send_execution_performed_by_producer": {"const": false},
+    "requires_separate_send_execution_receipt": {"const": true},
+    "draft_created_by_producer": {"const": false},
+    "external_mailbox_write_performed": {"const": false},
+    "external_message_sent": {"const": false},
+    "connector_mutation_performed": {"const": false},
+    "system_of_record_write_performed": {"const": false},
+    "memory_write_performed": {"const": false},
+    "raw_message_content_serialized": {"const": false},
+    "raw_recipient_serialized": {"const": false},
+    "raw_subject_serialized": {"const": false},
+    "raw_body_serialized": {"const": false},
+    "no_secret_values_serialized": {"const": true},
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "blocked_until": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "recovery_actions": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "validation_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "passed"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "approval_decision_valid": {"const": true},
+          "approval_decision_ready": {"const": true},
+          "decision": {"const": "approved"},
+          "receipt_decision": {"const": "deferred"},
+          "queue_precondition_sha256": {"pattern": "^[0-9a-f]{64}$"},
+          "source_queue_state": {"const": "requested"},
+          "source_queue_receipt_id": {"pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*_request$"},
+          "source_review_packet_id": {"const": "pa_approval_review_approval_review_packet_001"},
+          "source_review_packet_sha256": {"pattern": "^[0-9a-f]{64}$"},
+          "solver_outcome": {"const": "SolvedVerified"},
+          "proof_state": {"const": "Pass"},
+          "send_preparation_state": {"const": "prepared"},
+          "send_preparation_ready": {"const": true},
+          "send_preparation_ref": {"minLength": 1},
+          "prepared_message_ref": {"minLength": 1},
+          "recipient_hash": {"pattern": "^[0-9a-f]{64}$"},
+          "prepared_message_hash": {"pattern": "^[0-9a-f]{64}$"},
+          "send_preparation_authorized_by_decision": {"const": true},
+          "evidence_refs": {"minItems": 1},
+          "blocked_until": {"maxItems": 0}
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "design_id": "sdlc_design_personal_assistant_send_preparation_gate_20260625",
+  "requirement_id": "sdlc_req_personal_assistant_send_preparation_gate_20260625",
+  "architecture_summary": "Add a Personal Assistant send-preparation receipt boundary that composes approved approval-decision evidence into redacted preparation evidence while preserving a hard separation from draft creation, external send, connector mutation, memory writes, and system-of-record writes.",
+  "affected_modules": [
+    "schemas/personal_assistant_send_preparation_receipt.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/produce_personal_assistant_send_preparation_receipt.py",
+    "scripts/validate_personal_assistant_send_preparation_receipt.py",
+    "tests/test_produce_personal_assistant_send_preparation_receipt.py",
+    "tests/test_validate_personal_assistant_send_preparation_receipt.py"
+  ],
+  "data_model_changes": [
+    "Introduce PersonalAssistantSendPreparationReceipt with source approval decision refs, queue precondition carry-forward, redacted preparation refs, digest-only recipient/message hashes, no-effect flags, blockers, recovery actions, and validation commands.",
+    "Passed receipts require approved decision evidence and deferred decision receipt semantics but keep external_send_authorized_by_decision=false because send execution requires a later receipt.",
+    "Blocked receipts represent missing redacted preparation evidence; failed receipts represent invalid, missing, or unapproved decision evidence."
+  ],
+  "schema_changes": [
+    "schemas/personal_assistant_send_preparation_receipt.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json"
+  ],
+  "validator_changes": [
+    "Producer validates approval decision evidence before carrying forward approved decision fields.",
+    "Producer rejects secret-like preparation refs and malformed hashes before writing receipts.",
+    "Validator rejects raw fields, secret-like values, effect drift, denied decisions, missing preparation refs, malformed hashes, and missing receipt files.",
+    "Focused tests cover blocked, passed, denied, secret marker, CLI, require-ready, effect drift, raw field, missing preparation, bad hash, and missing path cases."
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove the Personal Assistant send-preparation receipt schema, manifest entry, producer, validator, focused tests, and SDLC artifacts; then rerun schema validation, protocol manifest validation, SDLC validation, and focused approval/send-preparation tests.",
+  "migration_plan": "No persistence or deployment migration is required. This is an additive Foundation Mode receipt contract and local producer/validator only.",
+  "test_plan": [
+    "python -m pytest tests/test_produce_personal_assistant_send_preparation_receipt.py tests/test_validate_personal_assistant_send_preparation_receipt.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "git diff --check --ignore-space-at-eol"
+  ],
+  "uao_ref": "uao://local-foundation/personal-assistant-send-preparation-gate/20260625",
+  "causal_decision_trace_ref": "trace://sdlc/personal-assistant-send-preparation-gate/20260625",
+  "receipt_ref": "schemas/personal_assistant_send_preparation_receipt.schema.json"
+}
