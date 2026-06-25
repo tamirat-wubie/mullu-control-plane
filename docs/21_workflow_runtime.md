@@ -15,6 +15,12 @@ runtime enforces that every stage transition is explicit, verified, and subject
 to the same autonomy and policy constraints that govern individual skill
 execution.
 
+For trusted local requests, the default workflow shape is autonomous execution:
+skill stages run in topological order without operator interruption when the
+capability gate admits the action, the effects are local or reversible, and each
+stage emits bounded verification evidence. Approval stages are boundary stages,
+not routine stage separators.
+
 ## Owned Artifacts
 
 | Artifact | Role |
@@ -48,7 +54,7 @@ draft --> validated --> running --> completed
 | Type | Description |
 |---|---|
 | `skill_execution` | Invoke a registered skill via the skill system. |
-| `approval_gate` | Pause until an operator approves continuation. |
+| `approval_gate` | Pause until an operator approves continuation for a modeled hard boundary. |
 | `observation` | Capture current system or environment state. |
 | `communication` | Send or receive a message through the communication plane. |
 | `wait_for_event` | Block until an external event arrives. |

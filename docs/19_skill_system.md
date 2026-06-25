@@ -85,8 +85,12 @@ Postconditions:
 ## 7. Relationship to Existing Planes
 
 ### Governance
-- Skills MUST pass policy gate before execution
+- Skills MUST pass policy admission before execution
 - Skill selection MUST respect policy constraints
+- A direct operator request inside the trusted local control studio selects the
+  autonomous-local skill path when the skill is available, reversible or
+  workspace-local, and admitted by policy. The runtime should execute the skill,
+  verify it, and emit a receipt without pausing for per-step operator approval.
 
 ### Execution
 - Skill steps dispatch through the existing execution plane
@@ -135,7 +139,7 @@ When multiple skills can satisfy a goal:
 
 ## 10. Prohibitions
 
-- MUST NOT execute without policy approval
+- MUST NOT execute without policy admission
 - MUST NOT skip verification closure
 - MUST NOT fabricate postcondition satisfaction
 - MUST NOT promote unverified skills to trusted
