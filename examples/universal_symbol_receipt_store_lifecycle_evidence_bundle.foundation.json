@@ -1,0 +1,131 @@
+{
+  "bundle_id": "universal-symbol-receipt-store-lifecycle-evidence-bundle-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-19T00:00:00Z",
+  "bundle_scope": "foundation-mode-universal-symbol-receipt-store-lifecycle-evidence-bundle",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "bundle_decision": "blocked_non_authorizing_lifecycle_evidence_bundle",
+  "bundle_is_not_lifecycle_authority": true,
+  "source_receipt_ref": "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+  "verifier_status": "all_refs_structurally_verified_non_authorizing",
+  "evidence_entries": [
+    {
+      "evidence_kind": "active_grant_identity",
+      "evidence_ref": "grant://universal-symbol/lifecycle/active-grant-identity",
+      "placeholder_ref": false,
+      "local_file_ref": false,
+      "content_verified": false,
+      "structurally_verified": true,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "reapproval_window",
+      "evidence_ref": "temporal://universal-symbol/lifecycle/reapproval-window",
+      "placeholder_ref": false,
+      "local_file_ref": false,
+      "content_verified": false,
+      "structurally_verified": true,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "expiry_evidence",
+      "evidence_ref": "expiry://universal-symbol/lifecycle/expiry-evidence",
+      "placeholder_ref": false,
+      "local_file_ref": false,
+      "content_verified": false,
+      "structurally_verified": true,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "revocation_request",
+      "evidence_ref": "revocation://universal-symbol/lifecycle/revocation-request",
+      "placeholder_ref": false,
+      "local_file_ref": false,
+      "content_verified": false,
+      "structurally_verified": true,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "revocation_effect_boundary",
+      "evidence_ref": "effect-boundary://universal-symbol/lifecycle/revocation-effect-boundary",
+      "placeholder_ref": false,
+      "local_file_ref": false,
+      "content_verified": false,
+      "structurally_verified": true,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "replacement_decision",
+      "evidence_ref": "approval-decision://universal-symbol/lifecycle/replacement-decision",
+      "placeholder_ref": false,
+      "local_file_ref": false,
+      "content_verified": false,
+      "structurally_verified": true,
+      "authority_granted": false
+    },
+    {
+      "evidence_kind": "lifecycle_audit_receipt",
+      "evidence_ref": "audit://universal-symbol/lifecycle/lifecycle-audit-receipt",
+      "placeholder_ref": false,
+      "local_file_ref": false,
+      "content_verified": false,
+      "structurally_verified": true,
+      "authority_granted": false
+    }
+  ],
+  "bundle_consistency_constraints": {
+    "all_evidence_kinds_present": true,
+    "source_receipt_validated": true,
+    "verifier_status_bound": true,
+    "placeholder_entries_do_not_authorize": true,
+    "content_verified_entries_do_not_authorize": true,
+    "authority_denials_remain_false": true,
+    "terminal_closure_denied": true
+  },
+  "authority_denials": {
+    "receipt_store_reapproval_recorded": false,
+    "receipt_store_revocation_recorded": false,
+    "approval_grant_extended": false,
+    "replacement_decision_recorded": false,
+    "lifecycle_audit_committed": false,
+    "receipt_store_append_performed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "blocked_reasons": [
+    "lifecycle_evidence_bundle_is_not_authority",
+    "receipt_store_lifecycle_recording_forbidden",
+    "terminal_closure_not_allowed",
+    "source_receipt_still_awaiting_evidence"
+  ],
+  "next_actions": [
+    "bind_bundle_to_non_authorizing_operator_read_model",
+    "collect_live_lifecycle_evidence_content_witnesses"
+  ],
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_lifecycle_evidence_bundle.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_evidence_bundle.foundation.json",
+    "schemas/universal_symbol_receipt_store_lifecycle_evidence_receipt.schema.json",
+    "examples/universal_symbol_receipt_store_lifecycle_evidence_receipt.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+    "scripts/verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
+    "tests/test_validate_universal_symbol_receipt_store_lifecycle_evidence_bundle.py",
+    "tests/test_verify_universal_symbol_receipt_store_lifecycle_evidence_refs.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "evidence_entry_count": 7,
+    "content_verified_entry_count": 0,
+    "placeholder_entry_count": 0,
+    "consistency_constraint_count": 7,
+    "authority_denial_count": 12,
+    "blocked_reason_count": 4,
+    "evidence_ref_count": 10
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-evidence-bundle-read-model:1",
+  "title": "Universal Symbol Receipt Store Lifecycle Evidence Bundle Read Model",
+  "description": "Foundation Mode read-only operator projection for UniversalSymbol receipt-store lifecycle evidence bundle status. This model exposes bundle status, counts, and bounded evidence-kind rows without raw payloads or lifecycle authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "read_model_id",
+    "schema_version",
+    "generated_at",
+    "read_model_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "read_model_is_not_lifecycle_authority",
+    "operator_status_summary",
+    "bundle_projection",
+    "evidence_kind_rows",
+    "effective_denials",
+    "read_model_constraints",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "read_model_id": {
+      "type": "string",
+      "const": "universal-symbol-receipt-store-lifecycle-evidence-bundle-read-model-foundation"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "read_model_scope": {
+      "type": "string",
+      "const": "foundation-mode-universal-symbol-receipt-store-lifecycle-evidence-bundle-read-model"
+    },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "read_model_is_not_lifecycle_authority": { "type": "boolean", "const": true },
+    "operator_status_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_status",
+        "bundle_status",
+        "recording_status",
+        "raw_detail_visibility",
+        "operator_action"
+      ],
+      "properties": {
+        "primary_status": { "type": "string", "const": "Evidence bundle visible" },
+        "bundle_status": { "type": "string", "const": "Non-authorizing" },
+        "recording_status": { "type": "string", "const": "Blocked" },
+        "raw_detail_visibility": { "type": "string", "const": "hidden_by_default" },
+        "operator_action": { "type": "string", "const": "Collect live content witnesses" }
+      }
+    },
+    "bundle_projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_ref",
+        "verifier_status",
+        "evidence_entry_count",
+        "content_verified_entry_count",
+        "placeholder_entry_count",
+        "authority_granted"
+      ],
+      "properties": {
+        "bundle_ref": { "$ref": "#/$defs/ref" },
+        "verifier_status": {
+          "type": "string",
+          "enum": [
+            "all_refs_structurally_verified_non_authorizing",
+            "blocked_placeholder_or_missing_lifecycle_evidence"
+          ]
+        },
+        "evidence_entry_count": { "type": "integer", "const": 7 },
+        "content_verified_entry_count": { "type": "integer", "minimum": 0, "maximum": 7 },
+        "placeholder_entry_count": { "type": "integer", "minimum": 0, "maximum": 7 },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "evidence_kind_rows": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": { "$ref": "#/$defs/evidence_kind_row" },
+      "uniqueItems": true
+    },
+    "effective_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lifecycle_authority_granted",
+        "receipt_store_reapproval_recorded",
+        "receipt_store_revocation_recorded",
+        "approval_grant_extended",
+        "replacement_decision_recorded",
+        "lifecycle_audit_committed",
+        "receipt_store_append_performed",
+        "raw_payload_exposed",
+        "raw_secret_exposed",
+        "state_mutation_performed",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "lifecycle_authority_granted": { "type": "boolean", "const": false },
+        "receipt_store_reapproval_recorded": { "type": "boolean", "const": false },
+        "receipt_store_revocation_recorded": { "type": "boolean", "const": false },
+        "approval_grant_extended": { "type": "boolean", "const": false },
+        "replacement_decision_recorded": { "type": "boolean", "const": false },
+        "lifecycle_audit_committed": { "type": "boolean", "const": false },
+        "receipt_store_append_performed": { "type": "boolean", "const": false },
+        "raw_payload_exposed": { "type": "boolean", "const": false },
+        "raw_secret_exposed": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "read_model_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only_projection",
+        "no_state_mutation",
+        "no_receipt_store_append",
+        "no_raw_payload",
+        "no_raw_secret",
+        "no_lifecycle_recording",
+        "no_terminal_closure"
+      ],
+      "properties": {
+        "read_only_projection": { "type": "boolean", "const": true },
+        "no_state_mutation": { "type": "boolean", "const": true },
+        "no_receipt_store_append": { "type": "boolean", "const": true },
+        "no_raw_payload": { "type": "boolean", "const": true },
+        "no_raw_secret": { "type": "boolean", "const": true },
+        "no_lifecycle_recording": { "type": "boolean", "const": true },
+        "no_terminal_closure": { "type": "boolean", "const": true }
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ref" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_kind_row_count",
+        "effective_denial_count",
+        "read_model_constraint_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "evidence_kind_row_count": { "type": "integer", "const": 7 },
+        "effective_denial_count": { "type": "integer", "const": 11 },
+        "read_model_constraint_count": { "type": "integer", "const": 7 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "evidence_kind_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_kind",
+        "operator_status",
+        "content_verified",
+        "placeholder_ref",
+        "raw_detail_visible",
+        "authority_granted"
+      ],
+      "properties": {
+        "evidence_kind": {
+          "type": "string",
+          "enum": [
+            "active_grant_identity",
+            "reapproval_window",
+            "expiry_evidence",
+            "revocation_request",
+            "revocation_effect_boundary",
+            "replacement_decision",
+            "lifecycle_audit_receipt"
+          ]
+        },
+        "operator_status": {
+          "type": "string",
+          "enum": ["Verified ref", "Needs live content", "Placeholder"]
+        },
+        "content_verified": { "type": "boolean" },
+        "placeholder_ref": { "type": "boolean" },
+        "raw_detail_visible": { "type": "boolean", "const": false },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}

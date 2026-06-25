@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-symbol-receipt-store-lifecycle-audit-read-model:1",
+  "title": "Universal Symbol Receipt Store Lifecycle Audit Read Model",
+  "description": "Foundation Mode read-only operator projection for UniversalSymbol receipt-store lifecycle audit receipt status. This model exposes blocked audit status, bounded requirement rows, denial counts, and Delta_reject logging state without raw payloads or lifecycle authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "read_model_id",
+    "schema_version",
+    "generated_at",
+    "read_model_scope",
+    "solver_outcome",
+    "foundation_mode",
+    "read_model_is_not_lifecycle_authority",
+    "operator_status_summary",
+    "receipt_projection",
+    "requirement_rows",
+    "effective_denials",
+    "read_model_constraints",
+    "evidence_refs",
+    "contract_summary"
+  ],
+  "properties": {
+    "read_model_id": {
+      "type": "string",
+      "const": "universal-symbol-receipt-store-lifecycle-audit-read-model-foundation"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "read_model_scope": {
+      "type": "string",
+      "const": "foundation-mode-universal-symbol-receipt-store-lifecycle-audit-read-model"
+    },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "foundation_mode": { "type": "boolean", "const": true },
+    "read_model_is_not_lifecycle_authority": { "type": "boolean", "const": true },
+    "operator_status_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_status",
+        "audit_status",
+        "recording_status",
+        "raw_detail_visibility",
+        "operator_action"
+      ],
+      "properties": {
+        "primary_status": { "type": "string", "const": "Lifecycle audit blocked" },
+        "audit_status": { "type": "string", "const": "Awaiting evidence" },
+        "recording_status": { "type": "string", "const": "Blocked" },
+        "raw_detail_visibility": { "type": "string", "const": "hidden_by_default" },
+        "operator_action": { "type": "string", "const": "Collect lifecycle witness evidence" }
+      }
+    },
+    "receipt_projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_ref",
+        "audit_decision",
+        "audit_requirement_count",
+        "blocked_reason_count",
+        "authority_granted"
+      ],
+      "properties": {
+        "receipt_ref": { "$ref": "#/$defs/ref" },
+        "audit_decision": {
+          "type": "string",
+          "const": "blocked_pending_lifecycle_witness_decision_grant_delta_reject_digest_and_auditor_evidence"
+        },
+        "audit_requirement_count": { "type": "integer", "const": 8 },
+        "blocked_reason_count": { "type": "integer", "const": 10 },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "requirement_rows": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "requirement_id",
+          "proof_state",
+          "operator_status",
+          "delta_reject_logged",
+          "raw_detail_visible",
+          "authority_granted"
+        ],
+        "properties": {
+          "requirement_id": {
+            "type": "string",
+            "enum": [
+              "requirement://source-lifecycle-witness",
+              "requirement://approval-decision-witness",
+              "requirement://active-grant-ref",
+              "requirement://lifecycle-event-kind",
+              "requirement://before-after-authority-envelope",
+              "requirement://delta-reject-ledger",
+              "requirement://redaction-digest-binding",
+              "requirement://auditor-identity"
+            ]
+          },
+          "proof_state": { "type": "string", "enum": ["Unknown", "BudgetUnknown", "Fail"] },
+          "operator_status": { "type": "string", "enum": ["Needs evidence", "Blocked", "Verified ref"] },
+          "delta_reject_logged": { "type": "boolean" },
+          "raw_detail_visible": { "type": "boolean", "const": false },
+          "authority_granted": { "type": "boolean", "const": false }
+        }
+      }
+    },
+    "effective_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_store_lifecycle_audit_recorded",
+        "receipt_store_reapproval_recorded",
+        "receipt_store_revocation_recorded",
+        "receipt_store_append_performed",
+        "replacement_decision_recorded",
+        "raw_payload_stored",
+        "raw_secret_stored",
+        "runtime_dispatch_performed",
+        "connector_call_performed",
+        "state_mutation_performed",
+        "terminal_closure_allowed",
+        "production_readiness_claimed"
+      ],
+      "properties": {
+        "receipt_store_lifecycle_audit_recorded": { "type": "boolean", "const": false },
+        "receipt_store_reapproval_recorded": { "type": "boolean", "const": false },
+        "receipt_store_revocation_recorded": { "type": "boolean", "const": false },
+        "receipt_store_append_performed": { "type": "boolean", "const": false },
+        "replacement_decision_recorded": { "type": "boolean", "const": false },
+        "raw_payload_stored": { "type": "boolean", "const": false },
+        "raw_secret_stored": { "type": "boolean", "const": false },
+        "runtime_dispatch_performed": { "type": "boolean", "const": false },
+        "connector_call_performed": { "type": "boolean", "const": false },
+        "state_mutation_performed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "production_readiness_claimed": { "type": "boolean", "const": false }
+      }
+    },
+    "read_model_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only_projection",
+        "no_state_mutation",
+        "no_receipt_store_append",
+        "no_raw_payload",
+        "no_raw_secret",
+        "no_lifecycle_audit_recording",
+        "no_terminal_closure"
+      ],
+      "properties": {
+        "read_only_projection": { "type": "boolean", "const": true },
+        "no_state_mutation": { "type": "boolean", "const": true },
+        "no_receipt_store_append": { "type": "boolean", "const": true },
+        "no_raw_payload": { "type": "boolean", "const": true },
+        "no_raw_secret": { "type": "boolean", "const": true },
+        "no_lifecycle_audit_recording": { "type": "boolean", "const": true },
+        "no_terminal_closure": { "type": "boolean", "const": true }
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/ref" }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_row_count",
+        "effective_denial_count",
+        "read_model_constraint_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "requirement_row_count": { "type": "integer", "const": 8 },
+        "effective_denial_count": { "type": "integer", "const": 12 },
+        "read_model_constraint_count": { "type": "integer", "const": 7 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(schemas|examples|docs|scripts|tests)/[^\\n\\r]+$|^[a-z][a-z0-9+.-]*://[^\\n\\r]+$"
+    }
+  }
+}

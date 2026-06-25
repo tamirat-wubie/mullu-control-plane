@@ -1,0 +1,130 @@
+{
+  "read_model_id": "universal-symbol-receipt-store-durability-replay-read-model-foundation",
+  "schema_version": 1,
+  "generated_at": "2026-06-20T00:00:00Z",
+  "read_model_scope": "foundation-mode-universal-symbol-receipt-store-durability-replay-read-model",
+  "solver_outcome": "AwaitingEvidence",
+  "foundation_mode": true,
+  "read_model_is_not_replay_authority": true,
+  "operator_status_summary": {
+    "primary_status": "Durability replay blocked",
+    "ordered_replay_status": "Awaiting ordered replay evidence",
+    "crash_window_status": "Awaiting crash-window evidence",
+    "raw_detail_visibility": "hidden_by_default",
+    "operator_action": "Collect ordered replay, append sequence, digest chain, idempotency reuse, crash-window, durability receipt, rollback handoff, and audit evidence"
+  },
+  "witness_projection": {
+    "witness_ref": "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
+    "durability_replay_decision": "blocked_pending_ordered_replay_digest_crash_window_and_audit_evidence",
+    "durability_replay_requirement_count": 8,
+    "blocked_reason_count": 10,
+    "authority_granted": false
+  },
+  "requirement_rows": [
+    {
+      "requirement_id": "requirement://ordered-replay",
+      "proof_state": "Unknown",
+      "operator_status": "Needs evidence",
+      "delta_reject_logged": true,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "requirement_id": "requirement://append-sequence",
+      "proof_state": "Unknown",
+      "operator_status": "Needs evidence",
+      "delta_reject_logged": true,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "requirement_id": "requirement://digest-chain",
+      "proof_state": "Unknown",
+      "operator_status": "Needs evidence",
+      "delta_reject_logged": true,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "requirement_id": "requirement://idempotency-key-reuse",
+      "proof_state": "Unknown",
+      "operator_status": "Needs evidence",
+      "delta_reject_logged": true,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "requirement_id": "requirement://crash-window",
+      "proof_state": "Unknown",
+      "operator_status": "Needs evidence",
+      "delta_reject_logged": true,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "requirement_id": "requirement://durability-receipt",
+      "proof_state": "Unknown",
+      "operator_status": "Needs evidence",
+      "delta_reject_logged": true,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "requirement_id": "requirement://rollback-handoff",
+      "proof_state": "Unknown",
+      "operator_status": "Needs evidence",
+      "delta_reject_logged": true,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    },
+    {
+      "requirement_id": "requirement://audit-receipt",
+      "proof_state": "Unknown",
+      "operator_status": "Needs evidence",
+      "delta_reject_logged": true,
+      "raw_detail_visible": false,
+      "authority_granted": false
+    }
+  ],
+  "effective_denials": {
+    "receipt_store_durability_replay_bound": false,
+    "receipt_store_write_path_registered": false,
+    "receipt_store_append_performed": false,
+    "receipt_store_replay_performed": false,
+    "duplicate_effect_allowed": false,
+    "raw_payload_stored": false,
+    "raw_secret_stored": false,
+    "runtime_dispatch_performed": false,
+    "connector_call_performed": false,
+    "state_mutation_performed": false,
+    "terminal_closure_allowed": false
+  },
+  "read_model_constraints": {
+    "read_only_projection": true,
+    "no_state_mutation": true,
+    "no_receipt_store_append": true,
+    "no_raw_payload": true,
+    "no_raw_secret": true,
+    "no_durability_replay_binding": true,
+    "no_replay_execution": true,
+    "no_terminal_closure": true
+  },
+  "evidence_refs": [
+    "schemas/universal_symbol_receipt_store_durability_replay_read_model.schema.json",
+    "examples/universal_symbol_receipt_store_durability_replay_read_model.foundation.json",
+    "schemas/universal_symbol_receipt_store_durability_replay_witness.schema.json",
+    "examples/universal_symbol_receipt_store_durability_replay_witness.foundation.json",
+    "scripts/validate_universal_symbol_receipt_store_durability_replay_read_model.py",
+    "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py",
+    "tests/test_validate_universal_symbol_receipt_store_durability_replay_read_model.py",
+    "tests/test_validate_universal_symbol_kernel.py",
+    "scripts/proof_coverage_matrix.py",
+    "tests/test_proof_coverage_matrix.py"
+  ],
+  "contract_summary": {
+    "requirement_row_count": 8,
+    "effective_denial_count": 11,
+    "read_model_constraint_count": 8,
+    "evidence_ref_count": 10
+  }
+}
