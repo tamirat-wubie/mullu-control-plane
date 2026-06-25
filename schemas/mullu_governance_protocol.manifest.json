@@ -1307,6 +1307,12 @@
       "urn": "urn:mullusi:schema:interpretation-receipt:1"
     },
     {
+      "path": "schemas/symbolic_interpretation_proposal.schema.json",
+      "schema_id": "symbolic-interpretation-proposal",
+      "surface": "interpretation",
+      "urn": "urn:mullusi:schema:symbolic-interpretation-proposal:1"
+    },
+    {
       "path": "schemas/interpreted_request.schema.json",
       "schema_id": "interpreted-request",
       "surface": "interpretation",

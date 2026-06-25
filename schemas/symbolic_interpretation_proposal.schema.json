@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:symbolic-interpretation-proposal:1",
+  "title": "Symbolic Interpretation Proposal",
+  "description": "Lower-authority symbolic interpretation proposal validated behind deterministic gateway interpretation. This contract records hashes and proposal metadata only; it does not serialize raw private payloads, secrets, action authority, or execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "proposal_id",
+    "request_id",
+    "raw_message_hash",
+    "proposal_source",
+    "proposed_intent_class",
+    "proposed_capability_id",
+    "proposed_slot_names",
+    "proposed_slots_hash",
+    "proposal_confidence",
+    "deterministic_intent_class",
+    "deterministic_capability_id",
+    "deterministic_confidence",
+    "comparison_result",
+    "validation_status",
+    "authority_level",
+    "deterministic_override_allowed",
+    "action_authority_granted",
+    "execution_allowed",
+    "private_payload_included",
+    "secret_values_serialized",
+    "rejected_reasons",
+    "created_at"
+  ],
+  "properties": {
+    "proposal_id": {"type": "string", "pattern": "^symbolic-interpretation-proposal-[a-f0-9]{16}$"},
+    "request_id": {"type": "string", "pattern": "^interpreted-request-[a-f0-9]{16}$"},
+    "raw_message_hash": {"$ref": "#/$defs/sha256_digest"},
+    "proposal_source": {"type": "string", "minLength": 1, "maxLength": 120},
+    "proposed_intent_class": {"$ref": "#/$defs/intent_class"},
+    "proposed_capability_id": {"type": "string", "minLength": 1, "maxLength": 120},
+    "proposed_slot_names": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true,
+      "maxItems": 50
+    },
+    "proposed_slots_hash": {"$ref": "#/$defs/sha256_digest"},
+    "proposal_confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "deterministic_intent_class": {"$ref": "#/$defs/intent_class"},
+    "deterministic_capability_id": {"type": "string", "minLength": 1, "maxLength": 120},
+    "deterministic_confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "comparison_result": {
+      "type": "string",
+      "enum": ["matches_deterministic", "differs_from_deterministic", "rejected_before_comparison"]
+    },
+    "validation_status": {
+      "type": "string",
+      "enum": ["accepted_as_proposal", "rejected"]
+    },
+    "authority_level": {"type": "string", "const": "proposal_only"},
+    "deterministic_override_allowed": {"type": "boolean", "const": false},
+    "action_authority_granted": {"type": "boolean", "const": false},
+    "execution_allowed": {"type": "boolean", "const": false},
+    "private_payload_included": {"type": "boolean", "const": false},
+    "secret_values_serialized": {"type": "boolean", "const": false},
+    "rejected_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"validation_status": {"const": "rejected"}},
+        "required": ["validation_status"]
+      },
+      "then": {
+        "properties": {"rejected_reasons": {"minItems": 1}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"validation_status": {"const": "accepted_as_proposal"}},
+        "required": ["validation_status"]
+      },
+      "then": {
+        "properties": {"rejected_reasons": {"maxItems": 0}}
+      }
+    },
+    {
+      "if": {
+        "properties": {"comparison_result": {"const": "rejected_before_comparison"}},
+        "required": ["comparison_result"]
+      },
+      "then": {
+        "properties": {"validation_status": {"const": "rejected"}}
+      }
+    }
+  ],
+  "$defs": {
+    "sha256_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "intent_class": {
+      "type": "string",
+      "enum": [
+        "question",
+        "action_request",
+        "explicit_command",
+        "approval_response",
+        "correction",
+        "follow_up",
+        "support_issue",
+        "document_instruction",
+        "connector_request",
+        "blocked_request",
+        "unclear_message"
+      ]
+    }
+  }
+}
