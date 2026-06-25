@@ -543,6 +543,9 @@ jobs:
       - name: Run operator plan receipt bundle tests
         run: python -m pytest tests/test_validate_operator_plan_receipt_bundle_read_model.py -q
 
+      - name: Run symbolic interpretation proposal tests
+        run: python -m pytest tests/test_validate_symbolic_interpretation_proposal.py -q
+
       - name: Run worker receipt emitter registration witness tests
         run: python -m pytest tests/test_validate_read_only_worker_runtime_receipt_emitter_registration_witness.py -q
 
