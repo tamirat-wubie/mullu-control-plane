@@ -47,6 +47,12 @@ from .drafts import (
     draft_email_response,
     draft_task,
 )
+from .draft_projection import (
+    DEFAULT_DRAFT_PROJECTION_GENERATED_AT,
+    DEFAULT_DRAFT_PROJECTION_SET_ID,
+    build_default_personal_assistant_draft_projection,
+    build_personal_assistant_draft_projection_envelope,
+)
 from .intake import (
     ApprovalScope,
     ConnectorProofRef,
@@ -153,6 +159,8 @@ __all__ = (
     "PersonalAssistantMemoryObservationLedger",
     "PersonalAssistantPlanningEnvelope",
     "PlanningScheduleProjection",
+    "DEFAULT_DRAFT_PROJECTION_GENERATED_AT",
+    "DEFAULT_DRAFT_PROJECTION_SET_ID",
     "DEFAULT_READ_ONLY_PROJECTION_GENERATED_AT",
     "DEFAULT_READ_ONLY_PROJECTION_SET_ID",
     "MathReasoningProjection",
@@ -176,7 +184,9 @@ __all__ = (
     "build_personal_assistant_intake_chain_read_model",
     "build_personal_assistant_console_read_model",
     "build_personal_assistant_preview_plan",
+    "build_default_personal_assistant_draft_projection",
     "build_default_personal_assistant_read_only_projection",
+    "build_personal_assistant_draft_projection_envelope",
     "build_personal_assistant_read_only_projection_envelope",
     "draft_calendar_event",
     "draft_email_response",
