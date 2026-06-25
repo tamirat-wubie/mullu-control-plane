@@ -2,7 +2,7 @@
 
 Purpose: define the request, response, redaction, replay, and authority
 contract for `POST /api/v1/shadow/inspect` and the external-effect advisory
-projection route.
+projection route, plus the read-only console evidence view.
 
 Governance scope: advisory-only symbolic intelligence inspection. The route can
 classify request risk, emit redacted findings, and record a redacted receipt; it
@@ -38,6 +38,17 @@ External-effect advisory route:
 | Runtime entry point | `InceptaDiveShadowRuntime.external_effect_advisory` |
 | Receipt behavior | no new shadow receipt; response exposes counts and obligations only |
 | Output status | `AwaitingEvidence`, `GovernanceBlocked`, or `SolvedUnverified` |
+
+Console evidence route:
+
+| Field | Value |
+| --- | --- |
+| Method | `GET` |
+| Path | `/api/v1/console/shadow/evidence` |
+| Authority | read-only |
+| Runtime entry point | `InceptaDiveShadowRuntime.recent_activity` |
+| Receipt behavior | reads recent redacted result and receipt summaries only |
+| Obligation history | not available until external-effect advisories are persisted |
 
 ## Request Body
 
@@ -93,6 +104,15 @@ the recommended outcome, and the recommended next action. It must not include
 raw request text, raw evidence refs, raw authority refs, private memory, live
 adapter handles, connector dispatch handles, or any execution authority flag.
 
+The console evidence response may include recent result ids, receipt ids,
+request ids, modes, stages, verdicts, finding counts, repair counts,
+escalation counts, block counts, receipt reference counts, and non-authority
+flags. It must not include raw request text, raw evidence refs, raw authority
+refs, finding summaries, private memory, live adapter handles, connector
+dispatch handles, or any execution authority flag. Because external-effect
+advisory calls are not yet stored, `obligation_history_available` remains
+`false` and missing-obligation history counts remain `0`.
+
 ## Runtime Fallbacks
 
 1. If the runtime dependency is not registered, the route builds a bounded
@@ -144,8 +164,13 @@ and route-family authority witnesses.
 boundary. It exposes external-effect obligations for operator visibility only;
 it cannot satisfy those obligations by itself.
 
+`GET /api/v1/console/shadow/evidence` follows the same authority boundary. It
+can summarize stored evidence posture only; it cannot execute, approve, write
+memory, dispatch connectors, replace governance verdicts, or manufacture
+obligation history that the store does not hold.
+
 STATUS:
-  Completeness: route contract, replay witness, and external-effect advisory projection defined
-  Invariants verified: advisory-only, redacted response, receipt-count exposure, no execution authority, no connector dispatch authority
+  Completeness: route contract, replay witness, external-effect advisory projection, and console evidence view defined
+  Invariants verified: advisory-only, read-only evidence posture, redacted response, receipt-count exposure, no execution authority, no connector dispatch authority
   Open issues: none
   Next action: keep replay fixture aligned with route response shape

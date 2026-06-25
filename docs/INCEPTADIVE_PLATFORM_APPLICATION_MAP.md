@@ -42,6 +42,7 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
 8. `mcoi_runtime.app.routers.shadow`
    - Exposes `POST /api/v1/shadow/inspect` for bounded, redacted, non-executing shadow inspection.
    - Exposes `POST /api/v1/shadow/external-effect/advisory` for read-only external-effect obligation projection.
+   - Exposes `GET /api/v1/console/shadow/evidence` for read-only recent result and receipt evidence posture.
    - Returns result and receipt metadata without raw request text, raw evidence refs, private memory, or execution authority.
    - Route contract: `docs/INCEPTADIVE_SHADOW_INSPECTION_CONTRACT.md`.
    - OpenAPI witness: `docs/INCEPTADIVE_SHADOW_OPENAPI_WITNESS.md`.
@@ -82,11 +83,17 @@ request or candidate action
   connector dispatch, or governance verdicts.
 - `POST /api/v1/shadow/inspect` is advisory-only and cannot execute candidate actions.
 - `POST /api/v1/shadow/external-effect/advisory` is advisory-only and cannot execute candidate actions.
+- `GET /api/v1/console/shadow/evidence` is read-only and cannot expose raw
+  request text, private memory, raw evidence refs, connector handles, memory
+  write handles, or governance verdict authority.
 - External-effect preflight deep advisories supplement strict preflight findings
   only; they do not grant execution, connector dispatch, memory write, approval,
   or governance verdict authority.
 - External-effect boundary advisories expose obligation status only; they do not
   call live adapters or close Mullu governance.
+- External-effect advisory history is not persisted in the shadow receipt store;
+  evidence views must report that history gap explicitly instead of deriving
+  historical obligation counts from unavailable data.
 
 ## Route slice closure
 
@@ -119,6 +126,8 @@ Focused tests cover:
   connector dispatch, memory write, approval, or raw reference exposure.
 - OpenAPI export retaining explicit shadow route response models and
   non-authority/redaction fields.
+- console evidence route exposing recent result and receipt summaries without
+  raw request text, raw evidence refs, private memory, or authority flags.
 
 ## Status
 
