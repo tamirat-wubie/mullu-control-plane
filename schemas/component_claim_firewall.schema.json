@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-claim-firewall:1",
+  "title": "Mullu Component Claim Firewall",
+  "description": "Foundation-stage Component Harness claim firewall. It blocks public and product claims that outrun component authority, proof, and fuse evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "firewall_id",
+    "mode",
+    "source_refs",
+    "firewall_is_not_execution_authority",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "terminal_closure_required",
+    "blocked_claims",
+    "allowed_bounded_claims",
+    "summary",
+    "claim_checks",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "firewall_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "const": "foundation"
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_passports",
+        "component_authority_fuse"
+      ],
+      "properties": {
+        "component_passports": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "component_authority_fuse": {
+          "$ref": "#/$defs/repo_path"
+        }
+      }
+    },
+    "firewall_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "live_connector_send_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "blocked_claims": {
+      "$ref": "#/$defs/non_empty_claim_list"
+    },
+    "allowed_bounded_claims": {
+      "$ref": "#/$defs/non_empty_claim_list"
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "claim_checks": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/claim_check"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 320
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "claim_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "non_empty_claim_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/claim_text"
+      }
+    },
+    "identifier_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "non_empty_identifier_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_count",
+        "claim_check_count",
+        "blocked_claim_count",
+        "allowed_bounded_claim_count",
+        "terminal_closure_allowed_count"
+      ],
+      "properties": {
+        "component_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "claim_check_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "blocked_claim_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "allowed_bounded_claim_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "terminal_closure_allowed_count": {
+          "type": "integer",
+          "const": 0
+        }
+      }
+    },
+    "claim_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_id",
+        "claim_text",
+        "claim_class",
+        "decision",
+        "outcome",
+        "required_component_states",
+        "blocking_component_ids",
+        "evidence_refs",
+        "required_validator_refs",
+        "claim_is_not_execution_authority",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "claim_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "claim_text": {
+          "$ref": "#/$defs/claim_text"
+        },
+        "claim_class": {
+          "type": "string",
+          "enum": [
+            "blocked_public_readiness",
+            "allowed_evidence_bounded"
+          ]
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "blocked",
+            "allowed_bounded"
+          ]
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "GovernanceBlocked",
+            "SolvedVerified"
+          ]
+        },
+        "required_component_states": {
+          "$ref": "#/$defs/non_empty_identifier_list"
+        },
+        "blocking_component_ids": {
+          "$ref": "#/$defs/identifier_list"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        },
+        "required_validator_refs": {
+          "$ref": "#/$defs/non_empty_identifier_list"
+        },
+        "claim_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_closure_allowed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}
