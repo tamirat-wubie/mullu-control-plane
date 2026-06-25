@@ -60,7 +60,65 @@ class ExternalEffectAdvisoryRequest(ShadowInspectRequest):
     authority_receipt_refs: list[object] = Field(default_factory=list)
 
 
-@router.get("/api/v1/health/shadow")
+class ShadowHealthResponse(BaseModel):
+    """OpenAPI response contract for the read-only shadow health posture."""
+
+    governed: bool
+    registered: bool
+    shadow: dict[str, object]
+    execution_authority: bool
+    raw_request_text_exposed: bool
+    private_memory_exposed: bool
+
+
+class ShadowRecentActivityResponse(BaseModel):
+    """OpenAPI response contract for redacted recent activity counts."""
+
+    result_count: int
+    receipt_count: int
+
+
+class ShadowInspectResponse(BaseModel):
+    """OpenAPI response contract for redacted shadow inspection results."""
+
+    governed: bool
+    registered: bool
+    result: dict[str, object]
+    receipt: dict[str, object] | None
+    recent_activity: ShadowRecentActivityResponse
+    execution_authority: bool
+    raw_request_text_exposed: bool
+    private_memory_exposed: bool
+
+
+class ShadowExternalEffectAdvisoryResponse(BaseModel):
+    """OpenAPI response contract for non-executing external-effect advisories."""
+
+    governed: bool
+    registered: bool
+    advisory: dict[str, object]
+    execution_authority: bool
+    connector_dispatch_authority: bool
+    memory_write_authority: bool
+    governance_verdict_authority: bool
+    raw_request_text_exposed: bool
+    private_memory_exposed: bool
+
+
+class ShadowConsoleResponse(BaseModel):
+    """OpenAPI response contract for read-only shadow console summaries."""
+
+    governed: bool
+    registered: bool
+    status: str
+    health: dict[str, object]
+    summary: dict[str, object]
+    execution_authority: bool
+    raw_request_text_exposed: bool
+    private_memory_exposed: bool
+
+
+@router.get("/api/v1/health/shadow", response_model=ShadowHealthResponse)
 def shadow_health() -> dict[str, object]:
     """Read-only shadow subsystem health posture."""
 
@@ -77,7 +135,7 @@ def shadow_health() -> dict[str, object]:
     }
 
 
-@router.post("/api/v1/shadow/inspect")
+@router.post("/api/v1/shadow/inspect", response_model=ShadowInspectResponse)
 def shadow_inspect(req: ShadowInspectRequest) -> dict[str, object]:
     """Run a bounded shadow inspection and return a redacted advisory envelope."""
 
@@ -117,7 +175,10 @@ def shadow_inspect(req: ShadowInspectRequest) -> dict[str, object]:
     }
 
 
-@router.post("/api/v1/shadow/external-effect/advisory")
+@router.post(
+    "/api/v1/shadow/external-effect/advisory",
+    response_model=ShadowExternalEffectAdvisoryResponse,
+)
 def shadow_external_effect_advisory(req: ExternalEffectAdvisoryRequest) -> dict[str, object]:
     """Return redacted external-effect authority and evidence obligations."""
 
@@ -155,7 +216,7 @@ def shadow_external_effect_advisory(req: ExternalEffectAdvisoryRequest) -> dict[
     }
 
 
-@router.get("/api/v1/console/shadow")
+@router.get("/api/v1/console/shadow", response_model=ShadowConsoleResponse)
 def shadow_console() -> dict[str, object]:
     """Read-only operator console summary for the shadow subsystem."""
 
