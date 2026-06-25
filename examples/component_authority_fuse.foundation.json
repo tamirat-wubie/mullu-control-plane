@@ -1,0 +1,466 @@
+{
+  "authority_transition_ladder": [
+    "read_only",
+    "draft_only",
+    "live_probe",
+    "approval_required",
+    "approved_live_action"
+  ],
+  "fuse_set_id": "component_authority_fuse.foundation.v1",
+  "fuse_set_is_not_execution_authority": true,
+  "fuses": [
+    {
+      "can_enable_live_action": false,
+      "can_mutate_authority_envelope": false,
+      "can_upgrade_authority": false,
+      "component_id": "governance_core",
+      "current_authority_level": "read_only_advisory",
+      "decision": "blocked",
+      "fuse_id": "component_authority_fuse.governance_core.foundation.v1",
+      "fuse_is_not_execution_authority": true,
+      "fuse_is_not_terminal_closure": true,
+      "fuse_state": "blocked",
+      "missing_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "outcome": "GovernanceBlocked",
+      "present_evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#gateway_capability_fabric"
+      ],
+      "requested_authority_level": "draft_only",
+      "required_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "required_validator_refs": [
+        "component_passports_validator",
+        "component_authority_fuse_validator"
+      ],
+      "self_upgrade_allowed": false,
+      "terminal_closure_allowed": false
+    },
+    {
+      "can_enable_live_action": false,
+      "can_mutate_authority_envelope": false,
+      "can_upgrade_authority": false,
+      "component_id": "agentic_service_harness",
+      "current_authority_level": "read_only",
+      "decision": "blocked",
+      "fuse_id": "component_authority_fuse.agentic_service_harness.foundation.v1",
+      "fuse_is_not_execution_authority": true,
+      "fuse_is_not_terminal_closure": true,
+      "fuse_state": "blocked",
+      "missing_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "outcome": "GovernanceBlocked",
+      "present_evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#agentic_service_harness_status_read_model"
+      ],
+      "requested_authority_level": "draft_only",
+      "required_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "required_validator_refs": [
+        "component_passports_validator",
+        "component_authority_fuse_validator"
+      ],
+      "self_upgrade_allowed": false,
+      "terminal_closure_allowed": false
+    },
+    {
+      "can_enable_live_action": false,
+      "can_mutate_authority_envelope": false,
+      "can_upgrade_authority": false,
+      "component_id": "snet",
+      "current_authority_level": "read_only_advisory",
+      "decision": "blocked",
+      "fuse_id": "component_authority_fuse.snet.foundation.v1",
+      "fuse_is_not_execution_authority": true,
+      "fuse_is_not_terminal_closure": true,
+      "fuse_state": "blocked",
+      "missing_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "outcome": "GovernanceBlocked",
+      "present_evidence_refs": [
+        "docs/73_snet_operator_read_model.md",
+        "docs/40_proof_coverage_matrix.md#snet_operator_read_model"
+      ],
+      "requested_authority_level": "draft_only",
+      "required_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "required_validator_refs": [
+        "component_passports_validator",
+        "component_authority_fuse_validator"
+      ],
+      "self_upgrade_allowed": false,
+      "terminal_closure_allowed": false
+    },
+    {
+      "can_enable_live_action": false,
+      "can_mutate_authority_envelope": false,
+      "can_upgrade_authority": false,
+      "component_id": "inceptadive_shadow",
+      "current_authority_level": "read_only_advisory",
+      "decision": "blocked",
+      "fuse_id": "component_authority_fuse.inceptadive_shadow.foundation.v1",
+      "fuse_is_not_execution_authority": true,
+      "fuse_is_not_terminal_closure": true,
+      "fuse_state": "blocked",
+      "missing_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "outcome": "GovernanceBlocked",
+      "present_evidence_refs": [
+        "docs/inceptadive-shadow-pass.md",
+        "docs/40_proof_coverage_matrix.md#operator_console_read_models"
+      ],
+      "requested_authority_level": "draft_only",
+      "required_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "required_validator_refs": [
+        "component_passports_validator",
+        "component_authority_fuse_validator"
+      ],
+      "self_upgrade_allowed": false,
+      "terminal_closure_allowed": false
+    },
+    {
+      "can_enable_live_action": false,
+      "can_mutate_authority_envelope": false,
+      "can_upgrade_authority": false,
+      "component_id": "personal_assistant",
+      "current_authority_level": "draft_only",
+      "decision": "blocked",
+      "fuse_id": "component_authority_fuse.personal_assistant.foundation.v1",
+      "fuse_is_not_execution_authority": true,
+      "fuse_is_not_terminal_closure": true,
+      "fuse_state": "blocked",
+      "missing_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "outcome": "GovernanceBlocked",
+      "present_evidence_refs": [
+        "docs/PERSONAL_ASSISTANT_SKILL_ARCHITECTURE.md",
+        "docs/40_proof_coverage_matrix.md#assistant_kernel_planning"
+      ],
+      "requested_authority_level": "live_probe",
+      "required_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "required_validator_refs": [
+        "component_passports_validator",
+        "component_authority_fuse_validator"
+      ],
+      "self_upgrade_allowed": false,
+      "terminal_closure_allowed": false
+    },
+    {
+      "can_enable_live_action": false,
+      "can_mutate_authority_envelope": false,
+      "can_upgrade_authority": false,
+      "component_id": "teamops_shared_inbox",
+      "current_authority_level": "live_probe",
+      "decision": "blocked",
+      "fuse_id": "component_authority_fuse.teamops_shared_inbox.foundation.v1",
+      "fuse_is_not_execution_authority": true,
+      "fuse_is_not_terminal_closure": true,
+      "fuse_state": "blocked",
+      "missing_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "outcome": "GovernanceBlocked",
+      "present_evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+      ],
+      "requested_authority_level": "approval_required",
+      "required_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "required_validator_refs": [
+        "component_passports_validator",
+        "component_authority_fuse_validator"
+      ],
+      "self_upgrade_allowed": false,
+      "terminal_closure_allowed": false
+    },
+    {
+      "can_enable_live_action": false,
+      "can_mutate_authority_envelope": false,
+      "can_upgrade_authority": false,
+      "component_id": "gmail_account_binding_gate",
+      "current_authority_level": "approval_required",
+      "decision": "blocked",
+      "fuse_id": "component_authority_fuse.gmail_account_binding_gate.foundation.v1",
+      "fuse_is_not_execution_authority": true,
+      "fuse_is_not_terminal_closure": true,
+      "fuse_state": "blocked",
+      "missing_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "outcome": "GovernanceBlocked",
+      "present_evidence_refs": [
+        "docs/64_durable_gmail_connector_runtime_plan.md",
+        "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+      ],
+      "requested_authority_level": "approved_live_action",
+      "required_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "required_validator_refs": [
+        "component_passports_validator",
+        "component_authority_fuse_validator"
+      ],
+      "self_upgrade_allowed": false,
+      "terminal_closure_allowed": false
+    },
+    {
+      "can_enable_live_action": false,
+      "can_mutate_authority_envelope": false,
+      "can_upgrade_authority": false,
+      "component_id": "worker_runtime",
+      "current_authority_level": "approval_required",
+      "decision": "blocked",
+      "fuse_id": "component_authority_fuse.worker_runtime.foundation.v1",
+      "fuse_is_not_execution_authority": true,
+      "fuse_is_not_terminal_closure": true,
+      "fuse_state": "blocked",
+      "missing_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "outcome": "GovernanceBlocked",
+      "present_evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#networked_worker_mesh"
+      ],
+      "requested_authority_level": "approved_live_action",
+      "required_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "required_validator_refs": [
+        "component_passports_validator",
+        "component_authority_fuse_validator"
+      ],
+      "self_upgrade_allowed": false,
+      "terminal_closure_allowed": false
+    },
+    {
+      "can_enable_live_action": false,
+      "can_mutate_authority_envelope": false,
+      "can_upgrade_authority": false,
+      "component_id": "capability_workers",
+      "current_authority_level": "approval_required",
+      "decision": "blocked",
+      "fuse_id": "component_authority_fuse.capability_workers.foundation.v1",
+      "fuse_is_not_execution_authority": true,
+      "fuse_is_not_terminal_closure": true,
+      "fuse_state": "blocked",
+      "missing_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "outcome": "GovernanceBlocked",
+      "present_evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#capability_worker_execution",
+        "docs/40_proof_coverage_matrix.md#restricted_adapter_worker_boundaries"
+      ],
+      "requested_authority_level": "approved_live_action",
+      "required_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "required_validator_refs": [
+        "component_passports_validator",
+        "component_authority_fuse_validator"
+      ],
+      "self_upgrade_allowed": false,
+      "terminal_closure_allowed": false
+    },
+    {
+      "can_enable_live_action": false,
+      "can_mutate_authority_envelope": false,
+      "can_upgrade_authority": false,
+      "component_id": "nested_mind_bridge",
+      "current_authority_level": "blocked",
+      "decision": "blocked",
+      "fuse_id": "component_authority_fuse.nested_mind_bridge.foundation.v1",
+      "fuse_is_not_execution_authority": true,
+      "fuse_is_not_terminal_closure": true,
+      "fuse_state": "blocked",
+      "missing_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "outcome": "GovernanceBlocked",
+      "present_evidence_refs": [
+        "docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md",
+        "docs/runbooks/nested-mind-record-observation-staging.md"
+      ],
+      "requested_authority_level": "read_only",
+      "required_evidence": [
+        "component_schema_contract",
+        "component_validator",
+        "component_lifecycle_transition_receipt",
+        "component_authority_upgrade_witness",
+        "component_proof_matrix_row",
+        "component_ci_gate",
+        "operator_approval_if_external_effect"
+      ],
+      "required_validator_refs": [
+        "component_passports_validator",
+        "component_authority_fuse_validator"
+      ],
+      "self_upgrade_allowed": false,
+      "terminal_closure_allowed": false
+    }
+  ],
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "next_action": "Require external authority-upgrade evidence before any component authority transition can advance.",
+  "required_fuse_evidence": [
+    "component_schema_contract",
+    "component_validator",
+    "component_lifecycle_transition_receipt",
+    "component_authority_upgrade_witness",
+    "component_proof_matrix_row",
+    "component_ci_gate",
+    "operator_approval_if_external_effect"
+  ],
+  "schema_version": 1,
+  "source_refs": {
+    "component_passports": "examples/component_passports.foundation.json"
+  },
+  "summary": {
+    "approved_live_action_count": 0,
+    "blocked_self_upgrade_count": 10,
+    "component_count": 10,
+    "fuse_count": 10,
+    "terminal_closure_allowed_count": 0
+  },
+  "terminal_closure_required": true,
+  "validators": [
+    {
+      "command": "python scripts/validate_component_authority_fuse.py",
+      "required_for_closure": true,
+      "validator_id": "component_authority_fuse_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_component_authority_fuse.py -q",
+      "required_for_closure": true,
+      "validator_id": "component_authority_fuse_tests"
+    }
+  ]
+}

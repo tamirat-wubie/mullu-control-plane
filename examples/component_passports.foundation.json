@@ -1,0 +1,827 @@
+{
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "next_action": "Use component passports as the dashboard-ready trust envelope before any route-family promotion can claim product ownership or live action.",
+  "passport_set_id": "component_passports.foundation.v1",
+  "passport_set_is_not_execution_authority": true,
+  "passports": [
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "customer_exposure",
+        "deploy",
+        "dns_mutation",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "public_readiness_claim",
+        "runtime_mutation",
+        "secret_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "governance_core",
+      "dependencies": [],
+      "evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#gateway_capability_fabric"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/run_workspace_governance_checks.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "identity": {
+        "aliases": [
+          "governance"
+        ],
+        "name": "Governance Core",
+        "owner_surface": "governance",
+        "type": "governance_core"
+      },
+      "last_validation": {
+        "state": "validated",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator",
+          "component_passports_validator"
+        ]
+      },
+      "lifecycle": {
+        "authority_level": "read_only_advisory",
+        "lifecycle_state": "registered",
+        "mode": "foundation",
+        "wiring_state": "present"
+      },
+      "passport_id": "component_passport.governance_core.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "passport_is_not_terminal_closure": true,
+      "proofs": {
+        "authority_witness_id": "component_authority_envelope.governance_core.foundation.v1",
+        "authority_witness_proof_state": "Pass",
+        "proof_surface_evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#gateway_capability_fabric"
+        ],
+        "proof_surface_id": "gateway_capability_fabric",
+        "proof_surface_status": "proof_bound"
+      },
+      "purpose": "",
+      "receipts": {
+        "can_claim_terminal_closure": false,
+        "can_emit_receipt": true,
+        "receipt_required": true,
+        "terminal_closure_required": true
+      }
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "agentic_service_harness",
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#agentic_service_harness_status_read_model"
+      ],
+      "health": {
+        "source": {
+          "ref": "/api/v1/harness/status",
+          "type": "route"
+        },
+        "status": "known"
+      },
+      "identity": {
+        "aliases": [
+          "agentic_service_harness"
+        ],
+        "name": "Agentic Service Harness",
+        "owner_surface": "runtime",
+        "type": "runtime_core"
+      },
+      "last_validation": {
+        "state": "validated",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator",
+          "component_passports_validator"
+        ]
+      },
+      "lifecycle": {
+        "authority_level": "read_only",
+        "lifecycle_state": "mounted",
+        "mode": "read_only",
+        "wiring_state": "mounted"
+      },
+      "passport_id": "component_passport.agentic_service_harness.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "passport_is_not_terminal_closure": true,
+      "proofs": {
+        "authority_witness_id": "component_authority_envelope.agentic_service_harness.foundation.v1",
+        "authority_witness_proof_state": "Pass",
+        "proof_surface_evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#agentic_service_harness_status_read_model"
+        ],
+        "proof_surface_id": "agentic_service_harness_status_read_model",
+        "proof_surface_status": "proof_bound"
+      },
+      "purpose": "",
+      "receipts": {
+        "can_claim_terminal_closure": false,
+        "can_emit_receipt": true,
+        "receipt_required": true,
+        "terminal_closure_required": true
+      }
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "snet",
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/73_snet_operator_read_model.md",
+        "docs/40_proof_coverage_matrix.md#snet_operator_read_model"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_snet_operator_read_model.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "identity": {
+        "aliases": [
+          "snet",
+          "symbolic_mesh"
+        ],
+        "name": "SNet Symbolic Mesh",
+        "owner_surface": "reasoning",
+        "type": "reasoning_symbolic_core"
+      },
+      "last_validation": {
+        "state": "validated",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator",
+          "component_passports_validator"
+        ]
+      },
+      "lifecycle": {
+        "authority_level": "read_only_advisory",
+        "lifecycle_state": "mounted",
+        "mode": "read_only",
+        "wiring_state": "mounted"
+      },
+      "passport_id": "component_passport.snet.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "passport_is_not_terminal_closure": true,
+      "proofs": {
+        "authority_witness_id": "component_authority_envelope.snet.foundation.v1",
+        "authority_witness_proof_state": "Pass",
+        "proof_surface_evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#snet_operator_read_model"
+        ],
+        "proof_surface_id": "snet_operator_read_model",
+        "proof_surface_status": "proof_bound"
+      },
+      "purpose": "",
+      "receipts": {
+        "can_claim_terminal_closure": false,
+        "can_emit_receipt": true,
+        "receipt_required": true,
+        "terminal_closure_required": true
+      }
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "inceptadive_shadow",
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/inceptadive-shadow-pass.md",
+        "docs/40_proof_coverage_matrix.md#operator_console_read_models"
+      ],
+      "health": {
+        "source": {
+          "ref": "/api/v1/console/shadow",
+          "type": "route"
+        },
+        "status": "known"
+      },
+      "identity": {
+        "aliases": [
+          "inceptadive_shadow",
+          "shadow_console"
+        ],
+        "name": "InceptaDive Shadow",
+        "owner_surface": "reasoning",
+        "type": "reasoning_symbolic_core"
+      },
+      "last_validation": {
+        "state": "validated",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator",
+          "component_passports_validator"
+        ]
+      },
+      "lifecycle": {
+        "authority_level": "read_only_advisory",
+        "lifecycle_state": "mounted",
+        "mode": "read_only_advisory",
+        "wiring_state": "mounted"
+      },
+      "passport_id": "component_passport.inceptadive_shadow.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "passport_is_not_terminal_closure": true,
+      "proofs": {
+        "authority_witness_id": "component_authority_envelope.inceptadive_shadow.foundation.v1",
+        "authority_witness_proof_state": "Pass",
+        "proof_surface_evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#operator_console_read_models"
+        ],
+        "proof_surface_id": "operator_console_read_models",
+        "proof_surface_status": "proof_bound"
+      },
+      "purpose": "",
+      "receipts": {
+        "can_claim_terminal_closure": false,
+        "can_emit_receipt": true,
+        "receipt_required": true,
+        "terminal_closure_required": true
+      }
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": true,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "blocked_actions": [
+        "calendar_write",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "send_email",
+        "terminal_closure"
+      ],
+      "component_id": "personal_assistant",
+      "dependencies": [
+        "governance_core",
+        "gmail_account_binding_gate"
+      ],
+      "evidence_refs": [
+        "docs/PERSONAL_ASSISTANT_SKILL_ARCHITECTURE.md",
+        "docs/40_proof_coverage_matrix.md#assistant_kernel_planning"
+      ],
+      "health": {
+        "source": {
+          "ref": "docs/PERSONAL_ASSISTANT_MVP_ROADMAP.md",
+          "type": "doc"
+        },
+        "status": "known"
+      },
+      "identity": {
+        "aliases": [
+          "assistant",
+          "personal_assistant"
+        ],
+        "name": "Personal Assistant",
+        "owner_surface": "assistant",
+        "type": "assistant_product_core"
+      },
+      "last_validation": {
+        "state": "validated",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator",
+          "component_passports_validator"
+        ]
+      },
+      "lifecycle": {
+        "authority_level": "draft_only",
+        "lifecycle_state": "draft_only",
+        "mode": "draft_only",
+        "wiring_state": "draft_only"
+      },
+      "passport_id": "component_passport.personal_assistant.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "passport_is_not_terminal_closure": true,
+      "proofs": {
+        "authority_witness_id": "component_authority_envelope.personal_assistant.foundation.v1",
+        "authority_witness_proof_state": "Pass",
+        "proof_surface_evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#assistant_kernel_planning"
+        ],
+        "proof_surface_id": "assistant_kernel_planning",
+        "proof_surface_status": "proof_bound"
+      },
+      "purpose": "",
+      "receipts": {
+        "can_claim_terminal_closure": false,
+        "can_emit_receipt": true,
+        "receipt_required": true,
+        "terminal_closure_required": true
+      }
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "blocked_actions": [
+        "external_send",
+        "mailbox_mutation",
+        "provider_write",
+        "send_email",
+        "terminal_closure"
+      ],
+      "component_id": "teamops_shared_inbox",
+      "dependencies": [
+        "governance_core",
+        "gmail_account_binding_gate"
+      ],
+      "evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_team_ops_shared_inbox_live_probe_authority.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "identity": {
+        "aliases": [
+          "teamops",
+          "team_ops"
+        ],
+        "name": "TeamOps Shared Inbox",
+        "owner_surface": "assistant",
+        "type": "assistant_product_core"
+      },
+      "last_validation": {
+        "state": "validated",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator",
+          "component_passports_validator"
+        ]
+      },
+      "lifecycle": {
+        "authority_level": "live_probe",
+        "lifecycle_state": "live_probe",
+        "mode": "live_probe",
+        "wiring_state": "live_probe"
+      },
+      "passport_id": "component_passport.teamops_shared_inbox.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "passport_is_not_terminal_closure": true,
+      "proofs": {
+        "authority_witness_id": "component_authority_envelope.teamops_shared_inbox.foundation.v1",
+        "authority_witness_proof_state": "Pass",
+        "proof_surface_evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+        ],
+        "proof_surface_id": "governed_connector_framework",
+        "proof_surface_status": "proof_bound"
+      },
+      "purpose": "",
+      "receipts": {
+        "can_claim_terminal_closure": false,
+        "can_emit_receipt": true,
+        "receipt_required": true,
+        "terminal_closure_required": true
+      }
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": false,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "blocked_actions": [
+        "account_binding_claim",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "provider_write",
+        "send_email",
+        "terminal_closure"
+      ],
+      "component_id": "gmail_account_binding_gate",
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/64_durable_gmail_connector_runtime_plan.md",
+        "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_durable_gmail_oauth_operator_handoff.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "identity": {
+        "aliases": [
+          "gmail_gate",
+          "gmail"
+        ],
+        "name": "Gmail Account Binding Gate",
+        "owner_surface": "connector",
+        "type": "connector_action_core"
+      },
+      "last_validation": {
+        "state": "validated",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator",
+          "component_passports_validator"
+        ]
+      },
+      "lifecycle": {
+        "authority_level": "approval_required",
+        "lifecycle_state": "approval_required",
+        "mode": "approval_required",
+        "wiring_state": "approval_required"
+      },
+      "passport_id": "component_passport.gmail_account_binding_gate.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "passport_is_not_terminal_closure": true,
+      "proofs": {
+        "authority_witness_id": "component_authority_envelope.gmail_account_binding_gate.foundation.v1",
+        "authority_witness_proof_state": "Pass",
+        "proof_surface_evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#governed_connector_framework"
+        ],
+        "proof_surface_id": "governed_connector_framework",
+        "proof_surface_status": "proof_bound"
+      },
+      "purpose": "",
+      "receipts": {
+        "can_claim_terminal_closure": false,
+        "can_emit_receipt": true,
+        "receipt_required": true,
+        "terminal_closure_required": true
+      }
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "blocked_actions": [
+        "autonomous_execution",
+        "filesystem_write",
+        "live_dispatch",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "worker_runtime",
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#networked_worker_mesh"
+      ],
+      "health": {
+        "source": {
+          "ref": "gateway/worker_mesh.py",
+          "type": "read_model"
+        },
+        "status": "known"
+      },
+      "identity": {
+        "aliases": [
+          "worker_runtime",
+          "worker_mesh"
+        ],
+        "name": "Worker Runtime",
+        "owner_surface": "execution",
+        "type": "execution_tooling_core"
+      },
+      "last_validation": {
+        "state": "validated",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator",
+          "component_passports_validator"
+        ]
+      },
+      "lifecycle": {
+        "authority_level": "approval_required",
+        "lifecycle_state": "bootstrapped",
+        "mode": "approval_required",
+        "wiring_state": "bootstrapped"
+      },
+      "passport_id": "component_passport.worker_runtime.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "passport_is_not_terminal_closure": true,
+      "proofs": {
+        "authority_witness_id": "component_authority_envelope.worker_runtime.foundation.v1",
+        "authority_witness_proof_state": "Pass",
+        "proof_surface_evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#networked_worker_mesh"
+        ],
+        "proof_surface_id": "networked_worker_mesh",
+        "proof_surface_status": "proof_bound"
+      },
+      "purpose": "",
+      "receipts": {
+        "can_claim_terminal_closure": false,
+        "can_emit_receipt": true,
+        "receipt_required": true,
+        "terminal_closure_required": true
+      }
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": true,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "filesystem_write",
+        "live_dispatch",
+        "provider_write",
+        "terminal_closure"
+      ],
+      "component_id": "capability_workers",
+      "dependencies": [
+        "governance_core",
+        "worker_runtime"
+      ],
+      "evidence_refs": [
+        "docs/40_proof_coverage_matrix.md#capability_worker_execution",
+        "docs/40_proof_coverage_matrix.md#restricted_adapter_worker_boundaries"
+      ],
+      "health": {
+        "source": {
+          "ref": "gateway/capability_worker.py",
+          "type": "read_model"
+        },
+        "status": "known"
+      },
+      "identity": {
+        "aliases": [
+          "capability_worker",
+          "restricted_workers"
+        ],
+        "name": "Capability Workers",
+        "owner_surface": "execution",
+        "type": "execution_tooling_core"
+      },
+      "last_validation": {
+        "state": "validated",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator",
+          "component_passports_validator"
+        ]
+      },
+      "lifecycle": {
+        "authority_level": "approval_required",
+        "lifecycle_state": "bootstrapped",
+        "mode": "approval_required",
+        "wiring_state": "bootstrapped"
+      },
+      "passport_id": "component_passport.capability_workers.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "passport_is_not_terminal_closure": true,
+      "proofs": {
+        "authority_witness_id": "component_authority_envelope.capability_workers.foundation.v1",
+        "authority_witness_proof_state": "Pass",
+        "proof_surface_evidence_refs": [
+          "docs/40_proof_coverage_matrix.md#capability_worker_execution"
+        ],
+        "proof_surface_id": "capability_worker_execution",
+        "proof_surface_status": "proof_bound"
+      },
+      "purpose": "",
+      "receipts": {
+        "can_claim_terminal_closure": false,
+        "can_emit_receipt": true,
+        "receipt_required": true,
+        "terminal_closure_required": true
+      }
+    },
+    {
+      "authority": {
+        "can_call_connector": false,
+        "can_claim_terminal_closure": false,
+        "can_draft": false,
+        "can_emit_receipt": false,
+        "can_execute": false,
+        "can_mutate": false,
+        "can_preview": true,
+        "can_read": true,
+        "can_send_external_message": false,
+        "can_write_files": false
+      },
+      "blocked_actions": [
+        "external_send",
+        "memory_topology_activation",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "nested_mind_bridge",
+      "dependencies": [
+        "governance_core"
+      ],
+      "evidence_refs": [
+        "docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md",
+        "docs/runbooks/nested-mind-record-observation-staging.md"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_nested_mind_p3_readiness.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "identity": {
+        "aliases": [
+          "nested_mind",
+          "nested_mind_submission"
+        ],
+        "name": "Nested Mind Bridge",
+        "owner_surface": "memory",
+        "type": "data_memory_core"
+      },
+      "last_validation": {
+        "state": "validated",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator",
+          "component_passports_validator"
+        ]
+      },
+      "lifecycle": {
+        "authority_level": "blocked",
+        "lifecycle_state": "present",
+        "mode": "blocked",
+        "wiring_state": "blocked"
+      },
+      "passport_id": "component_passport.nested_mind_bridge.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "passport_is_not_terminal_closure": true,
+      "proofs": {
+        "authority_witness_id": "component_authority_envelope.nested_mind_bridge.foundation.v1",
+        "authority_witness_proof_state": "Pass",
+        "proof_surface_evidence_refs": [],
+        "proof_surface_id": null,
+        "proof_surface_status": "awaiting_binding"
+      },
+      "purpose": "",
+      "receipts": {
+        "can_claim_terminal_closure": false,
+        "can_emit_receipt": false,
+        "receipt_required": false,
+        "terminal_closure_required": true
+      }
+    }
+  ],
+  "schema_version": 1,
+  "source_refs": {
+    "authority_envelope_witnesses": "examples/component_authority_envelope_witnesses.foundation.json",
+    "registry": "examples/component_registry.foundation.json"
+  },
+  "summary": {
+    "authority_witness_count": 10,
+    "awaiting_binding_count": 1,
+    "blocked_component_count": 1,
+    "component_count": 10,
+    "passport_count": 10,
+    "proof_bound_count": 9
+  },
+  "terminal_closure_required": true,
+  "validators": [
+    {
+      "command": "python scripts/validate_component_passports.py",
+      "required_for_closure": true,
+      "validator_id": "component_passports_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_component_passports.py -q",
+      "required_for_closure": true,
+      "validator_id": "component_passports_tests"
+    }
+  ]
+}
