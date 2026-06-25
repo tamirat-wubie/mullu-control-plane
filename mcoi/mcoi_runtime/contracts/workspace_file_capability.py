@@ -52,6 +52,14 @@ class WorkspaceFileDecision(StrEnum):
     BLOCK = "block"
 
 
+class WorkspaceFileAutonomyMode(StrEnum):
+    """Autonomy modes accepted by workspace file preflight."""
+
+    AUTONOMOUS_LOCAL = "autonomous_local"
+    BOUNDED_AUTONOMOUS = "bounded_autonomous"
+    APPROVAL_REQUIRED = "approval_required"
+
+
 def coerce_workspace_file_operation(value: WorkspaceFileOperation | str) -> WorkspaceFileOperation:
     """Return a WorkspaceFileOperation or raise a bounded validation error."""
     if isinstance(value, WorkspaceFileOperation):
@@ -60,6 +68,16 @@ def coerce_workspace_file_operation(value: WorkspaceFileOperation | str) -> Work
         return WorkspaceFileOperation(str(value))
     except ValueError as exc:
         raise ValueError("operation must be a known workspace file operation") from exc
+
+
+def coerce_workspace_file_autonomy_mode(value: WorkspaceFileAutonomyMode | str) -> WorkspaceFileAutonomyMode:
+    """Return a WorkspaceFileAutonomyMode or raise a bounded validation error."""
+    if isinstance(value, WorkspaceFileAutonomyMode):
+        return value
+    try:
+        return WorkspaceFileAutonomyMode(str(value))
+    except ValueError as exc:
+        raise ValueError("autonomy_mode must be a known workspace file autonomy mode") from exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +91,7 @@ class WorkspaceFilePreflightRequest(ContractRecord):
     purpose: str
     secondary_path: str = ""
     expected_diff_hash: str = ""
+    autonomy_mode: WorkspaceFileAutonomyMode | str = WorkspaceFileAutonomyMode.AUTONOMOUS_LOCAL
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -89,6 +108,7 @@ class WorkspaceFilePreflightRequest(ContractRecord):
                 "expected_diff_hash",
                 require_non_empty_text(self.expected_diff_hash, "expected_diff_hash"),
             )
+        object.__setattr__(self, "autonomy_mode", coerce_workspace_file_autonomy_mode(self.autonomy_mode))
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
 
@@ -104,6 +124,7 @@ class WorkspaceFilePreflightResult(ContractRecord):
     risk_level: WorkspaceFileRiskLevel | str
     actor_id: str
     purpose: str
+    autonomy_mode: WorkspaceFileAutonomyMode | str
     world_mutating: bool
     approval_required: bool
     sandbox_required: bool
@@ -128,6 +149,7 @@ class WorkspaceFilePreflightResult(ContractRecord):
         object.__setattr__(self, "risk_level", WorkspaceFileRiskLevel(str(self.risk_level)))
         object.__setattr__(self, "actor_id", require_non_empty_text(self.actor_id, "actor_id"))
         object.__setattr__(self, "purpose", require_non_empty_text(self.purpose, "purpose"))
+        object.__setattr__(self, "autonomy_mode", coerce_workspace_file_autonomy_mode(self.autonomy_mode))
         if not isinstance(self.world_mutating, bool):
             raise ValueError("world_mutating must be a boolean")
         if not isinstance(self.approval_required, bool):

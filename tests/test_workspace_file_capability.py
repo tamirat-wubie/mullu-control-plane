@@ -78,13 +78,34 @@ def test_preflight_routes_patch_to_guarded_capabilities() -> None:
     )
 
     assert result.decision is WorkspaceFileDecision.ALLOW
+    assert result.autonomy_mode == "autonomous_local"
     assert result.risk_level is WorkspaceFileRiskLevel.LEVEL_2_EDIT_EXISTING_FILE
     assert result.world_mutating is True
+    assert result.approval_required is False
     assert result.rollback_required is True
     assert "computer.code.patch" in result.allowed_capability_ids
     assert "software_dev.change.run" in result.allowed_capability_ids
     assert "before_hash" in result.required_evidence
     assert "after_hash" in result.required_evidence
+
+
+def test_preflight_approval_required_mode_gates_reversible_local_patch() -> None:
+    result = preflight_workspace_file_operation(
+        _request(
+            operation="apply_patch",
+            purpose="repair test",
+            target_path="tests/test_app.py",
+            autonomy_mode="approval_required",
+        )
+    )
+
+    assert result.decision is WorkspaceFileDecision.REQUIRE_APPROVAL
+    assert result.autonomy_mode == "approval_required"
+    assert result.risk_level is WorkspaceFileRiskLevel.LEVEL_2_EDIT_EXISTING_FILE
+    assert result.approval_required is True
+    assert result.allowed_capability_ids == ()
+    assert "approval_ref" in result.required_evidence
+    assert "autonomy_mode:approval_required" in result.reasons
 
 
 def test_preflight_requires_approval_for_protected_governance_paths() -> None:
@@ -144,6 +165,7 @@ def test_workspace_file_preflight_schemas_accept_representative_payloads() -> No
         "target_path": "tests/test_app.py",
         "actor_id": "developer:local",
         "purpose": "repair test",
+        "autonomy_mode": "autonomous_local",
         "metadata": {"fixture": "workspace_file_capability"},
     }
     output_payload = preflight_workspace_file_operation(
@@ -152,6 +174,7 @@ def test_workspace_file_preflight_schemas_accept_representative_payloads() -> No
 
     assert _validate_schema_instance(_load_schema(INPUT_SCHEMA), input_payload) == []
     assert _validate_schema_instance(_load_schema(OUTPUT_SCHEMA), output_payload) == []
+    assert output_payload["autonomy_mode"] == "autonomous_local"
     assert output_payload["metadata"]["preflight_is_not_execution_authority"] is True
 
 
@@ -163,6 +186,21 @@ def test_workspace_file_preflight_schema_rejects_path_escape() -> None:
         "target_path": "../secrets.env",
         "actor_id": "developer:local",
         "purpose": "bad path",
+        "metadata": {},
+    }
+
+    assert _validate_schema_instance(_load_schema(INPUT_SCHEMA), payload)
+
+
+def test_workspace_file_preflight_schema_rejects_unknown_autonomy_mode() -> None:
+    payload = {
+        "capability_id": "computer.workspace_file.preflight",
+        "request_id": "req-workspace-file",
+        "operation": "apply_patch",
+        "target_path": "tests/test_app.py",
+        "actor_id": "developer:local",
+        "purpose": "repair test",
+        "autonomy_mode": "unguarded",
         "metadata": {},
     }
 
@@ -181,8 +219,10 @@ def test_computer_pack_declares_canonical_preflight_capability() -> None:
     assert CapabilityRegistryEntry.from_mapping(entry).capability_id == "computer.workspace_file.preflight"
     assert entry["extensions"]["governed_record"]["read_only"] is True
     assert entry["extensions"]["governed_record"]["world_mutating"] is False
+    assert "autonomy_mode" in entry["evidence_model"]["required_evidence"]
     assert "workspace_file_written" in entry["effect_model"]["forbidden_effects"]
     assert "delete" in entry["extensions"]["governed_record"]["canonical_workspace_operations"]
+    assert "autonomous_local" in entry["extensions"]["governed_record"]["accepted_autonomy_modes"]
 
 
 def test_dispatcher_exposes_preflight_without_file_executor() -> None:
@@ -209,3 +249,4 @@ def test_dispatcher_exposes_preflight_without_file_executor() -> None:
     assert result["decision"] == "proposal_only"
     assert result["receipt_status"] == "preflighted"
     assert result["workspace_file_preflight"]["allowed_capability_ids"] == []
+    assert result["workspace_file_preflight"]["autonomy_mode"] == "autonomous_local"

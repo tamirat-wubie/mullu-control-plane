@@ -957,6 +957,7 @@ def _workspace_file_preflight(
             actor_id=str(params.get("actor_id") or context.identity_id),
             purpose=purpose,
             expected_diff_hash=str(params.get("expected_diff_hash") or ""),
+            autonomy_mode=str(params.get("autonomy_mode") or "autonomous_local"),
             metadata=dict(params.get("metadata", {})),
         )
         result = preflight_workspace_file_operation(request)

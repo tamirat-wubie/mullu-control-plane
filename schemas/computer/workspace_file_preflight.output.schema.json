@@ -14,6 +14,7 @@
     "risk_level",
     "actor_id",
     "purpose",
+    "autonomy_mode",
     "world_mutating",
     "approval_required",
     "sandbox_required",
@@ -78,6 +79,9 @@
     "purpose": {
       "type": "string",
       "minLength": 1
+    },
+    "autonomy_mode": {
+      "enum": ["autonomous_local", "bounded_autonomous", "approval_required"]
     },
     "world_mutating": {
       "type": "boolean"
