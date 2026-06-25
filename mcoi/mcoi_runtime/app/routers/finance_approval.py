@@ -40,6 +40,7 @@ from mcoi_runtime.core.finance_approval import (
     export_finance_packet_proof,
     transition_invoice_case,
 )
+from mcoi_runtime.core.finance_approval.proof import finance_life_meaning_judgment_ref
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.persistence.finance_approval_store import FinanceApprovalPacketStore
 
@@ -165,7 +166,7 @@ def create_finance_approval_packet(req: FinancePacketCreateRequest, request: Req
             risk=risk,
             created_at=now,
             updated_at=now,
-            metadata=req.metadata,
+            metadata=_finance_packet_metadata(req.metadata, req.case_id),
         )
         decision = evaluate_finance_packet_policy(
             case,
@@ -257,6 +258,7 @@ def finance_approval_operator_read_model(
                 "effect_ref_count": len(case.effect_refs),
                 "closure_certificate_id": case.closure_certificate_id,
                 "proof_exportable": proof_exportable,
+                "life_meaning_judgment_ref": finance_life_meaning_judgment_ref(case),
                 "updated_at": case.updated_at,
             }
         )
@@ -543,3 +545,14 @@ def get_finance_approval_packet_proof(case_id: str, request: Request):
     except FinanceProofExportError as exc:
         raise HTTPException(400, detail=_error_detail("proof not exportable", "proof_not_exportable")) from exc
     return {"proof": proof.to_json_dict(), "governed": True}
+
+
+def _finance_packet_metadata(metadata: dict[str, Any], case_id: str) -> dict[str, Any]:
+    normalized = dict(metadata)
+    life_meaning_ref = normalized.get("life_meaning_judgment_ref")
+    if not isinstance(life_meaning_ref, str) or not life_meaning_ref.strip():
+        normalized["life_meaning_judgment_ref"] = f"life-meaning:finance-approval:{case_id}"
+    else:
+        normalized["life_meaning_judgment_ref"] = life_meaning_ref.strip()
+    normalized["life_meaning_judgment_required"] = True
+    return normalized

@@ -388,6 +388,7 @@ def _operator_queue_item(
     *, plan: Any, tenant_id: str, owner_id: str, cognitive_context: dict | None = None
 ) -> dict[str, Any]:
     queue_state = "blocked" if plan.blocked else "ready_for_governed_dispatch"
+    life_meaning_judgment_ref = _plan_life_meaning_judgment_ref(plan)
     queue_id = stable_identifier(
         "assistant-operator-queue",
         {
@@ -407,11 +408,21 @@ def _operator_queue_item(
         "required_controls": list(plan.required_controls),
         "step_count": len(plan.steps),
         "execution_authority_granted": False,
+        "life_meaning_judgment_required": True,
+        "life_meaning_judgment_ref": life_meaning_judgment_ref,
     }
     # Advisory only; never changes queue identity (queue_id excludes it).
     if cognitive_context is not None:
         item["cognitive_planning_context"] = cognitive_context
     return item
+
+
+def _plan_life_meaning_judgment_ref(plan: Any) -> str:
+    metadata = getattr(plan, "metadata", {})
+    ref = metadata.get("life_meaning_judgment_ref") if isinstance(metadata, Mapping) else None
+    if isinstance(ref, str) and ref.strip():
+        return ref.strip()
+    return f"life-meaning:assistant-plan:{plan.plan_id}"
 
 
 def _inceptadive_shadow_advisory(

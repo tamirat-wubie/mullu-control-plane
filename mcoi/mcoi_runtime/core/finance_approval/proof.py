@@ -31,6 +31,7 @@ _CLOSED_STATES = frozenset(
     }
 )
 _PROOF_ALLOWED_STATES = _CLOSED_STATES | {FinancePacketState.REQUIRES_REVIEW}
+_LIFE_MEANING_JUDGMENT_REQUIRED = True
 
 
 def export_finance_packet_proof(
@@ -59,6 +60,7 @@ def export_finance_packet_proof(
     if invoice_case.state is FinancePacketState.CLOSED_SENT and not invoice_case.effect_refs:
         raise FinanceProofExportError("effect_refs are required for closed_sent")
 
+    life_meaning_judgment_ref = finance_life_meaning_judgment_ref(invoice_case)
     evidence_refs = _collect_evidence_refs(invoice_case, policy_decisions)
     return FinanceApprovalPacketProof(
         proof_id=stable_identifier(
@@ -73,13 +75,26 @@ def export_finance_packet_proof(
         tenant_id=invoice_case.tenant_id,
         final_state=invoice_case.state,
         policy_decisions=tuple(decision.decision_id for decision in policy_decisions),
-        evidence_refs=evidence_refs,
+        evidence_refs=_dedupe_text_refs((*evidence_refs, life_meaning_judgment_ref)),
         approval_refs=invoice_case.approval_refs,
         effect_refs=invoice_case.effect_refs,
         closure_certificate_id=invoice_case.closure_certificate_id,
         audit_root_hash=audit_root_hash,
         generated_at=generated_at,
+        metadata={
+            "life_meaning_judgment_required": _LIFE_MEANING_JUDGMENT_REQUIRED,
+            "life_meaning_judgment_ref": life_meaning_judgment_ref,
+        },
     )
+
+
+def finance_life_meaning_judgment_ref(invoice_case: InvoiceCase) -> str:
+    """Return the packet's life-meaning judgment authority reference."""
+
+    metadata_ref = invoice_case.metadata.get("life_meaning_judgment_ref")
+    if isinstance(metadata_ref, str) and metadata_ref.strip():
+        return metadata_ref.strip()
+    return f"life-meaning:finance-approval:{invoice_case.case_id}"
 
 
 def _collect_evidence_refs(
@@ -91,12 +106,17 @@ def _collect_evidence_refs(
         evidence_refs.extend(decision.evidence_refs)
     evidence_refs.extend(invoice_case.approval_refs)
     evidence_refs.extend(invoice_case.effect_refs)
+    deduped = list(_dedupe_text_refs(tuple(evidence_refs)))
+    if not deduped:
+        raise FinanceProofExportError("evidence_refs are required")
+    return tuple(deduped)
+
+
+def _dedupe_text_refs(evidence_refs: tuple[str, ...]) -> tuple[str, ...]:
     seen: set[str] = set()
     deduped: list[str] = []
     for evidence_ref in evidence_refs:
         if evidence_ref not in seen:
             seen.add(evidence_ref)
             deduped.append(evidence_ref)
-    if not deduped:
-        raise FinanceProofExportError("evidence_refs are required")
     return tuple(deduped)

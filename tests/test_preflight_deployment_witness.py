@@ -110,9 +110,12 @@ def test_preflight_deployment_witness_reports_ready(tmp_path: Path) -> None:
 
     assert report.ready is True
     assert report.gateway_url == "https://gateway.mullusi.com"
-    assert len(report.steps) == 9
+    assert len(report.steps) == 10
     assert all(step.passed for step in report.steps)
     assert payload["ready"] is True
+    assert payload["life_meaning_judgment_required"] is True
+    assert payload["life_meaning_judgment_ref"] == report.life_meaning_judgment_ref
+    assert any(step.name == "life meaning judgment preflight" for step in report.steps)
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 
@@ -146,8 +149,9 @@ def test_preflight_deployment_witness_can_skip_endpoint_probes() -> None:
     )
 
     assert report.ready is False
-    assert len(report.steps) == 6
+    assert len(report.steps) == 7
     assert report.steps[-1].name == "deployment witness workflow"
+    assert any(step.name == "life meaning judgment preflight" for step in report.steps)
     assert any(step.name == "runtime witness secret" for step in report.steps)
     assert any(step.name == "runtime conformance secret" for step in report.steps)
     assert any(step.name == "deployment witness secret" for step in report.steps)
@@ -228,7 +232,7 @@ def test_preflight_deployment_witness_accepts_valid_mcp_manifest() -> None:
     assert "valid=True" in manifest_step.detail
     assert "capabilities=1" in manifest_step.detail
     assert "approval_policies=1" in manifest_step.detail
-    assert len(report.steps) == 7
+    assert len(report.steps) == 8
 
 
 def test_preflight_deployment_witness_rejects_invalid_mcp_manifest(tmp_path: Path) -> None:

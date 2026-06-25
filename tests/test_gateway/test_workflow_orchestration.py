@@ -50,6 +50,8 @@ def test_invoice_workflow_waits_for_approval_then_closes_with_terminal_certifica
 
     assert run.status == WorkflowRunStatus.WAITING_FOR_APPROVAL
     assert _status(run, "manager-approval") == TaskRunStatus.WAITING_FOR_APPROVAL
+    assert run.metadata["life_meaning_judgment_required"] is True
+    assert run.metadata["life_meaning_judgment_ref"] == "life-meaning:workflow-run:workflow-run-001"
     assert run.task_runs[0].task_hash
 
     run = orchestrator.approve_task(run, task_id="manager-approval", approval_ref="approval://case-001")
@@ -95,11 +97,14 @@ def test_workflow_lifecycle_records_bounded_mutation_receipts() -> None:
     )
     assert receipts[0].previous_workflow_status is None
     assert receipts[0].new_workflow_status == "waiting_for_approval"
+    assert receipts[0].metadata["life_meaning_judgment_required"] is True
+    assert receipts[0].metadata["life_meaning_judgment_ref"] == run.metadata["life_meaning_judgment_ref"]
     assert receipts[1].task_id == "manager-approval"
     assert receipts[1].previous_task_status == "waiting_for_approval"
     assert receipts[1].new_task_status == "approved"
     assert receipts[2].metadata["attempts"] == 1
     assert receipts[3].metadata["evidence_ref_hashes"]
+    assert all(receipt.metadata["life_meaning_judgment_ref"] == run.metadata["life_meaning_judgment_ref"] for receipt in receipts)
     assert "secret-actor" not in str(receipts[0].to_dict())
     assert "secret goal" not in str(receipts[0].to_dict())
     assert "approval://case-001" not in str(receipts[1].to_dict())
@@ -153,6 +158,8 @@ def test_workflow_receipts_convert_to_effect_records() -> None:
     assert effect.details["workflow_run_id"] == run.workflow_run_id
     assert effect.details["evidence_ref"].startswith("workflow-receipt:")
     assert effect.details["new_workflow_status"] == "waiting_for_approval"
+    assert effect.details["metadata"]["life_meaning_judgment_required"] is True
+    assert effect.details["metadata"]["life_meaning_judgment_ref"] == run.metadata["life_meaning_judgment_ref"]
 
 
 def test_workflow_mutation_receipt_closes_effect_assurance() -> None:
@@ -304,6 +311,8 @@ def test_workflow_run_schema_exposes_runtime_contract() -> None:
 
     assert set(schema["required"]).issubset(payload)
     assert schema["$id"] == "urn:mullusi:schema:workflow-run:1"
+    assert payload["metadata"]["life_meaning_judgment_required"] is True
+    assert payload["metadata"]["life_meaning_judgment_ref"] == run.metadata["life_meaning_judgment_ref"]
     assert schema["$defs"]["task_spec"]["properties"]["task_type"]["enum"] == [
         "task",
         "approval_task",

@@ -66,6 +66,8 @@ class WorkflowRunStatus(StrEnum):
 _CLOSED_TASK_STATUSES = frozenset({TaskRunStatus.COMMITTED, TaskRunStatus.COMPENSATED})
 _REVIEW_TASK_STATUSES = frozenset({TaskRunStatus.REQUIRES_REVIEW, TaskRunStatus.FAILED})
 _MUTATION_RECEIPTS_METADATA_KEY = "mutation_receipts"
+_LIFE_MEANING_JUDGMENT_REQUIRED_METADATA_KEY = "life_meaning_judgment_required"
+_LIFE_MEANING_JUDGMENT_REF_METADATA_KEY = "life_meaning_judgment_ref"
 
 
 @dataclass(frozen=True, slots=True)
@@ -252,6 +254,7 @@ class WorkflowOrchestrator:
         if _MUTATION_RECEIPTS_METADATA_KEY in metadata_payload:
             raise ValueError("workflow_metadata_reserved_mutation_receipts")
         run_id = workflow_run_id or f"workflow-run-{_hash_payload({'workflow_id': workflow_id, 'tenant_id': tenant_id, 'goal': goal})[:16]}"
+        metadata_payload = _workflow_life_meaning_metadata(metadata_payload, run_id)
         task_runs = tuple(_initial_task_run(run_id, task) for task in task_tuple)
         run = _stamp_run(WorkflowRun(
             workflow_run_id=run_id,
@@ -606,7 +609,11 @@ def _append_mutation_receipt(
         previous_task_status=previous_task_status.value if previous_task_status is not None else None,
         new_task_status=new_task_status.value if new_task_status is not None else None,
         recorded_at=f"workflow-mutation:{ordinal}",
-        metadata=metadata or {},
+        metadata={
+            **(metadata or {}),
+            _LIFE_MEANING_JUDGMENT_REQUIRED_METADATA_KEY: True,
+            _LIFE_MEANING_JUDGMENT_REF_METADATA_KEY: _workflow_life_meaning_judgment_ref(run),
+        },
     )
     next_metadata = dict(run.metadata)
     next_metadata[_MUTATION_RECEIPTS_METADATA_KEY] = (*existing, receipt.to_dict())
@@ -638,6 +645,24 @@ def _workflow_receipt_from_dict(payload: Any) -> WorkflowMutationReceipt:
         recorded_at=str(payload.get("recorded_at") or ""),
         metadata=dict(payload.get("metadata") or {}),
     )
+
+
+def _workflow_life_meaning_metadata(metadata: dict[str, Any], workflow_run_id: str) -> dict[str, Any]:
+    next_metadata = dict(metadata)
+    ref = next_metadata.get(_LIFE_MEANING_JUDGMENT_REF_METADATA_KEY)
+    if not isinstance(ref, str) or not ref.strip():
+        next_metadata[_LIFE_MEANING_JUDGMENT_REF_METADATA_KEY] = f"life-meaning:workflow-run:{workflow_run_id}"
+    else:
+        next_metadata[_LIFE_MEANING_JUDGMENT_REF_METADATA_KEY] = ref.strip()
+    next_metadata[_LIFE_MEANING_JUDGMENT_REQUIRED_METADATA_KEY] = True
+    return next_metadata
+
+
+def _workflow_life_meaning_judgment_ref(run: WorkflowRun) -> str:
+    ref = run.metadata.get(_LIFE_MEANING_JUDGMENT_REF_METADATA_KEY)
+    if isinstance(ref, str) and ref.strip():
+        return ref.strip()
+    return f"life-meaning:workflow-run:{run.workflow_run_id}"
 
 
 def _workflow_receipt_id(

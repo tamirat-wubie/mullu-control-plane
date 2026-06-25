@@ -313,6 +313,8 @@ def test_assistant_kernel_compiles_finance_ops_plan_with_consent_and_controls() 
     assert "temporal_idempotency" in plan.required_controls
     assert "effect_reconciliation" in plan.required_controls
     assert plan.metadata["plan_is_not_execution"] is True
+    assert plan.metadata["life_meaning_judgment_required"] is True
+    assert plan.metadata["life_meaning_judgment_ref"] == f"life-meaning:assistant-plan:{plan.plan_id}"
     assert plan.plan_hash
 
 
@@ -324,6 +326,8 @@ def test_finance_ops_plan_requires_active_consent() -> None:
     assert "active_consent_required:payment.execute.with_approval" in plan.blocked_reasons
     assert "terminal_closure" in plan.required_controls
     assert plan.metadata["plan_is_not_execution"] is True
+    assert plan.metadata["life_meaning_judgment_required"] is True
+    assert plan.metadata["life_meaning_judgment_ref"] == f"life-meaning:assistant-plan:{plan.plan_id}"
     assert plan.plan_hash
 
 
@@ -348,6 +352,8 @@ def test_finance_ops_plan_projects_operator_queue() -> None:
     assert queue_item["step_count"] == len(plan.steps)
     assert queue_item["required_controls"] == list(plan.required_controls)
     assert queue_item["execution_authority_granted"] is False
+    assert queue_item["life_meaning_judgment_required"] is True
+    assert queue_item["life_meaning_judgment_ref"] == plan.metadata["life_meaning_judgment_ref"]
 
 
 def test_assistant_kernel_compiles_team_ops_plan_with_consent_and_controls() -> None:
@@ -373,6 +379,8 @@ def test_assistant_kernel_compiles_team_ops_plan_with_consent_and_controls() -> 
     assert "fresh_approval" in plan.required_controls
     assert goal.metadata["classification_skill_id"] == "skill.team_ops.shared_inbox_triage"
     assert plan.metadata["plan_is_not_execution"] is True
+    assert plan.metadata["life_meaning_judgment_required"] is True
+    assert plan.metadata["life_meaning_judgment_ref"] == f"life-meaning:assistant-plan:{plan.plan_id}"
     assert plan.plan_hash
 
 
@@ -385,6 +393,8 @@ def test_team_ops_plan_requires_active_external_send_consent() -> None:
     assert "terminal_closure" in plan.required_controls
     assert "active_consent" in plan.required_controls
     assert plan.metadata["plan_is_not_execution"] is True
+    assert plan.metadata["life_meaning_judgment_required"] is True
+    assert plan.metadata["life_meaning_judgment_ref"] == f"life-meaning:assistant-plan:{plan.plan_id}"
     assert plan.plan_hash
 
 
@@ -409,6 +419,8 @@ def test_team_ops_plan_projects_operator_queue() -> None:
     assert queue_item["step_count"] == len(plan.steps)
     assert queue_item["required_controls"] == list(plan.required_controls)
     assert queue_item["execution_authority_granted"] is False
+    assert queue_item["life_meaning_judgment_required"] is True
+    assert queue_item["life_meaning_judgment_ref"] == plan.metadata["life_meaning_judgment_ref"]
 
 
 def test_assistant_plan_never_grants_execution_authority() -> None:
@@ -438,6 +450,8 @@ def test_assistant_plan_never_grants_execution_authority() -> None:
     assert ready_queue_item["state"] == "ready_for_governed_dispatch"
     assert blocked_plan.metadata["plan_is_not_execution"] is True
     assert ready_plan.metadata["plan_is_not_execution"] is True
+    assert blocked_queue_item["life_meaning_judgment_ref"] == blocked_plan.metadata["life_meaning_judgment_ref"]
+    assert ready_queue_item["life_meaning_judgment_ref"] == ready_plan.metadata["life_meaning_judgment_ref"]
 
 
 def test_assistant_plan_errors_sanitized() -> None:

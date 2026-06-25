@@ -231,6 +231,8 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
 
     assert result.blocked is False
     assert result.dispatched is True
+    assert result.life_meaning_judgment is not None
+    assert result.life_meaning_judgment.decision == "pass"
     assert result.goal_certificate.goal.goal_id == "goal-1"
     assert result.world_certificate.allows_execution is True
     assert result.plan_certificate is not None
@@ -387,6 +389,7 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["life_meaning_judgment"]["judgment_id"].startswith(
         "life-meaning:"
     )
+    assert record["life_meaning_judgment"] == result.life_meaning_judgment.as_dict()
     assert record["life_meaning_judgment"]["action_id"] == result.action_id
     assert record["life_meaning_judgment"]["decision"] == "pass"
     assert record["life_meaning_judgment"]["truth_preserved"] is True
@@ -489,25 +492,22 @@ def test_universal_action_record_rejects_tampered_whqr_replay_metadata() -> None
 
 
 def test_universal_action_record_rejects_malformed_life_meaning_evidence_refs() -> None:
-    kernel, _executor = _kernel_with_capability()
+    kernel, executor = _kernel_with_capability()
     request = _action_request(
         intent_id="intent-life-meaning-bad-evidence",
         metadata={"life_meaning_judgment": {"evidence_refs": ["trace://valid", 7]}},
     )
-    result = kernel.run(request)
 
-    try:
-        build_universal_action_orchestration_record(request=request, result=result)
-    except RuntimeCoreInvariantError as exc:
-        assert "life_meaning_judgment.evidence_refs" in str(exc)
-        assert "non-empty strings" in str(exc)
-        assert result.dispatched is True
-    else:
-        raise AssertionError("malformed life-meaning evidence refs were accepted")
+    with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+        kernel.run(request)
+
+    assert "life_meaning_judgment.evidence_refs" in str(exc_info.value)
+    assert "non-empty strings" in str(exc_info.value)
+    assert executor.calls == 0
 
 
 def test_universal_action_record_rejects_boolean_life_meaning_symbol_levels() -> None:
-    kernel, _executor = _kernel_with_capability()
+    kernel, executor = _kernel_with_capability()
     request = _action_request(
         intent_id="intent-life-meaning-bool-level",
         metadata={
@@ -526,16 +526,91 @@ def test_universal_action_record_rejects_boolean_life_meaning_symbol_levels() ->
             }
         },
     )
-    result = kernel.run(request)
 
-    try:
-        build_universal_action_orchestration_record(request=request, result=result)
-    except RuntimeCoreInvariantError as exc:
-        assert "fragility_level must be an integer in [0,10]" in str(exc)
-        assert result.dispatched is True
-        assert result.proof_hash.startswith("universal-action-proof-")
-    else:
-        raise AssertionError("boolean life-meaning symbol level was accepted")
+    with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+        kernel.run(request)
+
+    assert "fragility_level must be an integer in [0,10]" in str(exc_info.value)
+    assert executor.calls == 0
+
+
+def test_universal_action_kernel_pauses_life_meaning_before_dispatch() -> None:
+    kernel, executor = _kernel_with_capability()
+    request = _action_request(
+        intent_id="intent-life-meaning-pause",
+        metadata={"life_meaning_judgment": {"love_delta": "negative"}},
+    )
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(request=request, result=result)
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert result.blocked is True
+    assert result.dispatched is False
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert result.block_reason == "life_meaning_judgment_pause"
+    assert result.life_meaning_judgment is not None
+    assert result.life_meaning_judgment.decision == "pause"
+    assert "love_delta_negative" in result.life_meaning_judgment.reasons
+    assert result.execution_receipt_ref is None
+    assert result.closure_state == "closed_deferred"
+    assert record["decision"]["status"] == "defer"
+    assert record["decision"]["execution_allowed"] is False
+    assert record["life_meaning_judgment"] == result.life_meaning_judgment.as_dict()
+
+
+def test_universal_action_kernel_blocks_life_meaning_before_dispatch() -> None:
+    kernel, executor = _kernel_with_capability()
+    request = _action_request(
+        intent_id="intent-life-meaning-block",
+        metadata={"life_meaning_judgment": {"dignity_boundary": "fail"}},
+    )
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(request=request, result=result)
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert result.blocked is True
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert result.block_reason == "life_meaning_judgment_block"
+    assert result.life_meaning_judgment is not None
+    assert result.life_meaning_judgment.decision == "block"
+    assert "dignity_boundary_failed" in result.life_meaning_judgment.reasons
+    assert result.closure_state == "closed_blocked"
+    assert record["decision"]["status"] == "block"
+    assert record["lineage"]["accepted_deltas"] == []
+    assert record["lineage"]["rejected_deltas"]
+
+
+def test_universal_action_kernel_escalates_life_meaning_before_dispatch() -> None:
+    kernel, executor = _kernel_with_capability()
+    request = _action_request(
+        intent_id="intent-life-meaning-escalate",
+        metadata={"life_meaning_judgment": {"irreversible": True}},
+    )
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(request=request, result=result)
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert result.blocked is True
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert result.block_reason == "life_meaning_judgment_escalate"
+    assert result.life_meaning_judgment is not None
+    assert result.life_meaning_judgment.decision == "escalate"
+    assert (
+        "unknown_life_feeling_or_meaning_status_with_irreversible_action"
+        in result.life_meaning_judgment.reasons
+    )
+    assert result.closure_state == "closed_escalated"
+    assert record["decision"]["status"] == "escalate"
+    assert record["decision"]["solver_outcome"] == "AwaitingEvidence"
 
 
 def test_universal_action_record_binds_operating_substrate_projection_evidence() -> None:
@@ -1132,6 +1207,8 @@ def test_universal_command_proof_view_replays_persisted_success_events() -> None
     assert proof.trace_ref == result.trace_ref
     assert proof.admission_receipt_ref == result.admission_receipt_ref
     assert proof.execution_receipt_ref == result.execution_receipt_ref
+    assert proof.life_meaning_judgment == result.life_meaning_judgment.as_dict()
+    assert proof.life_meaning_judgment["decision"] == "pass"
     assert proof.closure_state == "closed_allowed"
     assert proof.whqr_replay_binding == {}
     assert proof.proof_hash == result.proof_hash
@@ -2225,6 +2302,8 @@ def test_universal_command_proof_view_replays_blocked_result() -> None:
     assert proof.trace_ref == result.trace_ref
     assert proof.admission_receipt_ref == result.admission_receipt_ref
     assert proof.execution_receipt_ref is None
+    assert proof.life_meaning_judgment == result.life_meaning_judgment.as_dict()
+    assert proof.life_meaning_judgment["decision"] == "pause"
     assert proof.closure_state == "closed_blocked"
     assert proof.proof_hash == result.proof_hash
     assert proof.dispatch_ledger_hash == ""
