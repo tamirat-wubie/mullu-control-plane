@@ -534,6 +534,9 @@ jobs:
       - name: Test Agentic Service Harness receipt-store append preflight
         run: python -m pytest tests/test_validate_agentic_service_harness_receipt_store_append_preflight.py -q
 
+      - name: Test Agentic Service Harness executed test receipt admission preflight
+        run: python -m pytest tests/test_validate_agentic_service_harness_executed_test_receipt_admission_preflight.py -q
+
 
       - name: Test Agentic Service Harness actual diff collection admission preflight
         run: python -m pytest tests/test_validate_agentic_service_harness_actual_diff_collection_admission_preflight.py -q

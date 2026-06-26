@@ -1,0 +1,128 @@
+{
+  "report_id": "agentic_service_harness_executed_test_receipt_admission_preflight",
+  "schema_version": 1,
+  "generated_at": "2026-06-25T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "admission_status": "AwaitingEvidence",
+  "source_contract_refs": [
+    "examples/agentic_service_harness_dry_run_test_runner_plan_receipt.foundation.json",
+    "examples/agentic_service_harness_approved_branch_workspace_creation_preflight.foundation.json",
+    "examples/agentic_service_harness_receipt_store_append_preflight.foundation.json",
+    "schemas/agentic_service_harness.schema.json",
+    "scripts/validate_agentic_service_harness_readiness_map.py",
+    "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  ],
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "agent_run_id": "agent-run-foundation",
+    "dry_run_test_runner_plan_id": "dry-run-test-runner-plan-foundation",
+    "receipt_store_append_preflight_id": "receipt-store-append-preflight-foundation",
+    "foundation_phase": "foundation_executed_test_receipt_admission_preflight",
+    "admission_only": true,
+    "read_only_sources": true,
+    "test_execution_admitted": false,
+    "commands_executed": false,
+    "test_results_claimed": false,
+    "executed_test_receipt_admitted": false,
+    "receipt_store_append_enabled": false,
+    "secret_values_serialized": false
+  },
+  "test_execution_admission": {
+    "requested_action": "admit_executed_test_receipt",
+    "requested_route_ref": "route://harness/tests/executed-receipt/not-admitted",
+    "admission_decision": "BLOCKED_PENDING_APPROVED_WORKSPACE_COMMAND_EXECUTION_AND_RESULT_EVIDENCE",
+    "dry_run_test_runner_plan_valid": true,
+    "approved_branch_workspace_preflight_valid": true,
+    "receipt_store_append_preflight_valid": true,
+    "operator_approval_collected": false,
+    "live_workspace_created": false,
+    "command_timeout_policy_valid": false,
+    "subprocess_redaction_policy_valid": false,
+    "command_execution_performed": false,
+    "exit_code_observed": false,
+    "test_output_redacted": false,
+    "coverage_claimed": false,
+    "receipt_store_append_admitted": false,
+    "executed_test_receipt_admitted": false,
+    "required_before_execution_refs": [
+      "approval://operator/test-command-execution",
+      "evidence://branch-workspace-created-with-approval",
+      "evidence://workspace-path-confinement",
+      "evidence://test-command-timeout-policy",
+      "evidence://subprocess-output-redaction-policy",
+      "evidence://test-command-exit-code",
+      "evidence://test-output-redaction-digest",
+      "evidence://receipt-store-append-admission"
+    ],
+    "blocked_reason_refs": [
+      "blocked://test-execution/operator-approval-missing",
+      "blocked://test-execution/live-workspace-not-created",
+      "blocked://test-execution/timeout-policy-missing",
+      "blocked://test-execution/subprocess-redaction-missing",
+      "blocked://test-execution/commands-not-executed",
+      "blocked://test-results/exit-code-not-observed",
+      "blocked://test-results/output-not-redacted",
+      "blocked://receipt-store-append/not-admitted",
+      "blocked://runtime-state-write/not-admitted",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "next_required_evidence_refs": [
+      "evidence://non-empty-diff-receipt-admission",
+      "approval://executed-test-receipt/operator-decision",
+      "witness://harness-executed-test-receipt-audit"
+    ]
+  },
+  "executed_test_receipt_contract": {
+    "receipt_shape_ref": "schema://agentic-service-harness/ExecutedTestReceipt",
+    "allowed_metadata_refs": [
+      "field://executed-test-receipt/id",
+      "field://executed-test-receipt/agent_run_id",
+      "field://executed-test-receipt/command_id",
+      "field://executed-test-receipt/exit_code_ref",
+      "field://executed-test-receipt/output_digest_ref",
+      "field://executed-test-receipt/evidence_refs"
+    ],
+    "forbidden_inline_fields": [
+      "field://executed-test-receipt/raw-secret",
+      "field://executed-test-receipt/raw-stdout",
+      "field://executed-test-receipt/raw-stderr",
+      "field://executed-test-receipt/raw-diff",
+      "field://executed-test-receipt/external-token"
+    ],
+    "test_result_claimed": false,
+    "stored_receipt_ref": "executed-test-receipt://not-admitted"
+  },
+  "authority_denials": {
+    "test_execution_enabled": false,
+    "command_execution_enabled": false,
+    "subprocess_execution_enabled": false,
+    "test_result_claim_enabled": false,
+    "coverage_claim_enabled": false,
+    "receipt_store_append_enabled": false,
+    "receipt_store_append_performed": false,
+    "runtime_state_write_enabled": false,
+    "filesystem_write_enabled": false,
+    "branch_write_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "raw_test_output_stored": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-executed-test-receipt-admission-preflight",
+      "command": "python scripts/validate_agentic_service_harness_executed_test_receipt_admission_preflight.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add non-empty diff receipt admission preflight; keep executed test receipt, command execution, subprocess execution, test result claims, coverage claims, receipt-store append, runtime state writes, mutation routes, raw test output, secrets, and terminal closure blocked until operator approval, approved workspace, timeout, redaction, exit-code, output-digest, append-admission, and audit evidence exist.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}
