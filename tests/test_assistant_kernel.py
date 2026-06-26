@@ -17,6 +17,7 @@ from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 from fastapi import HTTPException
 
 from mcoi_runtime.app.routers.assistant import (
@@ -655,8 +656,62 @@ def test_assistant_support_contracts_keep_observations_and_effects_explicit() ->
     assert admission.memory_id.startswith("assistant-memory-")
     assert scheduled.state == "scheduled"
     assert scheduled.idempotency_key.startswith("assistant-idempotency-")
+    assert scheduled.life_meaning_judgment_required is True
+    assert scheduled.life_meaning_judgment_ref == f"life-meaning:assistant-schedule:{scheduled.schedule_id}"
+    assert scheduled.metadata["life_meaning_judgment_ref"] == scheduled.life_meaning_judgment_ref
     assert verification.passed is True
     assert verification.evidence_refs == ("ledger:reconciliation-1",)
+
+
+def test_scheduled_assistant_action_preserves_explicit_life_meaning_ref() -> None:
+    scheduled = schedule_assistant_action(
+        AssistantScheduleRequest(
+            tenant_id="tenant-finance",
+            owner_id="finance-owner",
+            capability_id="payment.reconcile",
+            run_at="2026-05-13T11:00:00+00:00",
+            requested_at="2026-05-13T10:00:00+00:00",
+            approval_required=True,
+            life_meaning_judgment_ref="life-meaning:assistant-schedule:approval-001",
+        )
+    )
+
+    assert scheduled.state == "waiting_for_approval"
+    assert scheduled.life_meaning_judgment_required is True
+    assert scheduled.life_meaning_judgment_ref == "life-meaning:assistant-schedule:approval-001"
+    assert scheduled.metadata["life_meaning_judgment_required"] is True
+    assert scheduled.metadata["life_meaning_judgment_ref"] == scheduled.life_meaning_judgment_ref
+
+
+def test_scheduled_assistant_action_rejects_conflicting_life_meaning_ref() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="conflicts with metadata"):
+        schedule_assistant_action(
+            AssistantScheduleRequest(
+                tenant_id="tenant-finance",
+                owner_id="finance-owner",
+                capability_id="payment.reconcile",
+                run_at="2026-05-13T11:00:00+00:00",
+                requested_at="2026-05-13T10:00:00+00:00",
+                approval_required=False,
+                life_meaning_judgment_ref="life-meaning:assistant-schedule:explicit",
+                metadata={"life_meaning_judgment_ref": "life-meaning:assistant-schedule:metadata"},
+            )
+        )
+
+
+def test_scheduled_assistant_action_rejects_blank_metadata_life_meaning_ref() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="metadata.life_meaning_judgment_ref"):
+        schedule_assistant_action(
+            AssistantScheduleRequest(
+                tenant_id="tenant-finance",
+                owner_id="finance-owner",
+                capability_id="payment.reconcile",
+                run_at="2026-05-13T11:00:00+00:00",
+                requested_at="2026-05-13T10:00:00+00:00",
+                approval_required=False,
+                metadata={"life_meaning_judgment_ref": " "},
+            )
+        )
 
 
 def test_assistant_profile_registry_files_expose_required_policy_keys() -> None:
