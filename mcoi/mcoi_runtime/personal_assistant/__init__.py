@@ -180,6 +180,12 @@ from .operator_reapproval_decision_receipt_value_binding_record_evidence_request
     build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_evidence_request_status_ledger,
     build_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_evidence_request_status_ledger_envelope,
 )
+from .operator_reapproval_decision_receipt_value_binding_record_submitted_evidence_ref_intake import (
+    DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_RECORD_SUBMITTED_EVIDENCE_REF_INTAKE_GENERATED_AT,
+    DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_RECORD_SUBMITTED_EVIDENCE_REF_INTAKE_ID,
+    build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_submitted_evidence_ref_intake,
+    build_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_submitted_evidence_ref_intake_envelope,
+)
 from .intake import (
     ApprovalScope,
     ConnectorProofRef,
@@ -301,6 +307,8 @@ __all__ = (
     "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_RECORD_EVIDENCE_REQUEST_SET_ID",
     "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_RECORD_EVIDENCE_REQUEST_STATUS_LEDGER_GENERATED_AT",
     "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_RECORD_EVIDENCE_REQUEST_STATUS_LEDGER_ID",
+    "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_RECORD_SUBMITTED_EVIDENCE_REF_INTAKE_GENERATED_AT",
+    "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_RECORD_SUBMITTED_EVIDENCE_REF_INTAKE_ID",
     "DEFAULT_OPERATOR_REAPPROVAL_GATE_GENERATED_AT",
     "DEFAULT_OPERATOR_REAPPROVAL_GATE_SET_ID",
     "PersonalAssistantApprovalQueue",
@@ -368,6 +376,7 @@ __all__ = (
     "build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_admission_preflight",
     "build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_evidence_request",
     "build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_evidence_request_status_ledger",
+    "build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_submitted_evidence_ref_intake",
     "build_default_personal_assistant_operator_reapproval_gate",
     "build_personal_assistant_preview_plan",
     "build_default_personal_assistant_draft_projection",
@@ -393,6 +402,7 @@ __all__ = (
     "build_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_admission_preflight_envelope",
     "build_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_evidence_request_envelope",
     "build_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_evidence_request_status_ledger_envelope",
+    "build_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_submitted_evidence_ref_intake_envelope",
     "build_personal_assistant_operator_reapproval_gate_envelope",
     "build_personal_assistant_execution_gate_envelope",
     "build_personal_assistant_read_only_projection_envelope",

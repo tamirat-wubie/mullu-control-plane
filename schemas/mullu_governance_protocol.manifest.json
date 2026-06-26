@@ -1805,6 +1805,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-evidence-request-status-ledger:1"
     },
     {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_submitted_evidence_ref_intake.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-submitted-evidence-ref-intake",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-submitted-evidence-ref-intake:1"
+    },
+    {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
       "schema_id": "personal-assistant-foundation-closure-packet",
       "surface": "assistant",
