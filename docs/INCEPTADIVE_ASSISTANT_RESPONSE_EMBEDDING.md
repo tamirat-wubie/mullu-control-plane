@@ -14,8 +14,9 @@ Dependencies: `mcoi_runtime.app.inceptadive_assistant_response_embedding`,
 `mcoi_runtime.app.routers.llm.chat`, `InceptaDiveShadowRuntime`, and
 non-executing shadow hook contracts.
 
-Invariants: raw user input, assistant content, private memory, raw evidence refs,
-and execution handles must not appear inside the embedded advisory metadata.
+Invariants: raw user input, assistant content, private memory, raw tenant ids,
+raw model ids, raw evidence refs, and execution handles must not appear inside
+the embedded advisory metadata.
 
 ## Applied Routes
 
@@ -37,6 +38,10 @@ The embedded `inceptadive_shadow_advisory` object must include:
 | --- | --- |
 | `embedding_surface` | Always `assistant_response`. |
 | `route` | The route that emitted the response envelope. |
+| `tenant_ref` | Stable deterministic public reference for the tenant boundary; never the raw tenant id. |
+| `model_ref` | Stable deterministic public reference for the model or capability boundary; never the raw model id. |
+| `tenant_identifier_exposed` | Always `false`. |
+| `model_identifier_exposed` | Always `false`. |
 | `execution_authority` | Always `false`. |
 | `connector_dispatch_authority` | Always `false`. |
 | `shadow_memory_write_authority` | Always `false`. |
@@ -63,6 +68,11 @@ execution_authority = false
 
 The raw exception message is not returned.
 
+The unavailable fallback follows the same public-identifier policy as the normal
+advisory path: it may expose `tenant_ref` and `model_ref`, but it must not expose
+`tenant_id`, `model_name`, raw exception text, raw user input, or assistant
+content.
+
 ## Verification
 
 Focused tests:
@@ -73,10 +83,11 @@ mcoi/tests/test_inceptadive_assistant_response_embedding.py
 
 The tests prove that live chat, streaming chat, and chat-workflow responses
 carry the advisory, that recent shadow activity is recorded, and that raw
-request markers and assistant content are absent from the advisory.
+request markers, raw tenant identifiers, raw model identifiers, and assistant
+content are absent from the advisory.
 
 STATUS:
   Completeness: live assistant response embedding defined for non-streaming and streaming chat surfaces
-  Invariants verified: redacted advisory, no execution authority, no connector dispatch, no shadow memory write authority
+  Invariants verified: redacted advisory, public-safe tenant/model refs, no execution authority, no connector dispatch, no shadow memory write authority
   Open issues: none for assistant response embedding
   Next action: keep route docs and tests aligned when response envelopes change

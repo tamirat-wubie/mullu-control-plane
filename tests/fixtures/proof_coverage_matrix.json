@@ -7105,7 +7105,7 @@
         "mcoi/tests/test_inceptadive_assistant_response_embedding.py",
         "docs/INCEPTADIVE_ASSISTANT_RESPONSE_EMBEDDING.md"
       ],
-      "notes": "Live assistant chat response envelopes and streaming events expose redacted InceptaDive shadow advisory metadata without changing assistant content, workflow status, conversation state, connector dispatch authority, shadow memory write authority, or governance verdicts.",
+      "notes": "Live assistant chat response envelopes and streaming events expose redacted InceptaDive shadow advisory metadata with public-safe tenant/model refs and without changing assistant content, workflow status, conversation state, connector dispatch authority, shadow memory write authority, or governance verdicts.",
       "representative_paths": [
         "/api/v1/chat",
         "/api/v1/chat/stream",
@@ -7115,7 +7115,8 @@
       "runtime_witnesses": [
         "live_chat_response_embeds_redacted_inceptadive_advisory",
         "streaming_chat_response_emits_redacted_inceptadive_advisory_event",
-        "chat_workflow_response_embeds_redacted_inceptadive_advisory"
+        "chat_workflow_response_embeds_redacted_inceptadive_advisory",
+        "assistant_response_advisory_unavailable_redacts_identifier_fields"
       ],
       "surface_id": "inceptadive_assistant_response_embedding"
     },
@@ -15503,8 +15504,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1965,
-    "runtime_witness_count": 1965,
+    "exact_test_anchor_count": 1966,
+    "runtime_witness_count": 1966,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19328,10 +19329,16 @@
               "mcoi/tests/test_inceptadive_assistant_response_embedding.py::test_chat_workflow_response_embeds_redacted_inceptadive_advisory"
             ],
             "witness": "chat_workflow_response_embeds_redacted_inceptadive_advisory"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_inceptadive_assistant_response_embedding.py::test_assistant_response_advisory_unavailable_redacts_identifier_fields"
+            ],
+            "witness": "assistant_response_advisory_unavailable_redacts_identifier_fields"
           }
         ],
-        "exact_test_anchor_count": 3,
-        "runtime_witness_count": 3,
+        "exact_test_anchor_count": 4,
+        "runtime_witness_count": 4,
         "surface_id": "inceptadive_assistant_response_embedding",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
