@@ -51,7 +51,6 @@ ADAPTER_PROMOTION_BLOCKER_ORDER = (
 )
 ADAPTER_PROMOTION_BLOCKERS = frozenset(ADAPTER_PROMOTION_BLOCKER_ORDER)
 PACKET_BLOCKED_ADAPTER_EVIDENCE_BLOCKERS = (
-    "browser_live_evidence_missing",
     "voice_dependency_missing:OPENAI_API_KEY",
     "voice_live_evidence_missing",
     "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
@@ -683,8 +682,8 @@ def _packet_blocked_adapter_evidence_payload() -> dict[str, Any]:
         "adapters": [
             {
                 "adapter_id": "browser.playwright",
-                "blockers": ["browser_live_evidence_missing"],
-                "status": "not_closed",
+                "blockers": [],
+                "status": "closed",
             },
             {
                 "adapter_id": "document.production_parsers",
