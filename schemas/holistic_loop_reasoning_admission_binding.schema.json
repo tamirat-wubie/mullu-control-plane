@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:holistic-loop-reasoning-admission-binding:1",
+  "title": "Holistic Loop Reasoning Admission Binding",
+  "description": "Foundation Mode admission binding that maps the operator wholistic reasoning direction to the holistic loop reasoning evidence surface without granting runtime authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding_id",
+    "witness_version",
+    "solver_outcome",
+    "admission_scope",
+    "source_artifacts",
+    "admission_requirements",
+    "authority_boundary",
+    "runtime_promotion_blockers",
+    "contract_summary",
+    "evidence_refs"
+  ],
+  "properties": {
+    "binding_id": { "type": "string", "minLength": 1 },
+    "witness_version": { "type": "string", "const": "holistic_loop_reasoning_admission_binding.v1" },
+    "solver_outcome": {
+      "type": "string",
+      "enum": [
+        "SolvedVerified",
+        "SolvedUnverified",
+        "AwaitingEvidence",
+        "SafeHalt",
+        "GovernanceBlocked",
+        "BudgetExhausted",
+        "ImpossibleProved",
+        "ModelInvalidated"
+      ]
+    },
+    "admission_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_direction",
+        "canonical_loop_id",
+        "foundation_mode_required",
+        "canonicalization_policy",
+        "runtime_reasoning_claimed",
+        "terminal_closure_claimed",
+        "scope_notes"
+      ],
+      "properties": {
+        "operator_direction": { "type": "string", "const": "wholistic_reasoning" },
+        "canonical_loop_id": { "type": "string", "const": "holistic_loop" },
+        "foundation_mode_required": { "type": "boolean", "const": true },
+        "canonicalization_policy": { "type": "string", "minLength": 1 },
+        "runtime_reasoning_claimed": { "type": "boolean", "const": false },
+        "terminal_closure_claimed": { "type": "boolean", "const": false },
+        "scope_notes": { "$ref": "#/$defs/text_list" }
+      }
+    },
+    "source_artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/source_artifact" },
+      "uniqueItems": true
+    },
+    "admission_requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/admission_requirement" },
+      "uniqueItems": true
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["read_only", "foundation_evidence_only", "denied_authority", "denial_reason"],
+      "properties": {
+        "read_only": { "type": "boolean", "const": true },
+        "foundation_evidence_only": { "type": "boolean", "const": true },
+        "denied_authority": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/denied_authority" },
+          "uniqueItems": true
+        },
+        "denial_reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "runtime_promotion_blockers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_artifact_count",
+        "denied_authority_count",
+        "runtime_requirement_count",
+        "satisfied_runtime_requirement_count",
+        "runtime_blocker_count",
+        "runtime_claim_count",
+        "read_only",
+        "receipt_is_not_terminal_closure"
+      ],
+      "properties": {
+        "source_artifact_count": { "type": "integer", "minimum": 0 },
+        "denied_authority_count": { "type": "integer", "minimum": 0 },
+        "runtime_requirement_count": { "type": "integer", "minimum": 0 },
+        "satisfied_runtime_requirement_count": { "type": "integer", "minimum": 0 },
+        "runtime_blocker_count": { "type": "integer", "minimum": 0 },
+        "runtime_claim_count": { "type": "integer", "minimum": 0 },
+        "read_only": { "type": "boolean", "const": true },
+        "receipt_is_not_terminal_closure": { "type": "boolean", "const": true }
+      }
+    },
+    "evidence_refs": { "$ref": "#/$defs/text_list" }
+  },
+  "$defs": {
+    "text_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "source_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "role", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "admission_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_ref",
+        "description",
+        "execution_allowed",
+        "satisfied",
+        "required_for_runtime_promotion"
+      ],
+      "properties": {
+        "requirement_ref": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "execution_allowed": { "type": "boolean", "const": false },
+        "satisfied": { "type": "boolean" },
+        "required_for_runtime_promotion": { "type": "boolean", "const": true }
+      }
+    },
+    "denied_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority_id", "allowed", "denial_reason"],
+      "properties": {
+        "authority_id": { "type": "string", "minLength": 1 },
+        "allowed": { "type": "boolean", "const": false },
+        "denial_reason": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
