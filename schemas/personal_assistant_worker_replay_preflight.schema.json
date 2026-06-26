@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-worker-replay-preflight:1",
+  "title": "Personal Assistant Worker Replay Preflight",
+  "description": "Foundation Mode no-effect preflight that binds personal-assistant execution gates to required worker binding and replay controls before any live connector dispatch.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "preflight_set_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_gate_set_id",
+    "preflight_count",
+    "preflight_ids",
+    "gate_ids",
+    "receipt_ids",
+    "preflights",
+    "effect_boundary",
+    "private_payload_policy",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "preflight_set_id": {"type": "string", "pattern": "^pa_worker_replay_preflight_[a-z0-9][a-z0-9_:-]*$"},
+    "generated_at": {"type": "string", "minLength": 1},
+    "governed": {"const": true},
+    "source_projection": {"const": "execution_gate_evidence"},
+    "source_gate_set_id": {"type": "string", "pattern": "^pa_execution_gate_[a-z0-9][a-z0-9_:-]*$"},
+    "preflight_count": {"type": "integer", "minimum": 1},
+    "preflight_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_worker_replay_preflight_item_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "gate_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_execution_gate_item_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "preflights": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/preflight_item"}
+    },
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "preflight_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preflight_id",
+        "gate_id",
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "skill_id",
+        "risk_level",
+        "execution_gate_ref",
+        "worker_preflight",
+        "replay_preflight",
+        "receipt"
+      ],
+      "properties": {
+        "preflight_id": {"type": "string", "pattern": "^pa_worker_replay_preflight_item_[a-z0-9][a-z0-9_:-]*$"},
+        "gate_id": {"type": "string", "pattern": "^pa_execution_gate_item_[a-z0-9][a-z0-9_:-]*$"},
+        "approval_id": {"type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$"},
+        "request_id": {"type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$"},
+        "plan_id": {"type": "string", "pattern": "^pa_plan_[a-z0-9][a-z0-9_:-]*$"},
+        "skill_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$"},
+        "risk_level": {"enum": ["P3", "P4", "P5"]},
+        "execution_gate_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_gate_set_id",
+            "gate_receipt_id",
+            "gate_receipt_state",
+            "execution_gate_evaluated",
+            "execution_allowed",
+            "payload_digest_only"
+          ],
+          "properties": {
+            "source_gate_set_id": {"type": "string", "minLength": 1},
+            "gate_receipt_id": {"type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$"},
+            "gate_receipt_state": {"const": "deferred"},
+            "execution_gate_evaluated": {"const": true},
+            "execution_allowed": {"const": false},
+            "payload_digest_only": {"const": true}
+          }
+        },
+        "worker_preflight": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "worker_family",
+            "worker_binding_state",
+            "worker_binding_allowed",
+            "execution_worker_bound",
+            "live_connector_witness_required",
+            "live_connector_witness_present",
+            "dispatch_lease_required",
+            "dispatch_lease_present",
+            "operator_reapproval_required"
+          ],
+          "properties": {
+            "worker_family": {"const": "personal_assistant_execution_worker"},
+            "worker_binding_state": {"const": "unbound"},
+            "worker_binding_allowed": {"const": false},
+            "execution_worker_bound": {"const": false},
+            "live_connector_witness_required": {"const": true},
+            "live_connector_witness_present": {"const": false},
+            "dispatch_lease_required": {"const": true},
+            "dispatch_lease_present": {"const": false},
+            "operator_reapproval_required": {"const": true}
+          }
+        },
+        "replay_preflight": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "replay_plan_required",
+            "replay_plan_state",
+            "replay_plan_validated",
+            "rollback_plan_required",
+            "rollback_plan_validated",
+            "idempotency_key_required",
+            "idempotency_key_present",
+            "replay_execution_allowed"
+          ],
+          "properties": {
+            "replay_plan_required": {"const": true},
+            "replay_plan_state": {"const": "required_not_recorded"},
+            "replay_plan_validated": {"const": false},
+            "rollback_plan_required": {"const": true},
+            "rollback_plan_validated": {"const": false},
+            "idempotency_key_required": {"const": true},
+            "idempotency_key_present": {"const": false},
+            "replay_execution_allowed": {"const": false}
+          }
+        },
+        "receipt": {"type": "object", "additionalProperties": true}
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worker_replay_preflight_allowed",
+        "worker_binding_allowed",
+        "replay_execution_allowed",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "external_send_allowed",
+        "calendar_write_allowed",
+        "task_write_allowed",
+        "memory_write_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "deployment_mutation_allowed",
+        "nested_mind_live_activation_allowed",
+        "public_readiness_claim_allowed"
+      ],
+      "properties": {
+        "worker_replay_preflight_allowed": {"const": true},
+        "worker_binding_allowed": {"const": false},
+        "replay_execution_allowed": {"const": false},
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "calendar_write_allowed": {"const": false},
+        "task_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "connector_payload_projection",
+        "gate_payload_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "connector_payload_projection": {"const": "ref_only"},
+        "gate_payload_projection": {"const": "gate_ref_only"}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "ready_for_live_execution",
+        "ready_for_customer_readiness_claim",
+        "authority_drift_detected",
+        "checked_controls",
+        "blocking_reasons",
+        "next_action"
+      ],
+      "properties": {
+        "assurance_id": {"const": "personal_assistant_worker_replay_preflight_no_effect_assurance"},
+        "outcome": {"enum": ["SolvedVerified", "GovernanceBlocked"]},
+        "foundation_only": {"const": true},
+        "ready_for_live_execution": {"const": false},
+        "ready_for_customer_readiness_claim": {"const": false},
+        "authority_drift_detected": {"type": "boolean"},
+        "checked_controls": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "blocking_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "foundation_only",
+        "projection_contract",
+        "runtime_boundary",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_send_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed"
+      ],
+      "properties": {
+        "foundation_only": {"const": true},
+        "projection_contract": {"const": "worker_replay_preflight_evidence_only"},
+        "runtime_boundary": {"const": "preflight_does_not_bind_worker_or_execute_replay"},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false}
+      }
+    }
+  }
+}

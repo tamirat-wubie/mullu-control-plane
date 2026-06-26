@@ -70,6 +70,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_approved_branch_workspace_creation_preflight",
         "agentic_service_harness_dry_run_test_runner_plan_receipt",
         "agentic_service_harness_task_record_write_uao_admission_preflight",
+        "agentic_service_harness_receipt_store_append_preflight",
         "agentic_service_harness_planned_file_change_collection_preflight",
         "agentic_service_harness_actual_file_change_summary_receipt",
         "agentic_service_harness_actual_diff_collection_admission_preflight",
@@ -330,6 +331,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_task_record_write_uao_admission_preflight",
+        "agentic_service_harness_receipt_store_append_preflight",
+    )
+    assert_ordered(
+        "agentic_service_harness_receipt_store_append_preflight",
         "agentic_service_harness_planned_file_change_collection_preflight",
     )
     assert_ordered(

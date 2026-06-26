@@ -114,6 +114,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_task_record_write_uao
     assert task_record_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_receipt_store_append_preflight() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    append_entry = entries[
+        "agentic-service-harness-receipt-store-append-preflight"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert append_entry["path"] == (
+        "schemas/agentic_service_harness_receipt_store_append_preflight.schema.json"
+    )
+    assert append_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-receipt-store-append-preflight:1"
+    )
+    assert append_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_evidence_bundle_projection() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

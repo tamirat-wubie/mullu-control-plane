@@ -71,6 +71,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-task-record-write-uao-admission-preflight:1"
     },
     {
+      "path": "schemas/agentic_service_harness_receipt_store_append_preflight.schema.json",
+      "schema_id": "agentic-service-harness-receipt-store-append-preflight",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-receipt-store-append-preflight:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_planned_file_change_collection_preflight.schema.json",
       "schema_id": "agentic-service-harness-planned-file-change-collection-preflight",
       "surface": "runtime",
@@ -1647,6 +1653,12 @@
       "schema_id": "personal-assistant-execution-gate",
       "surface": "approval",
       "urn": "urn:mullusi:schema:personal-assistant-execution-gate:1"
+    },
+    {
+      "path": "schemas/personal_assistant_worker_replay_preflight.schema.json",
+      "schema_id": "personal-assistant-worker-replay-preflight",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-worker-replay-preflight:1"
     },
     {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
