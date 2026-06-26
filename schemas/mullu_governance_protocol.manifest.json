@@ -1649,6 +1649,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-execution-gate:1"
     },
     {
+      "path": "schemas/personal_assistant_worker_replay_preflight.schema.json",
+      "schema_id": "personal-assistant-worker-replay-preflight",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-worker-replay-preflight:1"
+    },
+    {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
       "schema_id": "personal-assistant-foundation-closure-packet",
       "surface": "assistant",
