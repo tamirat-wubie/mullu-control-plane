@@ -135,6 +135,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "component_autopsy",
         "component_request_simulation",
         "component_bundle_compiler",
+        "component_evidence_request_queue",
+        "component_evidence_submission_intake",
         "component_graph",
         "component_dead_detector",
         "read_only_first_worker_path",
@@ -516,6 +518,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "component_bundle_compiler",
+        "component_evidence_request_queue",
+    )
+    assert_ordered(
+        "component_evidence_request_queue",
+        "component_evidence_submission_intake",
+    )
+    assert_ordered(
+        "component_evidence_submission_intake",
         "component_graph",
     )
     assert_ordered(

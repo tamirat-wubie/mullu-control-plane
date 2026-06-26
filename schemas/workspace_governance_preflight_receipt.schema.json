@@ -158,6 +158,8 @@
             "component_autopsy",
             "component_request_simulation",
             "component_bundle_compiler",
+            "component_evidence_request_queue",
+            "component_evidence_submission_intake",
             "component_graph",
             "component_dead_detector",
             "read_only_first_worker_path",

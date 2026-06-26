@@ -1,0 +1,207 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-evidence-submission-intake:1",
+  "title": "Mullu Component Evidence Submission Intake",
+  "description": "Non-accepting Component Harness evidence submission intake that records submitted refs as observations only and grants no execution, verification, authority, promotion, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "intake_id",
+    "mode",
+    "source_refs",
+    "intake_is_not_execution_authority",
+    "intake_is_not_evidence_submission",
+    "intake_is_not_evidence_acceptance",
+    "intake_is_not_evidence_rejection",
+    "intake_is_not_authority_grant",
+    "intake_is_not_promotion_approval",
+    "intake_is_not_terminal_closure",
+    "submitted_evidence_refs_are_observations_only",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "evidence_accepted",
+    "evidence_rejected",
+    "authority_granted",
+    "promotion_approved",
+    "terminal_closure_allowed",
+    "summary",
+    "intake_slots",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "intake_id": { "$ref": "#/$defs/identifier" },
+    "mode": { "type": "string", "const": "foundation" },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_evidence_request_queue"],
+      "properties": {
+        "component_evidence_request_queue": { "$ref": "#/$defs/source_ref" }
+      }
+    },
+    "intake_is_not_execution_authority": { "type": "boolean", "const": true },
+    "intake_is_not_evidence_submission": { "type": "boolean", "const": true },
+    "intake_is_not_evidence_acceptance": { "type": "boolean", "const": true },
+    "intake_is_not_evidence_rejection": { "type": "boolean", "const": true },
+    "intake_is_not_authority_grant": { "type": "boolean", "const": true },
+    "intake_is_not_promotion_approval": { "type": "boolean", "const": true },
+    "intake_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "submitted_evidence_refs_are_observations_only": { "type": "boolean", "const": true },
+    "live_execution_enabled": { "type": "boolean", "const": false },
+    "live_connector_send_enabled": { "type": "boolean", "const": false },
+    "can_execute": { "type": "boolean", "const": false },
+    "can_mutate": { "type": "boolean", "const": false },
+    "can_call_connector": { "type": "boolean", "const": false },
+    "can_claim_terminal_closure": { "type": "boolean", "const": false },
+    "evidence_accepted": { "type": "boolean", "const": false },
+    "evidence_rejected": { "type": "boolean", "const": false },
+    "authority_granted": { "type": "boolean", "const": false },
+    "promotion_approved": { "type": "boolean", "const": false },
+    "terminal_closure_allowed": { "type": "boolean", "const": false },
+    "summary": { "$ref": "#/$defs/summary" },
+    "intake_slots": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/intake_slot" }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1, "maxLength": 320 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 360,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "source_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_slot_count",
+        "submitted_slot_count",
+        "submitted_evidence_ref_count",
+        "accepted_evidence_count",
+        "rejected_evidence_count",
+        "authority_grant_count",
+        "terminal_closure_allowed_count"
+      ],
+      "properties": {
+        "request_slot_count": { "type": "integer", "minimum": 1 },
+        "submitted_slot_count": { "type": "integer", "minimum": 0 },
+        "submitted_evidence_ref_count": { "type": "integer", "minimum": 0 },
+        "accepted_evidence_count": { "type": "integer", "const": 0 },
+        "rejected_evidence_count": { "type": "integer", "const": 0 },
+        "authority_grant_count": { "type": "integer", "const": 0 },
+        "terminal_closure_allowed_count": { "type": "integer", "const": 0 }
+      }
+    },
+    "intake_slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intake_slot_id",
+        "request_id",
+        "bundle_id",
+        "missing_evidence_ref",
+        "request_state",
+        "submission_state",
+        "proof_state",
+        "outcome",
+        "request_bound",
+        "intake_only",
+        "submitted_evidence_observed",
+        "submitted_evidence_refs",
+        "accepted_evidence_refs",
+        "rejected_evidence_refs",
+        "evidence_accepted",
+        "evidence_rejected",
+        "authority_granted",
+        "promotion_approved",
+        "terminal_closure_allowed",
+        "blocked_actions",
+        "claim_firewall_blocking_claim_ids",
+        "required_validator_refs"
+      ],
+      "properties": {
+        "intake_slot_id": { "$ref": "#/$defs/identifier" },
+        "request_id": { "$ref": "#/$defs/identifier" },
+        "bundle_id": { "$ref": "#/$defs/identifier" },
+        "missing_evidence_ref": { "$ref": "#/$defs/identifier" },
+        "request_state": { "type": "string", "const": "requested_not_submitted" },
+        "submission_state": {
+          "type": "string",
+          "enum": ["awaiting_submission", "submitted_not_verified"]
+        },
+        "proof_state": { "type": "string", "const": "Unknown" },
+        "outcome": { "type": "string", "const": "AwaitingEvidence" },
+        "request_bound": { "type": "boolean", "const": true },
+        "intake_only": { "type": "boolean", "const": true },
+        "submitted_evidence_observed": { "type": "boolean" },
+        "submitted_evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "accepted_evidence_refs": { "$ref": "#/$defs/empty_identifier_list" },
+        "rejected_evidence_refs": { "$ref": "#/$defs/empty_identifier_list" },
+        "evidence_accepted": { "type": "boolean", "const": false },
+        "evidence_rejected": { "type": "boolean", "const": false },
+        "authority_granted": { "type": "boolean", "const": false },
+        "promotion_approved": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "contains": { "const": "terminal_closure" },
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "claim_firewall_blocking_claim_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "required_validator_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        }
+      }
+    },
+    "empty_identifier_list": {
+      "type": "array",
+      "maxItems": 0,
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

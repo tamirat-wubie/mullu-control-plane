@@ -1,0 +1,70 @@
+{
+  "requirement_id": "REQ-component-evidence-queue-and-intake-20260626",
+  "request_id": "runtime-authority-evidence-chain-closure-20260626",
+  "problem_statement": "Component Harness runtime authority promotion needs a local read-model evidence queue and a non-accepting submission intake so missing evidence can be requested and submitted refs can be observed without granting execution, acceptance, authority, promotion, or terminal closure.",
+  "success_criteria": [
+    "derive deterministic component_evidence_request_queue records from bundle compiler and claim firewall sources",
+    "derive deterministic component_evidence_submission_intake records from the request queue",
+    "record request slots as request-only AwaitingEvidence with Unknown proof state",
+    "record submitted refs as observations only and never as accepted or rejected evidence",
+    "register both schemas in the protocol manifest and workspace governance preflight",
+    "bind both surfaces into the proof coverage matrix as proven read-model/audit-chain surfaces",
+    "update the workspace preflight receipt schema and example to preserve canonical check order"
+  ],
+  "non_goals": [
+    "do not accept evidence",
+    "do not reject evidence",
+    "do not grant authority",
+    "do not approve promotion",
+    "do not execute, dispatch, mutate, call connectors, or claim terminal closure",
+    "do not add runtime endpoint registration"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "request queue and submission intake are deterministic local read models",
+    "unsafe source authority drift must fail closed with explicit causal context",
+    "submitted refs remain unverified until a separate governed verifier exists",
+    "Mfidel atomicity remains preserved because no Amharic, Ge'ez, Mfidel, or Ethiopian script processing is introduced"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "mcoi/mcoi_runtime/app/component_evidence_request_queue.py",
+    "mcoi/mcoi_runtime/app/component_evidence_submission_intake.py",
+    "schemas/component_evidence_request_queue.schema.json",
+    "schemas/component_evidence_submission_intake.schema.json",
+    "examples/component_evidence_request_queue.foundation.json",
+    "examples/component_evidence_submission_intake.foundation.json",
+    "scripts/validate_component_evidence_request_queue.py",
+    "scripts/validate_component_evidence_submission_intake.py",
+    "tests/test_validate_component_evidence_request_queue.py",
+    "tests/test_validate_component_evidence_submission_intake.py",
+    "scripts/proof_coverage_matrix.py",
+    "docs/40_proof_coverage_matrix.md",
+    "tests/fixtures/proof_coverage_matrix.json",
+    "scripts/run_workspace_governance_checks.py",
+    "schemas/workspace_governance_preflight_receipt.schema.json",
+    "docs/workspace-governance-preflight-receipt-example.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_component_evidence_request_queue.py",
+    "python scripts/validate_component_evidence_submission_intake.py",
+    "python -m pytest tests/test_validate_component_evidence_request_queue.py tests/test_validate_component_evidence_submission_intake.py -q",
+    "python -m pytest tests/test_proof_coverage_matrix.py tests/test_run_workspace_governance_checks.py -q",
+    "python scripts/validate_workspace_governance_preflight_receipt_contract.py",
+    "python scripts/validate_workspace_governance_preflight_receipt.py",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/run_workspace_governance_checks.py --check component_evidence_request_queue --check component_evidence_submission_intake --check workspace_governance_preflight_receipt_contract --check workspace_governance_preflight_receipt_example --check protocol_manifest --check strict_schema_validation --json"
+  ],
+  "evidence_required": [
+    "schema-backed Foundation examples",
+    "deterministic runtime projections",
+    "focused validator tests",
+    "proof coverage matrix update",
+    "workspace governance preflight receipt contract update",
+    "protocol manifest registration"
+  ],
+  "uao_ref": "uao://sdlc/component-evidence-queue-and-intake/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/component-evidence-queue-and-intake/requirement",
+  "receipt_ref": "receipt://sdlc/component-evidence-queue-and-intake/requirement"
+}

@@ -511,6 +511,90 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "component_evidence_request_queue",
+            ["component_evidence_request_queue"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_evidence_request_queue.py",
+                "schemas/component_evidence_request_queue.schema.json",
+                "examples/component_evidence_request_queue.foundation.json",
+                "scripts/validate_component_evidence_request_queue.py",
+                "tests/test_validate_component_evidence_request_queue.py",
+            ],
+            "Component Harness evidence request queue derives request-only missing-evidence slots from bundle compiler and claim firewall sources without granting submission, acceptance, execution, authority, promotion, or terminal closure.",
+            [
+                "component_evidence_request_queue_schema_valid",
+                "component_evidence_request_queue_example_matches_runtime_projection",
+                "component_evidence_request_queue_rejects_execution_and_acceptance_drift",
+                "component_evidence_request_queue_rejects_missing_blockers_and_validators",
+                "component_evidence_request_queue_runtime_rejects_unsafe_bundle_source",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_evidence_request_queue_schema_valid": [
+                    "component_evidence_request_queue_schema_valid_and_write",
+                ],
+                "component_evidence_request_queue_example_matches_runtime_projection": [
+                    "component_evidence_request_queue_example_matches_runtime_projection",
+                ],
+                "component_evidence_request_queue_rejects_execution_and_acceptance_drift": [
+                    "component_evidence_request_queue_rejects_execution_and_acceptance_drift",
+                ],
+                "component_evidence_request_queue_rejects_missing_blockers_and_validators": [
+                    "component_evidence_request_queue_rejects_missing_blockers_and_validators",
+                ],
+                "component_evidence_request_queue_runtime_rejects_unsafe_bundle_source": [
+                    "component_evidence_request_queue_runtime_rejects_unsafe_bundle_source",
+                ],
+            },
+        ),
+        _surface(
+            "component_evidence_submission_intake",
+            ["component_evidence_submission_intake"],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/component_evidence_submission_intake.py",
+                "schemas/component_evidence_submission_intake.schema.json",
+                "examples/component_evidence_submission_intake.foundation.json",
+                "scripts/validate_component_evidence_submission_intake.py",
+                "tests/test_validate_component_evidence_submission_intake.py",
+            ],
+            "Component Harness evidence submission intake records submitted refs as observations against queued requests without granting evidence acceptance, rejection, execution, authority, promotion, or terminal closure.",
+            [
+                "component_evidence_submission_intake_schema_valid",
+                "component_evidence_submission_intake_example_matches_runtime_projection",
+                "component_evidence_submission_intake_observes_submitted_refs_without_acceptance",
+                "component_evidence_submission_intake_rejects_acceptance_and_closure_drift",
+                "component_evidence_submission_intake_runtime_rejects_unknown_request_id",
+                "component_evidence_submission_intake_runtime_rejects_unsafe_queue_source",
+            ],
+            runtime_witness_anchor_aliases={
+                "component_evidence_submission_intake_schema_valid": [
+                    "component_evidence_submission_intake_schema_valid_and_write",
+                ],
+                "component_evidence_submission_intake_example_matches_runtime_projection": [
+                    "component_evidence_submission_intake_example_matches_runtime_projection",
+                ],
+                "component_evidence_submission_intake_observes_submitted_refs_without_acceptance": [
+                    "component_evidence_submission_intake_observes_submitted_refs_without_acceptance",
+                ],
+                "component_evidence_submission_intake_rejects_acceptance_and_closure_drift": [
+                    "component_evidence_submission_intake_rejects_acceptance_and_closure_drift",
+                ],
+                "component_evidence_submission_intake_runtime_rejects_unknown_request_id": [
+                    "component_evidence_submission_intake_runtime_rejects_unknown_request_id",
+                ],
+                "component_evidence_submission_intake_runtime_rejects_unsafe_queue_source": [
+                    "component_evidence_submission_intake_runtime_rejects_unsafe_queue_source",
+                ],
+            },
+        ),
+        _surface(
             "component_route_family_ownership",
             ["component_route_family_ownership"],
             "read_model",
@@ -11795,6 +11879,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "publish_component_bundle_compiler",
             "surfaces": ["component_bundle_compiler"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_evidence_request_queue",
+            "surfaces": ["component_evidence_request_queue"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_component_evidence_submission_intake",
+            "surfaces": ["component_evidence_submission_intake"],
             "status": "closed",
         },
         {

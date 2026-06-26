@@ -599,6 +599,18 @@
       "urn": "urn:mullusi:schema:component-bundle-compilation:1"
     },
     {
+      "path": "schemas/component_evidence_request_queue.schema.json",
+      "schema_id": "component-evidence-request-queue",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:component-evidence-request-queue:1"
+    },
+    {
+      "path": "schemas/component_evidence_submission_intake.schema.json",
+      "schema_id": "component-evidence-submission-intake",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:component-evidence-submission-intake:1"
+    },
+    {
       "path": "schemas/component_dead_component_detection.schema.json",
       "schema_id": "component-dead-component-detection",
       "surface": "governance",

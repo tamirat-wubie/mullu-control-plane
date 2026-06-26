@@ -72,6 +72,20 @@
       ]
     },
     {
+      "action_id": "publish_component_evidence_request_queue",
+      "status": "closed",
+      "surfaces": [
+        "component_evidence_request_queue"
+      ]
+    },
+    {
+      "action_id": "publish_component_evidence_submission_intake",
+      "status": "closed",
+      "surfaces": [
+        "component_evidence_submission_intake"
+      ]
+    },
+    {
       "action_id": "publish_component_route_family_ownership",
       "status": "closed",
       "surfaces": [
@@ -1465,18 +1479,18 @@
       "action_proof": 137,
       "audit_chain": 1,
       "gap": 0,
-      "read_model": 55,
+      "read_model": 57,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 192,
+      "audit_chain": 194,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 79,
+      "proven": 81,
       "unproven": 0,
       "witnessed": 116
     },
@@ -1484,15 +1498,15 @@
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
-      "read_model": 55,
+      "read_model": 57,
       "request_proof": 138
     },
-    "surface_count": 195
+    "surface_count": 197
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 195,
+      "strong": 197,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -4223,6 +4237,94 @@
         "component_bundle_compiler_rejects_live_authority_drift"
       ],
       "surface_id": "component_bundle_compiler"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/component_evidence_request_queue.py",
+        "schemas/component_evidence_request_queue.schema.json",
+        "examples/component_evidence_request_queue.foundation.json",
+        "scripts/validate_component_evidence_request_queue.py",
+        "tests/test_validate_component_evidence_request_queue.py"
+      ],
+      "notes": "Component Harness evidence request queue derives request-only missing-evidence slots from bundle compiler and claim firewall sources without granting submission, acceptance, execution, authority, promotion, or terminal closure.",
+      "representative_paths": [
+        "component_evidence_request_queue"
+      ],
+      "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "component_evidence_request_queue_example_matches_runtime_projection": [
+          "component_evidence_request_queue_example_matches_runtime_projection"
+        ],
+        "component_evidence_request_queue_rejects_execution_and_acceptance_drift": [
+          "component_evidence_request_queue_rejects_execution_and_acceptance_drift"
+        ],
+        "component_evidence_request_queue_rejects_missing_blockers_and_validators": [
+          "component_evidence_request_queue_rejects_missing_blockers_and_validators"
+        ],
+        "component_evidence_request_queue_runtime_rejects_unsafe_bundle_source": [
+          "component_evidence_request_queue_runtime_rejects_unsafe_bundle_source"
+        ],
+        "component_evidence_request_queue_schema_valid": [
+          "component_evidence_request_queue_schema_valid_and_write"
+        ]
+      },
+      "runtime_witnesses": [
+        "component_evidence_request_queue_schema_valid",
+        "component_evidence_request_queue_example_matches_runtime_projection",
+        "component_evidence_request_queue_rejects_execution_and_acceptance_drift",
+        "component_evidence_request_queue_rejects_missing_blockers_and_validators",
+        "component_evidence_request_queue_runtime_rejects_unsafe_bundle_source"
+      ],
+      "surface_id": "component_evidence_request_queue"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/component_evidence_submission_intake.py",
+        "schemas/component_evidence_submission_intake.schema.json",
+        "examples/component_evidence_submission_intake.foundation.json",
+        "scripts/validate_component_evidence_submission_intake.py",
+        "tests/test_validate_component_evidence_submission_intake.py"
+      ],
+      "notes": "Component Harness evidence submission intake records submitted refs as observations against queued requests without granting evidence acceptance, rejection, execution, authority, promotion, or terminal closure.",
+      "representative_paths": [
+        "component_evidence_submission_intake"
+      ],
+      "request_proof": "read_model",
+      "runtime_witness_anchor_aliases": {
+        "component_evidence_submission_intake_example_matches_runtime_projection": [
+          "component_evidence_submission_intake_example_matches_runtime_projection"
+        ],
+        "component_evidence_submission_intake_observes_submitted_refs_without_acceptance": [
+          "component_evidence_submission_intake_observes_submitted_refs_without_acceptance"
+        ],
+        "component_evidence_submission_intake_rejects_acceptance_and_closure_drift": [
+          "component_evidence_submission_intake_rejects_acceptance_and_closure_drift"
+        ],
+        "component_evidence_submission_intake_runtime_rejects_unknown_request_id": [
+          "component_evidence_submission_intake_runtime_rejects_unknown_request_id"
+        ],
+        "component_evidence_submission_intake_runtime_rejects_unsafe_queue_source": [
+          "component_evidence_submission_intake_runtime_rejects_unsafe_queue_source"
+        ],
+        "component_evidence_submission_intake_schema_valid": [
+          "component_evidence_submission_intake_schema_valid_and_write"
+        ]
+      },
+      "runtime_witnesses": [
+        "component_evidence_submission_intake_schema_valid",
+        "component_evidence_submission_intake_example_matches_runtime_projection",
+        "component_evidence_submission_intake_observes_submitted_refs_without_acceptance",
+        "component_evidence_submission_intake_rejects_acceptance_and_closure_drift",
+        "component_evidence_submission_intake_runtime_rejects_unknown_request_id",
+        "component_evidence_submission_intake_runtime_rejects_unsafe_queue_source"
+      ],
+      "surface_id": "component_evidence_submission_intake"
     },
     {
       "action_proof": "read_model",
@@ -15552,8 +15654,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1972,
-    "runtime_witness_count": 1972,
+    "exact_test_anchor_count": 1983,
+    "runtime_witness_count": 1983,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -16009,6 +16111,90 @@
         "exact_test_anchor_count": 5,
         "runtime_witness_count": 5,
         "surface_id": "component_bundle_compiler",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_component_evidence_request_queue.py::test_component_evidence_request_queue_schema_valid_and_write"
+            ],
+            "witness": "component_evidence_request_queue_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_component_evidence_request_queue.py::test_component_evidence_request_queue_example_matches_runtime_projection"
+            ],
+            "witness": "component_evidence_request_queue_example_matches_runtime_projection"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_component_evidence_request_queue.py::test_component_evidence_request_queue_rejects_execution_and_acceptance_drift"
+            ],
+            "witness": "component_evidence_request_queue_rejects_execution_and_acceptance_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_component_evidence_request_queue.py::test_component_evidence_request_queue_rejects_missing_blockers_and_validators"
+            ],
+            "witness": "component_evidence_request_queue_rejects_missing_blockers_and_validators"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_component_evidence_request_queue.py::test_component_evidence_request_queue_runtime_rejects_unsafe_bundle_source"
+            ],
+            "witness": "component_evidence_request_queue_runtime_rejects_unsafe_bundle_source"
+          }
+        ],
+        "exact_test_anchor_count": 5,
+        "runtime_witness_count": 5,
+        "surface_id": "component_evidence_request_queue",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_validate_component_evidence_submission_intake.py::test_component_evidence_submission_intake_schema_valid_and_write"
+            ],
+            "witness": "component_evidence_submission_intake_schema_valid"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_component_evidence_submission_intake.py::test_component_evidence_submission_intake_example_matches_runtime_projection"
+            ],
+            "witness": "component_evidence_submission_intake_example_matches_runtime_projection"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_component_evidence_submission_intake.py::test_component_evidence_submission_intake_observes_submitted_refs_without_acceptance"
+            ],
+            "witness": "component_evidence_submission_intake_observes_submitted_refs_without_acceptance"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_component_evidence_submission_intake.py::test_component_evidence_submission_intake_rejects_acceptance_and_closure_drift"
+            ],
+            "witness": "component_evidence_submission_intake_rejects_acceptance_and_closure_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_component_evidence_submission_intake.py::test_component_evidence_submission_intake_runtime_rejects_unknown_request_id"
+            ],
+            "witness": "component_evidence_submission_intake_runtime_rejects_unknown_request_id"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_component_evidence_submission_intake.py::test_component_evidence_submission_intake_runtime_rejects_unsafe_queue_source"
+            ],
+            "witness": "component_evidence_submission_intake_runtime_rejects_unsafe_queue_source"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "component_evidence_submission_intake",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

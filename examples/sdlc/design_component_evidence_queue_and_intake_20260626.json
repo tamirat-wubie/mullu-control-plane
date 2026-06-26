@@ -1,0 +1,58 @@
+{
+  "design_id": "DES-component-evidence-queue-and-intake-20260626",
+  "requirement_id": "REQ-component-evidence-queue-and-intake-20260626",
+  "architecture_summary": "Add two Component Harness read-model surfaces: a request-only evidence queue derived from bundle compiler and claim firewall blockers, and an observation-only submission intake derived from that queue. Both deny execution, connector calls, mutation, evidence acceptance, authority grant, promotion approval, and terminal closure.",
+  "affected_modules": [
+    "mcoi_runtime",
+    "schemas",
+    "examples",
+    "scripts",
+    "tests",
+    "docs",
+    "proof_coverage_matrix",
+    "workspace_governance_preflight"
+  ],
+  "data_model_changes": [
+    "Introduce ComponentEvidenceRequestQueue with request_slots, source_refs, validators, authority-denial flags, and summary counters",
+    "Introduce ComponentEvidenceSubmissionIntake with intake_slots, source_refs, validators, submitted-evidence observation fields, authority-denial flags, and summary counters",
+    "Extend workspace governance preflight receipt check_result.name enum with component_evidence_request_queue and component_evidence_submission_intake"
+  ],
+  "schema_changes": [
+    "schemas/component_evidence_request_queue.schema.json",
+    "schemas/component_evidence_submission_intake.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/workspace_governance_preflight_receipt.schema.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_component_evidence_request_queue.py",
+    "scripts/validate_component_evidence_submission_intake.py",
+    "tests/test_validate_component_evidence_request_queue.py",
+    "tests/test_validate_component_evidence_submission_intake.py",
+    "scripts/proof_coverage_matrix.py",
+    "scripts/run_workspace_governance_checks.py",
+    "tests/test_proof_coverage_matrix.py",
+    "tests/test_run_workspace_governance_checks.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Remove the component evidence request queue and submission intake runtime modules, schemas, examples, validators, tests, manifest entries, proof coverage matrix updates, root coverage waiver entries, workspace preflight entries, and workspace preflight receipt schema/example updates; then rerun schema, protocol, proof coverage, workspace receipt, and focused governance preflight validators.",
+  "migration_plan": "No runtime migration. This is an additive Foundation Mode read-model and validation slice with no persisted runtime state transition.",
+  "test_plan": [
+    "python scripts/validate_component_evidence_request_queue.py",
+    "python scripts/validate_component_evidence_submission_intake.py",
+    "python -m pytest tests/test_validate_component_evidence_request_queue.py tests/test_validate_component_evidence_submission_intake.py -q",
+    "python -m pytest tests/test_proof_coverage_matrix.py tests/test_run_workspace_governance_checks.py -q",
+    "python scripts/validate_workspace_governance_preflight_receipt_contract.py",
+    "python scripts/validate_workspace_governance_preflight_receipt.py",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/run_workspace_governance_checks.py --check component_evidence_request_queue --check component_evidence_submission_intake --check workspace_governance_preflight_receipt_contract --check workspace_governance_preflight_receipt_example --check protocol_manifest --check strict_schema_validation --json"
+  ],
+  "uao_ref": "uao://sdlc/component-evidence-queue-and-intake/design",
+  "causal_decision_trace_ref": "trace://sdlc/component-evidence-queue-and-intake/design",
+  "receipt_ref": "receipt://sdlc/component-evidence-queue-and-intake/design"
+}

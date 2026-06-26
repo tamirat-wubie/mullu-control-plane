@@ -1,5 +1,5 @@
 {
-  "check_count": 288,
+  "check_count": 290,
   "checks": [
     {
       "args": [
@@ -1209,6 +1209,32 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "[PASS] component_bundle_compiler\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_component_evidence_request_queue.py"
+      ],
+      "name": "component_evidence_request_queue",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] component_evidence_request_queue\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_component_evidence_submission_intake.py"
+      ],
+      "name": "component_evidence_submission_intake",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] component_evidence_submission_intake\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
