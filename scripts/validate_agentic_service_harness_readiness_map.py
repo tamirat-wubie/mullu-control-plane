@@ -28,8 +28,10 @@ Invariants:
     non-authorizing witness surface.
   - GitHub PR effect reconciliation remains closed as a read-only evidence
     surface.
-  - The first next PR advances to terminal closure candidate after effect
-    reconciliation closure.
+  - GitHub PR terminal closure remains closed as a non-authorizing
+    certificate/gate/decision/rejection evidence chain.
+  - The first next PR requires an explicit terminal closure operator decision
+    value before certificate minting.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -312,6 +314,25 @@ REQUIRED_GITHUB_PR_EFFECT_RECONCILIATION_TERMS = (
     "no branch, PR, ready-for-review, merge, repository, connector, network, mutation-route, receipt-store, secret, destructive, or terminal authority",
     "granting no repository mutation, secret, destructive, or terminal closure authority",
 )
+REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
+    "GitHub PR terminal closure certificate witness PR",
+    "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
+    "GitHub PR terminal closure certificate candidate PR",
+    "agentic_service_harness_github_pr_terminal_closure_certificate_candidate",
+    "GitHub PR terminal closure operator approval gate PR",
+    "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate",
+    "GitHub PR terminal closure operator decision contract PR",
+    "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
+    "GitHub PR terminal closure generic continuation rejection PR",
+    "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
+    "terminal closure status remains AwaitingEvidence",
+    "certificate minting, operator approval, repository mutation, connector calls, receipt-store append, secret serialization, destructive operation, and terminal closure remain blocked",
+    "operator approval is required, not collected",
+    "approve_terminal_certificate",
+    "deny_terminal_certificate",
+    "generic continuation text is rejected as terminal approval",
+    "no certificate minting, repository mutation, connector call, receipt-store append, secret serialization, destructive operation, or terminal closure authority is granted",
+)
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
     ("fastapi_mutation_decorator", re.compile(r"@\w+\.(?:post|put|patch|delete)\(", re.IGNORECASE)),
@@ -458,6 +479,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         "github_pr_effect_reconciliation_term",
         errors,
     )
+    _require_all(
+        map_text,
+        REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS,
+        "github_pr_terminal_closure_term",
+        errors,
+    )
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
@@ -477,6 +504,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_github_pr_admission_ready(map_text, errors)
     _validate_github_pr_ci_gate_ready(map_text, errors)
     _validate_github_pr_effect_reconciliation_ready(map_text, errors)
+    _validate_github_pr_terminal_closure_ready(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -740,10 +768,55 @@ def _validate_github_pr_effect_reconciliation_ready(
         errors.append("missing ready row: GitHub PR effect reconciliation live evidence PR")
 
 
+def _validate_github_pr_terminal_closure_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    witness_row = re.search(
+        r"^\| GitHub PR terminal closure certificate witness PR \| READY \| .+terminal closure status remains AwaitingEvidence.+terminal authority is granted\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if witness_row is None:
+        errors.append("missing ready row: GitHub PR terminal closure certificate witness PR")
+
+    candidate_row = re.search(
+        r"^\| GitHub PR terminal closure certificate candidate PR \| READY \| .+certificate minting.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if candidate_row is None:
+        errors.append("missing ready row: GitHub PR terminal closure certificate candidate PR")
+
+    approval_gate_row = re.search(
+        r"^\| GitHub PR terminal closure operator approval gate PR \| READY \| .+operator approval is required.+authority is granted\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if approval_gate_row is None:
+        errors.append("missing ready row: GitHub PR terminal closure operator approval gate PR")
+
+    decision_contract_row = re.search(
+        r"^\| GitHub PR terminal closure operator decision contract PR \| READY \| .+approve_terminal_certificate.+terminal closure authority is granted\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if decision_contract_row is None:
+        errors.append("missing ready row: GitHub PR terminal closure operator decision contract PR")
+
+    generic_rejection_row = re.search(
+        r"^\| GitHub PR terminal closure generic continuation rejection PR \| READY \| .+generic continuation text is rejected.+terminal closure authority is granted\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if generic_rejection_row is None:
+        errors.append("missing ready row: GitHub PR terminal closure generic continuation rejection PR")
+
+
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): close PR terminal closure certificate candidate",
-        "harness(pr): bind PR terminal closure certificate witness",
+        "harness(pr): collect explicit PR terminal closure operator decision value",
+        "harness(pr): mint PR terminal closure certificate after approval",
     )
     positions: list[int] = []
     for marker in sequence_markers:
@@ -768,7 +841,7 @@ def _validate_current_main_ref(map_text: str, errors: list[str]) -> None:
 
 def _validate_open_pr_queue_boundary(map_text: str, errors: list[str]) -> None:
     open_pr_queue = re.search(
-        r"^Open PRs after readiness-map refresh: .+ outside this PR effect reconciliation readiness-map closure; .+does not grant harness execution authority\.$",
+        r"^Open PRs after readiness-map refresh: .+ outside this PR terminal closure readiness-map closure; .+does not grant harness execution authority\.$",
         map_text,
         re.MULTILINE,
     )
