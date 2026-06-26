@@ -19,7 +19,7 @@ judgment is earned.
 | Subject | `governance(govern): add governance normalization map` |
 | Base branch | `main` assumed for PR preparation; remote PR not opened |
 | Publication state | Local only; push and PR creation not performed |
-| Outcome | `SolvedUnverified` |
+| Outcome | `AwaitingEvidence` for merge readiness; draft PR publication permitted |
 
 ## Commit Boundary
 
@@ -47,7 +47,7 @@ judgment is earned.
 | Surface | Judgment | Bound |
 | --- | --- | --- |
 | External publication | Not performed | Requires explicit operator request before push or PR creation |
-| Full unsharded preflight | Timed out after 10 minutes | Focused governance lanes passed; full receipt is not claimed |
+| Full unsharded preflight | First run timed out after 10 minutes; rerun with 120-second per-check timeout exited non-zero after about 15 minutes without a receipt | Focused governance lanes passed; full receipt is not claimed |
 | Focused receipt persistence | Blocked by contract because saved receipts require a full unsharded run | Correct policy behavior; focused output used as bounded local evidence |
 
 ## Verification Evidence
@@ -62,6 +62,8 @@ judgment is earned.
 | `python scripts/validate_artifacts.py --strict` | Passed |
 | `git diff --cached --check` before commit | Passed |
 | `git status --short` after commit | Clean |
+| Direct `component_router_inventory` gate after aggregate failure | Passed |
+| Direct `foundation_github_app_token_format_boundary` gate after aggregate stop point | Passed |
 
 ## Project Discipline Mesh
 
@@ -71,7 +73,7 @@ judgment is earned.
 | Design/Research | No user interface or research flow changed | Pass | No design artifact required |
 | Engineering | Map, validator, tests, preflight, witness, and receipt contracts are linked | Pass | Preserve check order in future preflight edits |
 | Quality/Security | No secrets, deployment, tenant, or external authority changed | Pass | Require explicit push/PR instruction before publication |
-| Operations | Full unsharded preflight timeout prevents full operational closure | Gap | Re-run full preflight with a longer execution window before merge readiness |
+| Operations | Full unsharded preflight did not produce a valid receipt, even after a longer per-check timeout | Gap | Diagnose aggregate preflight receipt emission before merge readiness |
 | Business/GTM | No customer, legal, billing, or public-readiness claim made | Pass | Keep PR wording bounded to local governance hardening |
 
 ## Rollback And Recovery Boundary
@@ -117,11 +119,11 @@ Adds an executable governance normalization map for the `govern` subsystem.
 
 ### Next Action
 
-Run full unsharded workspace preflight with a longer execution window, then push
-and open a PR only after explicit operator instruction.
+Open only a draft PR until the aggregate workspace preflight can emit and
+validate a full receipt.
 
 STATUS:
   Completeness: 95%
   Invariants verified: OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS, Mfidel atomicity
-  Open issues: full unsharded workspace preflight timed out; no remote CI evidence
-  Next action: run full preflight with a longer execution window before PR publication
+  Open issues: full unsharded workspace preflight has no valid receipt; no remote CI evidence
+  Next action: publish draft PR with preflight blocker disclosed
