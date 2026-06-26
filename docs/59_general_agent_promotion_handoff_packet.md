@@ -19,8 +19,8 @@ This packet is the operator entry point for final promotion validation. It binds
 | --- | --- |
 | Readiness level | `pilot-governed-core` |
 | Capability capsules | 13 |
-| Governed capabilities | 80 |
-| Aggregate closure actions | 11 |
+| Governed capabilities | 81 |
+| Aggregate closure actions | 10 |
 | Approval-required actions | 8 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
@@ -91,11 +91,13 @@ capability_improvement_required:agentic_control.governance_gate.evaluate
 capability_improvement_required:agentic_control.incident_recovery.plan
 ```
 
-The five repository-local capability-improvement actions were admitted through
+Browser adapter sandbox and live evidence are closed. The five
+repository-local capability-improvement actions were admitted through
 explicit operator approval refs, reconciled against live evidence and proof
 receipts, then minted into terminal closure certificates during the 2026-06-12
-promotion-chain run. Voice credential binding, upstream API/DNS readiness, and
-adapter live evidence remain bounded before production promotion.
+promotion-chain run. Voice credential binding, email/calendar connector
+binding, upstream API/DNS readiness, and residual adapter live evidence remain
+bounded before production promotion.
 
 ## Latest Terminal Minting Witness
 
@@ -149,7 +151,7 @@ publication, public health declaration, and live adapter evidence remain closed
 for `api.mullusi.com`.
 
 STATUS:
-  Completeness: 100%
-  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, capability improvement proof receipt linked, terminal evidence reconciliation contract linked, terminal minting gate linked, terminal certificate minting run contract linked, terminal certificates minted, blockers explicit, deployment witness published, public health declared, final promotion validation passed]
-  Open issues: none
-  Next action: preserve the terminal minting receipts with the release packet and continue the next deployment or issue workstream
+  Completeness: 92%
+  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, capability improvement proof receipt linked, terminal evidence reconciliation contract linked, terminal minting gate linked, terminal certificate minting run contract linked, terminal certificates minted, blockers explicit, deployment witness published, public health declared, browser adapter evidence closed]
+  Open issues: [voice credential binding, voice live receipt, email/calendar connector binding, email/calendar live receipt, final promotion validation remains blocked]
+  Next action: bind governed voice and email/calendar evidence inputs, regenerate receipts, then rerun strict promotion validation
