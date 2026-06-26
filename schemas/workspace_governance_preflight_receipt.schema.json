@@ -116,6 +116,7 @@
             "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
             "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
             "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record",
+            "agentic_service_harness_github_pr_terminal_closure_certificate_minting",
             "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
             "agentic_service_harness_read_only_status_route_design",
             "agentic_service_harness_read_only_status_route",

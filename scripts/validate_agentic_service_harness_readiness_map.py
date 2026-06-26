@@ -28,10 +28,10 @@ Invariants:
     non-authorizing witness surface.
   - GitHub PR effect reconciliation remains closed as a read-only evidence
     surface.
-  - GitHub PR terminal closure remains closed as a non-authorizing
-    certificate/gate/decision/rejection/request evidence chain.
-  - The first next PR requires an explicit approved/denied terminal closure
-    operator decision value before certificate minting.
+  - GitHub PR terminal closure remains closed as a bounded certificate/gate/
+    decision/rejection/request/minting evidence chain.
+  - The first next PR projects the minted certificate into a read model before
+    any runtime mutation, dashboard, connector, or deployment authority.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -329,6 +329,8 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
     "GitHub PR terminal closure operator decision value record PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record",
+    "GitHub PR terminal closure certificate minting PR",
+    "agentic_service_harness_github_pr_terminal_closure_certificate_minting",
     "terminal closure status remains AwaitingEvidence",
     "certificate minting, operator approval, repository mutation, connector calls, receipt-store append, secret serialization, destructive operation, and terminal closure remain blocked",
     "operator approval is required, not collected",
@@ -340,6 +342,9 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "satisfies only the operator decision gate",
     "minting no certificate",
     "no certificate minting, repository mutation, connector call, receipt-store append, secret serialization, destructive operation, or terminal closure authority is granted",
+    "mints the terminal closure certificate",
+    "limiting authority to this GitHub PR proof thread",
+    "granting no repository mutation, connector call, receipt-store append, deployment, secret serialization, or destructive-operation authority",
 )
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
@@ -836,10 +841,18 @@ def _validate_github_pr_terminal_closure_ready(
     if decision_value_record_row is None:
         errors.append("missing ready row: GitHub PR terminal closure operator decision value record PR")
 
+    certificate_minting_row = re.search(
+        r"^\| GitHub PR terminal closure certificate minting PR \| READY \| .+mints the terminal closure certificate.+GitHub PR proof thread.+destructive-operation authority\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if certificate_minting_row is None:
+        errors.append("missing ready row: GitHub PR terminal closure certificate minting PR")
+
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): mint PR terminal closure certificate after approved decision value",
+        "harness(pr): project minted PR terminal closure certificate read model",
     )
     positions: list[int] = []
     for marker in sequence_markers:
