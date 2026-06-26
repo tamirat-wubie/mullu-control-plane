@@ -64,6 +64,7 @@ def test_autonomous_demo_renders_json_continuation_summary(capsys: pytest.Captur
     assert body["workflow_approval_stage_count"] == 0
     assert body["workflow_external_stage_count"] == 0
     assert body["prompt_count"] == 0
+    assert "receipt_path" not in body
     assert body["workflow_descriptor_ref"].startswith("workflow://")
     assert body["rollback_ref"].endswith("/local-effects")
 
@@ -96,6 +97,7 @@ def test_autonomous_demo_writes_json_receipt_path(
     assert body["operation"] == "autonomous-demo"
     assert body["automation_state"] == "settled_without_prompt"
     assert body["prompt_count"] == 0
+    assert body["receipt_path"] == str(receipt_path)
     assert body["workflow_descriptor_ref"].startswith("workflow://")
     assert body["rollback_ref"].endswith("/local-effects")
 
@@ -130,6 +132,7 @@ def test_autonomous_demo_quiet_writes_receipt_without_stdout(
     assert body["operation"] == "autonomous-demo"
     assert body["automation_state"] == "settled_without_prompt"
     assert body["prompt_count"] == 0
+    assert body["receipt_path"] == str(receipt_path)
 
 
 def test_autonomous_demo_receipt_dir_derives_filename_and_creates_directory(
@@ -158,6 +161,7 @@ def test_autonomous_demo_receipt_dir_derives_filename_and_creates_directory(
     assert captured.err == ""
     assert receipt_path.exists()
     assert body["episode_id"] == "episode/demo:local"
+    assert body["receipt_path"] == str(receipt_path)
     assert body["automation_state"] == "settled_without_prompt"
 
 

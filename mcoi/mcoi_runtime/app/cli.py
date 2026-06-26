@@ -379,6 +379,7 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
     if args.receipt_dir:
         receipt_path = str(_autonomous_demo_receipt_dir_path(args.receipt_dir, view.episode_id))
     if receipt_path:
+        envelope["receipt_path"] = str(Path(receipt_path))
         _write_autonomous_demo_receipt(envelope, receipt_path)
     if not args.quiet:
         if args.json:
