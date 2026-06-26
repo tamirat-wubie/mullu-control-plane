@@ -1,5 +1,5 @@
 {
-  "artifact_count": 363,
+  "artifact_count": 366,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -100,6 +100,21 @@
       "name": "agents_policy_validator",
       "path": "scripts/validate_agents_governance.py",
       "purpose": "Read-only validator for the AGENTS.md governance policy surface."
+    },
+    {
+      "name": "governance_normalization_map_document",
+      "path": "docs/GOVERNANCE_NORMALIZATION_MAP.md",
+      "purpose": "Foundation Mode source map routing repeated governance doctrine to canonical docs, validators, tests, and preflight checks."
+    },
+    {
+      "name": "governance_normalization_map_validator",
+      "path": "scripts/validate_governance_normalization_map.py",
+      "purpose": "Read-only validator for governance normalization source, validator, test, and preflight bindings."
+    },
+    {
+      "name": "governance_normalization_map_tests",
+      "path": "tests/test_validate_governance_normalization_map.py",
+      "purpose": "Regression tests for governance normalization map validation."
     },
     {
       "name": "trusted_local_control_studio_doc",
@@ -1825,6 +1840,7 @@
     "governance integrity report omits a digest for an existing artifact",
     "governance integrity report counts contradict artifact records",
     "workspace governance preflight omits inventory, integrity, or witness validation",
+    "workspace governance witness omits governance normalization map artifacts",
     "workspace governance witness omits Universal Action Orchestration artifacts",
     "workspace governance witness omits Life Continuity Conflict Doctrine",
     "workspace governance witness omits Life-Meaning Governance Kernel artifacts",

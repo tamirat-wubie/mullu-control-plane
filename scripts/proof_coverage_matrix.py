@@ -3165,6 +3165,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/console/providers",
                 "/api/v1/console/scheduler",
                 "/api/v1/console/shadow",
+                "/api/v1/console/shadow/evidence",
                 "/api/v1/console/whqr/clarifications",
                 "/api/v1/console/note-memory",
                 "/api/v1/console/note-memory/view",
@@ -3199,6 +3200,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_checkpoints_expose_persisted_state_summary",
                 "console_provider_and_scheduler_views_are_read_only",
                 "shadow_console_route_returns_counts_without_raw_text",
+                "shadow_console_evidence_route_returns_redacted_recent_evidence",
                 "console_note_memory_returns_read_only_lifecycle_summary",
                 "console_note_memory_html_escapes_read_model",
                 "console_note_memory_fails_closed_without_store_path",
@@ -3223,6 +3225,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "shadow_console_route_returns_counts_without_raw_text": [
                     "shadow_console_route_returns_counts_without_raw_text",
+                ],
+                "shadow_console_evidence_route_returns_redacted_recent_evidence": [
+                    "shadow_console_evidence_route_returns_redacted_recent_evidence",
                 ],
                 "console_note_memory_returns_read_only_lifecycle_summary": [
                     "console_note_memory_enabled_read_model",

@@ -20,7 +20,7 @@
   },
   "summary": {
     "route_family_count": 79,
-    "declared_route_count": 450,
+    "declared_route_count": 451,
     "selected_component_bound_count": 13,
     "platform_family_classified_count": 66,
     "promotion_blocked_count": 66,
@@ -2593,7 +2593,7 @@
           "route_binding_is_bound": true
         }
       ],
-      "declared_route_count": 15,
+      "declared_route_count": 16,
       "sample_routes": [
         "/api/v1/console",
         "/api/v1/console/audit",
