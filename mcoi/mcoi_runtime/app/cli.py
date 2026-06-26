@@ -352,8 +352,10 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
     """Run the default local autonomous capability chain and render its receipt."""
     if args.max_local_retries < 0:
         _fatal("max-local-retries must be non-negative")
-    if args.quiet and not args.receipt_path:
-        _fatal("quiet autonomous demo requires --receipt-path")
+    if args.receipt_path and args.receipt_dir:
+        _fatal("autonomous demo accepts either --receipt-path or --receipt-dir")
+    if args.quiet and not (args.receipt_path or args.receipt_dir):
+        _fatal("quiet autonomous demo requires --receipt-path or --receipt-dir")
     config = _resolve_config(args)
     runtime = bootstrap_runtime(config=config)
     loop = OperatorLoop(runtime=runtime)
@@ -373,8 +375,11 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
     receipt = loop.run_autonomous_request_episode(episode)
     view = AutonomousRequestEpisodeSummaryView.from_receipt(receipt)
     envelope = _autonomous_demo_summary_envelope(view)
-    if args.receipt_path:
-        _write_autonomous_demo_receipt(envelope, args.receipt_path)
+    receipt_path = args.receipt_path
+    if args.receipt_dir:
+        receipt_path = str(_autonomous_demo_receipt_dir_path(args.receipt_dir, view.episode_id))
+    if receipt_path:
+        _write_autonomous_demo_receipt(envelope, receipt_path)
     if not args.quiet:
         if args.json:
             print(json.dumps(envelope, sort_keys=True, indent=2))
@@ -409,6 +414,22 @@ def _write_autonomous_demo_receipt(envelope: Mapping[str, object], receipt_path:
         Path(receipt_path).write_text(json.dumps(envelope, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     except OSError as exc:
         _fatal(f"cannot write autonomous demo receipt: {_classify_cli_os_error(exc)}")
+
+
+def _autonomous_demo_receipt_dir_path(receipt_dir: str, episode_id: str) -> Path:
+    """Return the deterministic receipt file path for a local receipt directory."""
+    safe_episode_id = "".join(
+        character if character.isalnum() or character in {"-", "_", "."} else "_"
+        for character in episode_id
+    ).strip("._")
+    if not safe_episode_id:
+        _fatal("autonomous demo episode id must produce a receipt filename")
+    path = Path(receipt_dir)
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        _fatal(f"cannot prepare autonomous demo receipt directory: {_classify_cli_os_error(exc)}")
+    return path / f"{safe_episode_id}.json"
 
 
 def profiles_command(args: argparse.Namespace) -> int:
@@ -1033,6 +1054,10 @@ def build_parser() -> argparse.ArgumentParser:
     autonomous_demo_parser.add_argument(
         "--receipt-path",
         help="Write the autonomous demo JSON envelope to a local file",
+    )
+    autonomous_demo_parser.add_argument(
+        "--receipt-dir",
+        help="Write the autonomous demo JSON envelope under a local receipt directory",
     )
     autonomous_demo_parser.add_argument(
         "--quiet",
