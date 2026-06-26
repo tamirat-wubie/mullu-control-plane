@@ -59,6 +59,17 @@ class ShadowRedactingRoute(APIRoute):
 
 
 router = APIRouter(route_class=ShadowRedactingRoute)
+_SAFE_REQUEST_ID_CHARS = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:")
+_SENSITIVE_REQUEST_ID_MARKERS = (
+    "secret",
+    "token",
+    "credential",
+    "password",
+    "private",
+    "apikey",
+    "api_key",
+    "bearer",
+)
 
 
 class ShadowInspectRequest(BaseModel):
@@ -419,12 +430,14 @@ def _shadow_runtime() -> tuple[InceptaDiveShadowRuntime, bool]:
 def _inspect_request_id(req: ShadowInspectRequest, *, created_at: str, stage: ShadowStage) -> str:
     """Return caller-provided id or a deterministic non-raw request reference."""
 
-    if req.request_id.strip():
-        return req.request_id.strip()
+    request_id = req.request_id.strip()
+    if _request_id_is_public_reference(request_id):
+        return request_id
     return "shadow_request_" + stable_identifier(
         "shadow-inspect-request",
         {
             "stage": stage.value,
+            "request_id": request_id,
             "user_input": req.user_input,
             "candidate_action": req.candidate_action,
             "created_at": created_at,
@@ -473,6 +486,17 @@ def _tuple_text(values: list[object]) -> tuple[str, ...]:
         if item:
             items.append(item)
     return tuple(items)
+
+
+def _request_id_is_public_reference(value: str) -> bool:
+    """Return true only for caller ids safe to echo in redacted envelopes."""
+
+    if not value or len(value) > 128:
+        return False
+    if any(character not in _SAFE_REQUEST_ID_CHARS for character in value):
+        return False
+    lowered = value.lower()
+    return not any(marker in lowered for marker in _SENSITIVE_REQUEST_ID_MARKERS)
 
 
 def _redacted_result(result: ShadowPassResult) -> dict[str, object]:

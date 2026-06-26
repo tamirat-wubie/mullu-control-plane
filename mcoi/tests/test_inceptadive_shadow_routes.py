@@ -216,6 +216,36 @@ def test_shadow_inspect_route_runs_runtime_and_redacts_raw_text() -> None:
     assert "secret-token" not in str(payload)
 
 
+def test_shadow_inspect_route_redacts_secret_shaped_request_id() -> None:
+    previous_store = dict(deps._store)
+    raw_request_id = "operator-secret-token-001"
+    deps._store.clear()
+    deps.set("inceptadive_shadow_runtime", build_inceptadive_shadow_runtime({}))
+    try:
+        response = _client().post(
+            "/api/v1/shadow/inspect",
+            json={
+                "request_id": raw_request_id,
+                "stage": "interpretation",
+                "user_input": "inspect bounded request id handling",
+                "created_at": "2026-06-26T00:00:00+00:00",
+            },
+        )
+    finally:
+        deps._store.clear()
+        deps._store.update(previous_store)
+
+    payload = response.json()
+    result = payload["result"]
+    receipt = payload["receipt"]
+    assert response.status_code == 200
+    assert result["request_id"].startswith("shadow_request_")
+    assert receipt["request_id"] == result["request_id"]
+    assert raw_request_id not in str(payload)
+    assert payload["raw_request_text_exposed"] is False
+    assert payload["execution_authority"] is False
+
+
 def test_shadow_inspect_route_matches_replay_contract_fixture() -> None:
     fixture = json.loads(
         (_FIXTURES / "inceptadive_shadow_inspect_replay.json").read_text(encoding="utf-8")
@@ -516,6 +546,36 @@ def test_external_effect_advisory_route_closes_refs_without_exposing_refs() -> N
     assert payload["raw_request_text_exposed"] is False
     assert "approval-secret-ref" not in str(payload)
     assert "authority-secret-ref" not in str(payload)
+
+
+def test_external_effect_advisory_route_redacts_secret_shaped_request_id() -> None:
+    previous_store = dict(deps._store)
+    raw_request_id = "advisory-private-token-001"
+    deps._store.clear()
+    deps.set("inceptadive_shadow_runtime", build_inceptadive_shadow_runtime({}))
+    try:
+        response = _client().post(
+            "/api/v1/shadow/external-effect/advisory",
+            json={
+                "request_id": raw_request_id,
+                "stage": "preflight",
+                "user_input": "inspect external-effect request id handling",
+                "candidate_action": "inspect only",
+                "created_at": "2026-06-26T00:00:00+00:00",
+            },
+        )
+    finally:
+        deps._store.clear()
+        deps._store.update(previous_store)
+
+    payload = response.json()
+    advisory = payload["advisory"]
+    assert response.status_code == 200
+    assert advisory["request_id"].startswith("shadow_request_")
+    assert raw_request_id not in str(payload)
+    assert payload["raw_request_text_exposed"] is False
+    assert payload["execution_authority"] is False
+    assert advisory["execution_authority"] is False
 
 
 def test_external_effect_advisory_route_rejects_invalid_request_bounded() -> None:
