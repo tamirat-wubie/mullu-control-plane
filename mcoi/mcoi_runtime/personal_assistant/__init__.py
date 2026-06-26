@@ -144,6 +144,12 @@ from .operator_reapproval_decision_receipt_value_binding_absence import (
     build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_absence,
     build_personal_assistant_operator_reapproval_decision_receipt_value_binding_absence_envelope,
 )
+from .operator_reapproval_decision_receipt_value_binding_admission_preflight import (
+    DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_ADMISSION_PREFLIGHT_GENERATED_AT,
+    DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_ADMISSION_PREFLIGHT_SET_ID,
+    build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_admission_preflight,
+    build_personal_assistant_operator_reapproval_decision_receipt_value_binding_admission_preflight_envelope,
+)
 from .intake import (
     ApprovalScope,
     ConnectorProofRef,
@@ -255,6 +261,8 @@ __all__ = (
     "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_GUARD_SET_ID",
     "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_ABSENCE_GENERATED_AT",
     "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_ABSENCE_SET_ID",
+    "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_ADMISSION_PREFLIGHT_GENERATED_AT",
+    "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_ADMISSION_PREFLIGHT_SET_ID",
     "DEFAULT_OPERATOR_REAPPROVAL_GATE_GENERATED_AT",
     "DEFAULT_OPERATOR_REAPPROVAL_GATE_SET_ID",
     "PersonalAssistantApprovalQueue",
@@ -316,6 +324,7 @@ __all__ = (
     "build_default_personal_assistant_operator_reapproval_decision_receipt_value_template",
     "build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_guard",
     "build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_absence",
+    "build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_admission_preflight",
     "build_default_personal_assistant_operator_reapproval_gate",
     "build_personal_assistant_preview_plan",
     "build_default_personal_assistant_draft_projection",
@@ -335,6 +344,7 @@ __all__ = (
     "build_personal_assistant_operator_reapproval_decision_receipt_value_template_envelope",
     "build_personal_assistant_operator_reapproval_decision_receipt_value_binding_guard_envelope",
     "build_personal_assistant_operator_reapproval_decision_receipt_value_binding_absence_envelope",
+    "build_personal_assistant_operator_reapproval_decision_receipt_value_binding_admission_preflight_envelope",
     "build_personal_assistant_operator_reapproval_gate_envelope",
     "build_personal_assistant_execution_gate_envelope",
     "build_personal_assistant_read_only_projection_envelope",
