@@ -996,6 +996,27 @@ def test_runtime_authority_read_model_rejects_missing_projection_link(tmp_path: 
         )
 
 
+def test_runtime_authority_read_model_rejects_unexpected_projection_link(tmp_path: Path) -> None:
+    read_model = json.loads(DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(read_model)
+    changed["authority_chain_projection"].append(
+        {
+            "link_id": "runtime-authority-read-model://unbounded-runtime-link",
+            "label": "Unbounded runtime link",
+            "source_ref": "policy://unbounded-runtime-link",
+            "proof_state": "Unknown",
+            "activation_allowed": False,
+            "operator_visible_summary": "Blocked pending governed evidence.",
+        }
+    )
+    changed["contract_summary"]["authority_chain_projection_count"] = len(changed["authority_chain_projection"])
+    with pytest.raises(UniversalSymbolRuntimeAuthorityReadModelError, match="unbounded-runtime-link"):
+        validate_universal_symbol_runtime_authority_read_model(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_SCHEMA_PATH,
+        )
+
+
 def test_runtime_authority_read_model_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
     read_model = json.loads(DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_PATH.read_text(encoding="utf-8"))
     changed = copy.deepcopy(read_model)
