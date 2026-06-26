@@ -284,12 +284,18 @@ def _contains_secret_shaped_text(value: Any) -> bool:
     return any(fragment in text for fragment in SECRET_SHAPED_FRAGMENTS)
 
 
+def _github_actions_run_id(value: Any) -> str | None:
+    prefix = f"https://github.com/{EXPECTED_REPO}/actions/runs/"
+    if not isinstance(value, str) or not value.startswith(prefix):
+        return None
+    run_id = value.removeprefix(prefix)
+    if not run_id.isdigit():
+        return None
+    return run_id
+
+
 def _is_github_actions_url(value: Any) -> bool:
-    return (
-        isinstance(value, str)
-        and value.startswith(f"https://github.com/{EXPECTED_REPO}/actions/runs/")
-        and value.rsplit("/", 1)[-1].isdigit()
-    )
+    return _github_actions_run_id(value) is not None
 
 
 def _is_pull_request_url(value: Any) -> bool:
@@ -434,13 +440,23 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
         findings.append(
             Finding("public_ci_window_receipt_workflow_urls_invalid", "workflow_run_urls must be a non-empty list")
         )
-    elif not all(_is_github_actions_url(item) for item in workflow_urls):
-        findings.append(
-            Finding(
-                "public_ci_window_receipt_workflow_urls_invalid",
-                "workflow_run_urls must contain repository GitHub Actions run URLs",
+    else:
+        workflow_run_ids = tuple(_github_actions_run_id(item) for item in workflow_urls)
+        if any(run_id is None for run_id in workflow_run_ids):
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_workflow_urls_invalid",
+                    "workflow_run_urls must contain exact repository GitHub Actions run URLs",
+                )
             )
-        )
+        observed_run_ids = tuple(run_id for run_id in workflow_run_ids if run_id is not None)
+        if len(set(observed_run_ids)) != len(observed_run_ids):
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_workflow_urls_duplicate",
+                    "workflow_run_urls must not repeat a GitHub Actions run",
+                )
+            )
 
     validators = payload.get("validators")
     if not isinstance(validators, list) or not all(isinstance(item, dict) for item in validators):
