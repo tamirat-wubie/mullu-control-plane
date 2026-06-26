@@ -1571,6 +1571,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-approval-decision:1"
     },
     {
+      "path": "schemas/personal_assistant_send_preparation_receipt.schema.json",
+      "schema_id": "personal-assistant-send-preparation-receipt",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-send-preparation-receipt:1"
+    },
+    {
       "path": "schemas/personal_assistant_approval_review_packet.schema.json",
       "schema_id": "personal-assistant-approval-review-packet",
       "surface": "approval",
