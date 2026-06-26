@@ -21,8 +21,10 @@ Invariants:
     READY surface.
   - Executed-test receipt admission remains closed as an admission-only
     READY surface.
-  - The first next PR advances to non-empty diff receipt admission after
-    executed-test receipt admission closes.
+  - Non-empty diff receipt admission remains closed as an admission-only
+    READY surface.
+  - The first next PR advances to GitHub PR admission after non-empty diff
+    receipt admission closes.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -248,6 +250,21 @@ REQUIRED_EXECUTED_TEST_RECEIPT_ADMISSION_TERMS = (
     "raw test output",
     "terminal closure remain blocked",
 )
+REQUIRED_NON_EMPTY_DIFF_RECEIPT_ADMISSION_TERMS = (
+    "Non-empty diff receipt admission preflight PR",
+    "agentic_service_harness_non_empty_diff_receipt_admission_preflight",
+    "zero-diff actual diff collection receipt",
+    "branch/workspace authority",
+    "cleanup",
+    "redaction",
+    "UAO admission",
+    "receipt-store write-path",
+    "non-empty diff receipt",
+    "raw diff bodies",
+    "raw file content",
+    "connector calls",
+    "terminal closure remain blocked",
+)
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
     ("fastapi_mutation_decorator", re.compile(r"@\w+\.(?:post|put|patch|delete)\(", re.IGNORECASE)),
@@ -370,6 +387,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         "executed_test_receipt_admission_term",
         errors,
     )
+    _require_all(
+        map_text,
+        REQUIRED_NON_EMPTY_DIFF_RECEIPT_ADMISSION_TERMS,
+        "non_empty_diff_receipt_admission_term",
+        errors,
+    )
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
@@ -385,6 +408,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_task_record_write_uao_ready(map_text, errors)
     _validate_receipt_store_append_preflight_ready(map_text, errors)
     _validate_executed_test_receipt_admission_ready(map_text, errors)
+    _validate_non_empty_diff_receipt_admission_ready(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -580,10 +604,23 @@ def _validate_executed_test_receipt_admission_ready(
         errors.append("missing ready row: Executed test receipt admission preflight PR")
 
 
+def _validate_non_empty_diff_receipt_admission_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Non-empty diff receipt admission preflight PR \| READY \| .+non-empty diff receipt.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Non-empty diff receipt admission preflight PR")
+
+
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(diffs): add non-empty diff receipt admission preflight",
         "harness(pr): add GitHub PR admission preflight",
+        "harness(pr): bind PR ready-for-review CI evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:
@@ -608,7 +645,7 @@ def _validate_current_main_ref(map_text: str, errors: list[str]) -> None:
 
 def _validate_open_pr_queue_boundary(map_text: str, errors: list[str]) -> None:
     open_pr_queue = re.search(
-        r"^Open PRs after readiness-map refresh: .+ outside this executed-test receipt admission preflight closure; .+does not grant harness execution authority\.$",
+        r"^Open PRs after readiness-map refresh: .+ outside this non-empty diff receipt admission preflight closure; .+does not grant harness execution authority\.$",
         map_text,
         re.MULTILINE,
     )

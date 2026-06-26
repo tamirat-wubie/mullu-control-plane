@@ -148,6 +148,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_executed_test_receipt
     assert executed_test_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_non_empty_diff_receipt_admission_preflight() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    diff_entry = entries[
+        "agentic-service-harness-non-empty-diff-receipt-admission-preflight"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert diff_entry["path"] == (
+        "schemas/agentic_service_harness_non_empty_diff_receipt_admission_preflight.schema.json"
+    )
+    assert diff_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-non-empty-diff-receipt-admission-preflight:1"
+    )
+    assert diff_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_evidence_bundle_projection() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
