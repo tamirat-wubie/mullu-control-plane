@@ -25,8 +25,10 @@ from typing import Any
 
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
-if str(WORKSPACE_ROOT) not in sys.path:
-    sys.path.insert(0, str(WORKSPACE_ROOT))
+MCOI_ROOT = WORKSPACE_ROOT / "mcoi"
+for import_root in (WORKSPACE_ROOT, MCOI_ROOT):
+    if str(import_root) not in sys.path:
+        sys.path.insert(0, str(import_root))
 
 from gateway.command_spine import _CAPABILITY_PASSPORTS  # noqa: E402
 from gateway.search_governance import (  # noqa: E402
