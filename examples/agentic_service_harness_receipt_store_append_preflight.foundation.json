@@ -1,0 +1,122 @@
+{
+  "report_id": "agentic_service_harness_receipt_store_append_preflight",
+  "schema_version": 1,
+  "generated_at": "2026-06-25T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "admission_status": "AwaitingEvidence",
+  "source_contract_refs": [
+    "examples/agentic_service_harness_task_record_write_uao_admission_preflight.foundation.json",
+    "examples/agentic_service_harness_receipt_projection.foundation.json",
+    "examples/agentic_service_harness_receipt_evidence_read_models.foundation.json",
+    "examples/universal_symbol_receipt_store_write_path_witness.foundation.json",
+    "examples/universal_symbol_receipt_store_authority_witness.foundation.json",
+    "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  ],
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "agent_run_id": "agent-run-foundation",
+    "task_record_write_uao_preflight_id": "task-record-write-uao-foundation",
+    "foundation_phase": "foundation_receipt_store_append_preflight",
+    "admission_only": true,
+    "read_only_sources": true,
+    "receipt_store_append_admitted": false,
+    "receipt_store_appended": false,
+    "runtime_state_write_enabled": false,
+    "raw_payload_stored": false,
+    "secret_values_serialized": false
+  },
+  "append_admission": {
+    "requested_action": "admit_harness_receipt_store_append",
+    "requested_route_ref": "route://harness/receipts/append/not-admitted",
+    "append_decision": "BLOCKED_PENDING_APPEND_AUTHORITY_AND_AUDIT",
+    "task_record_write_uao_valid": true,
+    "universal_write_path_witness_valid": true,
+    "universal_authority_witness_valid": true,
+    "operator_approval_collected": false,
+    "append_audit_witness_valid": false,
+    "writer_registration_valid": false,
+    "write_path_registered": false,
+    "tenant_scope_valid": false,
+    "idempotency_key_valid": false,
+    "durability_replay_valid": false,
+    "rollback_evidence_collected": false,
+    "redaction_evidence_collected": false,
+    "receipt_store_append_admitted": false,
+    "required_before_append_refs": [
+      "approval://operator/harness-receipt-store-append",
+      "witness://universal-symbol/receipt-append-audit",
+      "authority://universal-symbol/receipt-store-writer",
+      "authority://universal-symbol/receipt-store-write-path",
+      "proof://universal-symbol/receipt-store-idempotency",
+      "proof://universal-symbol/receipt-store-durability-replay",
+      "recovery://universal-symbol/receipt-store-authority",
+      "evidence://harness-receipt-redaction"
+    ],
+    "blocked_reason_refs": [
+      "blocked://receipt-store-append/operator-approval-missing",
+      "blocked://receipt-store-append/append-audit-missing",
+      "blocked://receipt-store-append/writer-registration-missing",
+      "blocked://receipt-store-append/write-path-not-registered",
+      "blocked://receipt-store-append/idempotency-missing",
+      "blocked://receipt-store-append/durability-replay-missing",
+      "blocked://receipt-store-append/rollback-missing",
+      "blocked://receipt-store-append/redaction-missing",
+      "blocked://runtime-state-write/not-admitted",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "next_required_evidence_refs": [
+      "evidence://executed-test-receipt-admission",
+      "approval://receipt-store-append/operator-decision",
+      "witness://harness-receipt-store-append-audit"
+    ]
+  },
+  "receipt_contract": {
+    "receipt_shape_ref": "schema://agentic-service-harness/Receipt",
+    "allowed_metadata_refs": [
+      "field://receipt/id",
+      "field://receipt/agent_run_id",
+      "field://receipt/receipt_kind",
+      "field://receipt/evidence_refs",
+      "field://receipt/content_digest"
+    ],
+    "forbidden_inline_fields": [
+      "field://receipt/raw-secret",
+      "field://receipt/raw-command-output",
+      "field://receipt/raw-diff",
+      "field://receipt/external-token",
+      "field://receipt/raw-payload"
+    ],
+    "append_result_claimed": false,
+    "stored_receipt_ref": "receipt-store://not-appended"
+  },
+  "authority_denials": {
+    "receipt_store_append_enabled": false,
+    "receipt_store_append_performed": false,
+    "receipt_store_write_path_registered": false,
+    "task_record_write_enabled": false,
+    "runtime_state_write_enabled": false,
+    "filesystem_write_enabled": false,
+    "branch_write_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "raw_payload_stored": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-receipt-store-append-preflight",
+      "command": "python scripts/validate_agentic_service_harness_receipt_store_append_preflight.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add executed test receipt admission preflight; keep receipt-store append, task record writes, runtime state writes, filesystem writes, adapter execution, connector calls, mutation routes, raw payloads, secrets, and terminal closure blocked until operator approval, append audit, writer registration, write-path, idempotency, durability replay, rollback, and redaction evidence exist.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}
