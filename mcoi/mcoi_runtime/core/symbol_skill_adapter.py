@@ -276,16 +276,19 @@ def source_from_record(
 
     source_id = _first_non_empty_text(record_map, defaults.identifier_fields)
     local_name = _bounded_symbol_segment(source_id)
-    source_ref = f"{surface.value}://{source_id}"
+    source_ref = f"{surface.value}://{local_name}"
     trace_scope = _mapping(record_map.get("trace_scope"))
 
     evidence_refs = _record_evidence_refs(record_map, surface, source_ref)
     target_refs = _record_refs(record_map, "target_refs")
     constraint_refs = _record_refs(record_map, "constraint_refs")
     metadata_refs = _metadata_refs(record_map, surface)
-    pre_state_ref = _optional_text(trace_scope.get("pre_state_hash_ref")) or f"state://{surface.value}/{source_id}/pre"
-    post_state_ref = _optional_text(trace_scope.get("post_state_hash_ref")) or f"state://{surface.value}/{source_id}/post"
-    causal_trace_ref = _optional_text(trace_scope.get("instruction_trace_ref")) or f"trace://symbol-skill-adapter/{surface.value}/{source_id}"
+    pre_state_ref = _optional_text(trace_scope.get("pre_state_hash_ref")) or f"state://{surface.value}/{local_name}/pre"
+    post_state_ref = _optional_text(trace_scope.get("post_state_hash_ref")) or f"state://{surface.value}/{local_name}/post"
+    causal_trace_ref = (
+        _optional_text(trace_scope.get("instruction_trace_ref"))
+        or f"trace://symbol-skill-adapter/{surface.value}/{local_name}"
+    )
 
     return SymbolAdapterSource(
         source_id=source_id,
@@ -477,7 +480,7 @@ def _first_non_empty_text(record: Mapping[str, Any], field_names: Sequence[str])
     for field_name in field_names:
         value = record.get(field_name)
         if isinstance(value, str) and value.strip():
-            return value
+            return value.strip()
     raise RuntimeCoreInvariantError("source record must contain a supported identifier field")
 
 
@@ -498,7 +501,12 @@ def _record_evidence_refs(
     ):
         value = record.get(field_name)
         if isinstance(value, str) and value.strip():
-            refs.append(value if "://" in value else f"{surface.value}://{field_name}/{value}")
+            value_text = value.strip()
+            refs.append(
+                value_text
+                if "://" in value_text
+                else f"{surface.value}://{field_name}/{_bounded_symbol_segment(value_text)}"
+            )
 
     trace_scope = _mapping(record.get("trace_scope"))
     for field_name in ("instruction_trace_ref", "proof_ref", "unsupported_op_gap_ref"):

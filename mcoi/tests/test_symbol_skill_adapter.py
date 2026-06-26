@@ -190,6 +190,41 @@ def test_projection_symbol_id_is_deterministic() -> None:
     assert first["contract_summary"]["authority_denial_count"] == 9
 
 
+def test_projection_canonicalizes_padded_source_identifier_refs() -> None:
+    padded_record = {
+        "receipt_id": " receipt-padded-source-0001 ",
+        "evidence_refs": ("receipt://padded-source/0001",),
+    }
+    canonical_record = {
+        "receipt_id": "receipt-padded-source-0001",
+        "evidence_refs": ("receipt://padded-source/0001",),
+    }
+
+    padded_symbol = universal_symbol_from_record(
+        padded_record,
+        SymbolAdapterSurface.GENERIC_RECEIPT,
+        generated_at=NOW,
+    )
+    canonical_symbol = universal_symbol_from_record(
+        canonical_record,
+        SymbolAdapterSurface.GENERIC_RECEIPT,
+        generated_at=NOW,
+    )
+
+    _assert_schema_valid(padded_symbol)
+    _assert_foundation_authority_denied(padded_symbol)
+    assert padded_symbol["symbol_id"] == canonical_symbol["symbol_id"]
+    assert padded_symbol["symbol_lineage"]["origin_ref"] == "generic_receipt://receipt-padded-source-0001"
+    assert padded_symbol["symbol_causality"]["pre_state_ref"] == "state://generic_receipt/receipt-padded-source-0001/pre"
+    assert padded_symbol["symbol_causality"]["post_state_ref"] == "state://generic_receipt/receipt-padded-source-0001/post"
+    assert (
+        padded_symbol["symbol_causality"]["causal_trace_ref"]
+        == "trace://symbol-skill-adapter/generic_receipt/receipt-padded-source-0001"
+    )
+    assert "generic_receipt://receipt_id/receipt-padded-source-0001" in padded_symbol["evidence_refs"]
+    assert all(" receipt-padded-source-0001 " not in ref for ref in padded_symbol["evidence_refs"])
+
+
 def test_projection_normalizes_refs_and_preserves_relation_constraints() -> None:
     record = {
         "receipt_id": "receipt-ref-normalization-0001",
