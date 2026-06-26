@@ -2580,6 +2580,19 @@
     {
       "args": [
         "python",
+        "scripts/validate_governance_normalization_map.py"
+      ],
+      "name": "governance_normalization_map",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] governance_normalization_map\nSTATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_public_repository_surface.py",
         "--local-only"
       ],

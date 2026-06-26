@@ -1105,6 +1105,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_phi_gps_v3_platform_spec.py"),
         ),
         CheckCommand(
+            "governance_normalization_map",
+            (python_executable, "scripts/validate_governance_normalization_map.py"),
+        ),
+        CheckCommand(
             "public_repository_surface",
             (python_executable, "scripts/validate_public_repository_surface.py", "--local-only"),
         ),
