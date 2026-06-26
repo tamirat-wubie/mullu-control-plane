@@ -17,6 +17,7 @@ from collections.abc import Sequence
 from mcoi_runtime.app.inceptadive_shadow_integration import InceptaDiveShadowRuntime
 from mcoi_runtime.core.inceptadive_shadow_hooks import run_workflow_shadow_hook
 from mcoi_runtime.core.inceptadive_shadow_types import ShadowSeverity
+from mcoi_runtime.core.invariants import stable_identifier
 
 
 def build_assistant_response_shadow_advisory(
@@ -40,6 +41,8 @@ def build_assistant_response_shadow_advisory(
     the normal route contract.
     """
 
+    tenant_ref = _public_identifier_ref("assistant-response-tenant", tenant_id, fallback="system")
+    model_ref = _public_identifier_ref("assistant-response-model", model_name, fallback="unknown")
     try:
         outcome = run_workflow_shadow_hook(
             runtime,
@@ -48,7 +51,7 @@ def build_assistant_response_shadow_advisory(
             workflow_steps=_response_shadow_steps(assistant_content, succeeded=succeeded),
             normal_intent="assistant_response",
             explicit_target=route,
-            scope=tenant_id,
+            scope=tenant_ref,
             risk_level=_response_shadow_risk(user_input, assistant_content, succeeded=succeeded),
             external_side_effect=False,
             created_at=created_at,
@@ -71,8 +74,10 @@ def build_assistant_response_shadow_advisory(
         {
             "embedding_surface": "assistant_response",
             "route": route,
-            "tenant_id": tenant_id or "system",
-            "model_name": model_name or "unknown",
+            "tenant_ref": tenant_ref,
+            "model_ref": model_ref,
+            "tenant_identifier_exposed": False,
+            "model_identifier_exposed": False,
             "assistant_content_exposed": False,
             "shadow_memory_write_authority": False,
             "connector_dispatch_authority": False,
@@ -113,3 +118,10 @@ def _has_any_term(text: str, terms: Sequence[str]) -> bool:
 
 def _lower_text(value: str) -> str:
     return " ".join(str(value or "").strip().lower().split())
+
+
+def _public_identifier_ref(namespace: str, value: str, *, fallback: str) -> str:
+    normalized = " ".join(str(value or "").strip().split())
+    if not normalized:
+        normalized = fallback
+    return stable_identifier(namespace, {"value": normalized})
