@@ -132,6 +132,57 @@ def test_autonomous_demo_quiet_writes_receipt_without_stdout(
     assert body["prompt_count"] == 0
 
 
+def test_autonomous_demo_receipt_dir_derives_filename_and_creates_directory(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    receipt_dir = tmp_path / "receipts" / "autonomous"
+
+    exit_code = cli.main(
+        [
+            "autonomous-demo",
+            "--episode-id",
+            "episode/demo:local",
+            "--receipt-dir",
+            str(receipt_dir),
+            "--quiet",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    receipt_path = receipt_dir / "episode_demo_local.json"
+    body = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert captured.out == ""
+    assert captured.err == ""
+    assert receipt_path.exists()
+    assert body["episode_id"] == "episode/demo:local"
+    assert body["automation_state"] == "settled_without_prompt"
+
+
+def test_autonomous_demo_rejects_ambiguous_receipt_targets(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(
+            [
+                "autonomous-demo",
+                "--receipt-path",
+                str(tmp_path / "receipt.json"),
+                "--receipt-dir",
+                str(tmp_path),
+            ]
+        )
+
+    captured = capsys.readouterr()
+
+    assert exc_info.value.code == 1
+    assert "autonomous demo accepts either --receipt-path or --receipt-dir" in captured.err
+    assert captured.out == ""
+
+
 def test_autonomous_demo_quiet_requires_receipt_path(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit) as exc_info:
         cli.main(["autonomous-demo", "--quiet"])
@@ -139,7 +190,7 @@ def test_autonomous_demo_quiet_requires_receipt_path(capsys: pytest.CaptureFixtu
     captured = capsys.readouterr()
 
     assert exc_info.value.code == 1
-    assert "quiet autonomous demo requires --receipt-path" in captured.err
+    assert "quiet autonomous demo requires --receipt-path or --receipt-dir" in captured.err
     assert captured.out == ""
 
 
