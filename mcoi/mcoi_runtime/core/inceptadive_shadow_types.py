@@ -122,6 +122,12 @@ def _mapping_bool(value: Mapping[str, object], key: str, *, default: bool = Fals
     return item
 
 
+def _reject_true_persisted_flags(value: Mapping[str, object], flag_names: Sequence[str]) -> None:
+    for flag_name in flag_names:
+        if flag_name in value and value[flag_name] is not False:
+            raise RuntimeCoreInvariantError(f"{flag_name} must be false")
+
+
 def _canonical_json(value: Mapping[str, object]) -> str:
     return json.dumps(dict(value), sort_keys=True, separators=(",", ":"), default=str)
 
@@ -395,6 +401,7 @@ class ShadowPassResult:
         """Rebuild a redacted result from persisted JSONL metadata."""
 
         try:
+            _reject_true_persisted_flags(value, ("execution_authority",))
             findings_value = value.get("findings", ())
             if not isinstance(findings_value, (list, tuple)):
                 raise RuntimeCoreInvariantError("findings must be a list")
@@ -419,7 +426,7 @@ class ShadowPassResult:
                 snapshot_hash=_mapping_text(value, "snapshot_hash"),
             )
         except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
-            raise RuntimeCoreInvariantError("invalid persisted ShadowPassResult") from exc
+            raise RuntimeCoreInvariantError(f"invalid persisted ShadowPassResult: {exc}") from exc
 
     def expected_snapshot_hash(self) -> str:
         return _snapshot_hash(self.to_dict(include_snapshot_hash=False))
@@ -519,6 +526,7 @@ class ShadowReceipt:
         """Rebuild a redacted receipt from persisted JSONL metadata."""
 
         try:
+            _reject_true_persisted_flags(value, ("execution_authority",))
             return cls(
                 receipt_id=_mapping_text(value, "receipt_id"),
                 request_id=_mapping_text(value, "request_id"),
@@ -534,7 +542,7 @@ class ShadowReceipt:
                 snapshot_hash=_mapping_text(value, "snapshot_hash"),
             )
         except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
-            raise RuntimeCoreInvariantError("invalid persisted ShadowReceipt") from exc
+            raise RuntimeCoreInvariantError(f"invalid persisted ShadowReceipt: {exc}") from exc
 
     def expected_snapshot_hash(self) -> str:
         return _snapshot_hash(self.to_dict(include_snapshot_hash=False))

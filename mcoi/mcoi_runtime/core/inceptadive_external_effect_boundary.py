@@ -101,6 +101,17 @@ class ExternalEffectBoundaryAdvisory:
         """Rebuild a redacted advisory from persisted JSONL metadata."""
 
         try:
+            _reject_true_persisted_flags(
+                value,
+                (
+                    "execution_authority",
+                    "connector_dispatch_authority",
+                    "memory_write_authority",
+                    "governance_verdict_authority",
+                    "raw_request_text_exposed",
+                    "private_memory_exposed",
+                ),
+            )
             return cls(
                 advisory_id=_mapping_text(value, "advisory_id"),
                 request_id=_mapping_text(value, "request_id"),
@@ -123,7 +134,7 @@ class ExternalEffectBoundaryAdvisory:
                 governance_verdict_authority=False,
             )
         except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
-            raise RuntimeCoreInvariantError("invalid persisted ExternalEffectBoundaryAdvisory") from exc
+            raise RuntimeCoreInvariantError(f"invalid persisted ExternalEffectBoundaryAdvisory: {exc}") from exc
 
 
 def build_external_effect_boundary_advisory(
@@ -273,3 +284,9 @@ def _mapping_int(value: Mapping[str, object], key: str, *, default: int = 0) -> 
     if item < 0:
         raise RuntimeCoreInvariantError(f"{key} must not be negative")
     return item
+
+
+def _reject_true_persisted_flags(value: Mapping[str, object], flag_names: Sequence[str]) -> None:
+    for flag_name in flag_names:
+        if flag_name in value and value[flag_name] is not False:
+            raise RuntimeCoreInvariantError(f"{flag_name} must be false")
