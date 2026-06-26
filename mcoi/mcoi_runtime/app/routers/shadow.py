@@ -70,6 +70,13 @@ _SENSITIVE_REQUEST_ID_MARKERS = (
     "api_key",
     "bearer",
 )
+_CONTEXT_REF_PREFIXES = {
+    "explicit_target": "shadow_context_target_",
+    "scope": "shadow_context_scope_",
+    "retrieval_receipt": "shadow_retrieval_receipt_",
+    "required_evidence": "shadow_required_evidence_",
+    "authority_receipt": "shadow_authority_receipt_",
+}
 
 
 class ShadowInspectRequest(BaseModel):
@@ -276,7 +283,7 @@ def shadow_inspect(req: ShadowInspectRequest) -> dict[str, object]:
         if stage == ShadowStage.PREFLIGHT:
             result, receipt = runtime.preflight_action(
                 context,
-                required_evidence_refs=_tuple_text(req.required_evidence_refs),
+                required_evidence_refs=_context_public_refs("required_evidence", req.required_evidence_refs),
             )
         else:
             result, receipt = runtime.inspect_request(context)
@@ -318,8 +325,8 @@ def shadow_external_effect_advisory(req: ExternalEffectAdvisoryRequest) -> dict[
         context = _shadow_context_from_request(req, created_at=created_at, stage=stage)
         advisory = runtime.external_effect_advisory(
             context,
-            required_evidence_refs=_tuple_text(req.required_evidence_refs),
-            authority_receipt_refs=_tuple_text(req.authority_receipt_refs),
+            required_evidence_refs=_context_public_refs("required_evidence", req.required_evidence_refs),
+            authority_receipt_refs=_context_public_refs("authority_receipt", req.authority_receipt_refs),
         )
     except (RuntimeCoreInvariantError, ValueError) as exc:
         _inc_metric("requests_rejected")
@@ -453,12 +460,12 @@ def _shadow_context_from_request(req: ShadowInspectRequest, *, created_at: str, 
         normal_intent=req.normal_intent,
         normal_plan=_tuple_text(req.normal_plan),
         candidate_action=req.candidate_action,
-        explicit_target=req.explicit_target,
-        scope=req.scope,
+        explicit_target=_context_public_ref("explicit_target", req.explicit_target),
+        scope=_context_public_ref("scope", req.scope),
         risk_level=_shadow_severity(req.risk_level),
         external_side_effect=req.external_side_effect,
         memory_contradiction=req.memory_contradiction,
-        retrieval_receipt_ids=_tuple_text(req.retrieval_receipt_ids),
+        retrieval_receipt_ids=_context_public_refs("retrieval_receipt", req.retrieval_receipt_ids),
         created_at=created_at,
     ).with_integrity()
 
@@ -486,6 +493,28 @@ def _tuple_text(values: list[object]) -> tuple[str, ...]:
         if item:
             items.append(item)
     return tuple(items)
+
+
+def _context_public_refs(kind: str, values: list[object]) -> tuple[str, ...]:
+    """Return deterministic non-raw refs while preserving empty/missing boundaries."""
+
+    return tuple(
+        _context_public_ref(kind, item)
+        for item in _tuple_text(values)
+    )
+
+
+def _context_public_ref(kind: str, value: object) -> str:
+    """Return a stable public reference for caller-supplied context identifiers."""
+
+    normalized = " ".join(str(value or "").strip().split())
+    if not normalized:
+        return ""
+    prefix = _CONTEXT_REF_PREFIXES[kind]
+    return prefix + stable_identifier(
+        f"inceptadive-shadow-{kind}",
+        {"value": normalized},
+    )
 
 
 def _request_id_is_public_reference(value: str) -> bool:
