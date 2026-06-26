@@ -1,0 +1,137 @@
+{
+  "report_id": "agentic_service_harness_executed_test_receipt_admission_preflight",
+  "schema_version": 1,
+  "generated_at": "2026-06-26T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "admission_status": "AwaitingEvidence",
+  "source_contract_refs": [
+    "examples/agentic_service_harness_dry_run_test_runner_plan_receipt.foundation.json",
+    "examples/agentic_service_harness_receipt_store_append_preflight.foundation.json",
+    "scripts/validate_agentic_service_harness_readiness_map.py",
+    "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  ],
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "agent_run_id": "agent-run-foundation",
+    "dry_run_test_runner_plan_id": "dry-run-test-runner-plan-foundation",
+    "receipt_store_append_preflight_id": "agentic-service-harness-receipt-store-append-preflight",
+    "foundation_phase": "foundation_executed_test_receipt_admission_preflight",
+    "admission_only": true,
+    "read_only_sources": true,
+    "command_execution_admitted": false,
+    "test_execution_admitted": false,
+    "test_receipt_emitted": false,
+    "test_results_claimed": false,
+    "coverage_claimed": false,
+    "receipt_store_appended": false,
+    "runtime_state_write_enabled": false,
+    "secret_values_serialized": false
+  },
+  "executed_test_receipt_admission": {
+    "requested_action": "admit_harness_executed_test_receipt",
+    "requested_route_ref": "route://harness/tests/executed-receipt/not-admitted",
+    "admission_decision": "BLOCKED_PENDING_COMMAND_EXECUTION_AND_RESULT_EVIDENCE",
+    "dry_run_test_runner_plan_valid": true,
+    "receipt_store_append_preflight_valid": true,
+    "operator_approval_collected": false,
+    "approved_workspace_created": false,
+    "command_execution_authority_valid": false,
+    "timeout_policy_valid": false,
+    "output_redaction_valid": false,
+    "exit_code_evidence_collected": false,
+    "duration_evidence_collected": false,
+    "result_digest_evidence_collected": false,
+    "coverage_evidence_collected": false,
+    "receipt_append_authority_valid": false,
+    "rollback_evidence_collected": false,
+    "executed_test_receipt_admitted": false,
+    "required_before_execution_refs": [
+      "approval://operator/test-command-execution",
+      "evidence://approved-branch-workspace-created",
+      "evidence://workspace-path-confinement",
+      "policy://test-command-timeout",
+      "policy://subprocess-output-redaction",
+      "authority://harness-command-execution"
+    ],
+    "required_before_receipt_refs": [
+      "evidence://test-command-exit-code",
+      "evidence://test-command-duration",
+      "evidence://test-output-redacted-ref",
+      "evidence://test-result-digest",
+      "evidence://receipt-store-append-authority",
+      "recovery://executed-test-receipt-rollback"
+    ],
+    "blocked_reason_refs": [
+      "blocked://executed-test-receipt/operator-approval-missing",
+      "blocked://executed-test-receipt/workspace-not-created",
+      "blocked://executed-test-receipt/command-execution-authority-missing",
+      "blocked://executed-test-receipt/timeout-policy-missing",
+      "blocked://executed-test-receipt/output-redaction-missing",
+      "blocked://executed-test-receipt/exit-code-evidence-missing",
+      "blocked://executed-test-receipt/result-digest-missing",
+      "blocked://executed-test-receipt/receipt-append-authority-missing",
+      "blocked://runtime-state-write/not-admitted",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "next_required_evidence_refs": [
+      "approval://test-command-execution/operator-decision",
+      "witness://approved-workspace-command-execution",
+      "receipt://redacted-executed-test-result-candidate"
+    ]
+  },
+  "test_receipt_contract": {
+    "receipt_shape_ref": "schema://agentic-service-harness/ExecutedTestReceipt",
+    "allowed_metadata_refs": [
+      "field://test-receipt/command_id",
+      "field://test-receipt/command",
+      "field://test-receipt/exit_code",
+      "field://test-receipt/duration_ms",
+      "field://test-receipt/stdout_ref",
+      "field://test-receipt/stderr_ref",
+      "field://test-receipt/result_digest",
+      "field://test-receipt/coverage_ref"
+    ],
+    "forbidden_inline_fields": [
+      "field://test-receipt/raw-stdout",
+      "field://test-receipt/raw-stderr",
+      "field://test-receipt/raw-secret",
+      "field://test-receipt/external-token",
+      "field://test-receipt/raw-payload"
+    ],
+    "result_claimed": false,
+    "stored_receipt_ref": "receipt-store://not-appended"
+  },
+  "authority_denials": {
+    "command_execution_enabled": false,
+    "subprocess_execution_enabled": false,
+    "test_execution_enabled": false,
+    "test_result_claim_enabled": false,
+    "coverage_claim_enabled": false,
+    "receipt_store_append_enabled": false,
+    "receipt_store_append_performed": false,
+    "runtime_state_write_enabled": false,
+    "filesystem_write_enabled": false,
+    "branch_write_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "raw_output_stored": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-executed-test-receipt-admission-preflight",
+      "command": "python scripts/validate_agentic_service_harness_executed_test_receipt_admission_preflight.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add redacted executed test receipt candidate only after operator approval, approved workspace creation, command execution authority, timeout policy, output redaction, exit-code evidence, result digest evidence, receipt-store append authority, rollback evidence, and terminal closure evidence exist; keep command execution, subprocess execution, receipt-store append, runtime state writes, filesystem writes, adapter execution, connector calls, mutation routes, raw outputs, secrets, and terminal closure blocked.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

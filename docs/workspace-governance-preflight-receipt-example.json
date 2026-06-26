@@ -1,5 +1,5 @@
 {
-  "check_count": 278,
+  "check_count": 279,
   "checks": [
     {
       "args": [
@@ -373,6 +373,19 @@
         "scripts/validate_agentic_service_harness_receipt_store_append_preflight.py"
       ],
       "name": "agentic_service_harness_receipt_store_append_preflight",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_executed_test_receipt_admission_preflight.py"
+      ],
+      "name": "agentic_service_harness_executed_test_receipt_admission_preflight",
       "passed": true,
       "return_code": 0,
       "stderr": "",

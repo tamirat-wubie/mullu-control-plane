@@ -19,8 +19,10 @@ Invariants:
     READY surface.
   - Receipt-store append preflight remains closed as an admission-only
     READY surface.
-  - The first next PR advances to executed test receipt admission after
-    receipt-store append preflight closes.
+  - Executed-test receipt admission preflight remains closed as an
+    admission-only READY surface.
+  - The first next PR advances to a redacted executed-test receipt candidate
+    after executed-test receipt admission closes.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -230,6 +232,26 @@ REQUIRED_RECEIPT_STORE_APPEND_PREFLIGHT_TERMS = (
     "raw payloads",
     "terminal closure remain blocked",
 )
+REQUIRED_EXECUTED_TEST_RECEIPT_ADMISSION_TERMS = (
+    "Executed test receipt admission preflight PR",
+    "agentic_service_harness_executed_test_receipt_admission_preflight",
+    "dry-run test-runner planning",
+    "receipt-store append preflight",
+    "command execution evidence",
+    "timeout",
+    "output redaction",
+    "exit-code",
+    "duration",
+    "result digest",
+    "receipt append authority",
+    "rollback",
+    "command execution",
+    "subprocess execution",
+    "test result claims",
+    "coverage claims",
+    "raw outputs",
+    "terminal closure remain blocked",
+)
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
     ("fastapi_mutation_decorator", re.compile(r"@\w+\.(?:post|put|patch|delete)\(", re.IGNORECASE)),
@@ -346,6 +368,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         "receipt_store_append_preflight_term",
         errors,
     )
+    _require_all(
+        map_text,
+        REQUIRED_EXECUTED_TEST_RECEIPT_ADMISSION_TERMS,
+        "executed_test_receipt_admission_term",
+        errors,
+    )
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
@@ -360,6 +388,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_dry_run_test_runner_plan_ready(map_text, errors)
     _validate_task_record_write_uao_ready(map_text, errors)
     _validate_receipt_store_append_preflight_ready(map_text, errors)
+    _validate_executed_test_receipt_admission_ready(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -511,7 +540,7 @@ def _validate_dry_run_test_runner_plan_ready(map_text: str, errors: list[str]) -
         errors.append("missing ready row: Dry-run test runner plan receipt PR")
 
     test_runner_row = re.search(
-        r"^\| Test runner \| READY \| .+agentic_service_harness_dry_run_test_runner_plan_receipt.+ \| None for plan-only command selection\..+ \|$",
+        r"^\| Test runner \| READY \| .+agentic_service_harness_dry_run_test_runner_plan_receipt.+terminal closure authority\. \| .+ \|$",
         map_text,
         re.MULTILINE,
     )
@@ -542,9 +571,30 @@ def _validate_receipt_store_append_preflight_ready(
         errors.append("missing ready row: Receipt-store append preflight PR")
 
 
+def _validate_executed_test_receipt_admission_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Executed test receipt admission preflight PR \| READY \| .+command execution.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Executed test receipt admission preflight PR")
+
+    test_runner_row = re.search(
+        r"^\| Test runner \| READY \| .+agentic_service_harness_executed_test_receipt_admission_preflight.+ \| None for admission-only test receipt planning\..+ \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if test_runner_row is None:
+        errors.append("missing ready row: Test runner executed-test admission preflight")
+
+
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(tests): add executed test receipt admission preflight",
+        "harness(tests): add redacted executed test receipt candidate",
         "harness(diffs): add non-empty diff receipt admission preflight",
     )
     positions: list[int] = []
