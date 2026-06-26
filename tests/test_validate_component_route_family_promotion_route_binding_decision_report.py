@@ -81,13 +81,20 @@ def test_component_route_family_promotion_route_binding_decision_report_match_ru
     assert example["route_binding_authorized"] is False
     assert example["router_inventory_delta_authorized"] is False
     assert example["mutates_router_inventory"] is False
+    assert example["authority_fuse_refs"] == ["component_authority_fuse.gmail_account_binding_gate.foundation.v1"]
+    assert example["authority_fuse_blocking_refs"] == example["authority_fuse_refs"]
     assert example["ready_for_promotion"] is False
     assert example["summary"]["route_binding_decision_count"] == 1
     assert example["summary"]["route_binding_denial_count"] == 1
     assert example["summary"]["route_binding_authorization_count"] == 0
     assert example["summary"]["router_inventory_mutation_count"] == 0
+    assert example["summary"]["authority_fuse_blocking_count"] == 1
     assert decision["gate_id"] == "route_binding_gate"
     assert decision["decision_state"] == "denied"
+    assert decision["authority_fuse_blocks_promotion"] is True
+    assert decision["authority_fuse_refs"] == example["authority_fuse_refs"]
+    assert decision["authority_fuse_blocking_refs"] == example["authority_fuse_refs"]
+    assert decision["requires_external_authority_upgrade_evidence"] is True
     assert decision["route_binding_authorized"] is False
     assert decision["requires_component_route_binding_receipt"] is True
     assert decision["requires_router_inventory_delta"] is True
@@ -164,6 +171,31 @@ def test_component_route_family_promotion_route_binding_decision_report_reject_r
     assert "source_authority_decision_denied must be true" in serialized_errors
     assert "source_authority_decision_refs must contain only the source authority decision id" in serialized_errors
     assert "accepted_record_refs must contain only the source record id" in serialized_errors
+
+
+def test_component_route_family_promotion_route_binding_decision_report_reject_authority_fuse_drift(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    decision = _route_binding_decision(payload)
+    payload["authority_fuse_refs"] = []
+    payload["authority_fuse_blocking_refs"] = ["component_authority_fuse.gmail_account_binding_gate.foundation.v1"]
+    decision["authority_fuse_blocks_promotion"] = False
+    decision["requires_external_authority_upgrade_evidence"] = False
+    decision["authority_fuse_refs"] = ["component_authority_fuse.other_component.foundation.v1"]
+    decision["authority_fuse_blocking_refs"] = []
+
+    validation = validate_component_route_family_promotion_route_binding_decision_report(
+        example_path=_write_payload(tmp_path, payload)
+    )
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "authority_fuse_refs must contain exactly one target component fuse" in serialized_errors
+    assert "authority_fuse_blocking_refs must match authority_fuse_refs" in serialized_errors
+    assert "authority_fuse_blocks_promotion must be true" in serialized_errors
+    assert "requires_external_authority_upgrade_evidence must be true" in serialized_errors
+    assert "route-binding decision authority_fuse_refs must match report authority_fuse_refs" in serialized_errors
 
 
 def test_component_route_family_promotion_route_binding_decision_report_reject_router_inventory_mutation_drift(

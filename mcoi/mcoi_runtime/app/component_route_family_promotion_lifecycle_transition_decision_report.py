@@ -5,7 +5,7 @@ denial-only lifecycle transition decision without changing component lifecycle
 state or granting route-family promotion authority.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: component route-family promotion route-binding decision report
-projection.
+projection and component authority-fuse denial references.
 Invariants:
   - Lifecycle transition decisions can deny without changing lifecycle state.
   - A denied lifecycle transition decision cannot emit a lifecycle transition
@@ -87,7 +87,12 @@ def build_component_route_family_promotion_lifecycle_transition_decision_report(
         component_id=component_id,
     )
     _validate_route_binding_report(route_binding_report, surface_id, component_id)
+    authority_fuse_refs = _authority_fuse_refs(route_binding_report)
     source_decision = _source_route_binding_decision(route_binding_report)
+    if list(_string_list(source_decision.get("authority_fuse_refs"))) != authority_fuse_refs:
+        raise ComponentRouteFamilyPromotionLifecycleTransitionDecisionReportError(
+            "lifecycle source route-binding decision must cite the report authority fuse"
+        )
     lifecycle_decision = _lifecycle_transition_decision(source_decision, surface_id)
     approval_evidence_required = list(_string_list(route_binding_report.get("approval_evidence_required")))
     return {
@@ -145,6 +150,7 @@ def build_component_route_family_promotion_lifecycle_transition_decision_report(
                 "examples/"
                 "component_route_family_promotion_authority_decision_report.governed_connector_framework.json"
             ),
+            "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
             "promotion_preflight": "examples/component_route_family_promotion_preflight.governed_connector_framework.json",
             "proof_matrix": "docs/40_proof_coverage_matrix.md",
         },
@@ -153,6 +159,8 @@ def build_component_route_family_promotion_lifecycle_transition_decision_report(
         "lifecycle_transition_decision_refs": [str(lifecycle_decision["lifecycle_transition_decision_id"])],
         "source_route_binding_decision_refs": [str(lifecycle_decision["source_route_binding_decision_id"])],
         "source_authority_decision_refs": [str(lifecycle_decision["source_authority_decision_id"])],
+        "authority_fuse_refs": authority_fuse_refs,
+        "authority_fuse_blocking_refs": authority_fuse_refs,
         "satisfied_gate_evaluation_refs": [str(lifecycle_decision["source_gate_evaluation_id"])],
         "accepted_record_refs": [str(lifecycle_decision["source_operator_submitted_record_id"])],
         "lifecycle_transition_receipt_refs": [],
@@ -174,6 +182,7 @@ def build_component_route_family_promotion_lifecycle_transition_decision_report(
             "component_route_family_promotion_lifecycle_transition_decision_report_validator",
             "component_route_family_promotion_lifecycle_transition_decision_report_tests",
             "component_route_family_promotion_route_binding_decision_report_validator",
+            "component_authority_fuse_validator",
         ],
         "next_action": (
             "Create an authority-upgrade witness decision while lifecycle transition remains denied until "
@@ -226,6 +235,20 @@ def _validate_route_binding_report(report: dict[str, Any], surface_id: str, comp
             )
 
 
+def _authority_fuse_refs(report: dict[str, Any]) -> list[str]:
+    fuse_refs = list(_string_list(report.get("authority_fuse_refs")))
+    blocking_refs = list(_string_list(report.get("authority_fuse_blocking_refs")))
+    if len(fuse_refs) != 1:
+        raise ComponentRouteFamilyPromotionLifecycleTransitionDecisionReportError(
+            "lifecycle transition decision report requires exactly one component authority-fuse reference"
+        )
+    if blocking_refs != fuse_refs:
+        raise ComponentRouteFamilyPromotionLifecycleTransitionDecisionReportError(
+            "lifecycle transition decision report requires authority-fuse blocking refs to match authority-fuse refs"
+        )
+    return fuse_refs
+
+
 def _source_route_binding_decision(report: dict[str, Any]) -> dict[str, Any]:
     decisions = report.get("route_binding_decisions")
     if not isinstance(decisions, list):
@@ -248,6 +271,18 @@ def _source_route_binding_decision(report: dict[str, Any]) -> dict[str, Any]:
     if decision.get("requires_lifecycle_transition") is not True:
         raise ComponentRouteFamilyPromotionLifecycleTransitionDecisionReportError(
             "source route-binding decision must still require lifecycle transition"
+        )
+    if decision.get("authority_fuse_blocks_promotion") is not True:
+        raise ComponentRouteFamilyPromotionLifecycleTransitionDecisionReportError(
+            "source route-binding decision must remain blocked by authority fuse"
+        )
+    if len(_string_list(decision.get("authority_fuse_refs"))) != 1:
+        raise ComponentRouteFamilyPromotionLifecycleTransitionDecisionReportError(
+            "source route-binding decision must cite exactly one authority fuse"
+        )
+    if _string_list(decision.get("authority_fuse_blocking_refs")) != _string_list(decision.get("authority_fuse_refs")):
+        raise ComponentRouteFamilyPromotionLifecycleTransitionDecisionReportError(
+            "source route-binding decision authority-fuse blocking refs must match authority-fuse refs"
         )
     return decision
 
@@ -287,6 +322,8 @@ def _lifecycle_transition_decision(source_decision: dict[str, Any], surface_id: 
         "resulting_lifecycle_state": RESULTING_LIFECYCLE_STATE,
         "record_evidence_satisfied": True,
         "source_route_binding_decision_denied": True,
+        "authority_fuse_blocks_promotion": True,
+        "requires_external_authority_upgrade_evidence": True,
         "action_requirement_satisfied": False,
         "lifecycle_transition_authorized": False,
         "lifecycle_state_changed": False,
@@ -318,6 +355,8 @@ def _lifecycle_transition_decision(source_decision: dict[str, Any], surface_id: 
         "source_authority_decision_refs": [
             _required_text(source_decision, "source_authority_decision_id", "source route-binding decision")
         ],
+        "authority_fuse_refs": list(_string_list(source_decision.get("authority_fuse_refs"))),
+        "authority_fuse_blocking_refs": list(_string_list(source_decision.get("authority_fuse_refs"))),
         "satisfied_gate_evaluation_refs": [
             _required_text(source_decision, "source_gate_evaluation_id", "source route-binding decision")
         ],
@@ -335,7 +374,7 @@ def _lifecycle_transition_decision(source_decision: dict[str, Any], surface_id: 
         "missing_lifecycle_transition_witnesses": list(MISSING_LIFECYCLE_TRANSITION_WITNESSES),
         "decision_reason": (
             "lifecycle_transition_gate remains denied because route binding, router inventory delta, "
-            "and lifecycle transition receipt witnesses are absent"
+            "lifecycle transition receipt witnesses are absent, and the component authority fuse remains blocked"
         ),
     }
 
@@ -361,6 +400,7 @@ def _summary(lifecycle_decision: dict[str, Any], approval_evidence_required: lis
         "accepted_record_count": len(lifecycle_decision["accepted_record_refs"]),
         "lifecycle_transition_receipt_count": len(lifecycle_decision["lifecycle_transition_receipt_refs"]),
         "route_binding_receipt_count": len(lifecycle_decision["route_binding_receipt_refs"]),
+        "authority_fuse_blocking_count": len(lifecycle_decision["authority_fuse_blocking_refs"]),
         "router_inventory_delta_ref_count": len(lifecycle_decision["router_inventory_delta_refs"]),
         "approval_artifact_requirement_count": len(approval_evidence_required),
         "required_followup_decision_count": len(REQUIRED_FOLLOWUP_DECISIONS),

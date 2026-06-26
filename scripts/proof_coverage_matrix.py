@@ -1034,21 +1034,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_route_binding_decision_report.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_route_binding_decision_report.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_route_binding_decision_report.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_route_binding_decision_report.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_route_binding_decision_report.py",
             ],
-            "Component Harness promotion route-binding decision report consumes a denied authority decision and records one denial-only route-binding decision while router inventory mutation, selected-component binding, promotion approval, authority grants, execution, connector calls, and terminal closure remain blocked.",
+            "Component Harness promotion route-binding decision report consumes a denied authority decision and the target component authority-fuse denial, then records one denial-only route-binding decision while router inventory mutation, selected-component binding, promotion approval, authority grants, execution, connector calls, and terminal closure remain blocked.",
             [
                 "component_route_family_promotion_route_binding_decision_report_schema_valid",
                 "component_route_family_promotion_route_binding_decision_report_match_runtime_projection",
                 "component_route_family_promotion_route_binding_decision_report_reject_route_authorization_overclaim",
                 "component_route_family_promotion_route_binding_decision_report_reject_missing_decision",
                 "component_route_family_promotion_route_binding_decision_report_reject_record_satisfaction_drift",
+                "component_route_family_promotion_route_binding_decision_report_reject_authority_fuse_drift",
                 "component_route_family_promotion_route_binding_decision_report_reject_router_inventory_mutation_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1067,6 +1072,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "component_route_family_promotion_route_binding_decision_report_reject_record_satisfaction_drift": [
                     "component_route_family_promotion_route_binding_decision_report_reject_record_satisfaction_drift",
                 ],
+                "component_route_family_promotion_route_binding_decision_report_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_route_binding_decision_report_reject_authority_fuse_drift",
+                ],
                 "component_route_family_promotion_route_binding_decision_report_reject_router_inventory_mutation_drift": [
                     "component_route_family_promotion_route_binding_decision_report_reject_router_inventory_mutation_drift",
                 ],
@@ -1081,21 +1089,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_lifecycle_transition_decision_report.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_lifecycle_transition_decision_report.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_lifecycle_transition_decision_report.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_lifecycle_transition_decision_report.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_lifecycle_transition_decision_report.py",
             ],
-            "Component Harness promotion lifecycle-transition decision report consumes a denied route-binding decision and records one denial-only lifecycle decision while lifecycle state change, lifecycle receipts, promotion approval, authority grants, execution, connector calls, and terminal closure remain blocked.",
+            "Component Harness promotion lifecycle-transition decision report consumes a denied route-binding decision and inherited authority-fuse denial, then records one denial-only lifecycle decision while lifecycle state change, lifecycle receipts, promotion approval, authority grants, execution, connector calls, and terminal closure remain blocked.",
             [
                 "component_route_family_promotion_lifecycle_transition_decision_report_schema_valid",
                 "component_route_family_promotion_lifecycle_transition_decision_report_match_runtime_projection",
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_state_change_overclaim",
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_missing_decision",
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_proof_drift",
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_authority_fuse_drift",
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_lifecycle_receipt_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1113,6 +1126,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_proof_drift": [
                     "component_route_family_promotion_lifecycle_transition_decision_report_reject_proof_drift",
+                ],
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_lifecycle_transition_decision_report_reject_authority_fuse_drift",
                 ],
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_lifecycle_receipt_drift": [
                     "component_route_family_promotion_lifecycle_transition_decision_report_reject_lifecycle_receipt_drift",

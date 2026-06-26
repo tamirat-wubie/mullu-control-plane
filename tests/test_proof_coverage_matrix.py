@@ -294,14 +294,14 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["component_route_family_promotion_authority_decision_report"]["unanchored_witness_count"] == 0
     assert surfaces["component_route_family_promotion_authority_decision_report"]["exact_test_anchor_count"] == 6
     assert surfaces["component_route_family_promotion_route_binding_decision_report"]["unanchored_witness_count"] == 0
-    assert surfaces["component_route_family_promotion_route_binding_decision_report"]["exact_test_anchor_count"] == 6
+    assert surfaces["component_route_family_promotion_route_binding_decision_report"]["exact_test_anchor_count"] == 7
     assert (
         surfaces["component_route_family_promotion_lifecycle_transition_decision_report"]["unanchored_witness_count"]
         == 0
     )
     assert (
         surfaces["component_route_family_promotion_lifecycle_transition_decision_report"]["exact_test_anchor_count"]
-        == 6
+        == 7
     )
     assert (
         surfaces["component_route_family_promotion_authority_upgrade_witness_decision_report"][

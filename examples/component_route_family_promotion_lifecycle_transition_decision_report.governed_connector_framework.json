@@ -14,6 +14,12 @@
     "product_specific_ownership_decision",
     "selected_component_bound_router_inventory_delta"
   ],
+  "authority_fuse_blocking_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
+  "authority_fuse_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
   "authority_grant_refs": [],
   "authority_granted": false,
   "blocked_actions": [
@@ -66,6 +72,13 @@
         "promotion_operator_submitted_evidence_record.governed_connector_framework.route_binding_gate.v1"
       ],
       "action_requirement_satisfied": false,
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "can_call_connector": false,
@@ -78,7 +91,7 @@
       "decision_is_not_lifecycle_receipt": true,
       "decision_is_not_promotion_approval": true,
       "decision_is_not_state_change": true,
-      "decision_reason": "lifecycle_transition_gate remains denied because route binding, router inventory delta, and lifecycle transition receipt witnesses are absent",
+      "decision_reason": "lifecycle_transition_gate remains denied because route binding, router inventory delta, lifecycle transition receipt witnesses are absent, and the component authority fuse remains blocked",
       "decision_state": "denied",
       "foundation_fixture_decision_is_not_live_operator_evidence": true,
       "gate_id": "lifecycle_transition_gate",
@@ -101,6 +114,7 @@
       "requested_lifecycle_state": "approved_live_action",
       "requires_authority_upgrade_witness": true,
       "requires_component_route_binding_receipt": true,
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition_receipt": true,
       "requires_product_ownership_decision": true,
       "requires_router_inventory_delta": true,
@@ -189,6 +203,7 @@
   ],
   "source_refs": {
     "authority_decision_report": "examples/component_route_family_promotion_authority_decision_report.governed_connector_framework.json",
+    "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
     "promotion_preflight": "examples/component_route_family_promotion_preflight.governed_connector_framework.json",
     "proof_matrix": "docs/40_proof_coverage_matrix.md",
     "route_binding_decision_report": "examples/component_route_family_promotion_route_binding_decision_report.governed_connector_framework.json"
@@ -200,6 +215,7 @@
     "accepted_evidence_count": 0,
     "accepted_record_count": 1,
     "approval_artifact_requirement_count": 8,
+    "authority_fuse_blocking_count": 1,
     "authority_grant_count": 0,
     "lifecycle_state_change_count": 0,
     "lifecycle_transition_authorization_count": 0,
@@ -223,6 +239,7 @@
   "validators": [
     "component_route_family_promotion_lifecycle_transition_decision_report_validator",
     "component_route_family_promotion_lifecycle_transition_decision_report_tests",
-    "component_route_family_promotion_route_binding_decision_report_validator"
+    "component_route_family_promotion_route_binding_decision_report_validator",
+    "component_authority_fuse_validator"
   ]
 }
