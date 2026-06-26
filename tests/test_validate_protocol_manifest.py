@@ -2676,6 +2676,40 @@ def test_protocol_manifest_indexes_github_pr_terminal_certificate_minting() -> N
     assert minting_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_personal_assistant_operator_reapproval_decision_receipt_value_request() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    value_request_entry = entries[
+        "personal-assistant-operator-reapproval-decision-receipt-value-request"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert value_request_entry["path"] == (
+        "schemas/personal_assistant_operator_reapproval_decision_receipt_value_request.schema.json"
+    )
+    assert value_request_entry["urn"] == (
+        "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-request:1"
+    )
+    assert value_request_entry["surface"] == "approval"
+
+
+def test_protocol_manifest_indexes_personal_assistant_operator_reapproval_decision_receipt_value_absence() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    value_absence_entry = entries[
+        "personal-assistant-operator-reapproval-decision-receipt-value-absence"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert value_absence_entry["path"] == (
+        "schemas/personal_assistant_operator_reapproval_decision_receipt_value_absence.schema.json"
+    )
+    assert value_absence_entry["urn"] == (
+        "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-absence:1"
+    )
+    assert value_absence_entry["surface"] == "approval"
+
+
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
     manifest = load_manifest()
     manifest["schemas"] = [

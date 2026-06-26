@@ -1465,18 +1465,18 @@
       "action_proof": 137,
       "audit_chain": 1,
       "gap": 0,
-      "read_model": 54,
+      "read_model": 55,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 191,
+      "audit_chain": 192,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 78,
+      "proven": 79,
       "unproven": 0,
       "witnessed": 116
     },
@@ -1485,14 +1485,14 @@
       "audit_chain": 1,
       "gap": 0,
       "read_model": 55,
-      "request_proof": 137
+      "request_proof": 138
     },
-    "surface_count": 194
+    "surface_count": 195
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 194,
+      "strong": 195,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -7094,6 +7094,30 @@
         "finance_ops_plan_records_inceptadive_shadow_advisory_history"
       ],
       "surface_id": "inceptadive_shadow_inspection_routes"
+    },
+    {
+      "action_proof": "read_model",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "mcoi/mcoi_runtime/app/inceptadive_assistant_response_embedding.py",
+        "mcoi/mcoi_runtime/app/routers/llm/chat.py",
+        "mcoi/tests/test_inceptadive_assistant_response_embedding.py",
+        "docs/INCEPTADIVE_ASSISTANT_RESPONSE_EMBEDDING.md"
+      ],
+      "notes": "Live assistant chat response envelopes and streaming events expose redacted InceptaDive shadow advisory metadata without changing assistant content, workflow status, conversation state, connector dispatch authority, shadow memory write authority, or governance verdicts.",
+      "representative_paths": [
+        "/api/v1/chat",
+        "/api/v1/chat/stream",
+        "/api/v1/chat/workflow"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "live_chat_response_embeds_redacted_inceptadive_advisory",
+        "streaming_chat_response_emits_redacted_inceptadive_advisory_event",
+        "chat_workflow_response_embeds_redacted_inceptadive_advisory"
+      ],
+      "surface_id": "inceptadive_assistant_response_embedding"
     },
     {
       "action_proof": "action_proof",
@@ -15479,8 +15503,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1962,
-    "runtime_witness_count": 1962,
+    "exact_test_anchor_count": 1965,
+    "runtime_witness_count": 1965,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19282,6 +19306,33 @@
         "exact_test_anchor_count": 14,
         "runtime_witness_count": 14,
         "surface_id": "inceptadive_shadow_inspection_routes",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "mcoi/tests/test_inceptadive_assistant_response_embedding.py::test_live_chat_response_embeds_redacted_inceptadive_advisory"
+            ],
+            "witness": "live_chat_response_embeds_redacted_inceptadive_advisory"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_inceptadive_assistant_response_embedding.py::test_streaming_chat_response_emits_redacted_inceptadive_advisory_event"
+            ],
+            "witness": "streaming_chat_response_emits_redacted_inceptadive_advisory_event"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_inceptadive_assistant_response_embedding.py::test_chat_workflow_response_embeds_redacted_inceptadive_advisory"
+            ],
+            "witness": "chat_workflow_response_embeds_redacted_inceptadive_advisory"
+          }
+        ],
+        "exact_test_anchor_count": 3,
+        "runtime_witness_count": 3,
+        "surface_id": "inceptadive_assistant_response_embedding",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

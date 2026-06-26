@@ -3305,6 +3305,30 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "inceptadive_assistant_response_embedding",
+            [
+                "/api/v1/chat",
+                "/api/v1/chat/stream",
+                "/api/v1/chat/workflow",
+            ],
+            "request_proof",
+            "read_model",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/inceptadive_assistant_response_embedding.py",
+                "mcoi/mcoi_runtime/app/routers/llm/chat.py",
+                "mcoi/tests/test_inceptadive_assistant_response_embedding.py",
+                "docs/INCEPTADIVE_ASSISTANT_RESPONSE_EMBEDDING.md",
+            ],
+            "Live assistant chat response envelopes and streaming events expose redacted InceptaDive shadow advisory metadata without changing assistant content, workflow status, conversation state, connector dispatch authority, shadow memory write authority, or governance verdicts.",
+            [
+                "live_chat_response_embeds_redacted_inceptadive_advisory",
+                "streaming_chat_response_emits_redacted_inceptadive_advisory_event",
+                "chat_workflow_response_embeds_redacted_inceptadive_advisory",
+            ],
+        ),
+        _surface(
             "agent_adapter_protocol",
             [
                 "/api/v1/agent/register",
