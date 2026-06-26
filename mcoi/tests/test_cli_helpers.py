@@ -100,6 +100,49 @@ def test_autonomous_demo_writes_json_receipt_path(
     assert body["rollback_ref"].endswith("/local-effects")
 
 
+def test_autonomous_demo_quiet_writes_receipt_without_stdout(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    receipt_path = tmp_path / "autonomous-demo-receipt.json"
+
+    exit_code = cli.main(
+        [
+            "autonomous-demo",
+            "--target",
+            "workspace",
+            "--objective",
+            "prepare local change",
+            "--change",
+            "apply local patch",
+            "--receipt-path",
+            str(receipt_path),
+            "--quiet",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    body = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert captured.out == ""
+    assert captured.err == ""
+    assert body["operation"] == "autonomous-demo"
+    assert body["automation_state"] == "settled_without_prompt"
+    assert body["prompt_count"] == 0
+
+
+def test_autonomous_demo_quiet_requires_receipt_path(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(["autonomous-demo", "--quiet"])
+
+    captured = capsys.readouterr()
+
+    assert exc_info.value.code == 1
+    assert "quiet autonomous demo requires --receipt-path" in captured.err
+    assert captured.out == ""
+
+
 def test_autonomous_demo_receipt_path_write_failure_is_bounded(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

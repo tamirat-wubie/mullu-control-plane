@@ -352,6 +352,8 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
     """Run the default local autonomous capability chain and render its receipt."""
     if args.max_local_retries < 0:
         _fatal("max-local-retries must be non-negative")
+    if args.quiet and not args.receipt_path:
+        _fatal("quiet autonomous demo requires --receipt-path")
     config = _resolve_config(args)
     runtime = bootstrap_runtime(config=config)
     loop = OperatorLoop(runtime=runtime)
@@ -373,10 +375,11 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
     envelope = _autonomous_demo_summary_envelope(view)
     if args.receipt_path:
         _write_autonomous_demo_receipt(envelope, args.receipt_path)
-    if args.json:
-        print(json.dumps(envelope, sort_keys=True, indent=2))
-    else:
-        print(render_autonomous_request_episode_summary(view))
+    if not args.quiet:
+        if args.json:
+            print(json.dumps(envelope, sort_keys=True, indent=2))
+        else:
+            print(render_autonomous_request_episode_summary(view))
     return 0 if receipt.automation_state == AutonomousRequestAutomationState.SETTLED_WITHOUT_PROMPT.value else 1
 
 
@@ -1030,6 +1033,11 @@ def build_parser() -> argparse.ArgumentParser:
     autonomous_demo_parser.add_argument(
         "--receipt-path",
         help="Write the autonomous demo JSON envelope to a local file",
+    )
+    autonomous_demo_parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress stdout when writing an autonomous demo receipt file",
     )
     pilot_parser = subparsers.add_parser("pilot", help="Pilot bring-up commands")
     pilot_subparsers = pilot_parser.add_subparsers(dest="pilot_command")
