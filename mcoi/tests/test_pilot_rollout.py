@@ -1,6 +1,7 @@
 """Phase 126 — Live Pilot Rollout Tests."""
 import pytest
 from unittest.mock import Mock
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.pilot.customer_profile import PilotCustomerProfile, SELECTION_CRITERIA, evaluate_fit
 from mcoi_runtime.pilot.live_deployment import LivePilotDeployment, DeploymentReport
 from mcoi_runtime.pilot.weekly_tracker import WeeklyPilotTracker, WeeklySnapshot, FeedbackEntry
@@ -46,12 +47,24 @@ class TestLiveDeployment:
         assert report.connectors_activated == 5
         assert report.personas_created == 4
         assert report.governance_rules == 3
+        assert report.life_meaning_judgment_required is True
+        assert report.life_meaning_judgment_ref == "life-meaning:pilot-deployment:cust-001"
         assert report.is_ready
 
     def test_deploy_report_fields(self):
         deployment = LivePilotDeployment()
-        report = deployment.deploy(_good_profile())
+        report = deployment.deploy(
+            _good_profile(),
+            life_meaning_judgment_ref="life-meaning:pilot-deployment:approved-cust-001",
+        )
         assert report.tenant_id == "cust-001"
+        assert report.life_meaning_judgment_required is True
+        assert report.life_meaning_judgment_ref == "life-meaning:pilot-deployment:approved-cust-001"
+
+    def test_deploy_rejects_blank_life_meaning_judgment_ref(self):
+        deployment = LivePilotDeployment()
+        with pytest.raises(RuntimeCoreInvariantError, match="life_meaning_judgment_ref"):
+            deployment.deploy(_good_profile(), life_meaning_judgment_ref=" ")
 
     def test_deploy_failure_is_bounded(self):
         deployment = LivePilotDeployment()
@@ -61,6 +74,7 @@ class TestLiveDeployment:
 
         assert report.bootstrap_status == "failed"
         assert report.issues == ["bootstrap failed (RuntimeError)"]
+        assert report.life_meaning_judgment_ref == "life-meaning:pilot-deployment:cust-001"
 
     def test_load_data(self):
         deployment = LivePilotDeployment()
@@ -72,6 +86,14 @@ class TestLiveDeployment:
         results = deployment.load_data("cust-001", dataset)
         assert results["cases"].accepted == 10
         assert results["remediations"].accepted == 5
+        assert results["cases"].life_meaning_judgment_required is True
+        assert results["cases"].life_meaning_judgment_ref == "life-meaning:pilot-data-load:cust-001"
+        assert results["remediations"].life_meaning_judgment_ref == results["cases"].life_meaning_judgment_ref
+
+    def test_load_data_rejects_blank_life_meaning_judgment_ref(self):
+        deployment = LivePilotDeployment()
+        with pytest.raises(RuntimeCoreInvariantError, match="life_meaning_judgment_ref"):
+            deployment.load_data("cust-001", {"cases": []}, life_meaning_judgment_ref="")
 
 class TestWeeklyTracker:
     def test_record_and_evaluate(self):

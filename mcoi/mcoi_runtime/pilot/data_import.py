@@ -7,6 +7,7 @@ from mcoi_runtime.core.case_runtime import CaseRuntimeEngine
 from mcoi_runtime.core.remediation_runtime import RemediationRuntimeEngine
 from mcoi_runtime.core.records_runtime import RecordsRuntimeEngine
 from mcoi_runtime.core.human_workflow import HumanWorkflowEngine
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
 @dataclass
 class ImportResult:
@@ -15,11 +16,42 @@ class ImportResult:
     accepted: int = 0
     rejected: int = 0
     conflicts: int = 0
+    life_meaning_judgment_required: bool = True
+    life_meaning_judgment_ref: str = ""
     errors: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.life_meaning_judgment_required is not True:
+            raise RuntimeCoreInvariantError("life_meaning_judgment_required must be true")
+        if not self.life_meaning_judgment_ref.strip():
+            raise RuntimeCoreInvariantError("life_meaning_judgment_ref must not be blank")
+        self.life_meaning_judgment_ref = self.life_meaning_judgment_ref.strip()
 
 
 def _bounded_import_error(summary: str, exc: Exception) -> str:
     return f"{summary} ({type(exc).__name__})"
+
+
+def _life_meaning_judgment_ref(tenant_id: str, source_system: str) -> str:
+    bounded_tenant = tenant_id.strip()
+    bounded_source = source_system.strip()
+    if not bounded_tenant or not bounded_source:
+        raise RuntimeCoreInvariantError("life_meaning_judgment_ref requires tenant and source identifiers")
+    return f"life-meaning:pilot-data-import:{bounded_tenant}:{bounded_source}"
+
+
+def _normalize_life_meaning_judgment_ref(
+    candidate: str | None,
+    *,
+    tenant_id: str,
+    source_system: str,
+) -> str:
+    if candidate is None:
+        return _life_meaning_judgment_ref(tenant_id, source_system)
+    normalized = candidate.strip()
+    if not normalized:
+        raise RuntimeCoreInvariantError("life_meaning_judgment_ref must not be blank")
+    return normalized
 
 class PilotDataImporter:
     """Import historical data for pilot tenant."""
@@ -54,8 +86,21 @@ class PilotDataImporter:
             return True
         return False
 
-    def import_cases(self, tenant_id: str, cases: list[dict[str, Any]]) -> ImportResult:
-        result = ImportResult(source_system="cases")
+    def import_cases(
+        self,
+        tenant_id: str,
+        cases: list[dict[str, Any]],
+        *,
+        life_meaning_judgment_ref: str | None = None,
+    ) -> ImportResult:
+        result = ImportResult(
+            source_system="cases",
+            life_meaning_judgment_ref=_normalize_life_meaning_judgment_ref(
+                life_meaning_judgment_ref,
+                tenant_id=tenant_id,
+                source_system="cases",
+            ),
+        )
         result.total_records = len(cases)
         existing_ids = {case.case_id for case in self._case_engine.cases_for_tenant(tenant_id)}
         for case in cases:
@@ -88,8 +133,21 @@ class PilotDataImporter:
                     )
         return result
 
-    def import_remediations(self, tenant_id: str, items: list[dict[str, Any]]) -> ImportResult:
-        result = ImportResult(source_system="remediations")
+    def import_remediations(
+        self,
+        tenant_id: str,
+        items: list[dict[str, Any]],
+        *,
+        life_meaning_judgment_ref: str | None = None,
+    ) -> ImportResult:
+        result = ImportResult(
+            source_system="remediations",
+            life_meaning_judgment_ref=_normalize_life_meaning_judgment_ref(
+                life_meaning_judgment_ref,
+                tenant_id=tenant_id,
+                source_system="remediations",
+            ),
+        )
         result.total_records = len(items)
         existing_ids = {
             remediation.remediation_id
@@ -130,8 +188,21 @@ class PilotDataImporter:
                     )
         return result
 
-    def import_records(self, tenant_id: str, records: list[dict[str, Any]]) -> ImportResult:
-        result = ImportResult(source_system="records")
+    def import_records(
+        self,
+        tenant_id: str,
+        records: list[dict[str, Any]],
+        *,
+        life_meaning_judgment_ref: str | None = None,
+    ) -> ImportResult:
+        result = ImportResult(
+            source_system="records",
+            life_meaning_judgment_ref=_normalize_life_meaning_judgment_ref(
+                life_meaning_judgment_ref,
+                tenant_id=tenant_id,
+                source_system="records",
+            ),
+        )
         result.total_records = len(records)
         existing_ids = {
             record.record_id
@@ -171,12 +242,30 @@ class PilotDataImporter:
                     )
         return result
 
-    def import_all(self, tenant_id: str, dataset: dict[str, list[dict[str, Any]]]) -> dict[str, ImportResult]:
+    def import_all(
+        self,
+        tenant_id: str,
+        dataset: dict[str, list[dict[str, Any]]],
+        *,
+        life_meaning_judgment_ref: str | None = None,
+    ) -> dict[str, ImportResult]:
         results = {}
         if "cases" in dataset:
-            results["cases"] = self.import_cases(tenant_id, dataset["cases"])
+            results["cases"] = self.import_cases(
+                tenant_id,
+                dataset["cases"],
+                life_meaning_judgment_ref=life_meaning_judgment_ref,
+            )
         if "remediations" in dataset:
-            results["remediations"] = self.import_remediations(tenant_id, dataset["remediations"])
+            results["remediations"] = self.import_remediations(
+                tenant_id,
+                dataset["remediations"],
+                life_meaning_judgment_ref=life_meaning_judgment_ref,
+            )
         if "records" in dataset:
-            results["records"] = self.import_records(tenant_id, dataset["records"])
+            results["records"] = self.import_records(
+                tenant_id,
+                dataset["records"],
+                life_meaning_judgment_ref=life_meaning_judgment_ref,
+            )
         return results
