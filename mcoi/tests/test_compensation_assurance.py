@@ -3,6 +3,7 @@ Governance scope: compensation planning, dispatch observation, verification,
 reconciliation, and graph anchoring.
 Invariants:
   - Compensation is admitted only for unresolved original reconciliation.
+  - Compensation plans and outcomes bind LifeMeaningJudgment evidence.
   - Compensation succeeds only when compensation effects reconcile to MATCH.
   - Compensation outcomes carry evidence and graph witnesses.
 """
@@ -19,6 +20,8 @@ from mcoi_runtime.core.compensation import CompensationAssuranceGate
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.operational_graph import OperationalGraph
+
+LIFE_MEANING_REF = "life-meaning:compensation:refund-1"
 
 
 def _clock():
@@ -136,6 +139,26 @@ def test_create_plan_rejects_matched_original_reconciliation():
             expected_effects=("refund_receipt_received",),
             forbidden_effects=("duplicate_refund",),
             evidence_required=("refund_id",),
+            life_meaning_judgment_ref=LIFE_MEANING_REF,
+            kind=CompensationKind.COMPENSATION,
+        )
+
+
+def test_create_plan_rejects_missing_life_meaning_judgment_ref():
+    _, _, compensation_gate, original_plan, reconciliation = _original_context(
+        EffectRecord(name="payment_receipt_received", details={"evidence_ref": "payment:receipt-1"})
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="life_meaning_judgment_ref"):
+        compensation_gate.create_plan(
+            original_plan=original_plan,
+            original_reconciliation=reconciliation,
+            capability_id="financial.refund",
+            approval_id="approval-comp-1",
+            expected_effects=("refund_receipt_received",),
+            forbidden_effects=("duplicate_refund",),
+            evidence_required=("refund_id",),
+            life_meaning_judgment_ref="",
             kind=CompensationKind.COMPENSATION,
         )
 
@@ -152,13 +175,20 @@ def test_successful_compensation_requires_reconciled_compensation_effects():
         expected_effects=("refund_receipt_received",),
         forbidden_effects=("duplicate_refund",),
         evidence_required=("refund_id",),
+        life_meaning_judgment_ref=LIFE_MEANING_REF,
         kind=CompensationKind.COMPENSATION,
     )
     attempt, outcome = compensation_gate.execute(plan, dispatch=_successful_refund_dispatch)
     assert attempt.compensation_plan_id == plan.compensation_plan_id
+    assert plan.life_meaning_judgment_ref == LIFE_MEANING_REF
+    assert LIFE_MEANING_REF in plan.evidence_required
+    assert attempt.life_meaning_judgment_ref == LIFE_MEANING_REF
+    assert LIFE_MEANING_REF in attempt.evidence_refs
+    assert outcome.life_meaning_judgment_ref == LIFE_MEANING_REF
+    assert LIFE_MEANING_REF in outcome.evidence_refs
     assert outcome.status is CompensationStatus.SUCCEEDED
     assert outcome.case_id is None
-    assert outcome.evidence_refs == ("refund:receipt-1",)
+    assert outcome.evidence_refs == ("refund:receipt-1", LIFE_MEANING_REF)
 
 
 def test_failed_compensation_requires_review_and_preserves_case():
@@ -173,11 +203,14 @@ def test_failed_compensation_requires_review_and_preserves_case():
         expected_effects=("refund_receipt_received",),
         forbidden_effects=("duplicate_refund",),
         evidence_required=("refund_id",),
+        life_meaning_judgment_ref=LIFE_MEANING_REF,
     )
     attempt, outcome = compensation_gate.execute(plan, dispatch=_failed_refund_dispatch)
-    assert attempt.evidence_refs == ("refund:request-1",)
+    assert attempt.evidence_refs == ("refund:request-1", LIFE_MEANING_REF)
+    assert attempt.metadata["life_meaning_judgment_ref"] == LIFE_MEANING_REF
     assert outcome.status is CompensationStatus.REQUIRES_REVIEW
     assert outcome.case_id == "case-comp-1"
+    assert outcome.metadata["life_meaning_judgment_ref"] == LIFE_MEANING_REF
     assert compensation_gate.outcome_count == 1
 
 
@@ -193,6 +226,7 @@ def test_compensation_graph_anchor_records_approval_attempt_outcome_and_evidence
         expected_effects=("refund_receipt_received",),
         forbidden_effects=("duplicate_refund",),
         evidence_required=("refund_id",),
+        life_meaning_judgment_ref=LIFE_MEANING_REF,
     )
     attempt, outcome = compensation_gate.execute(plan, dispatch=_successful_refund_dispatch)
     nodes = graph.all_nodes()
@@ -201,3 +235,4 @@ def test_compensation_graph_anchor_records_approval_attempt_outcome_and_evidence
     assert any(node.node_id == f"compensation_outcome:{outcome.outcome_id}" for node in nodes)
     assert any(node.node_id == "approval:approval-comp-1" and node.node_type is NodeType.APPROVAL for node in nodes)
     assert any(node.node_id == "evidence:refund:receipt-1" for node in nodes)
+    assert any(node.node_id == f"evidence:{LIFE_MEANING_REF}" for node in nodes)

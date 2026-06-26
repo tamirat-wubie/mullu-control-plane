@@ -7,7 +7,8 @@ Invariants:
   - No successful execution memory without passing verification.
   - Inconclusive verification requires explicit active accepted risk.
   - Failed verification is stored only as a failure record.
-  - Successful compensation can become episodic only with evidence.
+  - Successful compensation can become episodic only with evidence and
+    LifeMeaningJudgment binding.
   - This bridge never writes semantic or procedural memory.
 """
 
@@ -102,6 +103,7 @@ class ClosureMemoryPromoter:
             "attempt_id": outcome.attempt_id,
             "verification_result_id": outcome.verification_result_id,
             "reconciliation_id": outcome.reconciliation_id,
+            "life_meaning_judgment_ref": outcome.life_meaning_judgment_ref,
             "evidence_refs": outcome.evidence_refs,
             "decided_at": outcome.decided_at,
             "recorded_at": self._clock(),
