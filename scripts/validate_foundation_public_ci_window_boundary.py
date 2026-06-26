@@ -12,6 +12,8 @@ Invariants:
   - Public visibility is not public readiness.
   - Public CI windows do not authorize public launch, customer exposure,
     production deployment, legal filing, fundraising, or raw secret exposure.
+  - Window-specific receipts either close exposure or preserve an explicit
+    AwaitingEvidence bounded-public state.
 """
 
 from __future__ import annotations
@@ -27,9 +29,12 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DOC_PATH = REPO_ROOT / "docs" / "FOUNDATION_PUBLIC_CI_WINDOW_BOUNDARY.md"
 DEFAULT_WITNESS_PATH = REPO_ROOT / "examples" / "foundation_public_ci_window_boundary_witness.awaiting_evidence.json"
+DEFAULT_RECEIPT_PATH = REPO_ROOT / "examples" / "foundation_public_ci_window_receipt.closed.example.json"
 
 EXPECTED_WITNESS_ID = "foundation_public_ci_window_boundary_witness.awaiting_evidence.v1"
 EXPECTED_WINDOW_ID = "foundation_public_ci_window.awaiting_evidence.v1"
+EXPECTED_RECEIPT_ID = "foundation_public_ci_window_receipt.closed.example.v1"
+EXPECTED_REPO = "tamirat-wubie/mullu-control-plane"
 EXPECTED_BLOCKED_CLAIMS = (
     "public readiness",
     "public launch",
@@ -44,6 +49,12 @@ EXPECTED_VALIDATOR_COMMANDS = (
     "python scripts/validate_proprietary_boundary.py",
     "python scripts/validate_release_status.py",
     "python scripts/report_ci_health.py --repo tamirat-wubie/mullu-control-plane --branch main --json",
+)
+EXPECTED_RECEIPT_VALIDATOR_COMMANDS = (
+    "python scripts/validate_public_repository_surface.py --local-only",
+    "python scripts/validate_proprietary_boundary.py",
+    "python scripts/validate_release_status.py",
+    "gh pr checks 2213",
 )
 EXPECTED_ROOT_KEYS = {
     "blocked_claims",
@@ -69,6 +80,45 @@ EXPECTED_ROOT_KEYS = {
     "witness_id",
     "workflow_run_urls",
 }
+EXPECTED_RECEIPT_ROOT_KEYS = {
+    "branch",
+    "closed_at",
+    "closure_decision",
+    "customer_access_claimed",
+    "exposure_decision",
+    "head_sha",
+    "opened_at",
+    "production_deployment_claimed",
+    "public_launch_claimed",
+    "public_readiness_claimed",
+    "pull_request",
+    "raw_secrets_committed",
+    "reason",
+    "receipt_id",
+    "repo",
+    "repo_visibility_after",
+    "repo_visibility_before",
+    "schema_version",
+    "solver_outcome",
+    "status",
+    "validators",
+    "window_id",
+    "workflow_run_urls",
+}
+ALLOWED_RECEIPT_STATUSES = {"closed", "bounded_public_awaiting_evidence"}
+SECRET_SHAPED_FRAGMENTS = (
+    "-----begin",
+    "private key",
+    "access_token",
+    "refresh_token",
+    "client_secret",
+    "github_token",
+    "ghp_",
+    "gho_",
+    "ghu_",
+    "ghs_",
+    "ghr_",
+)
 
 REQUIRED_FRAGMENTS = (
     "Foundation Public CI Window Boundary",
@@ -91,6 +141,7 @@ REQUIRED_FRAGMENTS = (
     "workflow_run_urls",
     "exposure_decision",
     "closure_decision",
+    "foundation_public_ci_window_receipt.closed.example.json",
     "AwaitingEvidence",
     "../examples/foundation_public_ci_window_boundary_witness.awaiting_evidence.json",
 )
@@ -224,9 +275,157 @@ def validate_witness(payload: dict[str, Any]) -> list[Finding]:
     return findings
 
 
+def _is_non_empty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _contains_secret_shaped_text(value: Any) -> bool:
+    text = json.dumps(value, sort_keys=True).casefold()
+    return any(fragment in text for fragment in SECRET_SHAPED_FRAGMENTS)
+
+
+def _is_github_actions_url(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and value.startswith(f"https://github.com/{EXPECTED_REPO}/actions/runs/")
+        and value.rsplit("/", 1)[-1].isdigit()
+    )
+
+
+def _is_pull_request_url(value: Any) -> bool:
+    return isinstance(value, str) and value.startswith(f"https://github.com/{EXPECTED_REPO}/pull/")
+
+
+def _is_hex_sha(value: Any) -> bool:
+    return isinstance(value, str) and len(value) == 40 and all(char in "0123456789abcdef" for char in value)
+
+
+def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
+    """Validate one window-specific public CI receipt."""
+
+    findings: list[Finding] = []
+    if set(payload) != EXPECTED_RECEIPT_ROOT_KEYS:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_root_keys_invalid",
+                f"root keys must be: {', '.join(sorted(EXPECTED_RECEIPT_ROOT_KEYS))}",
+            )
+        )
+
+    expected_false_flags = (
+        "public_readiness_claimed",
+        "public_launch_claimed",
+        "customer_access_claimed",
+        "production_deployment_claimed",
+        "raw_secrets_committed",
+    )
+    for key in expected_false_flags:
+        if payload.get(key) is not False:
+            findings.append(Finding("public_ci_window_receipt_claim_flag_invalid", f"{key} must be false"))
+
+    if payload.get("receipt_id") != EXPECTED_RECEIPT_ID:
+        findings.append(
+            Finding("public_ci_window_receipt_id_invalid", f"receipt_id must be {EXPECTED_RECEIPT_ID!r}")
+        )
+    if payload.get("schema_version") != 1:
+        findings.append(Finding("public_ci_window_receipt_schema_version_invalid", "schema_version must be 1"))
+    if payload.get("repo") != EXPECTED_REPO:
+        findings.append(Finding("public_ci_window_receipt_repo_invalid", f"repo must be {EXPECTED_REPO!r}"))
+
+    status = payload.get("status")
+    solver_outcome = payload.get("solver_outcome")
+    if status not in ALLOWED_RECEIPT_STATUSES:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_status_invalid",
+                f"status must be one of: {', '.join(sorted(ALLOWED_RECEIPT_STATUSES))}",
+            )
+        )
+    if status == "closed" and solver_outcome != "SolvedVerified":
+        findings.append(
+            Finding("public_ci_window_receipt_solver_outcome_invalid", "closed receipts must be SolvedVerified")
+        )
+    if status == "bounded_public_awaiting_evidence" and solver_outcome != "AwaitingEvidence":
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_solver_outcome_invalid",
+                "bounded public receipts must remain AwaitingEvidence",
+            )
+        )
+
+    required_text_fields = (
+        "window_id",
+        "reason",
+        "repo_visibility_before",
+        "repo_visibility_after",
+        "opened_at",
+        "branch",
+        "head_sha",
+        "exposure_decision",
+        "closure_decision",
+    )
+    for key in required_text_fields:
+        if not _is_non_empty_string(payload.get(key)):
+            findings.append(Finding("public_ci_window_receipt_required_string_invalid", f"{key} must be non-empty"))
+    if not _is_hex_sha(payload.get("head_sha")):
+        findings.append(Finding("public_ci_window_receipt_head_sha_invalid", "head_sha must be a 40-character lowercase hex SHA"))
+    if not _is_pull_request_url(payload.get("pull_request")):
+        findings.append(Finding("public_ci_window_receipt_pull_request_invalid", "pull_request must be a repository PR URL"))
+
+    closed_at = payload.get("closed_at")
+    if status == "closed" and not _is_non_empty_string(closed_at):
+        findings.append(Finding("public_ci_window_receipt_closed_at_invalid", "closed receipts require closed_at"))
+    if status == "bounded_public_awaiting_evidence" and closed_at is not None:
+        findings.append(
+            Finding("public_ci_window_receipt_closed_at_invalid", "bounded public receipts must keep closed_at null")
+        )
+
+    workflow_urls = payload.get("workflow_run_urls")
+    if not isinstance(workflow_urls, list) or not workflow_urls:
+        findings.append(
+            Finding("public_ci_window_receipt_workflow_urls_invalid", "workflow_run_urls must be a non-empty list")
+        )
+    elif not all(_is_github_actions_url(item) for item in workflow_urls):
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_workflow_urls_invalid",
+                "workflow_run_urls must contain repository GitHub Actions run URLs",
+            )
+        )
+
+    validators = payload.get("validators")
+    if not isinstance(validators, list) or not all(isinstance(item, dict) for item in validators):
+        findings.append(Finding("public_ci_window_receipt_validators_invalid", "validators must be a list of objects"))
+    else:
+        observed_commands = tuple(item.get("command") for item in validators)
+        if observed_commands != EXPECTED_RECEIPT_VALIDATOR_COMMANDS:
+            findings.append(
+                Finding("public_ci_window_receipt_validator_commands_invalid", "validator command inventory drifted")
+            )
+        observed_states = tuple(item.get("state") for item in validators)
+        expected_state = "passed" if status == "closed" else "AwaitingEvidence"
+        if observed_states != (expected_state,) * len(EXPECTED_RECEIPT_VALIDATOR_COMMANDS):
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_validator_states_invalid",
+                    f"validator states must all be {expected_state}",
+                )
+            )
+
+    if _contains_secret_shaped_text(payload):
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_secret_shaped_text_present",
+                "receipt must not contain raw secret-shaped text",
+            )
+        )
+    return findings
+
+
 def validate_foundation_public_ci_window_boundary(
     doc_path: Path = DEFAULT_DOC_PATH,
     witness_path: Path = DEFAULT_WITNESS_PATH,
+    receipt_path: Path = DEFAULT_RECEIPT_PATH,
 ) -> list[Finding]:
     """Validate the repository-local public CI window boundary artifact."""
 
@@ -240,6 +439,8 @@ def validate_foundation_public_ci_window_boundary(
     findings = validate_document_text(doc_path.read_text(encoding="utf-8"))
     witness_payload = load_json_object(witness_path, "public CI window boundary witness")
     findings.extend(validate_witness(witness_payload))
+    receipt_payload = load_json_object(receipt_path, "public CI window receipt example")
+    findings.extend(validate_window_receipt(receipt_payload))
     return findings
 
 
@@ -247,10 +448,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate the public CI window boundary.")
     parser.add_argument("--doc", type=Path, default=DEFAULT_DOC_PATH)
     parser.add_argument("--witness", type=Path, default=DEFAULT_WITNESS_PATH)
+    parser.add_argument("--receipt", type=Path, default=DEFAULT_RECEIPT_PATH)
     args = parser.parse_args(argv)
 
     try:
-        findings = validate_foundation_public_ci_window_boundary(args.doc, args.witness)
+        findings = validate_foundation_public_ci_window_boundary(args.doc, args.witness, args.receipt)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"[FAIL] public_ci_window_boundary_load: {exc}", file=sys.stderr)
         print("STATUS: failed", file=sys.stderr)

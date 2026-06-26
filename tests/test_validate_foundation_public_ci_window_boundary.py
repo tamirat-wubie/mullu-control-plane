@@ -22,12 +22,14 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.validate_foundation_public_ci_window_boundary import (  # noqa: E402
     DEFAULT_DOC_PATH,
+    DEFAULT_RECEIPT_PATH,
     DEFAULT_WITNESS_PATH,
     EXPECTED_WITNESS_ID,
     REQUIRED_FRAGMENTS,
     load_json_object,
     validate_document_text,
     validate_foundation_public_ci_window_boundary,
+    validate_window_receipt,
     validate_witness,
     main,
 )
@@ -85,6 +87,58 @@ def test_public_ci_window_witness_rejects_launch_claim() -> None:
     assert findings
     assert any(finding.rule_id == "public_ci_window_witness_value_invalid" for finding in findings)
     assert any("public_launch_claimed" in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_example_passes() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+
+    assert validate_window_receipt(payload) == []
+    assert payload["status"] == "closed"
+    assert payload["solver_outcome"] == "SolvedVerified"
+    assert payload["public_readiness_claimed"] is False
+    assert payload["raw_secrets_committed"] is False
+    assert payload["workflow_run_urls"]
+
+
+def test_public_ci_window_receipt_rejects_missing_closure_for_closed_window() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["closed_at"] = None
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_closed_at_invalid" for finding in findings)
+    assert any("closed receipts require closed_at" in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_secret_shaped_text() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["exposure_decision"] = "accidentally included client_secret value"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(
+        finding.rule_id == "public_ci_window_receipt_secret_shaped_text_present"
+        for finding in findings
+    )
+    assert all("client_secret value" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_allows_bounded_public_awaiting_evidence() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["status"] = "bounded_public_awaiting_evidence"
+    payload["solver_outcome"] = "AwaitingEvidence"
+    payload["closed_at"] = None
+    for validator in payload["validators"]:
+        validator["state"] = "AwaitingEvidence"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings == []
+    assert payload["status"] == "bounded_public_awaiting_evidence"
+    assert payload["closed_at"] is None
+    assert all(validator["state"] == "AwaitingEvidence" for validator in payload["validators"])
 
 
 def test_public_ci_window_boundary_cli_passes(capsys) -> None:
