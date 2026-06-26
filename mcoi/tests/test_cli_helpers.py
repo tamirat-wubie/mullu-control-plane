@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -65,6 +66,54 @@ def test_autonomous_demo_renders_json_continuation_summary(capsys: pytest.Captur
     assert body["prompt_count"] == 0
     assert body["workflow_descriptor_ref"].startswith("workflow://")
     assert body["rollback_ref"].endswith("/local-effects")
+
+
+def test_autonomous_demo_writes_json_receipt_path(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    receipt_path = tmp_path / "autonomous-demo-receipt.json"
+
+    exit_code = cli.main(
+        [
+            "autonomous-demo",
+            "--target",
+            "workspace",
+            "--objective",
+            "prepare local change",
+            "--change",
+            "apply local patch",
+            "--receipt-path",
+            str(receipt_path),
+        ]
+    )
+
+    output = capsys.readouterr().out
+    body = json.loads(receipt_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert "Autonomous Request Episode Summary" in output
+    assert body["operation"] == "autonomous-demo"
+    assert body["automation_state"] == "settled_without_prompt"
+    assert body["prompt_count"] == 0
+    assert body["workflow_descriptor_ref"].startswith("workflow://")
+    assert body["rollback_ref"].endswith("/local-effects")
+
+
+def test_autonomous_demo_receipt_path_write_failure_is_bounded(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    missing_parent_path = tmp_path / "missing" / "autonomous-demo-receipt.json"
+
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(["autonomous-demo", "--receipt-path", str(missing_parent_path)])
+
+    captured = capsys.readouterr()
+
+    assert exc_info.value.code == 1
+    assert "cannot write autonomous demo receipt: file not found" in captured.err
+    assert captured.out == ""
 
 
 def test_autonomous_demo_rejects_negative_retry_count(capsys: pytest.CaptureFixture[str]) -> None:

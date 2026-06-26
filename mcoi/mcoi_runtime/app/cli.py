@@ -370,8 +370,11 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
     episode = compile_default_autonomous_request_episode(intent)
     receipt = loop.run_autonomous_request_episode(episode)
     view = AutonomousRequestEpisodeSummaryView.from_receipt(receipt)
+    envelope = _autonomous_demo_summary_envelope(view)
+    if args.receipt_path:
+        _write_autonomous_demo_receipt(envelope, args.receipt_path)
     if args.json:
-        print(json.dumps(_autonomous_demo_summary_envelope(view), sort_keys=True, indent=2))
+        print(json.dumps(envelope, sort_keys=True, indent=2))
     else:
         print(render_autonomous_request_episode_summary(view))
     return 0 if receipt.automation_state == AutonomousRequestAutomationState.SETTLED_WITHOUT_PROMPT.value else 1
@@ -395,6 +398,14 @@ def _autonomous_demo_summary_envelope(view: AutonomousRequestEpisodeSummaryView)
         "plan_receipt_ref": view.plan_receipt_ref,
         "rollback_ref": view.rollback_ref,
     }
+
+
+def _write_autonomous_demo_receipt(envelope: Mapping[str, object], receipt_path: str) -> None:
+    """Persist a local autonomous demo receipt envelope as deterministic JSON."""
+    try:
+        Path(receipt_path).write_text(json.dumps(envelope, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    except OSError as exc:
+        _fatal(f"cannot write autonomous demo receipt: {_classify_cli_os_error(exc)}")
 
 
 def profiles_command(args: argparse.Namespace) -> int:
@@ -1016,6 +1027,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum local repair retries for validation failures",
     )
     autonomous_demo_parser.add_argument("--json", action="store_true", help="Emit JSON envelope")
+    autonomous_demo_parser.add_argument(
+        "--receipt-path",
+        help="Write the autonomous demo JSON envelope to a local file",
+    )
     pilot_parser = subparsers.add_parser("pilot", help="Pilot bring-up commands")
     pilot_subparsers = pilot_parser.add_subparsers(dest="pilot_command")
     pilot_init_parser = pilot_subparsers.add_parser("init", help="Scaffold a governed pilot bundle")
