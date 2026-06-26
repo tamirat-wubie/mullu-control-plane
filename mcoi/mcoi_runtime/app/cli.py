@@ -385,13 +385,13 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
     receipt_path = args.receipt_path
     if args.receipt_dir:
         receipt_path = str(_autonomous_demo_receipt_dir_path(args.receipt_dir, view.episode_id))
+    if latest_path:
+        envelope["latest_receipt_path"] = str(latest_path)
     if receipt_path:
         envelope["receipt_path"] = str(Path(receipt_path))
         _write_autonomous_demo_receipt(envelope, receipt_path)
     if latest_path:
-        latest_envelope = dict(envelope)
-        latest_envelope["latest_receipt_path"] = str(latest_path)
-        _write_autonomous_demo_receipt(latest_envelope, str(latest_path))
+        _write_autonomous_demo_receipt(envelope, str(latest_path))
     if not args.quiet:
         if args.json:
             print(json.dumps(envelope, sort_keys=True, indent=2))
