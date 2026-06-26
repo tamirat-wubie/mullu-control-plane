@@ -1162,6 +1162,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_governance_normalization_map.py"),
         ),
         CheckCommand(
+            "holistic_loop_reasoning_admission_binding",
+            (python_executable, "scripts/validate_holistic_loop_reasoning_admission_binding.py"),
+        ),
+        CheckCommand(
             "public_repository_surface",
             (python_executable, "scripts/validate_public_repository_surface.py", "--local-only"),
         ),

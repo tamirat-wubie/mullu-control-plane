@@ -1355,6 +1355,12 @@
       "urn": "urn:mullusi:schema:holistic-loop-read-model:1"
     },
     {
+      "path": "schemas/holistic_loop_reasoning_admission_binding.schema.json",
+      "schema_id": "holistic-loop-reasoning-admission-binding",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:holistic-loop-reasoning-admission-binding:1"
+    },
+    {
       "path": "schemas/inceptadive_external_effect_adapter_readiness.schema.json",
       "schema_id": "inceptadive-external-effect-adapter-readiness",
       "surface": "governance",

@@ -1,0 +1,53 @@
+{
+  "security_review_id": "SEC-holistic-loop-reasoning-admission-binding-20260626",
+  "change_id": "holistic-loop-reasoning-admission-binding-20260626",
+  "impact_categories": [
+    "auth",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "A reasoning admission binding can accidentally become runtime authority if operator intent, canonical loop identity, or evidence references are conflated with execution. The main risks are authorizing runtime reasoning, registering a loop, transitioning loop status, calling connectors, appending receipts, exporting private reasoning, or claiming terminal closure without live evidence. The mitigation is a schema-backed read-only binding that denies all runtime authorities and keeps runtime promotion blocked on explicit evidence refs.",
+  "required_checks": [
+    { "category": "auth", "check": "runtime reasoning, loop registration, status transition, mutation route, and live adapter authority remain denied", "status": "passed", "evidence_ref": "tests/test_validate_holistic_loop_reasoning_admission_binding.py::test_holistic_loop_reasoning_admission_rejects_authority_drift" },
+    { "category": "secrets", "check": "redaction check confirms secret access and private reasoning export remain denied", "status": "passed", "evidence_ref": "examples/holistic_loop_reasoning_admission_binding.foundation.json" },
+    { "category": "policy", "check": "policy bypass check confirms runtime promotion remains AwaitingEvidence", "status": "passed", "evidence_ref": "tests/test_validate_holistic_loop_reasoning_admission_binding.py::test_holistic_loop_reasoning_admission_rejects_scope_and_evidence_drift" },
+    { "category": "receipts", "check": "receipt integrity check confirms runtime blockers and contract summary counts cannot drift", "status": "passed", "evidence_ref": "tests/test_validate_holistic_loop_reasoning_admission_binding.py::test_holistic_loop_reasoning_admission_rejects_receipt_and_gap_drift" },
+    { "category": "audit", "check": "audit visibility check confirms schema, validator, SDLC sidecars, and proof labels are retained", "status": "passed", "evidence_ref": "scripts/validate_holistic_loop_reasoning_admission_binding.py" }
+  ],
+  "findings": [
+    {
+      "finding_id": "holistic-loop-reasoning-runtime-authority",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "Foundation Mode binding denies runtime reasoning, loop registration, status transition, connector calls, receipt append, learning updates, terminal closure, and success claims.",
+      "evidence_refs": [
+        "schemas/holistic_loop_reasoning_admission_binding.schema.json",
+        "examples/holistic_loop_reasoning_admission_binding.foundation.json",
+        "scripts/validate_holistic_loop_reasoning_admission_binding.py",
+        "tests/test_validate_holistic_loop_reasoning_admission_binding.py"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep the binding read-only and Foundation Mode scoped",
+    "deny runtime reasoning and loop registration authority",
+    "deny connector calls, network calls, secret access, and external execution",
+    "deny receipt append, learning updates, terminal closure, and success claims",
+    "require UAO admission, operator approval, runtime execution design, rollback recovery, live receipts, and terminal closure review before promotion"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "schemas/holistic_loop_reasoning_admission_binding.schema.json",
+    "examples/holistic_loop_reasoning_admission_binding.foundation.json",
+    "scripts/validate_holistic_loop_reasoning_admission_binding.py",
+    "tests/test_validate_holistic_loop_reasoning_admission_binding.py",
+    "receipt://sdlc/holistic-loop-reasoning-admission-binding/security"
+  ],
+  "uao_ref": "uao://sdlc/holistic-loop-reasoning-admission-binding/security",
+  "causal_decision_trace_ref": "trace://sdlc/holistic-loop-reasoning-admission-binding/security",
+  "receipt_ref": "receipt://sdlc/holistic-loop-reasoning-admission-binding/security"
+}

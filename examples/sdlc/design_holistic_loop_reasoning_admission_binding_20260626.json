@@ -1,0 +1,58 @@
+{
+  "design_id": "DES-holistic-loop-reasoning-admission-binding-20260626",
+  "requirement_id": "REQ-holistic-loop-reasoning-admission-binding-20260626",
+  "architecture_summary": "Add a schema-backed, read-only Foundation Mode admission binding that records wholistic_reasoning as operator source intent, canonicalizes to the existing holistic_loop evidence surface, pins source artifact digests, denies runtime authority, and keeps runtime promotion blocked on explicit evidence refs.",
+  "affected_modules": [
+    "schemas",
+    "examples",
+    "scripts",
+    "tests",
+    "docs",
+    "proof_coverage_matrix",
+    "workspace_governance_preflight"
+  ],
+  "data_model_changes": [
+    "Introduce HolisticLoopReasoningAdmissionBinding with admission_scope, source_artifacts, admission_requirements, authority_boundary, runtime_promotion_blockers, contract_summary, and evidence_refs",
+    "Represent runtime promotion blockers as exact evidence refs that remain unsatisfied in Foundation Mode",
+    "Represent denied runtime authorities as explicit allowed=false records"
+  ],
+  "schema_changes": [
+    "schemas/holistic_loop_reasoning_admission_binding.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/workspace_governance_preflight_receipt.schema.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_holistic_loop_reasoning_admission_binding.py",
+    "tests/test_validate_holistic_loop_reasoning_admission_binding.py",
+    "scripts/proof_coverage_matrix.py",
+    "scripts/run_workspace_governance_checks.py",
+    "scripts/validate_schemas.py",
+    "scripts/validate_protocol_manifest.py",
+    "scripts/validate_public_repository_surface.py",
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_pr_enforcement.py"
+  ],
+  "security_model": {
+    "raw_reasoning_rejected": true,
+    "secret_fields_rejected": true,
+    "effect_bearing_requires_receipt": true,
+    "tenant_scope_reviewed": true
+  },
+  "rollback_plan": "Revert the added binding schema, Foundation example, validator, tests, documentation, SDLC sidecars, protocol manifest entry, proof matrix generated outputs, and workspace preflight check; rerun schema, protocol, proof coverage, SDLC security, and governance preflight validators.",
+  "migration_plan": "No runtime migration. This is an additive Foundation Mode evidence binding and does not mutate runtime state.",
+  "test_plan": [
+    "python scripts/validate_holistic_loop_reasoning_admission_binding.py",
+    "python -m pytest tests/test_validate_holistic_loop_reasoning_admission_binding.py -q",
+    "python -m py_compile scripts/validate_holistic_loop_reasoning_admission_binding.py scripts/proof_coverage_matrix.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_holistic_loop_reasoning_admission_binding_20260626.json --strict",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/run_workspace_governance_checks.py --check holistic_loop_reasoning_admission_binding --json"
+  ],
+  "uao_ref": "uao://sdlc/holistic-loop-reasoning-admission-binding/design",
+  "causal_decision_trace_ref": "trace://sdlc/holistic-loop-reasoning-admission-binding/design",
+  "receipt_ref": "receipt://sdlc/holistic-loop-reasoning-admission-binding/design"
+}

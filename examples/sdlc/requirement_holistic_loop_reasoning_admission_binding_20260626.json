@@ -1,0 +1,63 @@
+{
+  "requirement_id": "REQ-holistic-loop-reasoning-admission-binding-20260626",
+  "request_id": "continue-wholistic-reasoning-admission-binding",
+  "problem_statement": "The operator asked to continue and decide about wholistic reasoning. The repository already has Reasoning Integrity Mesh and holistic loop read-model evidence, but no binding that records the operator spelling, canonical loop surface, denied runtime authority, and missing runtime promotion evidence.",
+  "success_criteria": [
+    "HolisticLoopReasoningAdmissionBinding validates against a public JSON schema and Foundation Mode example",
+    "The binding preserves wholistic_reasoning as operator source intent and canonicalizes only to holistic_loop for existing governance surfaces",
+    "The binding denies runtime reasoning, loop registration, mutation routes, connector calls, receipt append, learning updates, terminal closure, and success claims",
+    "The validator rejects runtime evidence drift, denied authority drift, source digest drift, summary-count drift, and SDLC sidecar drift",
+    "The binding is covered by a focused validator, root tests, protocol manifest entry, proof coverage matrix surface, and workspace governance preflight check"
+  ],
+  "non_goals": [
+    "no runtime reasoning execution",
+    "no new loop registration",
+    "no loop status transition",
+    "no connector calls",
+    "no receipt append",
+    "no learning updates",
+    "no terminal closure",
+    "no success claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "solver_outcome remains AwaitingEvidence",
+    "operator_direction remains wholistic_reasoning",
+    "canonical_loop_id remains holistic_loop",
+    "runtime_reasoning_claimed remains false",
+    "terminal_closure_claimed remains false",
+    "all denied authority entries remain allowed=false",
+    "Mfidel atomicity remains preserved"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "schemas/holistic_loop_reasoning_admission_binding.schema.json",
+    "examples/holistic_loop_reasoning_admission_binding.foundation.json",
+    "scripts/validate_holistic_loop_reasoning_admission_binding.py",
+    "tests/test_validate_holistic_loop_reasoning_admission_binding.py",
+    "docs/99_holistic_loop_reasoning_admission_binding.md",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/run_workspace_governance_checks.py",
+    "scripts/proof_coverage_matrix.py"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_holistic_loop_reasoning_admission_binding.py",
+    "python -m pytest tests/test_validate_holistic_loop_reasoning_admission_binding.py -q",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_holistic_loop_reasoning_admission_binding_20260626.json --strict",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/proof_coverage_matrix.py --check",
+    "python scripts/run_workspace_governance_checks.py --check holistic_loop_reasoning_admission_binding --json"
+  ],
+  "evidence_required": [
+    "schemas/holistic_loop_reasoning_admission_binding.schema.json",
+    "examples/holistic_loop_reasoning_admission_binding.foundation.json",
+    "scripts/validate_holistic_loop_reasoning_admission_binding.py",
+    "tests/test_validate_holistic_loop_reasoning_admission_binding.py",
+    "docs/99_holistic_loop_reasoning_admission_binding.md",
+    "examples/sdlc/design_holistic_loop_reasoning_admission_binding_20260626.json",
+    "examples/sdlc/security_review_holistic_loop_reasoning_admission_binding_20260626.json"
+  ],
+  "uao_ref": "uao://sdlc/holistic-loop-reasoning-admission-binding/requirement",
+  "causal_decision_trace_ref": "trace://sdlc/holistic-loop-reasoning-admission-binding/requirement",
+  "receipt_ref": "receipt://sdlc/holistic-loop-reasoning-admission-binding/requirement"
+}

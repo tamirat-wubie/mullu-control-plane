@@ -1,0 +1,260 @@
+{
+  "binding_id": "holistic-loop-reasoning-admission-binding-foundation-20260626",
+  "witness_version": "holistic_loop_reasoning_admission_binding.v1",
+  "solver_outcome": "AwaitingEvidence",
+  "admission_scope": {
+    "operator_direction": "wholistic_reasoning",
+    "canonical_loop_id": "holistic_loop",
+    "foundation_mode_required": true,
+    "canonicalization_policy": "Operator spelling wholistic_reasoning is preserved as source intent and canonicalized only to the existing holistic_loop governance surface.",
+    "runtime_reasoning_claimed": false,
+    "terminal_closure_claimed": false,
+    "scope_notes": [
+      "bind the requested wholistic reasoning direction to existing reasoning integrity evidence",
+      "do not register a new runtime loop",
+      "do not execute reasoning workflows",
+      "do not append runtime receipts or claim terminal closure"
+    ]
+  },
+  "source_artifacts": [
+    {
+      "path": "docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md",
+      "role": "reasoning integrity doctrine",
+      "sha256": "f5ee0f4c0f02d00a407f3650089d347bed9064d8440a20e626f6d1e4be32ecd1"
+    },
+    {
+      "path": "governance/reasoning_method_registry.yaml",
+      "role": "reasoning method registry",
+      "sha256": "79ab0627348ae515883d45feb1b23087d74855a6091cc112a55d2bf94c97d0e5"
+    },
+    {
+      "path": "governance/judgment_integrity_gate.yaml",
+      "role": "judgment integrity gate",
+      "sha256": "940784b9d9b93fc193add9670762006e031e12d8f08c3234b0898dd04c9d0bfb"
+    },
+    {
+      "path": "governance/weakness_taxonomy.yaml",
+      "role": "weakness taxonomy",
+      "sha256": "0fba1e1852537497165c680ac1078deced0d2ef08c59e4fc534c7a5609af737a"
+    },
+    {
+      "path": "governance/reasoning_edge_case_forge.yaml",
+      "role": "reasoning edge case forge",
+      "sha256": "669db48559b3c31d06b74e4a23a096c2c6cf8f6a6f42493c1d2afa69018930f3"
+    },
+    {
+      "path": "scripts/validate_reasoning_integrity_mesh.py",
+      "role": "reasoning integrity validator",
+      "sha256": "e7fa13f992c6536b70445c7fc92af45a5c4d0ef834a03cc619b05ab481f7419f"
+    },
+    {
+      "path": "tests/governance/test_reasoning_integrity_mesh.py",
+      "role": "reasoning integrity tests",
+      "sha256": "27bedfc58f26b07fddb7d90861f9b291d6cc5f6926361264c70c454a3ba6e35a"
+    },
+    {
+      "path": "docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md",
+      "role": "holistic loop kernel doctrine",
+      "sha256": "34d45e1e7ee7f23e6f5575417b690e38d45abc34ce19da901a81a0a0dd4d36ca"
+    },
+    {
+      "path": "schemas/holistic_loop_read_model.schema.json",
+      "role": "holistic loop read model schema",
+      "sha256": "77e06b23989af91087f07e687d0684eafad69c8b776699600c94666427309688"
+    },
+    {
+      "path": "scripts/validate_holistic_loop_read_model.py",
+      "role": "holistic loop read model validator",
+      "sha256": "f702c6bf13eb014ede6fa7dbb430be27e280e2cad483101d98e23c85e270af03"
+    },
+    {
+      "path": "scripts/validate_holistic_loop_extension_admission.py",
+      "role": "holistic loop extension admission validator",
+      "sha256": "7cd148f46d30314c72a8273e0378371e4a586aa5ea840be289075e0490d63c31"
+    },
+    {
+      "path": "scripts/validate_holistic_loop_kernel_freeze.py",
+      "role": "holistic loop kernel freeze validator",
+      "sha256": "81aba6759e752fdebb97a0b1267a39bcdaf8ba764f4e8209085a927b508e9e64"
+    },
+    {
+      "path": "scripts/validate_holistic_loop_http_surface.py",
+      "role": "holistic loop HTTP surface validator",
+      "sha256": "76aa201ecc639d8580880cd4a9b23e1525b9096be8f32ea6a8173987f81aaed6"
+    }
+  ],
+  "admission_requirements": [
+    {
+      "requirement_ref": "evidence://wholistic-reasoning/uao-admission",
+      "description": "UAO admission must classify the runtime reasoning action and prove no bypass path.",
+      "execution_allowed": false,
+      "satisfied": false,
+      "required_for_runtime_promotion": true
+    },
+    {
+      "requirement_ref": "evidence://wholistic-reasoning/operator-approval",
+      "description": "Operator approval must explicitly authorize runtime reasoning beyond read-only binding.",
+      "execution_allowed": false,
+      "satisfied": false,
+      "required_for_runtime_promotion": true
+    },
+    {
+      "requirement_ref": "evidence://wholistic-reasoning/runtime-execution-design",
+      "description": "Runtime execution design must define loop state transitions, termination, and evidence capture.",
+      "execution_allowed": false,
+      "satisfied": false,
+      "required_for_runtime_promotion": true
+    },
+    {
+      "requirement_ref": "evidence://wholistic-reasoning/rollback-recovery",
+      "description": "Rollback and recovery evidence must show safe restoration for any effect-bearing execution.",
+      "execution_allowed": false,
+      "satisfied": false,
+      "required_for_runtime_promotion": true
+    },
+    {
+      "requirement_ref": "evidence://wholistic-reasoning/live-run-receipts",
+      "description": "Live run receipts must exist before runtime success or terminal closure can be claimed.",
+      "execution_allowed": false,
+      "satisfied": false,
+      "required_for_runtime_promotion": true
+    },
+    {
+      "requirement_ref": "evidence://wholistic-reasoning/terminal-closure-review",
+      "description": "Terminal closure review must verify that all blockers are closed with receipts.",
+      "execution_allowed": false,
+      "satisfied": false,
+      "required_for_runtime_promotion": true
+    }
+  ],
+  "authority_boundary": {
+    "read_only": true,
+    "foundation_evidence_only": true,
+    "denial_reason": "Foundation binding records source evidence and denied authority only; it is not runtime admission.",
+    "denied_authority": [
+      {
+        "authority_id": "runtime_reasoning_allowed",
+        "allowed": false,
+        "denial_reason": "runtime reasoning needs UAO admission and live receipts"
+      },
+      {
+        "authority_id": "loop_registration_allowed",
+        "allowed": false,
+        "denial_reason": "new loop registration needs explicit runtime execution design"
+      },
+      {
+        "authority_id": "loop_status_transition_allowed",
+        "allowed": false,
+        "denial_reason": "status transitions are not admitted by read-only binding"
+      },
+      {
+        "authority_id": "mutation_route_allowed",
+        "allowed": false,
+        "denial_reason": "mutation route is outside Foundation evidence scope"
+      },
+      {
+        "authority_id": "connector_call_allowed",
+        "allowed": false,
+        "denial_reason": "connector execution needs separate adapter authority"
+      },
+      {
+        "authority_id": "external_model_execution_allowed",
+        "allowed": false,
+        "denial_reason": "external execution is not part of this binding"
+      },
+      {
+        "authority_id": "network_call_allowed",
+        "allowed": false,
+        "denial_reason": "network calls are not required for read-only evidence binding"
+      },
+      {
+        "authority_id": "secret_access_allowed",
+        "allowed": false,
+        "denial_reason": "secret access is not needed for the binding"
+      },
+      {
+        "authority_id": "filesystem_write_allowed",
+        "allowed": false,
+        "denial_reason": "runtime filesystem writes are outside the admitted contract"
+      },
+      {
+        "authority_id": "receipt_append_allowed",
+        "allowed": false,
+        "denial_reason": "receipt append requires runtime receipt-store authority"
+      },
+      {
+        "authority_id": "dashboard_ui_allowed",
+        "allowed": false,
+        "denial_reason": "dashboard UI exposure is not admitted"
+      },
+      {
+        "authority_id": "task_creation_allowed",
+        "allowed": false,
+        "denial_reason": "task creation is an effect-bearing action outside this binding"
+      },
+      {
+        "authority_id": "live_adapter_execution_allowed",
+        "allowed": false,
+        "denial_reason": "live adapter execution requires separate capability evidence"
+      },
+      {
+        "authority_id": "canonical_state_mutation_allowed",
+        "allowed": false,
+        "denial_reason": "canonical state writes must route through governed runtime authority"
+      },
+      {
+        "authority_id": "learning_update_allowed",
+        "allowed": false,
+        "denial_reason": "learning update authority is not granted"
+      },
+      {
+        "authority_id": "raw_reasoning_persistence_allowed",
+        "allowed": false,
+        "denial_reason": "raw private reasoning persistence is denied"
+      },
+      {
+        "authority_id": "private_reasoning_export_allowed",
+        "allowed": false,
+        "denial_reason": "private reasoning export is denied"
+      },
+      {
+        "authority_id": "terminal_closure_allowed",
+        "allowed": false,
+        "denial_reason": "terminal closure needs closure review evidence"
+      },
+      {
+        "authority_id": "success_claim_allowed",
+        "allowed": false,
+        "denial_reason": "success claim requires verified runtime receipts"
+      }
+    ]
+  },
+  "runtime_promotion_blockers": [
+    "evidence://wholistic-reasoning/uao-admission",
+    "evidence://wholistic-reasoning/operator-approval",
+    "evidence://wholistic-reasoning/runtime-execution-design",
+    "evidence://wholistic-reasoning/rollback-recovery",
+    "evidence://wholistic-reasoning/live-run-receipts",
+    "evidence://wholistic-reasoning/terminal-closure-review"
+  ],
+  "contract_summary": {
+    "source_artifact_count": 13,
+    "denied_authority_count": 19,
+    "runtime_requirement_count": 6,
+    "satisfied_runtime_requirement_count": 0,
+    "runtime_blocker_count": 6,
+    "runtime_claim_count": 0,
+    "read_only": true,
+    "receipt_is_not_terminal_closure": true
+  },
+  "evidence_refs": [
+    "schemas/holistic_loop_reasoning_admission_binding.schema.json",
+    "examples/holistic_loop_reasoning_admission_binding.foundation.json",
+    "scripts/validate_holistic_loop_reasoning_admission_binding.py",
+    "tests/test_validate_holistic_loop_reasoning_admission_binding.py",
+    "docs/99_holistic_loop_reasoning_admission_binding.md",
+    "examples/sdlc/requirement_holistic_loop_reasoning_admission_binding_20260626.json",
+    "examples/sdlc/design_holistic_loop_reasoning_admission_binding_20260626.json",
+    "examples/sdlc/security_review_holistic_loop_reasoning_admission_binding_20260626.json"
+  ]
+}
