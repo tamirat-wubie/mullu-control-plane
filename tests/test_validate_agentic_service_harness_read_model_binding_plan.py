@@ -571,14 +571,41 @@ def test_readiness_map_rejects_missing_github_pr_terminal_certificate_read_model
     )
 
 
-def test_readiness_map_rejects_missing_dry_run_test_execution_observation_next_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_dry_run_test_execution_observation_row(
+    tmp_path: Path,
+) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(test): collect dry-run test execution observation`",
+            "| Dry-run test execution observation receipt PR | READY |",
+            "| Dry-run test execution observation receipt PR | PARTIAL |",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing ready row: Dry-run test execution observation receipt PR"
+        in serialized_errors
+    )
+
+
+def test_readiness_map_rejects_missing_filesystem_write_admission_next_pr(
+    tmp_path: Path,
+) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "1. `harness(workspace): bind filesystem write admission`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -589,7 +616,7 @@ def test_readiness_map_rejects_missing_dry_run_test_execution_observation_next_p
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(test): collect dry-run test execution observation"
+        "missing next PR marker: harness(workspace): bind filesystem write admission"
         in serialized_errors
     )
 
