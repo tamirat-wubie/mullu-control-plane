@@ -496,14 +496,39 @@ def test_readiness_map_rejects_missing_github_pr_terminal_decision_value_record_
     )
 
 
-def test_readiness_map_rejects_missing_certificate_minting_next_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_github_pr_terminal_certificate_minting_row(
+    tmp_path: Path,
+) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): mint PR terminal closure certificate after approved decision value`",
+            "| GitHub PR terminal closure certificate minting PR | READY |",
+            "| GitHub PR terminal closure certificate minting PR | PARTIAL |",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing ready row: GitHub PR terminal closure certificate minting PR"
+        in serialized_errors
+    )
+
+
+def test_readiness_map_rejects_missing_certificate_read_model_next_pr(tmp_path: Path) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "1. `harness(pr): project minted PR terminal closure certificate read model`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -514,7 +539,7 @@ def test_readiness_map_rejects_missing_certificate_minting_next_pr(tmp_path: Pat
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): mint PR terminal closure certificate after approved decision value"
+        "missing next PR marker: harness(pr): project minted PR terminal closure certificate read model"
         in serialized_errors
     )
 
