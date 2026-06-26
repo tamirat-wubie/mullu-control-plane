@@ -76,6 +76,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_actual_file_change_summary_receipt",
         "agentic_service_harness_actual_diff_collection_admission_preflight",
         "agentic_service_harness_actual_diff_collection_receipt",
+        "agentic_service_harness_non_empty_diff_receipt_admission_preflight",
         "agentic_service_harness_github_pr_admission_preflight",
         "agentic_service_harness_github_pr_operator_approval_request",
         "agentic_service_harness_github_pr_operator_response_witness",
