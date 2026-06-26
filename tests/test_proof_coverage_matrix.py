@@ -313,7 +313,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
         surfaces["component_route_family_promotion_authority_upgrade_witness_decision_report"][
             "exact_test_anchor_count"
         ]
-        == 6
+        == 7
     )
     assert (
         surfaces["component_route_family_promotion_product_ownership_decision_report"]["unanchored_witness_count"]
@@ -321,7 +321,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     )
     assert (
         surfaces["component_route_family_promotion_product_ownership_decision_report"]["exact_test_anchor_count"]
-        == 6
+        == 7
     )
     assert (
         surfaces["component_route_family_promotion_terminal_closure_denial_report"]["unanchored_witness_count"]
@@ -329,7 +329,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     )
     assert (
         surfaces["component_route_family_promotion_terminal_closure_denial_report"]["exact_test_anchor_count"]
-        == 6
+        == 7
     )
     assert (
         surfaces["component_route_family_promotion_missing_evidence_ledger"]["unanchored_witness_count"]
@@ -1290,6 +1290,8 @@ def test_component_route_family_promotion_terminal_closure_denial_report_surface
         "schemas/component_route_family_promotion_terminal_closure_denial_report.schema.json"
         in decision_surface["evidence_files"]
     )
+    assert "mcoi/mcoi_runtime/app/component_authority_fuse.py" in decision_surface["evidence_files"]
+    assert "component_route_family_promotion_terminal_closure_denial_report_reject_authority_fuse_drift" in witnesses
     assert "component_route_family_promotion_terminal_closure_denial_report_schema_valid" in witnesses
     assert (
         "component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift"

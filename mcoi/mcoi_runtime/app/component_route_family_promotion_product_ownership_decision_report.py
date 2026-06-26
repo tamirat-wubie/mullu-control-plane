@@ -5,7 +5,7 @@ product-specific ownership decision for a route family without granting product
 ownership, route binding, authority, execution, or terminal closure.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: component route-family promotion authority-upgrade witness
-decision report projection.
+decision report projection and component authority-fuse denial refs.
 Invariants:
   - Product-ownership decisions can deny without binding a route family to a
     product bundle.
@@ -88,8 +88,18 @@ def build_component_route_family_promotion_product_ownership_decision_report(
         or _build_authority_upgrade_witness_decision_report(surface_id=surface_id, component_id=component_id)
     )
     _validate_authority_upgrade_report(authority_upgrade_report, surface_id, component_id)
+    authority_fuse_refs = _authority_fuse_refs(authority_upgrade_report)
     source_decision = _source_authority_upgrade_decision(authority_upgrade_report)
-    product_ownership_decision = _product_ownership_decision(source_decision, surface_id, product_bundle_id)
+    if _string_list(source_decision.get("authority_fuse_refs")) != authority_fuse_refs:
+        raise ComponentRouteFamilyPromotionProductOwnershipDecisionReportError(
+            "source authority-upgrade decision authority_fuse_refs must match report authority_fuse_refs"
+        )
+    product_ownership_decision = _product_ownership_decision(
+        source_decision,
+        surface_id,
+        product_bundle_id,
+        authority_fuse_refs,
+    )
     approval_evidence_required = list(_string_list(authority_upgrade_report.get("approval_evidence_required")))
     return {
         "schema_version": SCHEMA_VERSION,
@@ -155,6 +165,7 @@ def build_component_route_family_promotion_product_ownership_decision_report(
                 "examples/"
                 "component_route_family_promotion_route_binding_decision_report.governed_connector_framework.json"
             ),
+            "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
             "proof_matrix": "docs/40_proof_coverage_matrix.md",
         },
         "summary": _summary(product_ownership_decision, approval_evidence_required),
@@ -169,6 +180,8 @@ def build_component_route_family_promotion_product_ownership_decision_report(
         "source_route_binding_decision_refs": [
             str(product_ownership_decision["source_route_binding_decision_id"])
         ],
+        "authority_fuse_refs": list(authority_fuse_refs),
+        "authority_fuse_blocking_refs": list(authority_fuse_refs),
         "product_ownership_witness_refs": [],
         "product_bundle_binding_refs": [],
         "authority_upgrade_witness_refs": [],
@@ -192,6 +205,7 @@ def build_component_route_family_promotion_product_ownership_decision_report(
             "component_route_family_promotion_product_ownership_decision_report_validator",
             "component_route_family_promotion_product_ownership_decision_report_tests",
             "component_route_family_promotion_authority_upgrade_witness_decision_report_validator",
+            "component_authority_fuse_validator",
         ],
         "next_action": (
             "Create terminal-closure denial while product ownership, authority upgrade, lifecycle transition, "
@@ -268,6 +282,19 @@ def _source_authority_upgrade_decision(report: dict[str, Any]) -> dict[str, Any]
         raise ComponentRouteFamilyPromotionProductOwnershipDecisionReportError(
             "source authority-upgrade decision must still require product ownership decision"
         )
+    if decision.get("authority_fuse_blocks_promotion") is not True:
+        raise ComponentRouteFamilyPromotionProductOwnershipDecisionReportError(
+            "source authority-upgrade decision must keep authority_fuse_blocks_promotion true"
+        )
+    authority_fuse_refs = _string_list(decision.get("authority_fuse_refs"))
+    if len(authority_fuse_refs) != 1:
+        raise ComponentRouteFamilyPromotionProductOwnershipDecisionReportError(
+            "source authority-upgrade decision must carry exactly one authority_fuse_refs entry"
+        )
+    if _string_list(decision.get("authority_fuse_blocking_refs")) != authority_fuse_refs:
+        raise ComponentRouteFamilyPromotionProductOwnershipDecisionReportError(
+            "source authority-upgrade decision authority_fuse_blocking_refs must match authority_fuse_refs"
+        )
     return decision
 
 
@@ -275,6 +302,7 @@ def _product_ownership_decision(
     source_decision: dict[str, Any],
     surface_id: str,
     product_bundle_id: str,
+    authority_fuse_refs: tuple[str, ...],
 ) -> dict[str, Any]:
     return {
         "product_ownership_decision_id": (
@@ -302,6 +330,8 @@ def _product_ownership_decision(
         "decision_basis": "authority_upgrade_decision_denial",
         "proof_state": "Pass",
         "source_authority_upgrade_decision_denied": True,
+        "authority_fuse_blocks_promotion": True,
+        "requires_external_authority_upgrade_evidence": True,
         "product_ownership_authorized": False,
         "product_bundle_binding_authorized": False,
         "product_ownership_witness_emitted": False,
@@ -347,6 +377,8 @@ def _product_ownership_decision(
         "source_route_binding_decision_refs": [
             _required_text(source_decision, "source_route_binding_decision_id", "source authority-upgrade decision")
         ],
+        "authority_fuse_refs": list(authority_fuse_refs),
+        "authority_fuse_blocking_refs": list(authority_fuse_refs),
         "product_ownership_witness_refs": [],
         "product_bundle_binding_refs": [],
         "authority_upgrade_witness_refs": [],
@@ -362,8 +394,8 @@ def _product_ownership_decision(
         "missing_product_ownership_witnesses": list(MISSING_PRODUCT_OWNERSHIP_WITNESSES),
         "decision_reason": (
             "product-specific ownership remains denied because the target surface is a generic connector "
-            "framework and authority-upgrade, lifecycle, route-binding, router-inventory, and product "
-            "ownership witnesses are absent"
+            "framework, the component authority fuse remains blocked, and authority-upgrade, lifecycle, "
+            "route-binding, router-inventory, and product ownership witnesses are absent"
         ),
     }
 
@@ -416,9 +448,23 @@ def _summary(product_ownership_decision: dict[str, Any], approval_evidence_requi
         "terminal_closure_count": 1 if product_ownership_decision["can_claim_terminal_closure"] is True else 0,
         "accepted_evidence_count": len(product_ownership_decision["accepted_evidence_refs"]),
         "rejected_evidence_count": len(product_ownership_decision["rejected_evidence_refs"]),
+        "authority_fuse_blocking_count": len(product_ownership_decision["authority_fuse_blocking_refs"]),
         "approval_artifact_requirement_count": len(approval_evidence_required),
         "required_followup_decision_count": len(REQUIRED_FOLLOWUP_DECISIONS),
     }
+
+
+def _authority_fuse_refs(report: dict[str, Any]) -> tuple[str, ...]:
+    refs = _string_list(report.get("authority_fuse_refs"))
+    if len(refs) != 1:
+        raise ComponentRouteFamilyPromotionProductOwnershipDecisionReportError(
+            "authority-upgrade report must carry exactly one authority_fuse_refs entry"
+        )
+    if _string_list(report.get("authority_fuse_blocking_refs")) != refs:
+        raise ComponentRouteFamilyPromotionProductOwnershipDecisionReportError(
+            "authority-upgrade report authority_fuse_blocking_refs must match authority_fuse_refs"
+        )
+    return refs
 
 
 def _required_text(payload: dict[str, Any], field_name: str, label: str) -> str:

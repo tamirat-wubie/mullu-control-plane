@@ -5,7 +5,7 @@ terminal-closure decision without minting a terminal certificate, granting
 authority, mutating router inventory, or claiming promotion closure.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: component route-family promotion product-ownership decision
-report projection.
+report projection and component authority-fuse denial refs.
 Invariants:
   - Terminal-closure denial is not terminal closure.
   - A denied product-ownership decision cannot mint a terminal certificate.
@@ -89,8 +89,18 @@ def build_component_route_family_promotion_terminal_closure_denial_report(
         product_bundle_id=product_bundle_id,
     )
     _validate_product_ownership_report(product_report, surface_id, component_id, product_bundle_id)
+    authority_fuse_refs = _authority_fuse_refs(product_report)
     source_decision = _source_product_ownership_decision(product_report)
-    terminal_decision = _terminal_closure_decision(source_decision, surface_id, product_bundle_id)
+    if _string_list(source_decision.get("authority_fuse_refs")) != authority_fuse_refs:
+        raise ComponentRouteFamilyPromotionTerminalClosureDenialReportError(
+            "source product-ownership decision authority_fuse_refs must match report authority_fuse_refs"
+        )
+    terminal_decision = _terminal_closure_decision(
+        source_decision,
+        surface_id,
+        product_bundle_id,
+        authority_fuse_refs,
+    )
     approval_evidence_required = list(_string_list(product_report.get("approval_evidence_required")))
     return {
         "schema_version": SCHEMA_VERSION,
@@ -157,6 +167,7 @@ def build_component_route_family_promotion_terminal_closure_denial_report(
                 "examples/"
                 "component_route_family_promotion_authority_upgrade_witness_decision_report.governed_connector_framework.json"
             ),
+            "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
             "proof_matrix": "docs/40_proof_coverage_matrix.md",
         },
         "summary": _summary(terminal_decision, approval_evidence_required),
@@ -168,6 +179,8 @@ def build_component_route_family_promotion_terminal_closure_denial_report(
         "source_authority_upgrade_decision_refs": [
             str(terminal_decision["source_authority_upgrade_decision_id"])
         ],
+        "authority_fuse_refs": list(authority_fuse_refs),
+        "authority_fuse_blocking_refs": list(authority_fuse_refs),
         "terminal_closure_certificate_refs": [],
         "terminal_closure_witness_refs": [],
         "terminal_closure_refs": [],
@@ -193,6 +206,7 @@ def build_component_route_family_promotion_terminal_closure_denial_report(
             "component_route_family_promotion_terminal_closure_denial_report_validator",
             "component_route_family_promotion_terminal_closure_denial_report_tests",
             "component_route_family_promotion_product_ownership_decision_report_validator",
+            "component_authority_fuse_validator",
         ],
         "next_action": (
             "Keep promotion blocked until route-binding, lifecycle, authority-upgrade, product ownership, "
@@ -279,6 +293,19 @@ def _source_product_ownership_decision(report: dict[str, Any]) -> dict[str, Any]
         raise ComponentRouteFamilyPromotionTerminalClosureDenialReportError(
             "source product-ownership decision must still require terminal closure"
         )
+    if decision.get("authority_fuse_blocks_promotion") is not True:
+        raise ComponentRouteFamilyPromotionTerminalClosureDenialReportError(
+            "source product-ownership decision must keep authority_fuse_blocks_promotion true"
+        )
+    authority_fuse_refs = _string_list(decision.get("authority_fuse_refs"))
+    if len(authority_fuse_refs) != 1:
+        raise ComponentRouteFamilyPromotionTerminalClosureDenialReportError(
+            "source product-ownership decision must carry exactly one authority_fuse_refs entry"
+        )
+    if _string_list(decision.get("authority_fuse_blocking_refs")) != authority_fuse_refs:
+        raise ComponentRouteFamilyPromotionTerminalClosureDenialReportError(
+            "source product-ownership decision authority_fuse_blocking_refs must match authority_fuse_refs"
+        )
     return decision
 
 
@@ -286,6 +313,7 @@ def _terminal_closure_decision(
     source_decision: dict[str, Any],
     surface_id: str,
     product_bundle_id: str,
+    authority_fuse_refs: tuple[str, ...],
 ) -> dict[str, Any]:
     return {
         "terminal_closure_decision_id": (
@@ -308,6 +336,8 @@ def _terminal_closure_decision(
         "decision_basis": "product_ownership_decision_denial",
         "proof_state": "Pass",
         "source_product_ownership_decision_denied": True,
+        "authority_fuse_blocks_promotion": True,
+        "requires_external_authority_upgrade_evidence": True,
         "terminal_closure_authorized": False,
         "terminal_certificate_minted": False,
         "terminal_closure_witness_emitted": False,
@@ -346,6 +376,8 @@ def _terminal_closure_decision(
                 "source product-ownership decision",
             )
         ],
+        "authority_fuse_refs": list(authority_fuse_refs),
+        "authority_fuse_blocking_refs": list(authority_fuse_refs),
         "terminal_closure_certificate_refs": [],
         "terminal_closure_witness_refs": [],
         "terminal_closure_refs": [],
@@ -354,8 +386,9 @@ def _terminal_closure_decision(
         "rejected_evidence_refs": [],
         "missing_terminal_closure_witnesses": list(MISSING_TERMINAL_CLOSURE_WITNESSES),
         "decision_reason": (
-            "terminal closure remains denied because product ownership, authority-upgrade, lifecycle, "
-            "route-binding, router-inventory, and terminal-certificate witnesses are absent"
+            "terminal closure remains denied because the component authority fuse remains blocked and product "
+            "ownership, authority-upgrade, lifecycle, route-binding, router-inventory, and terminal-certificate "
+            "witnesses are absent"
         ),
     }
 
@@ -390,9 +423,23 @@ def _summary(terminal_decision: dict[str, Any], approval_evidence_required: list
         ),
         "accepted_evidence_count": len(terminal_decision["accepted_evidence_refs"]),
         "rejected_evidence_count": len(terminal_decision["rejected_evidence_refs"]),
+        "authority_fuse_blocking_count": len(terminal_decision["authority_fuse_blocking_refs"]),
         "approval_artifact_requirement_count": len(approval_evidence_required),
         "required_followup_decision_count": len(REQUIRED_FOLLOWUP_DECISIONS),
     }
+
+
+def _authority_fuse_refs(report: dict[str, Any]) -> tuple[str, ...]:
+    refs = _string_list(report.get("authority_fuse_refs"))
+    if len(refs) != 1:
+        raise ComponentRouteFamilyPromotionTerminalClosureDenialReportError(
+            "product-ownership report must carry exactly one authority_fuse_refs entry"
+        )
+    if _string_list(report.get("authority_fuse_blocking_refs")) != refs:
+        raise ComponentRouteFamilyPromotionTerminalClosureDenialReportError(
+            "product-ownership report authority_fuse_blocking_refs must match authority_fuse_refs"
+        )
+    return refs
 
 
 def _required_text(payload: dict[str, Any], field_name: str, label: str) -> str:

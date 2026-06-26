@@ -16,6 +16,12 @@
   ],
   "authority_envelope_mutated": false,
   "authority_envelope_mutation_refs": [],
+  "authority_fuse_blocking_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
+  "authority_fuse_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
   "authority_grant_refs": [],
   "authority_granted": false,
   "authority_level_changed": false,
@@ -37,6 +43,13 @@
       "action_requirement_satisfied": false,
       "authority_envelope_mutated": false,
       "authority_envelope_mutation_refs": [],
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "authority_level_changed": false,
@@ -54,7 +67,7 @@
       "decision_is_not_authority_grant": true,
       "decision_is_not_authority_witness": true,
       "decision_is_not_promotion_approval": true,
-      "decision_reason": "authority_upgrade_gate remains denied because authority-upgrade, lifecycle, route-binding, and router-inventory witnesses are absent",
+      "decision_reason": "authority_upgrade_gate remains denied because authority-upgrade, lifecycle, route-binding, router-inventory witnesses are absent, and the component authority fuse remains blocked",
       "decision_state": "denied",
       "foundation_fixture_decision_is_not_live_operator_evidence": true,
       "gate_id": "authority_upgrade_gate",
@@ -76,6 +89,7 @@
       "requested_authority_level": "approved_live_action",
       "requires_authority_upgrade_witness": true,
       "requires_component_route_binding_receipt": true,
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition_receipt": true,
       "requires_product_ownership_decision": true,
       "requires_router_inventory_delta": true,
@@ -207,6 +221,7 @@
   ],
   "source_refs": {
     "authority_decision_report": "examples/component_route_family_promotion_authority_decision_report.governed_connector_framework.json",
+    "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
     "lifecycle_transition_decision_report": "examples/component_route_family_promotion_lifecycle_transition_decision_report.governed_connector_framework.json",
     "proof_matrix": "docs/40_proof_coverage_matrix.md",
     "route_binding_decision_report": "examples/component_route_family_promotion_route_binding_decision_report.governed_connector_framework.json"
@@ -220,6 +235,7 @@
     "approval_artifact_requirement_count": 8,
     "authority_envelope_mutation_count": 0,
     "authority_envelope_mutation_ref_count": 0,
+    "authority_fuse_blocking_count": 1,
     "authority_grant_count": 0,
     "authority_level_change_count": 0,
     "authority_upgrade_authorization_count": 0,
@@ -243,6 +259,7 @@
   "validators": [
     "component_route_family_promotion_authority_upgrade_witness_decision_report_validator",
     "component_route_family_promotion_authority_upgrade_witness_decision_report_tests",
-    "component_route_family_promotion_lifecycle_transition_decision_report_validator"
+    "component_route_family_promotion_lifecycle_transition_decision_report_validator",
+    "component_authority_fuse_validator"
   ]
 }

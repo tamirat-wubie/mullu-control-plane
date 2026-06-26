@@ -12,6 +12,12 @@
   ],
   "authority_envelope_mutated": false,
   "authority_envelope_mutation_refs": [],
+  "authority_fuse_blocking_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
+  "authority_fuse_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
   "authority_grant_refs": [],
   "authority_granted": false,
   "authority_level_changed": false,
@@ -118,12 +124,14 @@
   ],
   "source_refs": {
     "authority_upgrade_witness_decision_report": "examples/component_route_family_promotion_authority_upgrade_witness_decision_report.governed_connector_framework.json",
+    "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
     "product_ownership_decision_report": "examples/component_route_family_promotion_product_ownership_decision_report.governed_connector_framework.json",
     "proof_matrix": "docs/40_proof_coverage_matrix.md"
   },
   "summary": {
     "accepted_evidence_count": 0,
     "approval_artifact_requirement_count": 8,
+    "authority_fuse_blocking_count": 1,
     "authority_grant_count": 0,
     "authority_upgrade_authorization_count": 0,
     "lifecycle_transition_authorization_count": 0,
@@ -155,6 +163,13 @@
   "terminal_closure_decisions": [
     {
       "accepted_evidence_refs": [],
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_granted": false,
       "authority_upgrade_authorized": false,
       "can_call_connector": false,
@@ -166,7 +181,7 @@
       "decision_is_not_promotion_approval": true,
       "decision_is_not_terminal_certificate": true,
       "decision_is_not_terminal_closure": true,
-      "decision_reason": "terminal closure remains denied because product ownership, authority-upgrade, lifecycle, route-binding, router-inventory, and terminal-certificate witnesses are absent",
+      "decision_reason": "terminal closure remains denied because the component authority fuse remains blocked and product ownership, authority-upgrade, lifecycle, route-binding, router-inventory, and terminal-certificate witnesses are absent",
       "decision_state": "denied",
       "foundation_fixture_decision_is_not_live_operator_evidence": true,
       "gate_id": "terminal_closure_gate",
@@ -189,6 +204,7 @@
       "rejected_evidence_refs": [],
       "requires_authority_upgrade_witness": true,
       "requires_component_route_binding_receipt": true,
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition_receipt": true,
       "requires_product_ownership_witness": true,
       "requires_router_inventory_delta": true,
@@ -228,6 +244,7 @@
   "validators": [
     "component_route_family_promotion_terminal_closure_denial_report_validator",
     "component_route_family_promotion_terminal_closure_denial_report_tests",
-    "component_route_family_promotion_product_ownership_decision_report_validator"
+    "component_route_family_promotion_product_ownership_decision_report_validator",
+    "component_authority_fuse_validator"
   ]
 }

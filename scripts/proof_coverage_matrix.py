@@ -1144,21 +1144,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_authority_upgrade_witness_decision_report.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_authority_upgrade_witness_decision_report.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_authority_upgrade_witness_decision_report.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_authority_upgrade_witness_decision_report.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_authority_upgrade_witness_decision_report.py",
             ],
-            "Component Harness promotion authority-upgrade witness decision report consumes a denied lifecycle-transition decision and records one denial-only authority-upgrade decision while authority grants, witness emission, authority-envelope mutation, execution, connector calls, and terminal closure remain blocked.",
+            "Component Harness promotion authority-upgrade witness decision report consumes a denied lifecycle-transition decision and inherited authority-fuse denial, then records one denial-only authority-upgrade decision while authority grants, witness emission, authority-envelope mutation, execution, connector calls, and terminal closure remain blocked.",
             [
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_schema_valid",
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_match_runtime_projection",
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_authority_overclaim",
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_missing_decision",
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_proof_drift",
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_authority_fuse_drift",
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_witness_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1177,6 +1182,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_proof_drift": [
                     "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_proof_drift",
                 ],
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_authority_fuse_drift",
+                ],
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_witness_drift": [
                     "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_witness_drift",
                 ],
@@ -1191,21 +1199,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_product_ownership_decision_report.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_product_ownership_decision_report.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_product_ownership_decision_report.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_product_ownership_decision_report.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_product_ownership_decision_report.py",
             ],
-            "Component Harness promotion product-ownership decision report consumes a denied authority-upgrade decision and records one denial-only product-specific ownership decision while product ownership, product bundle binding, authority grants, execution, connector calls, router mutation, and terminal closure remain blocked.",
+            "Component Harness promotion product-ownership decision report consumes a denied authority-upgrade decision and inherited authority-fuse denial, then records one denial-only product-specific ownership decision while product ownership, product bundle binding, authority grants, execution, connector calls, router mutation, and terminal closure remain blocked.",
             [
                 "component_route_family_promotion_product_ownership_decision_report_schema_valid",
                 "component_route_family_promotion_product_ownership_decision_report_match_runtime_projection",
                 "component_route_family_promotion_product_ownership_decision_report_reject_ownership_overclaim",
                 "component_route_family_promotion_product_ownership_decision_report_reject_missing_decision",
                 "component_route_family_promotion_product_ownership_decision_report_reject_source_ref_drift",
+                "component_route_family_promotion_product_ownership_decision_report_reject_authority_fuse_drift",
                 "component_route_family_promotion_product_ownership_decision_report_reject_witness_binding_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1224,6 +1237,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "component_route_family_promotion_product_ownership_decision_report_reject_source_ref_drift": [
                     "component_route_family_promotion_product_ownership_decision_report_reject_source_ref_drift",
                 ],
+                "component_route_family_promotion_product_ownership_decision_report_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_product_ownership_decision_report_reject_authority_fuse_drift",
+                ],
                 "component_route_family_promotion_product_ownership_decision_report_reject_witness_binding_drift": [
                     "component_route_family_promotion_product_ownership_decision_report_reject_witness_binding_drift",
                 ],
@@ -1238,21 +1254,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_terminal_closure_denial_report.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_terminal_closure_denial_report.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_terminal_closure_denial_report.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_terminal_closure_denial_report.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_terminal_closure_denial_report.py",
             ],
-            "Component Harness promotion terminal-closure denial report consumes a denied product-ownership decision and records one denial-only terminal-closure decision while terminal certificates, closure claims, promotion approval, authority grants, execution, connector calls, and router mutation remain blocked.",
+            "Component Harness promotion terminal-closure denial report consumes a denied product-ownership decision and inherited authority-fuse denial, then records one denial-only terminal-closure decision while terminal certificates, closure claims, promotion approval, authority grants, execution, connector calls, and router mutation remain blocked.",
             [
                 "component_route_family_promotion_terminal_closure_denial_report_schema_valid",
                 "component_route_family_promotion_terminal_closure_denial_report_match_runtime_projection",
                 "component_route_family_promotion_terminal_closure_denial_report_reject_closure_overclaim",
                 "component_route_family_promotion_terminal_closure_denial_report_reject_missing_decision",
                 "component_route_family_promotion_terminal_closure_denial_report_reject_source_ref_drift",
+                "component_route_family_promotion_terminal_closure_denial_report_reject_authority_fuse_drift",
                 "component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1270,6 +1291,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "component_route_family_promotion_terminal_closure_denial_report_reject_source_ref_drift": [
                     "component_route_family_promotion_terminal_closure_denial_report_reject_source_ref_drift",
+                ],
+                "component_route_family_promotion_terminal_closure_denial_report_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_terminal_closure_denial_report_reject_authority_fuse_drift",
                 ],
                 "component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift": [
                     "component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift",
@@ -11713,6 +11737,87 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
             },
         ),
+        _surface(
+            "holistic_loop_reasoning_admission_binding",
+            [
+                "HolisticLoopReasoningAdmissionBinding",
+                "validate_holistic_loop_reasoning_admission_binding",
+                "holistic_loop_reasoning_admission_binding.v1",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "schemas/holistic_loop_reasoning_admission_binding.schema.json",
+                "examples/holistic_loop_reasoning_admission_binding.foundation.json",
+                "scripts/validate_holistic_loop_reasoning_admission_binding.py",
+                "tests/test_validate_holistic_loop_reasoning_admission_binding.py",
+                "docs/99_holistic_loop_reasoning_admission_binding.md",
+                "docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md",
+                "governance/reasoning_method_registry.yaml",
+                "governance/judgment_integrity_gate.yaml",
+                "governance/weakness_taxonomy.yaml",
+                "governance/reasoning_edge_case_forge.yaml",
+                "scripts/validate_reasoning_integrity_mesh.py",
+                "tests/governance/test_reasoning_integrity_mesh.py",
+                "docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md",
+                "schemas/holistic_loop_read_model.schema.json",
+                "scripts/validate_holistic_loop_read_model.py",
+                "scripts/validate_holistic_loop_extension_admission.py",
+                "scripts/validate_holistic_loop_kernel_freeze.py",
+                "scripts/validate_holistic_loop_http_surface.py",
+                "examples/sdlc/requirement_holistic_loop_reasoning_admission_binding_20260626.json",
+                "examples/sdlc/design_holistic_loop_reasoning_admission_binding_20260626.json",
+                "examples/sdlc/security_review_holistic_loop_reasoning_admission_binding_20260626.json",
+            ],
+            (
+                "Holistic loop reasoning admission binds the operator's "
+                "wholistic reasoning direction to the existing Reasoning "
+                "Integrity Mesh and holistic loop read-model while keeping "
+                "runtime reasoning, loop registration, status transition, "
+                "mutation routes, connector calls, receipt append, learning "
+                "updates, terminal closure, and success claims denied. "
+                "Runtime promotion remains AwaitingEvidence until UAO "
+                "admission, operator approval, runtime execution design, "
+                "rollback recovery, live-run receipts, and terminal closure "
+                "review exist."
+            ),
+            [
+                "holistic_loop_reasoning_admission_binding_schema_valid",
+                "holistic_loop_reasoning_admission_binding_denies_runtime_authority",
+                "holistic_loop_reasoning_admission_binding_requires_runtime_evidence",
+                "holistic_loop_reasoning_admission_binding_rejects_requirement_drift",
+                "holistic_loop_reasoning_admission_binding_rejects_digest_and_summary_drift",
+                "holistic_loop_reasoning_admission_binding_rejects_receipt_and_gap_drift",
+                "holistic_loop_reasoning_admission_binding_sdlc_artifacts_valid",
+            ],
+            runtime_witness_anchor_aliases={
+                "holistic_loop_reasoning_admission_binding_schema_valid": [
+                    "holistic_loop_reasoning_admission_binding_passes"
+                ],
+                "holistic_loop_reasoning_admission_binding_denies_runtime_authority": [
+                    "holistic_loop_reasoning_admission_binding_passes",
+                    "holistic_loop_reasoning_admission_rejects_authority_drift",
+                ],
+                "holistic_loop_reasoning_admission_binding_requires_runtime_evidence": [
+                    "holistic_loop_reasoning_admission_binding_passes",
+                    "holistic_loop_reasoning_admission_rejects_scope_and_evidence_drift",
+                ],
+                "holistic_loop_reasoning_admission_binding_rejects_requirement_drift": [
+                    "holistic_loop_reasoning_admission_rejects_requirement_drift"
+                ],
+                "holistic_loop_reasoning_admission_binding_rejects_digest_and_summary_drift": [
+                    "holistic_loop_reasoning_admission_rejects_digest_and_summary_drift"
+                ],
+                "holistic_loop_reasoning_admission_binding_rejects_receipt_and_gap_drift": [
+                    "holistic_loop_reasoning_admission_rejects_receipt_and_gap_drift"
+                ],
+                "holistic_loop_reasoning_admission_binding_sdlc_artifacts_valid": [
+                    "sdlc_requirement_design_and_security_validate_for_holistic_loop_reasoning_admission"
+                ],
+            },
+        ),
     ]
     closure_actions = [
         {
@@ -11915,6 +12020,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "register_holistic_loop_read_model_kernel",
             "surfaces": ["holistic_loop_read_model_kernel"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_holistic_loop_reasoning_admission_binding",
+            "surfaces": ["holistic_loop_reasoning_admission_binding"],
             "status": "closed",
         },
         {
