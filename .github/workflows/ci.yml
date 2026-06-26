@@ -531,6 +531,9 @@ jobs:
       - name: Test Agentic Service Harness GitHub PR terminal decision value request
         run: python -m pytest tests/test_validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request.py -q
 
+      - name: Test Agentic Service Harness GitHub PR terminal decision value record
+        run: python -m pytest tests/test_validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record.py -q
+
       - name: Test Agentic Service Harness receipt projection
         run: python -m pytest tests/test_validate_agentic_service_harness_receipt_projection.py -q
 

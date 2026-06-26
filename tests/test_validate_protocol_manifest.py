@@ -2642,6 +2642,23 @@ def test_protocol_manifest_indexes_personal_assistant_operator_reapproval_decisi
     assert intake_entry["surface"] == "approval"
 
 
+def test_protocol_manifest_indexes_github_pr_terminal_decision_value_record() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    record_entry = entries[
+        "agentic-service-harness-github-pr-terminal-closure-operator-decision-value-record"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert record_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record.schema.json"
+    )
+    assert record_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-operator-decision-value-record:1"
+    )
+    assert record_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
     manifest = load_manifest()
     manifest["schemas"] = [
