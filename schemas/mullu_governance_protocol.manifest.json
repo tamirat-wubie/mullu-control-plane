@@ -1673,6 +1673,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-replay-rollback-witness:1"
     },
     {
+      "path": "schemas/personal_assistant_connector_lease_witness.schema.json",
+      "schema_id": "personal-assistant-connector-lease-witness",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-connector-lease-witness:1"
+    },
+    {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
       "schema_id": "personal-assistant-foundation-closure-packet",
       "surface": "assistant",
