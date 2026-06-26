@@ -24,20 +24,42 @@ def _receipt():
 
 def test_post_outcome_learning_candidate_stays_governance_pending() -> None:
     receipt = _receipt()
+    raw_evidence_ref = "outcome-secret-evidence-1"
     candidate = build_outcome_learning_candidate(
         request_id="req-learning-1",
         expected_state={"status": "planned"},
         actual_state={"status": "completed"},
         shadow_receipts=(receipt,),
-        evidence_refs=("outcome:1",),
+        evidence_refs=(raw_evidence_ref,),
     )
     payload = candidate.to_dict()
 
     assert candidate.kind == OutcomeLearningKind.EXPECTATION_MISMATCH
+    assert candidate.evidence_refs[0].startswith("inceptadive_outcome_evidence_")
+    assert raw_evidence_ref not in str(payload)
     assert payload["governance_pending"] is True
     assert payload["memory_write_authority"] is False
     assert payload["execution_authority"] is False
     assert receipt.receipt_id in payload["source_receipt_ids"]
+    assert payload["evidence_refs"] == list(candidate.evidence_refs)
+
+
+def test_post_outcome_learning_missing_evidence_uses_public_sentinel() -> None:
+    receipt = _receipt()
+    candidate = build_outcome_learning_candidate(
+        request_id="req-learning-2",
+        expected_state={"status": "planned"},
+        actual_state={"status": "planned"},
+        shadow_receipts=(receipt,),
+        evidence_refs=("",),
+    )
+    payload = candidate.to_dict()
+
+    assert candidate.kind == OutcomeLearningKind.MISSING_EVIDENCE
+    assert payload["evidence_refs"] == ["missing-outcome-evidence"]
+    assert payload["governance_pending"] is True
+    assert payload["memory_write_authority"] is False
+    assert payload["execution_authority"] is False
 
 
 def test_phi_inceptadive_solver_advisory_has_repair_signal() -> None:
