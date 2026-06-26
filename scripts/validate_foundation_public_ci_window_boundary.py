@@ -50,11 +50,10 @@ EXPECTED_VALIDATOR_COMMANDS = (
     "python scripts/validate_release_status.py",
     "python scripts/report_ci_health.py --repo tamirat-wubie/mullu-control-plane --branch main --json",
 )
-EXPECTED_RECEIPT_VALIDATOR_COMMANDS = (
+EXPECTED_RECEIPT_BASE_VALIDATOR_COMMANDS = (
     "python scripts/validate_public_repository_surface.py --local-only",
     "python scripts/validate_proprietary_boundary.py",
     "python scripts/validate_release_status.py",
-    "gh pr checks 2213",
 )
 EXPECTED_ROOT_KEYS = {
     "blocked_claims",
@@ -296,6 +295,15 @@ def _is_pull_request_url(value: Any) -> bool:
     return isinstance(value, str) and value.startswith(f"https://github.com/{EXPECTED_REPO}/pull/")
 
 
+def _pull_request_number(value: Any) -> str | None:
+    if not _is_pull_request_url(value):
+        return None
+    number = value.rsplit("/", 1)[-1]
+    if not number.isdigit():
+        return None
+    return number
+
+
 def _is_hex_sha(value: Any) -> bool:
     return isinstance(value, str) and len(value) == 40 and all(char in "0123456789abcdef" for char in value)
 
@@ -369,7 +377,8 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
             findings.append(Finding("public_ci_window_receipt_required_string_invalid", f"{key} must be non-empty"))
     if not _is_hex_sha(payload.get("head_sha")):
         findings.append(Finding("public_ci_window_receipt_head_sha_invalid", "head_sha must be a 40-character lowercase hex SHA"))
-    if not _is_pull_request_url(payload.get("pull_request")):
+    pull_request_number = _pull_request_number(payload.get("pull_request"))
+    if pull_request_number is None:
         findings.append(Finding("public_ci_window_receipt_pull_request_invalid", "pull_request must be a repository PR URL"))
 
     closed_at = payload.get("closed_at")
@@ -397,14 +406,20 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
     if not isinstance(validators, list) or not all(isinstance(item, dict) for item in validators):
         findings.append(Finding("public_ci_window_receipt_validators_invalid", "validators must be a list of objects"))
     else:
+        expected_validator_commands = EXPECTED_RECEIPT_BASE_VALIDATOR_COMMANDS
+        if pull_request_number is not None:
+            expected_validator_commands = (
+                *EXPECTED_RECEIPT_BASE_VALIDATOR_COMMANDS,
+                f"gh pr checks {pull_request_number}",
+            )
         observed_commands = tuple(item.get("command") for item in validators)
-        if observed_commands != EXPECTED_RECEIPT_VALIDATOR_COMMANDS:
+        if observed_commands != expected_validator_commands:
             findings.append(
                 Finding("public_ci_window_receipt_validator_commands_invalid", "validator command inventory drifted")
             )
         observed_states = tuple(item.get("state") for item in validators)
         expected_state = "passed" if status == "closed" else "AwaitingEvidence"
-        if observed_states != (expected_state,) * len(EXPECTED_RECEIPT_VALIDATOR_COMMANDS):
+        if observed_states != (expected_state,) * len(expected_validator_commands):
             findings.append(
                 Finding(
                     "public_ci_window_receipt_validator_states_invalid",
