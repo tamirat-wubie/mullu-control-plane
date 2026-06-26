@@ -32,6 +32,7 @@ from mcoi_runtime.contracts.simulation import SimulationComparison, SimulationVe
 from mcoi_runtime.contracts.provider_attribution import ProviderAttribution
 
 if TYPE_CHECKING:
+    from mcoi_runtime.app.autonomous_request import AutonomousRequestEpisodeReceipt
     from mcoi_runtime.core.operational_graph import OperationalGraph
 
 
@@ -438,6 +439,49 @@ class WorkflowSummaryView:
             stage_count=len(report.stage_summaries),
             completed_stages=completed,
             failed_stage_id=failed_stage,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Autonomous request summary
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True, slots=True)
+class AutonomousRequestEpisodeSummaryView:
+    """Autonomous request episode continuation state for operator display."""
+
+    episode_id: str
+    goal_id: str
+    automation_state: str
+    solver_outcome: str
+    action_count: int
+    dispatched_count: int
+    prompt_count: int
+    workflow_descriptor_ref: str | None
+    workflow_stage_count: int
+    workflow_approval_stage_count: int
+    workflow_external_stage_count: int
+    plan_receipt_ref: str | None
+    rollback_ref: str
+
+    @staticmethod
+    def from_receipt(
+        receipt: AutonomousRequestEpisodeReceipt,
+    ) -> "AutonomousRequestEpisodeSummaryView":
+        return AutonomousRequestEpisodeSummaryView(
+            episode_id=receipt.episode_id,
+            goal_id=receipt.goal_id,
+            automation_state=receipt.automation_state,
+            solver_outcome=receipt.solver_outcome,
+            action_count=receipt.action_count,
+            dispatched_count=receipt.dispatched_count,
+            prompt_count=receipt.prompt_count,
+            workflow_descriptor_ref=receipt.workflow_descriptor_ref,
+            workflow_stage_count=receipt.workflow_stage_count,
+            workflow_approval_stage_count=receipt.workflow_approval_stage_count,
+            workflow_external_stage_count=receipt.workflow_external_stage_count,
+            plan_receipt_ref=receipt.plan_receipt_ref,
+            rollback_ref=receipt.rollback_ref,
         )
 
 
