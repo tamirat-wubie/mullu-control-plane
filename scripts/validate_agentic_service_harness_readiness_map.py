@@ -29,9 +29,9 @@ Invariants:
   - GitHub PR effect reconciliation remains closed as a read-only evidence
     surface.
   - GitHub PR terminal closure remains closed as a non-authorizing
-    certificate/gate/decision/rejection evidence chain.
-  - The first next PR requires an explicit terminal closure operator decision
-    value before certificate minting.
+    certificate/gate/decision/rejection/request evidence chain.
+  - The first next PR requires an explicit approved/denied terminal closure
+    operator decision value before certificate minting.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -325,12 +325,16 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
     "GitHub PR terminal closure generic continuation rejection PR",
     "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
+    "GitHub PR terminal closure operator decision value request PR",
+    "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
     "terminal closure status remains AwaitingEvidence",
     "certificate minting, operator approval, repository mutation, connector calls, receipt-store append, secret serialization, destructive operation, and terminal closure remain blocked",
     "operator approval is required, not collected",
     "approve_terminal_certificate",
     "deny_terminal_certificate",
     "generic continuation text is rejected as terminal approval",
+    "recording no operator decision value",
+    "minting no certificate",
     "no certificate minting, repository mutation, connector call, receipt-store append, secret serialization, destructive operation, or terminal closure authority is granted",
 )
 FORBIDDEN_PATTERNS = (
@@ -812,11 +816,19 @@ def _validate_github_pr_terminal_closure_ready(
     if generic_rejection_row is None:
         errors.append("missing ready row: GitHub PR terminal closure generic continuation rejection PR")
 
+    decision_value_request_row = re.search(
+        r"^\| GitHub PR terminal closure operator decision value request PR \| READY \| .+approve_terminal_certificate.+deny_terminal_certificate.+recording no operator decision value.+terminal closure authority\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if decision_value_request_row is None:
+        errors.append("missing ready row: GitHub PR terminal closure operator decision value request PR")
+
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): collect explicit PR terminal closure operator decision value",
-        "harness(pr): mint PR terminal closure certificate after approval",
+        "harness(pr): collect explicit approved/denied PR terminal closure decision value",
+        "harness(pr): mint PR terminal closure certificate after approved decision value",
     )
     positions: list[int] = []
     for marker in sequence_markers:

@@ -446,15 +446,17 @@ def test_readiness_map_rejects_missing_github_pr_terminal_closure_ready_row(
     )
 
 
-def test_readiness_map_rejects_missing_operator_decision_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_github_pr_terminal_decision_value_request_row(
+    tmp_path: Path,
+) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): collect explicit PR terminal closure operator decision value`",
-            "1. `harness(pr): mint PR terminal closure certificate after approval`",
+            "| GitHub PR terminal closure operator decision value request PR | READY |",
+            "| GitHub PR terminal closure operator decision value request PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -464,7 +466,30 @@ def test_readiness_map_rejects_missing_operator_decision_first_pr(tmp_path: Path
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): collect explicit PR terminal closure operator decision value"
+        "missing ready row: GitHub PR terminal closure operator decision value request PR"
+        in serialized_errors
+    )
+
+
+def test_readiness_map_rejects_missing_operator_decision_first_pr(tmp_path: Path) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "1. `harness(pr): collect explicit approved/denied PR terminal closure decision value`",
+            "1. `harness(pr): mint PR terminal closure certificate after approved decision value`",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing next PR marker: harness(pr): collect explicit approved/denied PR terminal closure decision value"
         in serialized_errors
     )
 

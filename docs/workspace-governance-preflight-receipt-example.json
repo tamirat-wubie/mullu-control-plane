@@ -1,5 +1,5 @@
 {
-  "check_count": 281,
+  "check_count": 282,
   "checks": [
     {
       "args": [
@@ -637,6 +637,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE GENERIC CONTINUATION REJECTION VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request.py"
+      ],
+      "name": "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE OPERATOR DECISION VALUE REQUEST VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },

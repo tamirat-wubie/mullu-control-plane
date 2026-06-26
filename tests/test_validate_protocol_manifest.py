@@ -2543,6 +2543,7 @@ def test_protocol_manifest_indexes_finance_approval_packet_proof() -> None:
         "urn:mullusi:schema:finance-approval-live-handoff-closure-run:1"
     )
     assert entries["finance-approval-live-handoff-closure-run"]["surface"] == "finance"
+
     assert entries["finance-approval-live-handoff-chain-validation"]["path"] == (
         "schemas/finance_approval_live_handoff_chain_validation.schema.json"
     )
@@ -2605,6 +2606,23 @@ def test_protocol_manifest_indexes_finance_approval_packet_proof() -> None:
     )
     assert entries["finance-approval-operator-summary"]["surface"] == "finance"
     assert validate_protocol_manifest(manifest) == []
+
+
+def test_protocol_manifest_indexes_github_pr_terminal_decision_value_request() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    request_entry = entries[
+        "agentic-service-harness-github-pr-terminal-closure-operator-decision-value-request"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert request_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request.schema.json"
+    )
+    assert request_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-operator-decision-value-request:1"
+    )
+    assert request_entry["surface"] == "runtime"
 
 
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
