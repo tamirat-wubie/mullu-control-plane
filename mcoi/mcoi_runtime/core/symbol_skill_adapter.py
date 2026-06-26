@@ -383,7 +383,7 @@ def universal_symbol_from_source(source: SymbolAdapterSource, *, generated_at: s
         "symbol_relations": {
             "relation_refs": list(source.relation_refs),
             "upstream_refs": list(source.upstream_refs),
-            "downstream_refs": list(source.downstream_refs),
+            "downstream_refs": list(_merge_unique(source.downstream_refs, source.target_refs)),
             "peer_refs": list(source.peer_refs),
             "relation_is_symbolizable": True,
         },
@@ -406,7 +406,7 @@ def universal_symbol_from_source(source: SymbolAdapterSource, *, generated_at: s
         "symbol_governance": {
             "governance_mode": "foundation",
             "uao_ref": f"uao://symbol-skill-adapter/{source.source_surface.value}",
-            "policy_refs": list(_FOUNDATION_POLICY_REFS),
+            "policy_refs": list(_merge_unique(_FOUNDATION_POLICY_REFS, source.constraint_refs)),
             "authority_refs": [],
             "approval_refs": [],
             "blocked_action_refs": list(_BLOCKED_ACTION_REFS),
@@ -566,10 +566,11 @@ def _require_ref_tuple(values: Any, field_name: str, non_empty: bool) -> tuple[s
     for index, value in enumerate(values):
         if not isinstance(value, str) or not value.strip():
             raise RuntimeCoreInvariantError(f"{field_name}[{index}] must be a non-empty string")
-        if value in seen:
+        normalized_value = value.strip()
+        if normalized_value in seen:
             raise RuntimeCoreInvariantError(f"{field_name} must not contain duplicate refs")
-        seen.add(value)
-        refs.append(value)
+        seen.add(normalized_value)
+        refs.append(normalized_value)
     if non_empty and not refs:
         raise RuntimeCoreInvariantError(f"{field_name} must contain at least one item")
     return tuple(refs)
