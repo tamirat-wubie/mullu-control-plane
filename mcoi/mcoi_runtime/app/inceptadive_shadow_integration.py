@@ -107,11 +107,14 @@ class InceptaDiveShadowRuntime:
     ) -> ExternalEffectBoundaryAdvisory:
         """Return redacted obligations for an effect-bearing candidate action."""
 
-        return build_external_effect_boundary_advisory(
+        advisory = build_external_effect_boundary_advisory(
             _as_preflight(context),
             required_evidence_refs=required_evidence_refs,
             authority_receipt_refs=authority_receipt_refs,
         )
+        if self.receipt_store is not None:
+            self.receipt_store.append_external_effect_advisory(advisory)
+        return advisory
 
     def health_posture(
         self,
@@ -150,6 +153,11 @@ class InceptaDiveShadowRuntime:
         if self.receipt_store is None:
             return (), ()
         return self.receipt_store.recent_results(limit=limit), self.receipt_store.recent_receipts(limit=limit)
+
+    def recent_external_effect_advisories(self, *, limit: int = 25) -> tuple[ExternalEffectBoundaryAdvisory, ...]:
+        if self.receipt_store is None:
+            return ()
+        return self.receipt_store.recent_external_effect_advisories(limit=limit)
 
     def _record(self, result: ShadowPassResult, receipt: ShadowReceipt | None) -> None:
         if self.receipt_store is None:

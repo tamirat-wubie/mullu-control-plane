@@ -36,7 +36,7 @@ External-effect advisory route:
 | Path | `/api/v1/shadow/external-effect/advisory` |
 | Authority | advisory-only |
 | Runtime entry point | `InceptaDiveShadowRuntime.external_effect_advisory` |
-| Receipt behavior | no new shadow receipt; response exposes counts and obligations only |
+| Receipt behavior | records redacted advisory history when the receipt store is enabled |
 | Output status | `AwaitingEvidence`, `GovernanceBlocked`, or `SolvedUnverified` |
 
 Console evidence route:
@@ -46,9 +46,9 @@ Console evidence route:
 | Method | `GET` |
 | Path | `/api/v1/console/shadow/evidence` |
 | Authority | read-only |
-| Runtime entry point | `InceptaDiveShadowRuntime.recent_activity` |
-| Receipt behavior | reads recent redacted result and receipt summaries only |
-| Obligation history | not available until external-effect advisories are persisted |
+| Runtime entry point | `InceptaDiveShadowRuntime.recent_activity` and `recent_external_effect_advisories` |
+| Receipt behavior | reads recent redacted result, receipt, and advisory summaries only |
+| Obligation history | available when the shadow receipt store is enabled |
 
 ## Request Body
 
@@ -103,15 +103,18 @@ obligations, evidence obligations, missing-obligation labels, reference counts,
 the recommended outcome, and the recommended next action. It must not include
 raw request text, raw evidence refs, raw authority refs, private memory, live
 adapter handles, connector dispatch handles, or any execution authority flag.
+The runtime records the same redacted advisory read model in the selected
+shadow receipt store when available.
 
 The console evidence response may include recent result ids, receipt ids,
 request ids, modes, stages, verdicts, finding counts, repair counts,
-escalation counts, block counts, receipt reference counts, and non-authority
-flags. It must not include raw request text, raw evidence refs, raw authority
-refs, finding summaries, private memory, live adapter handles, connector
-dispatch handles, or any execution authority flag. Because external-effect
-advisory calls are not yet stored, `obligation_history_available` remains
-`false` and missing-obligation history counts remain `0`.
+escalation counts, block counts, receipt reference counts, redacted advisory
+counts, missing-obligation counts, and non-authority flags. It must not include
+raw request text, raw evidence refs, raw authority refs, finding summaries,
+private memory, live adapter handles, connector dispatch handles, or any
+execution authority flag. If the shadow receipt store is unavailable,
+`obligation_history_available` is `false` and the unavailable reason is
+`shadow_receipt_store_unavailable`.
 
 ## Runtime Fallbacks
 

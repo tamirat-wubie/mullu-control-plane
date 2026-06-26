@@ -24,6 +24,7 @@ from mcoi_runtime.app.inceptadive_shadow_integration import (
     build_inceptadive_shadow_runtime,
 )
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.core.inceptadive_external_effect_boundary import ExternalEffectBoundaryAdvisory
 from mcoi_runtime.core.inceptadive_shadow_types import (
     ShadowContext,
     ShadowFindingKind,
@@ -156,6 +157,28 @@ class ShadowEvidenceRecentReceiptResponse(BaseModel):
     execution_authority: bool
 
 
+class ShadowEvidenceRecentAdvisoryResponse(BaseModel):
+    """OpenAPI response contract for redacted recent advisory obligations."""
+
+    advisory_id: str
+    request_id: str
+    context_hash: str
+    action_families: list[str]
+    missing_authority_obligation_count: int
+    missing_evidence_obligation_count: int
+    required_evidence_ref_count: int
+    authority_receipt_count: int
+    retrieval_receipt_count: int
+    external_side_effect: bool
+    strict_preflight_required: bool
+    awaiting_evidence: bool
+    recommended_outcome: str
+    execution_authority: bool
+    connector_dispatch_authority: bool
+    memory_write_authority: bool
+    governance_verdict_authority: bool
+
+
 class ShadowConsoleEvidenceResponse(BaseModel):
     """OpenAPI response contract for read-only shadow evidence summaries."""
 
@@ -172,10 +195,12 @@ class ShadowConsoleEvidenceResponse(BaseModel):
     block_recommended_count: int
     missing_authority_obligation_count: int
     missing_evidence_obligation_count: int
+    recent_advisory_count: int
     obligation_history_available: bool
     obligation_history_unavailable_reason: str
     recent_results: list[ShadowEvidenceRecentResultResponse]
     recent_receipts: list[ShadowEvidenceRecentReceiptResponse]
+    recent_external_effect_advisories: list[ShadowEvidenceRecentAdvisoryResponse]
     execution_authority: bool
     connector_dispatch_authority: bool
     memory_write_authority: bool
@@ -313,8 +338,11 @@ def shadow_console_evidence() -> dict[str, object]:
     created_at = _created_at()
     posture = runtime.health_posture(created_at=created_at).to_dict()
     recent_results, recent_receipts = runtime.recent_activity(limit=runtime.config.max_findings)
+    recent_advisories = runtime.recent_external_effect_advisories(limit=runtime.config.max_findings)
     redacted_results = [_redacted_evidence_result(result) for result in recent_results]
     redacted_receipts = [_redacted_evidence_receipt(receipt) for receipt in recent_receipts]
+    redacted_advisories = [_redacted_evidence_advisory(advisory) for advisory in recent_advisories]
+    obligation_history_available = runtime.receipt_store is not None
     return {
         "governed": True,
         "registered": registered,
@@ -327,12 +355,20 @@ def shadow_console_evidence() -> dict[str, object]:
         "repair_required_count": sum(int(result["repair_required_count"]) for result in redacted_results),
         "escalation_required_count": sum(int(result["escalation_required_count"]) for result in redacted_results),
         "block_recommended_count": sum(1 for result in redacted_results if result["block_recommended"]),
-        "missing_authority_obligation_count": 0,
-        "missing_evidence_obligation_count": 0,
-        "obligation_history_available": False,
-        "obligation_history_unavailable_reason": "external_effect_advisory_history_not_recorded",
+        "missing_authority_obligation_count": sum(
+            int(advisory["missing_authority_obligation_count"]) for advisory in redacted_advisories
+        ),
+        "missing_evidence_obligation_count": sum(
+            int(advisory["missing_evidence_obligation_count"]) for advisory in redacted_advisories
+        ),
+        "recent_advisory_count": len(redacted_advisories),
+        "obligation_history_available": obligation_history_available,
+        "obligation_history_unavailable_reason": ""
+        if obligation_history_available
+        else "shadow_receipt_store_unavailable",
         "recent_results": redacted_results,
         "recent_receipts": redacted_receipts,
+        "recent_external_effect_advisories": redacted_advisories,
         "execution_authority": False,
         "connector_dispatch_authority": False,
         "memory_write_authority": False,
@@ -516,6 +552,30 @@ def _redacted_evidence_receipt(receipt: ShadowReceipt) -> dict[str, object]:
         "created_at": receipt.created_at,
         "snapshot_hash": receipt.snapshot_hash,
         "execution_authority": False,
+    }
+
+
+def _redacted_evidence_advisory(advisory: ExternalEffectBoundaryAdvisory) -> dict[str, object]:
+    """Return recent advisory evidence without raw request or ref values."""
+
+    return {
+        "advisory_id": advisory.advisory_id,
+        "request_id": advisory.request_id,
+        "context_hash": advisory.context_hash,
+        "action_families": list(advisory.action_families),
+        "missing_authority_obligation_count": len(advisory.missing_authority_obligations),
+        "missing_evidence_obligation_count": len(advisory.missing_evidence_obligations),
+        "required_evidence_ref_count": advisory.required_evidence_ref_count,
+        "authority_receipt_count": advisory.authority_receipt_count,
+        "retrieval_receipt_count": advisory.retrieval_receipt_count,
+        "external_side_effect": advisory.external_side_effect,
+        "strict_preflight_required": advisory.strict_preflight_required,
+        "awaiting_evidence": advisory.awaiting_evidence,
+        "recommended_outcome": advisory.recommended_outcome,
+        "execution_authority": False,
+        "connector_dispatch_authority": False,
+        "memory_write_authority": False,
+        "governance_verdict_authority": False,
     }
 
 

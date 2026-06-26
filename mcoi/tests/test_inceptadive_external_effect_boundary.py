@@ -91,13 +91,46 @@ def test_runtime_facade_returns_external_effect_boundary_advisory() -> None:
 
     advisory = runtime.external_effect_advisory(context)
     payload = advisory.to_dict()
+    recent_advisories = runtime.recent_external_effect_advisories(limit=5)
 
     assert advisory.request_id == "req-external-effect-3"
     assert advisory.strict_preflight_required is True
     assert advisory.external_side_effect is True
     assert advisory.recommended_outcome == "AwaitingEvidence"
+    assert recent_advisories == (advisory,)
     assert payload["execution_authority"] is False
     assert payload["private_memory_exposed"] is False
+
+
+def test_runtime_records_jsonl_external_effect_advisory_without_raw_refs(tmp_path) -> None:
+    runtime = build_inceptadive_shadow_runtime(
+        {"MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(tmp_path)}
+    )
+    context = _context(
+        "send approved receipt with secret-token",
+        request_id="req-external-effect-jsonl-1",
+        candidate_action="send approved receipt with secret-token",
+        explicit_target="operator-review-inbox",
+        scope="support-workflow",
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+    )
+
+    advisory = runtime.external_effect_advisory(
+        context,
+        required_evidence_refs=("approval-secret-ref",),
+        authority_receipt_refs=("authority-secret-ref",),
+    )
+    recent_advisories = runtime.recent_external_effect_advisories(limit=5)
+    jsonl_text = (tmp_path / "external-effect-advisories.jsonl").read_text(encoding="utf-8")
+
+    assert recent_advisories == (advisory,)
+    assert advisory.required_evidence_ref_count == 1
+    assert advisory.authority_receipt_count == 1
+    assert advisory.to_dict()["raw_request_text_exposed"] is False
+    assert "approval-secret-ref" not in jsonl_text
+    assert "authority-secret-ref" not in jsonl_text
+    assert "secret-token" not in jsonl_text
 
 
 def test_external_effect_boundary_rejects_authority_flags() -> None:

@@ -16,14 +16,17 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
    - Keeps all results advisory.
 
 3. `mcoi_runtime.core.inceptadive_shadow_receipt_store`
-   - Provides in-memory and JSONL-backed redacted result/receipt stores.
-   - Backs console summaries without storing raw request text or private memory.
+   - Provides in-memory and JSONL-backed redacted result, receipt, and
+     external-effect advisory stores.
+   - Backs console summaries without storing raw request text, raw evidence
+     refs, raw authority refs, or private memory.
 
 4. `mcoi_runtime.app.inceptadive_shadow_integration`
    - Invokes the bounded deep engine when deep mode is selected and enabled.
    - Adds bounded deep advisory findings to strict preflight for external-effect
      candidates when the deep engine is explicitly enabled.
    - Records results and receipts through the selected store.
+   - Records redacted external-effect advisory history through the selected store.
    - Preserves the explicit `DEEP_REQUIRED` fallback when the deep engine is disabled.
 
 5. `mcoi_runtime.core.inceptadive_post_outcome_learning`
@@ -43,7 +46,9 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
    - Exposes `POST /api/v1/shadow/inspect` for bounded, redacted, non-executing shadow inspection.
    - Exposes `POST /api/v1/shadow/external-effect/advisory` for read-only external-effect obligation projection.
    - Exposes `GET /api/v1/console/shadow/evidence` for read-only recent result and receipt evidence posture.
-   - Returns result and receipt metadata without raw request text, raw evidence refs, private memory, or execution authority.
+   - Returns result, receipt, and redacted advisory metadata without raw request
+     text, raw evidence refs, raw authority refs, private memory, or execution
+     authority.
    - Route contract: `docs/INCEPTADIVE_SHADOW_INSPECTION_CONTRACT.md`.
    - OpenAPI witness: `docs/INCEPTADIVE_SHADOW_OPENAPI_WITNESS.md`.
    - Replay fixture: `mcoi/tests/fixtures/inceptadive_shadow_inspect_replay.json`.
@@ -91,9 +96,9 @@ request or candidate action
   or governance verdict authority.
 - External-effect boundary advisories expose obligation status only; they do not
   call live adapters or close Mullu governance.
-- External-effect advisory history is not persisted in the shadow receipt store;
-  evidence views must report that history gap explicitly instead of deriving
-  historical obligation counts from unavailable data.
+- External-effect advisory history stores redacted obligation posture only; it
+  does not store raw request text, raw evidence refs, raw authority refs,
+  connector handles, memory handles, or execution handles.
 
 ## Route slice closure
 
@@ -102,7 +107,9 @@ The previously deferred route-level extensions are now applied:
 1. Redacted InceptaDive hook summaries are attached directly to assistant route responses.
 2. A dedicated redacted `POST /api/v1/shadow/inspect` route is available.
 
-Both surfaces continue to use `InceptaDiveShadowRuntime.inspect_request`, `preflight_action`, `console_summary`, and `recent_activity`.
+Both surfaces continue to use `InceptaDiveShadowRuntime.inspect_request`,
+`preflight_action`, `console_summary`, `recent_activity`, and
+`recent_external_effect_advisories`.
 
 ## Verification added
 
