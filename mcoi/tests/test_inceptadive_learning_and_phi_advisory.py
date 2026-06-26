@@ -63,8 +63,9 @@ def test_post_outcome_learning_missing_evidence_uses_public_sentinel() -> None:
 
 
 def test_phi_inceptadive_solver_advisory_has_repair_signal() -> None:
+    raw_problem_id = "problem-secret-token-advisory-1"
     problem = build_problem_star(
-        problem_id="problem-advisory-1",
+        problem_id=raw_problem_id,
         values={"W": {"repo": "local"}, "G": {"target": "proof"}, "Pi": ("receipt",)},
         statuses={"T": ProblemFieldStatus.UNKNOWN, "Pi": ProblemFieldStatus.PARTIAL},
         evidence_refs={"W": ("repo",), "G": ("goal",), "Pi": ("proof",)},
@@ -86,6 +87,12 @@ def test_phi_inceptadive_solver_advisory_has_repair_signal() -> None:
     advisory = build_phi_inceptadive_solver_advisory(compiled)
 
     assert advisory["execution_approval"] is False
+    assert advisory["problem_id"].startswith("phi_inceptadive_problem_")
+    assert advisory["problem_identifier_exposed"] is False
+    assert advisory["lineage_ref_count"] >= 1
+    assert advisory["lineage_identifiers_exposed"] is False
+    assert raw_problem_id not in str(advisory)
+    assert "Phi-GPS-v3" not in str(advisory)
     assert advisory["proof_gap_count"] >= 1
     assert advisory["requires_repair"] is True
     assert advisory["suggested_solver_modes"]
