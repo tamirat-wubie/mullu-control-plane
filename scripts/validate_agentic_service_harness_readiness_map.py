@@ -29,9 +29,9 @@ Invariants:
   - GitHub PR effect reconciliation remains closed as a read-only evidence
     surface.
   - GitHub PR terminal closure remains closed as a bounded certificate/gate/
-    decision/rejection/request/minting evidence chain.
-  - The first next PR projects the minted certificate into a read model before
-    any runtime mutation, dashboard, connector, or deployment authority.
+    decision/rejection/request/minting/read-model evidence chain.
+  - The first next PR binds approved branch workspace creation authority only
+    after the read-only certificate projection exists.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -849,10 +849,18 @@ def _validate_github_pr_terminal_closure_ready(
     if certificate_minting_row is None:
         errors.append("missing ready row: GitHub PR terminal closure certificate minting PR")
 
+    certificate_read_model_row = re.search(
+        r"^\| GitHub PR terminal closure certificate read model PR \| READY \| .+projects the minted terminal closure certificate.+operator inspection.+new terminal-closure authority\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if certificate_read_model_row is None:
+        errors.append("missing ready row: GitHub PR terminal closure certificate read model PR")
+
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): project minted PR terminal closure certificate read model",
+        "harness(workspace): bind approved branch workspace creation authority",
     )
     positions: list[int] = []
     for marker in sequence_markers:

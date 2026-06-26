@@ -2828,6 +2828,23 @@ def test_protocol_manifest_indexes_personal_assistant_operator_reapproval_decisi
     assert record_admission_preflight_entry["surface"] == "approval"
 
 
+def test_protocol_manifest_indexes_github_pr_terminal_certificate_read_model() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_model_entry = entries[
+        "agentic-service-harness-github-pr-terminal-closure-certificate-read-model"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert read_model_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.schema.json"
+    )
+    assert read_model_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-certificate-read-model:1"
+    )
+    assert read_model_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
     manifest = load_manifest()
     manifest["schemas"] = [
