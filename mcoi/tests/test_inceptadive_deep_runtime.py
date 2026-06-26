@@ -70,6 +70,49 @@ def test_runtime_receipt_redacts_raw_retrieval_refs_before_persistence(tmp_path)
     assert receipt.to_dict()["execution_authority"] is False
 
 
+def test_runtime_preflight_redacts_raw_required_evidence_refs_before_persistence(tmp_path) -> None:
+    raw_evidence_ref = "approval-secret-evidence-001"
+    store_path = tmp_path / "shadow-store"
+    runtime = build_inceptadive_shadow_runtime(
+        {
+            "MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1",
+            "MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(store_path),
+        }
+    )
+    context = _context(
+        "send approved receipt",
+        request_id="req-deep-runtime-evidence-redaction-1",
+        stage=ShadowStage.PREFLIGHT,
+        candidate_action="send approved receipt",
+        explicit_target="operator-review-inbox",
+        scope="support-workflow",
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+    )
+
+    result, receipt = runtime.preflight_action(context, required_evidence_refs=(raw_evidence_ref,))
+
+    payload = result.to_dict()
+    evidence_finding = next(
+        finding
+        for finding in result.findings
+        if finding.summary == "preflight received explicit evidence references"
+    )
+    assert evidence_finding.evidence_refs[0].startswith("shadow_required_evidence_")
+    assert raw_evidence_ref not in str(payload)
+    persisted_finding = next(
+        finding
+        for finding in payload["findings"]
+        if finding["finding_id"] == evidence_finding.finding_id
+    )
+    assert persisted_finding["evidence_refs"] == list(evidence_finding.evidence_refs)
+    persisted_results = (store_path / "shadow-results.jsonl").read_text(encoding="utf-8")
+    assert raw_evidence_ref not in persisted_results
+    assert "shadow_required_evidence_" in persisted_results
+    assert receipt is not None
+    assert receipt.to_dict()["execution_authority"] is False
+
+
 def test_deep_engine_can_be_disabled_without_silent_success() -> None:
     runtime = build_inceptadive_shadow_runtime({"MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "0"})
     context = _context("deploy it", risk_level=ShadowSeverity.HIGH, external_side_effect=True)

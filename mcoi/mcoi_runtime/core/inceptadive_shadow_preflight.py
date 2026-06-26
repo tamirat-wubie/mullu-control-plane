@@ -4,10 +4,12 @@ Purpose: inspect high-impact candidate actions before execution governance is
 allowed to continue.
 Governance scope: advisory preflight only; no execution, mutation, approval,
 retrieval, or tool call is performed here.
-Dependencies: shared shadow types and deterministic action inspection.
+Dependencies: shared shadow types, deterministic action inspection, and stable
+identifier generation.
 Invariants: destructive, external, production, legal, financial, and security
 sensitive actions require explicit target, scope, and evidence before proceeding
-to governance.
+to governance; explicit evidence refs are retained only as deterministic public
+refs.
 """
 
 from __future__ import annotations
@@ -25,6 +27,7 @@ from mcoi_runtime.core.inceptadive_shadow_types import (
     ShadowStage,
     ShadowVerdict,
 )
+from mcoi_runtime.core.invariants import stable_identifier
 
 _DESTRUCTIVE_TERMS = {"delete", "destroy", "purge", "wipe", "drop", "remove"}
 _DEPLOY_TERMS = {"deploy", "release", "publish", "launch", "rollout"}
@@ -34,6 +37,7 @@ _SECURITY_TERMS = {"secret", "token", "credential", "dns", "production", "prod",
 _EXTERNAL_TERMS = {"send", "email", "notify", "post", "message", "publish"}
 _PROOF_TERMS = {"approved", "approval", "verified", "receipt", "evidence", "review", "proof"}
 _ROLLBACK_TERMS = {"rollback", "backup", "restore", "revert"}
+_PUBLIC_REQUIRED_EVIDENCE_PREFIX = "shadow_required_evidence_"
 
 
 def run_strict_preflight(context: ShadowContext, *, required_evidence_refs: Sequence[str] | None = None) -> ShadowPassResult:
@@ -46,7 +50,7 @@ def run_strict_preflight(context: ShadowContext, *, required_evidence_refs: Sequ
     checked_context = context.with_integrity()
     text = _normalize_text(checked_context.text_surface())
     tokens = frozenset(_word_tokens(text))
-    evidence_refs = tuple(str(ref).strip() for ref in (required_evidence_refs or ()) if str(ref).strip())
+    evidence_refs = _public_required_evidence_refs(required_evidence_refs)
     findings: list[ShadowFinding] = []
 
     if checked_context.stage != ShadowStage.PREFLIGHT:
@@ -278,3 +282,24 @@ def _normalize_text(value: str) -> str:
 
 def _word_tokens(value: str) -> tuple[str, ...]:
     return tuple(re.findall(r"[a-z0-9_#.-]+", value))
+
+
+def _public_required_evidence_refs(values: Sequence[str] | None) -> tuple[str, ...]:
+    """Return stable non-raw evidence refs for finding/result persistence."""
+
+    refs: list[str] = []
+    for value in values or ():
+        normalized = " ".join(str(value or "").strip().split())
+        if not normalized:
+            continue
+        if normalized.startswith(_PUBLIC_REQUIRED_EVIDENCE_PREFIX):
+            refs.append(normalized)
+        else:
+            refs.append(
+                _PUBLIC_REQUIRED_EVIDENCE_PREFIX
+                + stable_identifier(
+                    "inceptadive-shadow-core-required-evidence",
+                    {"value": normalized},
+                )
+            )
+    return tuple(refs)
