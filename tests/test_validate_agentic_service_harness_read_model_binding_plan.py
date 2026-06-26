@@ -396,15 +396,17 @@ def test_readiness_map_rejects_missing_github_pr_ci_gate_ready_row(
     )
 
 
-def test_readiness_map_rejects_missing_effect_reconciliation_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_github_pr_effect_reconciliation_ready_row(
+    tmp_path: Path,
+) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind PR effect reconciliation evidence`",
-            "1. `harness(pr): close PR terminal closure certificate candidate`",
+            "| GitHub PR effect reconciliation witness PR | READY |",
+            "| GitHub PR effect reconciliation witness PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -414,7 +416,30 @@ def test_readiness_map_rejects_missing_effect_reconciliation_first_pr(tmp_path: 
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind PR effect reconciliation evidence"
+        "missing ready row: GitHub PR effect reconciliation witness PR"
+        in serialized_errors
+    )
+
+
+def test_readiness_map_rejects_missing_terminal_candidate_first_pr(tmp_path: Path) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "1. `harness(pr): close PR terminal closure certificate candidate`",
+            "1. `harness(pr): bind PR terminal closure certificate witness`",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing next PR marker: harness(pr): close PR terminal closure certificate candidate"
         in serialized_errors
     )
 
@@ -446,7 +471,7 @@ def test_readiness_map_rejects_missing_open_pr_queue_boundary(tmp_path: Path) ->
     )
     map_path = tmp_path / "readiness-map.md"
     mutated_map_text = re.sub(
-        r"^Open PRs after readiness-map refresh: .+ outside this GitHub PR admission readiness-map closure; .+does not grant harness execution authority\.$",
+        r"^Open PRs after readiness-map refresh: .+ outside this PR effect reconciliation readiness-map closure; .+does not grant harness execution authority\.$",
         "Open PRs after readiness-map refresh: none.",
         map_text,
         flags=re.MULTILINE,
