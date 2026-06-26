@@ -1,0 +1,112 @@
+{
+  "binding_id": "agentic_service_harness_approved_branch_workspace_creation_authority_binding",
+  "schema_version": 1,
+  "generated_at": "2026-06-26T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_preflight_ref": "examples/agentic_service_harness_approved_branch_workspace_creation_preflight.foundation.json",
+  "authority_kind": "approved_branch_workspace_creation_authority",
+  "authority_status": "authority_bound_not_executed",
+  "authority_binding_collected": true,
+  "workspace_creation_authority_granted": true,
+  "workspace_created": false,
+  "planning_only": true,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "source_preflight_id": "agentic_service_harness_approved_branch_workspace_creation_preflight",
+    "workspace_root_policy_ref": "policy://foundation/workspace-root-confined",
+    "branch_name": "codex/harness-branch-workspace-authority-20260626",
+    "workspace_mode": "approved_branch_workspace_creation_authority_only",
+    "foundation_phase": "foundation_approved_branch_workspace_creation_authority_binding"
+  },
+  "authority_binding": {
+    "authority_request_id": "authority-binding.approved-branch-workspace-create",
+    "source_preflight_satisfied": true,
+    "operator_approval_ref": "approval://operator/branch-workspace-create",
+    "uao_admission_ref": "evidence://uao/branch-workspace-create-admission",
+    "cleanup_plan_ref": "evidence://cleanup-receipt-plan",
+    "rollback_plan_ref": "evidence://workspace-create-rollback-plan",
+    "redaction_policy_ref": "evidence://secret-redaction-policy",
+    "path_confinement_ref": "evidence://workspace-path-confinement",
+    "authorized_effect": "create_one_confined_branch_workspace_without_file_writes",
+    "expires_after_single_workspace_create": true,
+    "requires_post_create_observation": true,
+    "requires_cleanup_receipt_before_close": true
+  },
+  "required_evidence": {
+    "before_authority_binding": [
+      "examples/agentic_service_harness_approved_branch_workspace_creation_preflight.foundation.json",
+      "approval://operator/branch-workspace-create",
+      "evidence://uao/branch-workspace-create-admission",
+      "evidence://cleanup-receipt-plan",
+      "evidence://workspace-create-rollback-plan",
+      "evidence://secret-redaction-policy"
+    ],
+    "before_workspace_create": [
+      "evidence://workspace-path-confinement",
+      "evidence://workspace-create-timeout-bound",
+      "evidence://workspace-create-post-observation-required"
+    ],
+    "before_filesystem_write": [
+      "evidence://branch-workspace-created-with-approval",
+      "evidence://filesystem-write-rollback-plan",
+      "evidence://non-empty-diff-admission-preflight"
+    ],
+    "before_adapter_execution": [
+      "approval://adapter-execution/operator-decision",
+      "evidence://worker-lease-sandbox-boundary",
+      "evidence://executed-test-receipt-admission-preflight"
+    ],
+    "before_terminal_closure": [
+      "evidence://branch-workspace-create-observed",
+      "evidence://cleanup-receipt-after-workspace-use",
+      "evidence://effect-reconciliation-before-terminal-closure"
+    ]
+  },
+  "effect_boundary": {
+    "workspace_create_authorized": true,
+    "workspace_created": false,
+    "filesystem_written": false,
+    "branch_pushed": false,
+    "pull_request_opened": false,
+    "adapter_executed": false,
+    "connector_called": false,
+    "receipt_store_appended": false,
+    "mutation_route_admitted": false,
+    "secret_values_serialized": false,
+    "network_policy": "none"
+  },
+  "authority_denials": {
+    "filesystem_write_enabled": false,
+    "branch_push_enabled": false,
+    "pull_request_creation_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_calls_enabled": false,
+    "receipt_store_append_enabled": false,
+    "runtime_state_write_enabled": false,
+    "mutation_route_enabled": false,
+    "secret_values_serialized": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "receipt_refs": {
+    "authority_binding_schema": "schemas/agentic_service_harness_approved_branch_workspace_creation_authority_binding.schema.json",
+    "source_preflight_schema": "schemas/agentic_service_harness_approved_branch_workspace_creation_preflight.schema.json",
+    "temporary_workspace_schema": "schemas/agentic_service_harness_temporary_branch_workspace_preflight.schema.json",
+    "workspace_sandbox_schema": "schemas/agentic_service_harness_workspace_sandbox_preflight.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-approved-branch-workspace-creation-authority-binding",
+      "command": "python scripts/validate_agentic_service_harness_approved_branch_workspace_creation_authority_binding.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Create the confined branch workspace only through the bound authority envelope, then observe workspace creation before any filesystem write, adapter execution, receipt append, pull request creation, or terminal closure claim."
+}

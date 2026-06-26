@@ -59,6 +59,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-approved-branch-workspace-creation-preflight:1"
     },
     {
+      "path": "schemas/agentic_service_harness_approved_branch_workspace_creation_authority_binding.schema.json",
+      "schema_id": "agentic-service-harness-approved-branch-workspace-creation-authority-binding",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-approved-branch-workspace-creation-authority-binding:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_dry_run_test_runner_plan_receipt.schema.json",
       "schema_id": "agentic-service-harness-dry-run-test-runner-plan-receipt",
       "surface": "runtime",

@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-approved-branch-workspace-creation-authority-binding:1",
+  "title": "Agentic Service Harness Approved Branch Workspace Creation Authority Binding",
+  "description": "Foundation Mode authority binding for approved branch workspace creation. This contract grants only a bounded workspace-creation authority envelope after source preflight, UAO, cleanup, rollback, and redaction evidence refs are present; it does not create a workspace, write files, execute adapters, call connectors, append receipts, create pull requests, serialize secrets, perform destructive operations, or issue terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_preflight_ref",
+    "authority_kind",
+    "authority_status",
+    "authority_binding_collected",
+    "workspace_creation_authority_granted",
+    "workspace_created",
+    "planning_only",
+    "report_is_not_terminal_closure",
+    "terminal_closure",
+    "scope",
+    "authority_binding",
+    "required_evidence",
+    "effect_boundary",
+    "authority_denials",
+    "receipt_refs",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "const": "agentic_service_harness_approved_branch_workspace_creation_authority_binding"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "source_preflight_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_approved_branch_workspace_creation_preflight.foundation.json"
+    },
+    "authority_kind": { "type": "string", "const": "approved_branch_workspace_creation_authority" },
+    "authority_status": { "type": "string", "const": "authority_bound_not_executed" },
+    "authority_binding_collected": { "type": "boolean", "const": true },
+    "workspace_creation_authority_granted": { "type": "boolean", "const": true },
+    "workspace_created": { "type": "boolean", "const": false },
+    "planning_only": { "type": "boolean", "const": true },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "scope": { "$ref": "#/$defs/scope" },
+    "authority_binding": { "$ref": "#/$defs/authority_binding" },
+    "required_evidence": { "$ref": "#/$defs/required_evidence" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "source_preflight_id",
+        "workspace_root_policy_ref",
+        "branch_name",
+        "workspace_mode",
+        "foundation_phase"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "source_preflight_id": {
+          "type": "string",
+          "const": "agentic_service_harness_approved_branch_workspace_creation_preflight"
+        },
+        "workspace_root_policy_ref": {
+          "type": "string",
+          "const": "policy://foundation/workspace-root-confined"
+        },
+        "branch_name": {
+          "type": "string",
+          "pattern": "^codex/harness-[A-Za-z0-9._-]+-20260626$"
+        },
+        "workspace_mode": {
+          "type": "string",
+          "const": "approved_branch_workspace_creation_authority_only"
+        },
+        "foundation_phase": {
+          "type": "string",
+          "const": "foundation_approved_branch_workspace_creation_authority_binding"
+        }
+      }
+    },
+    "authority_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_request_id",
+        "source_preflight_satisfied",
+        "operator_approval_ref",
+        "uao_admission_ref",
+        "cleanup_plan_ref",
+        "rollback_plan_ref",
+        "redaction_policy_ref",
+        "path_confinement_ref",
+        "authorized_effect",
+        "expires_after_single_workspace_create",
+        "requires_post_create_observation",
+        "requires_cleanup_receipt_before_close"
+      ],
+      "properties": {
+        "authority_request_id": {
+          "type": "string",
+          "const": "authority-binding.approved-branch-workspace-create"
+        },
+        "source_preflight_satisfied": { "type": "boolean", "const": true },
+        "operator_approval_ref": { "$ref": "#/$defs/evidence_ref" },
+        "uao_admission_ref": { "$ref": "#/$defs/evidence_ref" },
+        "cleanup_plan_ref": { "$ref": "#/$defs/evidence_ref" },
+        "rollback_plan_ref": { "$ref": "#/$defs/evidence_ref" },
+        "redaction_policy_ref": { "$ref": "#/$defs/evidence_ref" },
+        "path_confinement_ref": { "$ref": "#/$defs/evidence_ref" },
+        "authorized_effect": {
+          "type": "string",
+          "const": "create_one_confined_branch_workspace_without_file_writes"
+        },
+        "expires_after_single_workspace_create": { "type": "boolean", "const": true },
+        "requires_post_create_observation": { "type": "boolean", "const": true },
+        "requires_cleanup_receipt_before_close": { "type": "boolean", "const": true }
+      }
+    },
+    "required_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before_authority_binding",
+        "before_workspace_create",
+        "before_filesystem_write",
+        "before_adapter_execution",
+        "before_terminal_closure"
+      ],
+      "properties": {
+        "before_authority_binding": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_workspace_create": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_filesystem_write": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_adapter_execution": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_terminal_closure": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspace_create_authorized",
+        "workspace_created",
+        "filesystem_written",
+        "branch_pushed",
+        "pull_request_opened",
+        "adapter_executed",
+        "connector_called",
+        "receipt_store_appended",
+        "mutation_route_admitted",
+        "secret_values_serialized",
+        "network_policy"
+      ],
+      "properties": {
+        "workspace_create_authorized": { "type": "boolean", "const": true },
+        "workspace_created": { "type": "boolean", "const": false },
+        "filesystem_written": { "type": "boolean", "const": false },
+        "branch_pushed": { "type": "boolean", "const": false },
+        "pull_request_opened": { "type": "boolean", "const": false },
+        "adapter_executed": { "type": "boolean", "const": false },
+        "connector_called": { "type": "boolean", "const": false },
+        "receipt_store_appended": { "type": "boolean", "const": false },
+        "mutation_route_admitted": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "network_policy": { "type": "string", "const": "none" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filesystem_write_enabled",
+        "branch_push_enabled",
+        "pull_request_creation_enabled",
+        "adapter_execution_enabled",
+        "connector_calls_enabled",
+        "receipt_store_append_enabled",
+        "runtime_state_write_enabled",
+        "mutation_route_enabled",
+        "secret_values_serialized",
+        "destructive_operation_enabled",
+        "terminal_closure",
+        "default_high_risk_authority"
+      ],
+      "properties": {
+        "filesystem_write_enabled": { "type": "boolean", "const": false },
+        "branch_push_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "adapter_execution_enabled": { "type": "boolean", "const": false },
+        "connector_calls_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "default_high_risk_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_binding_schema",
+        "source_preflight_schema",
+        "temporary_workspace_schema",
+        "workspace_sandbox_schema"
+      ],
+      "properties": {
+        "authority_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "source_preflight_schema": { "$ref": "#/$defs/evidence_ref" },
+        "temporary_workspace_schema": { "$ref": "#/$defs/evidence_ref" },
+        "workspace_sandbox_schema": { "$ref": "#/$defs/evidence_ref" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}
