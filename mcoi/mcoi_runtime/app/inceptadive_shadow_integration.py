@@ -1,4 +1,15 @@
-"""Application integration helpers for InceptaDive Shadow Pass."""
+"""Application integration helpers for InceptaDive Shadow Pass.
+
+Purpose: expose a runtime facade that normalizes direct shadow inputs before
+inspection, advisory persistence, and receipt creation.
+Governance scope: advisory runtime integration only; no execution, retrieval,
+approval, memory write, or governance verdict authority.
+Dependencies: shadow core contracts, receipt stores, deterministic identifiers,
+and environment-derived configuration.
+Invariants: runtime outputs remain non-executing; direct caller target, scope,
+retrieval, and secret-shaped request identifiers are converted to public refs
+before persistence.
+"""
 
 from __future__ import annotations
 
@@ -40,7 +51,25 @@ from mcoi_runtime.core.inceptadive_shadow_types import (
     ShadowVerdict,
     severity_rank,
 )
-from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
+
+_PUBLIC_REQUEST_PREFIX = "shadow_runtime_request_"
+_CONTEXT_REF_PREFIXES = {
+    "explicit_target": "shadow_context_target_",
+    "scope": "shadow_context_scope_",
+    "retrieval_receipt": "shadow_retrieval_receipt_",
+}
+_SAFE_REQUEST_ID_CHARS = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:")
+_SENSITIVE_REQUEST_ID_MARKERS = (
+    "secret",
+    "token",
+    "credential",
+    "password",
+    "private",
+    "apikey",
+    "api_key",
+    "bearer",
+)
 
 
 @dataclass(frozen=True)
@@ -54,6 +83,7 @@ class InceptaDiveShadowRuntime:
     receipt_store: ShadowReceiptStore | None = None
 
     def inspect_request(self, context: ShadowContext) -> tuple[ShadowPassResult, ShadowReceipt | None]:
+        context = _runtime_safe_context(context)
         decision = decide_shadow_mode(context, self.config)
         if decision.mode == ShadowMode.OFF:
             result = _off_result(context)
@@ -80,7 +110,7 @@ class InceptaDiveShadowRuntime:
         *,
         required_evidence_refs: tuple[str, ...] = (),
     ) -> tuple[ShadowPassResult, ShadowReceipt | None]:
-        preflight_context = _as_preflight(context)
+        preflight_context = _as_preflight(_runtime_safe_context(context))
         if not self.config.enabled:
             result = _off_result(preflight_context)
         else:
@@ -108,7 +138,7 @@ class InceptaDiveShadowRuntime:
         """Return redacted obligations for an effect-bearing candidate action."""
 
         advisory = build_external_effect_boundary_advisory(
-            _as_preflight(context),
+            _as_preflight(_runtime_safe_context(context)),
             required_evidence_refs=required_evidence_refs,
             authority_receipt_refs=authority_receipt_refs,
         )
@@ -330,6 +360,69 @@ def _as_preflight(context: ShadowContext) -> ShadowContext:
         retrieval_receipt_ids=context.retrieval_receipt_ids,
         created_at=context.created_at,
     ).with_integrity()
+
+
+def _runtime_safe_context(context: ShadowContext) -> ShadowContext:
+    """Return context refs safe for direct runtime result and receipt persistence."""
+
+    checked = context.with_integrity()
+    return ShadowContext(
+        request_id=_public_request_id(checked.request_id, stage=checked.stage, created_at=checked.created_at),
+        stage=checked.stage,
+        user_input=checked.user_input,
+        normal_intent=checked.normal_intent,
+        normal_plan=checked.normal_plan,
+        candidate_action=checked.candidate_action,
+        explicit_target=_context_public_ref("explicit_target", checked.explicit_target),
+        scope=_context_public_ref("scope", checked.scope),
+        risk_level=checked.risk_level,
+        external_side_effect=checked.external_side_effect,
+        memory_contradiction=checked.memory_contradiction,
+        retrieval_receipt_ids=_context_public_refs("retrieval_receipt", checked.retrieval_receipt_ids),
+        created_at=checked.created_at,
+    ).with_integrity()
+
+
+def _context_public_refs(kind: str, values: Sequence[str]) -> tuple[str, ...]:
+    return tuple(ref for ref in (_context_public_ref(kind, value) for value in values) if ref)
+
+
+def _context_public_ref(kind: str, value: object) -> str:
+    normalized = " ".join(str(value or "").strip().split())
+    if not normalized:
+        return ""
+    prefix = _CONTEXT_REF_PREFIXES[kind]
+    if normalized.startswith(prefix):
+        return normalized
+    return prefix + stable_identifier(
+        f"inceptadive-shadow-runtime-{kind}",
+        {"value": normalized},
+    )
+
+
+def _public_request_id(request_id: str, *, stage: ShadowStage, created_at: str) -> str:
+    normalized = " ".join(str(request_id or "").strip().split())
+    if _request_id_is_public_reference(normalized):
+        return normalized
+    return _PUBLIC_REQUEST_PREFIX + stable_identifier(
+        "inceptadive-shadow-runtime-request",
+        {
+            "stage": stage.value,
+            "request_id": normalized,
+            "created_at": created_at,
+        },
+    )
+
+
+def _request_id_is_public_reference(value: str) -> bool:
+    if not value or len(value) > 128:
+        return False
+    if value.startswith(_PUBLIC_REQUEST_PREFIX):
+        return True
+    if any(character not in _SAFE_REQUEST_ID_CHARS for character in value):
+        return False
+    lowered = value.lower()
+    return not any(marker in lowered for marker in _SENSITIVE_REQUEST_ID_MARKERS)
 
 
 def _env_flag(value: str | None) -> bool:
