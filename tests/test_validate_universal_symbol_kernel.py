@@ -838,11 +838,37 @@ def test_lane_runtime_authority_evidence_receipt_rejects_missing_lane(tmp_path: 
         )
 
 
+def test_lane_runtime_authority_evidence_receipt_rejects_unexpected_lane(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    extra_item = copy.deepcopy(changed["lane_evidence_items"][0])
+    extra_item["lane_ref"] = "skill://unbounded-lane-evidence"
+    extra_item["delta_reject_ref"] = "delta-reject://universal-symbol-lane/unbounded-lane-evidence"
+    changed["lane_evidence_items"].append(extra_item)
+    changed["contract_summary"]["lane_evidence_item_count"] = len(changed["lane_evidence_items"])
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError, match="unbounded-lane-evidence"):
+        validate_universal_symbol_lane_runtime_authority_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
+        )
+
+
 def test_lane_runtime_authority_evidence_receipt_rejects_observed_evidence_drift(tmp_path: Path) -> None:
     receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
     changed = copy.deepcopy(receipt)
     changed["lane_evidence_items"][0]["observed_evidence_refs"].append("witness://unexpected/live-lane")
     with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError, match="observed_evidence_refs"):
+        validate_universal_symbol_lane_runtime_authority_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_receipt_rejects_unexpected_blocker(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["lane_evidence_items"][0]["blocker_classifications"].append("unbounded_lane_blocker")
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError, match="unbounded_lane_blocker"):
         validate_universal_symbol_lane_runtime_authority_evidence_receipt(
             _write_policy_case(tmp_path, changed),
             DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
