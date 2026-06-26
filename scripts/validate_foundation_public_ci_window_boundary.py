@@ -311,6 +311,10 @@ def _pull_request_number(value: Any) -> str | None:
     return number
 
 
+def _window_id_binds_pull_request(window_id: Any, pull_request_number: str) -> bool:
+    return isinstance(window_id, str) and window_id.endswith(f".pr{pull_request_number}")
+
+
 def _is_hex_sha(value: Any) -> bool:
     return isinstance(value, str) and len(value) == 40 and all(char in "0123456789abcdef" for char in value)
 
@@ -399,6 +403,13 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
     pull_request_number = _pull_request_number(payload.get("pull_request"))
     if pull_request_number is None:
         findings.append(Finding("public_ci_window_receipt_pull_request_invalid", "pull_request must be a repository PR URL"))
+    elif not _window_id_binds_pull_request(payload.get("window_id"), pull_request_number):
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_window_id_pr_mismatch",
+                "window_id must end with the pull request identity",
+            )
+        )
 
     opened_at = payload.get("opened_at")
     parsed_opened_at = _parse_utc_timestamp(opened_at)
