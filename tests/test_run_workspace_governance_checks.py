@@ -171,6 +171,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "life_meaning_governance",
         "phi_gps_v3_platform_spec",
         "governance_normalization_map",
+        "holistic_loop_reasoning_admission_binding",
         "public_repository_surface",
         "proprietary_boundary",
         "company_boundary_kernel",
@@ -671,7 +672,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("protocol_manifest", "simple_assistant_ui_boundary")
     assert_ordered("life_meaning_governance", "phi_gps_v3_platform_spec")
     assert_ordered("phi_gps_v3_platform_spec", "governance_normalization_map")
-    assert_ordered("governance_normalization_map", "public_repository_surface")
+    assert_ordered("governance_normalization_map", "holistic_loop_reasoning_admission_binding")
+    assert_ordered("holistic_loop_reasoning_admission_binding", "public_repository_surface")
     assert_ordered("code_change_physics_packet", "search_decision_receipt")
     assert_ordered("search_decision_receipt", "intelligence_coordination_episode_receipt")
 
