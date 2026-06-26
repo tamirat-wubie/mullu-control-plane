@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-approved-branch-workspace-creation-observation-receipt:1",
+  "title": "Agentic Service Harness Approved Branch Workspace Creation Observation Receipt",
+  "description": "Foundation Mode observation receipt for one approved branch workspace creation. This contract observes only the bounded workspace-create effect after authority binding; it does not grant file writes, branch pushes, adapter execution, connector calls, receipt append, pull-request creation, secret serialization, destructive operation, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_authority_binding_ref",
+    "observation_status",
+    "workspace_creation_observed",
+    "workspace_created",
+    "planning_only",
+    "report_is_not_terminal_closure",
+    "terminal_closure",
+    "scope",
+    "observation",
+    "effect_boundary",
+    "authority_denials",
+    "required_next_evidence",
+    "receipt_refs",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "const": "agentic_service_harness_approved_branch_workspace_creation_observation_receipt"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "source_authority_binding_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_approved_branch_workspace_creation_authority_binding.foundation.json"
+    },
+    "observation_status": {
+      "type": "string",
+      "const": "workspace_creation_observed_without_later_effects"
+    },
+    "workspace_creation_observed": { "type": "boolean", "const": true },
+    "workspace_created": { "type": "boolean", "const": true },
+    "planning_only": { "type": "boolean", "const": false },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "scope": { "$ref": "#/$defs/scope" },
+    "observation": { "$ref": "#/$defs/observation" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "required_next_evidence": { "$ref": "#/$defs/required_next_evidence" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "source_authority_binding_id",
+        "workspace_root_policy_ref",
+        "branch_name",
+        "workspace_mode",
+        "foundation_phase"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "source_authority_binding_id": {
+          "type": "string",
+          "const": "agentic_service_harness_approved_branch_workspace_creation_authority_binding"
+        },
+        "workspace_root_policy_ref": {
+          "type": "string",
+          "const": "policy://foundation/workspace-root-confined"
+        },
+        "branch_name": {
+          "type": "string",
+          "pattern": "^codex/harness-[A-Za-z0-9._-]+-20260626$"
+        },
+        "workspace_mode": {
+          "type": "string",
+          "const": "approved_branch_workspace_creation_observation_only"
+        },
+        "foundation_phase": {
+          "type": "string",
+          "const": "foundation_approved_branch_workspace_creation_observation"
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_request_id",
+        "source_authority_binding_satisfied",
+        "observed_effect",
+        "workspace_path_ref",
+        "workspace_path_confined",
+        "created_branch_name",
+        "create_command_ref",
+        "post_create_observation_ref",
+        "cleanup_required_before_close"
+      ],
+      "properties": {
+        "authority_request_id": {
+          "type": "string",
+          "const": "authority-binding.approved-branch-workspace-create"
+        },
+        "source_authority_binding_satisfied": { "type": "boolean", "const": true },
+        "observed_effect": {
+          "type": "string",
+          "const": "created_one_confined_branch_workspace_without_file_writes"
+        },
+        "workspace_path_ref": { "$ref": "#/$defs/evidence_ref" },
+        "workspace_path_confined": { "type": "boolean", "const": true },
+        "created_branch_name": {
+          "type": "string",
+          "pattern": "^codex/harness-[A-Za-z0-9._-]+-20260626$"
+        },
+        "create_command_ref": { "$ref": "#/$defs/evidence_ref" },
+        "post_create_observation_ref": { "$ref": "#/$defs/evidence_ref" },
+        "cleanup_required_before_close": { "type": "boolean", "const": true }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspace_create_authorized",
+        "workspace_created",
+        "filesystem_written",
+        "branch_pushed",
+        "pull_request_opened",
+        "adapter_executed",
+        "connector_called",
+        "receipt_store_appended",
+        "mutation_route_admitted",
+        "secret_values_serialized",
+        "network_policy"
+      ],
+      "properties": {
+        "workspace_create_authorized": { "type": "boolean", "const": true },
+        "workspace_created": { "type": "boolean", "const": true },
+        "filesystem_written": { "type": "boolean", "const": false },
+        "branch_pushed": { "type": "boolean", "const": false },
+        "pull_request_opened": { "type": "boolean", "const": false },
+        "adapter_executed": { "type": "boolean", "const": false },
+        "connector_called": { "type": "boolean", "const": false },
+        "receipt_store_appended": { "type": "boolean", "const": false },
+        "mutation_route_admitted": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "network_policy": { "type": "string", "const": "none" }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filesystem_write_enabled",
+        "branch_push_enabled",
+        "pull_request_creation_enabled",
+        "adapter_execution_enabled",
+        "connector_calls_enabled",
+        "receipt_store_append_enabled",
+        "runtime_state_write_enabled",
+        "mutation_route_enabled",
+        "secret_values_serialized",
+        "destructive_operation_enabled",
+        "terminal_closure",
+        "default_high_risk_authority"
+      ],
+      "properties": {
+        "filesystem_write_enabled": { "type": "boolean", "const": false },
+        "branch_push_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "adapter_execution_enabled": { "type": "boolean", "const": false },
+        "connector_calls_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "default_high_risk_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "required_next_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before_filesystem_write",
+        "before_adapter_execution",
+        "before_receipt_append",
+        "before_pull_request_creation",
+        "before_terminal_closure"
+      ],
+      "properties": {
+        "before_filesystem_write": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_adapter_execution": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_receipt_append": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_pull_request_creation": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_terminal_closure": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_schema",
+        "source_authority_binding_schema",
+        "source_preflight_schema"
+      ],
+      "properties": {
+        "observation_schema": { "$ref": "#/$defs/evidence_ref" },
+        "source_authority_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "source_preflight_schema": { "$ref": "#/$defs/evidence_ref" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

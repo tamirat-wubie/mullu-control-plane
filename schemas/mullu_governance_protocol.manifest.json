@@ -65,6 +65,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-approved-branch-workspace-creation-authority-binding:1"
     },
     {
+      "path": "schemas/agentic_service_harness_approved_branch_workspace_creation_observation_receipt.schema.json",
+      "schema_id": "agentic-service-harness-approved-branch-workspace-creation-observation-receipt",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-approved-branch-workspace-creation-observation-receipt:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_dry_run_test_runner_plan_receipt.schema.json",
       "schema_id": "agentic-service-harness-dry-run-test-runner-plan-receipt",
       "surface": "runtime",
@@ -609,6 +615,12 @@
       "schema_id": "component-evidence-submission-intake",
       "surface": "governance",
       "urn": "urn:mullusi:schema:component-evidence-submission-intake:1"
+    },
+    {
+      "path": "schemas/component_evidence_postmerge_audit.schema.json",
+      "schema_id": "component-evidence-postmerge-audit",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:component-evidence-postmerge-audit:1"
     },
     {
       "path": "schemas/component_dead_component_detection.schema.json",

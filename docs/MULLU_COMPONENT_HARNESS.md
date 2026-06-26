@@ -35,6 +35,7 @@ schemas/component_read_model.schema.json,
 schemas/component_autopsy.schema.json,
 schemas/component_request_simulation.schema.json,
 schemas/component_bundle_compilation.schema.json,
+schemas/component_evidence_postmerge_audit.schema.json,
 schemas/component_graph.schema.json,
 schemas/component_dead_component_detection.schema.json,
 schemas/component_lifecycle_transition_receipts.schema.json,
@@ -69,6 +70,7 @@ examples/component_proof_binding.foundation.json, examples/component_read_model.
 examples/component_autopsy.nested_mind_bridge.json,
 examples/component_request_simulation.foundation.json,
 examples/component_bundle_compilation.personal_assistant_v0.json,
+examples/component_evidence_postmerge_audit.foundation.json,
 examples/component_graph.foundation.json,
 examples/component_dead_component_detection.foundation.json,
 examples/component_lifecycle_transition_receipts.foundation.json,
@@ -104,6 +106,7 @@ scripts/validate_component_read_model.py,
 scripts/validate_component_autopsy.py,
 scripts/validate_component_request_simulation.py,
 scripts/validate_component_bundle_compiler.py,
+scripts/validate_component_evidence_postmerge_audit.py,
 scripts/validate_component_graph.py,
 scripts/validate_component_dead_detector.py,
 scripts/validate_component_lifecycle_transition_receipts.py,
@@ -139,6 +142,7 @@ tests/test_validate_component_read_model.py,
 tests/test_validate_component_autopsy.py,
 tests/test_validate_component_request_simulation.py,
 tests/test_validate_component_bundle_compiler.py,
+tests/test_validate_component_evidence_postmerge_audit.py,
 tests/test_validate_component_graph.py,
 tests/test_validate_component_dead_detector.py,
 tests/test_validate_component_lifecycle_transition_receipts.py,
@@ -1303,6 +1307,7 @@ python scripts/validate_component_read_model.py --strict
 python scripts/validate_component_autopsy.py --strict
 python scripts/validate_component_request_simulation.py --strict
 python scripts/validate_component_bundle_compiler.py --strict
+python scripts/validate_component_evidence_postmerge_audit.py --strict
 python scripts/validate_component_graph.py --strict
 python scripts/validate_component_dead_detector.py --strict
 python scripts/validate_component_lifecycle_transition_receipts.py --strict
@@ -1335,7 +1340,7 @@ python -m pytest tests/test_validate_component_route_family_promotion_router_inv
 python -m pytest tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_plan.py -q
 python -m pytest tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.py -q
 python -m pytest tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.py -q
-python -m pytest tests/test_validate_component_read_model.py tests/test_validate_component_autopsy.py tests/test_validate_component_request_simulation.py tests/test_validate_component_bundle_compiler.py tests/test_validate_component_graph.py tests/test_validate_component_dead_detector.py tests/test_validate_component_lifecycle_transition_receipts.py tests/test_validate_component_authority_envelope_witnesses.py mcoi/tests/test_component_read_model_route.py mcoi/tests/test_component_autopsy_route.py mcoi/tests/test_component_request_simulator.py mcoi/tests/test_component_bundle_compiler.py -q
+python -m pytest tests/test_validate_component_read_model.py tests/test_validate_component_autopsy.py tests/test_validate_component_request_simulation.py tests/test_validate_component_bundle_compiler.py tests/test_validate_component_evidence_postmerge_audit.py tests/test_validate_component_graph.py tests/test_validate_component_dead_detector.py tests/test_validate_component_lifecycle_transition_receipts.py tests/test_validate_component_authority_envelope_witnesses.py mcoi/tests/test_component_read_model_route.py mcoi/tests/test_component_autopsy_route.py mcoi/tests/test_component_request_simulator.py mcoi/tests/test_component_bundle_compiler.py -q
 python scripts/validate_protocol_manifest.py
 ```
 

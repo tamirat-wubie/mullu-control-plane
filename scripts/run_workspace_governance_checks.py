@@ -247,6 +247,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "agentic_service_harness_approved_branch_workspace_creation_observation_receipt",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_approved_branch_workspace_creation_observation_receipt.py",
+            ),
+        ),
+        CheckCommand(
             "agentic_service_harness_dry_run_test_runner_plan_receipt",
             (
                 python_executable,
@@ -643,6 +650,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "component_evidence_submission_intake",
             (python_executable, "scripts/validate_component_evidence_submission_intake.py"),
+        ),
+        CheckCommand(
+            "component_evidence_postmerge_audit",
+            (python_executable, "scripts/validate_component_evidence_postmerge_audit.py"),
         ),
         CheckCommand(
             "component_graph",

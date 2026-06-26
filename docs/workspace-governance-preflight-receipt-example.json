@@ -1,2965 +1,2997 @@
 {
-  "check_count": 290,
+  "receipt_id": "workspace_governance_preflight_receipt",
+  "terminal_closure_required": true,
+  "receipt_is_not_terminal_closure": true,
+  "status": "passed",
+  "generated_at_epoch": 1782510652.541783,
+  "check_count": 292,
   "checks": [
     {
+      "name": "local_assurance_plan",
       "args": [
         "python",
         "scripts/refresh_local_assurance.py",
         "--dry-run",
         "--json"
       ],
-      "name": "local_assurance_plan",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] local_assurance_plan\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agents_policy",
       "args": [
         "python",
         "scripts/validate_agents_governance.py"
       ],
-      "name": "agents_policy",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agents_policy\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "trusted_local_control_studio",
       "args": [
         "python",
         "scripts/validate_trusted_local_control_studio.py"
       ],
-      "name": "trusted_local_control_studio",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] trusted_local_control_studio\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_mode",
       "args": [
         "python",
         "scripts/validate_foundation_mode.py"
       ],
-      "name": "foundation_mode",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_mode\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_source_control_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_source_control_boundary.py"
       ],
-      "name": "foundation_source_control_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_source_control_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_source_control_review_checklist_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_source_control_review_checklist_boundary.py"
       ],
-      "name": "foundation_source_control_review_checklist_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_source_control_review_checklist_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_local_release_packet_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_local_release_packet_rehearsal_boundary.py"
       ],
-      "name": "foundation_local_release_packet_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_local_release_packet_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_python_dependency_visibility_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_python_dependency_visibility_rehearsal_boundary.py"
       ],
-      "name": "foundation_python_dependency_visibility_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_python_dependency_visibility_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_contract",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_contract.py"
       ],
-      "name": "agentic_service_harness_contract",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_contract\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_read_models",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_read_models.py"
       ],
-      "name": "agentic_service_harness_read_models",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_read_models\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_read_model_projections",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_read_model_projections.py"
       ],
-      "name": "agentic_service_harness_read_model_projections",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_read_model_projections\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_read_model_integrity",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_read_model_integrity.py"
       ],
-      "name": "agentic_service_harness_read_model_integrity",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_read_model_integrity\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_read_model_persistence",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_read_model_persistence.py"
       ],
-      "name": "agentic_service_harness_read_model_persistence",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_read_model_persistence\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_repo_task_service",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_repo_task_service.py"
       ],
-      "name": "agentic_service_harness_github_repo_task_service",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_repo_task_service\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_repo_task_intake",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_repo_task_intake.py"
       ],
-      "name": "agentic_service_harness_github_repo_task_intake",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_repo_task_intake\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_dashboard_data_contract",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_dashboard_data_contract.py"
       ],
-      "name": "agentic_service_harness_dashboard_data_contract",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_dashboard_data_contract\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_adapter_registry_contract",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_adapter_registry_contract.py"
       ],
-      "name": "agentic_service_harness_adapter_registry_contract",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_adapter_registry_contract\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_evidence_bundle_projection",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_evidence_bundle_projection.py"
       ],
-      "name": "agentic_service_harness_evidence_bundle_projection",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_evidence_bundle_projection\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_receipt_evidence_read_models",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_receipt_evidence_read_models.py"
       ],
-      "name": "agentic_service_harness_receipt_evidence_read_models",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_receipt_evidence_read_models\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_loopstatus_projection",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_loopstatus_projection.py"
       ],
-      "name": "agentic_service_harness_loopstatus_projection",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_loopstatus_projection\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_receipt_projection",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_receipt_projection.py"
       ],
-      "name": "agentic_service_harness_receipt_projection",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_receipt_projection\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_task_creation_admission_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_task_creation_admission_preflight.py"
       ],
-      "name": "agentic_service_harness_task_creation_admission_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_task_creation_admission_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_task_receipt_emitter_dry_run",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py"
       ],
-      "name": "agentic_service_harness_github_task_receipt_emitter_dry_run",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_task_receipt_emitter_dry_run\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_temporary_branch_workspace_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_temporary_branch_workspace_preflight.py"
       ],
-      "name": "agentic_service_harness_temporary_branch_workspace_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_temporary_branch_workspace_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_workspace_sandbox_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_workspace_sandbox_preflight.py"
       ],
-      "name": "agentic_service_harness_workspace_sandbox_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_workspace_sandbox_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_approved_branch_workspace_creation_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_approved_branch_workspace_creation_preflight.py"
       ],
-      "name": "agentic_service_harness_approved_branch_workspace_creation_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_approved_branch_workspace_creation_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_approved_branch_workspace_creation_authority_binding",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_approved_branch_workspace_creation_authority_binding.py"
       ],
-      "name": "agentic_service_harness_approved_branch_workspace_creation_authority_binding",
-      "passed": true,
       "return_code": 0,
+      "stdout": "[PASS] agentic_service_harness_approved_branch_workspace_creation_authority_binding\nSTATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_approved_branch_workspace_creation_observation_receipt",
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_approved_branch_workspace_creation_observation_receipt.py"
+      ],
+      "return_code": 0,
+      "stdout": "[PASS] agentic_service_harness_approved_branch_workspace_creation_observation_receipt\nSTATUS: passed\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "agentic_service_harness_dry_run_test_runner_plan_receipt",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_dry_run_test_runner_plan_receipt.py"
       ],
-      "name": "agentic_service_harness_dry_run_test_runner_plan_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_dry_run_test_runner_plan_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_task_record_write_uao_admission_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_task_record_write_uao_admission_preflight.py"
       ],
-      "name": "agentic_service_harness_task_record_write_uao_admission_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_task_record_write_uao_admission_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_receipt_store_append_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_receipt_store_append_preflight.py"
       ],
-      "name": "agentic_service_harness_receipt_store_append_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_receipt_store_append_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_executed_test_receipt_admission_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_executed_test_receipt_admission_preflight.py"
       ],
-      "name": "agentic_service_harness_executed_test_receipt_admission_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_executed_test_receipt_admission_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_planned_file_change_collection_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_planned_file_change_collection_preflight.py"
       ],
-      "name": "agentic_service_harness_planned_file_change_collection_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_planned_file_change_collection_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_actual_file_change_summary_receipt",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_actual_file_change_summary_receipt.py"
       ],
-      "name": "agentic_service_harness_actual_file_change_summary_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_actual_file_change_summary_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_actual_diff_collection_admission_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_actual_diff_collection_admission_preflight.py"
       ],
-      "name": "agentic_service_harness_actual_diff_collection_admission_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_actual_diff_collection_admission_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_actual_diff_collection_receipt",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_actual_diff_collection_receipt.py"
       ],
-      "name": "agentic_service_harness_actual_diff_collection_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_actual_diff_collection_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_non_empty_diff_receipt_admission_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_non_empty_diff_receipt_admission_preflight.py"
       ],
-      "name": "agentic_service_harness_non_empty_diff_receipt_admission_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_non_empty_diff_receipt_admission_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_admission_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_admission_preflight.py"
       ],
-      "name": "agentic_service_harness_github_pr_admission_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_admission_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_operator_approval_request",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_operator_approval_request.py"
       ],
-      "name": "agentic_service_harness_github_pr_operator_approval_request",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_operator_approval_request\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_operator_response_witness",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_operator_response_witness.py"
       ],
-      "name": "agentic_service_harness_github_pr_operator_response_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_operator_response_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_branch_write_authority_binding",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_branch_write_authority_binding.py"
       ],
-      "name": "agentic_service_harness_github_pr_branch_write_authority_binding",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_branch_write_authority_binding\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_uao_admission_witness",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_uao_admission_witness.py"
       ],
-      "name": "agentic_service_harness_github_pr_uao_admission_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_uao_admission_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.py"
       ],
-      "name": "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_repository_effect_rollback_plan_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.py"
       ],
-      "name": "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_effect_reconciliation_witness",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_effect_reconciliation_witness.py"
       ],
-      "name": "agentic_service_harness_github_pr_effect_reconciliation_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_effect_reconciliation_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_effect_reconciliation_evidence_contract",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_effect_reconciliation_evidence_contract.py"
       ],
-      "name": "agentic_service_harness_github_pr_effect_reconciliation_evidence_contract",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_effect_reconciliation_evidence_contract\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_effect_reconciliation_live_evidence",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_effect_reconciliation_live_evidence.py"
       ],
-      "name": "agentic_service_harness_github_pr_effect_reconciliation_live_evidence",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_effect_reconciliation_live_evidence\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_terminal_closure_certificate_candidate",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_candidate.py"
       ],
-      "name": "agentic_service_harness_github_pr_terminal_closure_certificate_candidate",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_terminal_closure_certificate_candidate\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.py"
       ],
-      "name": "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_terminal_closure_operator_approval_gate\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.py"
       ],
-      "name": "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_terminal_closure_operator_decision_contract\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection.py"
       ],
-      "name": "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request.py"
       ],
-      "name": "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record.py"
       ],
-      "name": "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_terminal_closure_certificate_minting",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_minting.py"
       ],
-      "name": "agentic_service_harness_github_pr_terminal_closure_certificate_minting",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_terminal_closure_certificate_minting\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_terminal_closure_certificate_read_model",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_read_model.py"
       ],
-      "name": "agentic_service_harness_github_pr_terminal_closure_certificate_read_model",
-      "passed": true,
       "return_code": 0,
+      "stdout": "[PASS] agentic_service_harness_github_pr_terminal_closure_certificate_read_model\nSTATUS: passed\n",
       "stderr": "",
-      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE CERTIFICATE READ MODEL VALID\n",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_witness.py"
       ],
-      "name": "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_github_pr_terminal_closure_certificate_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_read_only_status_route_design",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_read_only_status_route_design.py"
       ],
-      "name": "agentic_service_harness_read_only_status_route_design",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_read_only_status_route_design\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_read_only_status_route",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_read_only_status_route.py"
       ],
-      "name": "agentic_service_harness_read_only_status_route",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_read_only_status_route\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_authority_transitions",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_authority_transitions.py"
       ],
-      "name": "agentic_service_harness_authority_transitions",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_authority_transitions\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "channel_approval_strength_policy",
       "args": [
         "python",
         "scripts/validate_channel_approval_strength_policy.py"
       ],
-      "name": "channel_approval_strength_policy",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] channel_approval_strength_policy\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_registry",
       "args": [
         "python",
         "scripts/validate_component_registry.py"
       ],
-      "name": "component_registry",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_registry\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_lifecycle_transition_receipts",
       "args": [
         "python",
         "scripts/validate_component_lifecycle_transition_receipts.py"
       ],
-      "name": "component_lifecycle_transition_receipts",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_lifecycle_transition_receipts\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_authority_envelope_witnesses",
       "args": [
         "python",
         "scripts/validate_component_authority_envelope_witnesses.py"
       ],
-      "name": "component_authority_envelope_witnesses",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_authority_envelope_witnesses\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_router_inventory",
       "args": [
         "python",
         "scripts/validate_component_router_inventory.py"
       ],
-      "name": "component_router_inventory",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_router_inventory\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_proof_binding",
       "args": [
         "python",
         "scripts/validate_component_proof_binding.py"
       ],
-      "name": "component_proof_binding",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_proof_binding\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_ownership",
       "args": [
         "python",
         "scripts/validate_component_route_family_ownership.py"
       ],
-      "name": "component_route_family_ownership",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_ownership\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_preflight",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_preflight.py"
       ],
-      "name": "component_route_family_promotion_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_witness_requirements",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_witness_requirements.py"
       ],
-      "name": "component_route_family_promotion_witness_requirements",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_witness_requirements\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_witness_evidence",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_witness_evidence.py"
       ],
-      "name": "component_route_family_promotion_witness_evidence",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_witness_evidence\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_approval_candidates",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_approval_candidates.py"
       ],
-      "name": "component_route_family_promotion_approval_candidates",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_approval_candidates\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_approval_intake",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_approval_intake.py"
       ],
-      "name": "component_route_family_promotion_approval_intake",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_approval_intake\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_submitted_evidence_verifier",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_submitted_evidence_verifier.py"
       ],
-      "name": "component_route_family_promotion_submitted_evidence_verifier",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_submitted_evidence_verifier\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_submitted_evidence_records",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_submitted_evidence_records.py"
       ],
-      "name": "component_route_family_promotion_submitted_evidence_records",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_submitted_evidence_records\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_submitted_evidence_payload_examples",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_submitted_evidence_payload_examples.py"
       ],
-      "name": "component_route_family_promotion_submitted_evidence_payload_examples",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_submitted_evidence_payload_examples\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_operator_submitted_evidence_records",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_operator_submitted_evidence_records.py"
       ],
-      "name": "component_route_family_promotion_operator_submitted_evidence_records",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_operator_submitted_evidence_records\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_gate_satisfaction_evaluator",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_gate_satisfaction_evaluator.py"
       ],
-      "name": "component_route_family_promotion_gate_satisfaction_evaluator",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_gate_satisfaction_evaluator\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_authority_decision_report",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_authority_decision_report.py"
       ],
-      "name": "component_route_family_promotion_authority_decision_report",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_authority_decision_report\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_route_binding_decision_report",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_route_binding_decision_report.py"
       ],
-      "name": "component_route_family_promotion_route_binding_decision_report",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_route_binding_decision_report\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_lifecycle_transition_decision_report",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_lifecycle_transition_decision_report.py"
       ],
-      "name": "component_route_family_promotion_lifecycle_transition_decision_report",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_lifecycle_transition_decision_report\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_authority_upgrade_witness_decision_report",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_authority_upgrade_witness_decision_report.py"
       ],
-      "name": "component_route_family_promotion_authority_upgrade_witness_decision_report",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_authority_upgrade_witness_decision_report\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_product_ownership_decision_report",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_product_ownership_decision_report.py"
       ],
-      "name": "component_route_family_promotion_product_ownership_decision_report",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_product_ownership_decision_report\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_terminal_closure_denial_report",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_terminal_closure_denial_report.py"
       ],
-      "name": "component_route_family_promotion_terminal_closure_denial_report",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_terminal_closure_denial_report\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_missing_evidence_ledger",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_missing_evidence_ledger.py"
       ],
-      "name": "component_route_family_promotion_missing_evidence_ledger",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_missing_evidence_ledger\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_router_inventory_delta_candidate",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_router_inventory_delta_candidate.py"
       ],
-      "name": "component_route_family_promotion_router_inventory_delta_candidate",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_candidate\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_router_inventory_delta_witness_requirements",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_requirements.py"
       ],
-      "name": "component_route_family_promotion_router_inventory_delta_witness_requirements",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_requirements\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_router_inventory_delta_witness_minting_preflight",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_minting_preflight.py"
       ],
-      "name": "component_route_family_promotion_router_inventory_delta_witness_minting_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_minting_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_minting_denial_report.py"
       ],
-      "name": "component_route_family_promotion_router_inventory_delta_witness_minting_denial_report",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_minting_denial_report\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_router_inventory_delta_witness_remediation_plan",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_remediation_plan.py"
       ],
-      "name": "component_route_family_promotion_router_inventory_delta_witness_remediation_plan",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_remediation_plan\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.py"
       ],
-      "name": "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger",
       "args": [
         "python",
         "scripts/validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.py"
       ],
-      "name": "component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_read_model",
       "args": [
         "python",
         "scripts/validate_component_read_model.py"
       ],
-      "name": "component_read_model",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_read_model\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_autopsy",
       "args": [
         "python",
         "scripts/validate_component_autopsy.py"
       ],
-      "name": "component_autopsy",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_autopsy\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_request_simulation",
       "args": [
         "python",
         "scripts/validate_component_request_simulation.py"
       ],
-      "name": "component_request_simulation",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_request_simulation\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_bundle_compiler",
       "args": [
         "python",
         "scripts/validate_component_bundle_compiler.py"
       ],
-      "name": "component_bundle_compiler",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_bundle_compiler\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_evidence_request_queue",
       "args": [
         "python",
         "scripts/validate_component_evidence_request_queue.py"
       ],
-      "name": "component_evidence_request_queue",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_evidence_request_queue\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_evidence_submission_intake",
       "args": [
         "python",
         "scripts/validate_component_evidence_submission_intake.py"
       ],
-      "name": "component_evidence_submission_intake",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_evidence_submission_intake\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_evidence_postmerge_audit",
+      "args": [
+        "python",
+        "scripts/validate_component_evidence_postmerge_audit.py"
+      ],
+      "return_code": 0,
+      "stdout": "[PASS] component_evidence_postmerge_audit\nSTATUS: passed\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "component_graph",
       "args": [
         "python",
         "scripts/validate_component_graph.py"
       ],
-      "name": "component_graph",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_graph\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "component_dead_detector",
       "args": [
         "python",
         "scripts/validate_component_dead_detector.py"
       ],
-      "name": "component_dead_detector",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] component_dead_detector\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "read_only_first_worker_path",
       "args": [
         "python",
         "scripts/validate_read_only_first_worker_path.py"
       ],
-      "name": "read_only_first_worker_path",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] read_only_first_worker_path\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "read_only_document_worker_path",
       "args": [
         "python",
         "scripts/validate_read_only_document_worker_path.py"
       ],
-      "name": "read_only_document_worker_path",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] read_only_document_worker_path\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "read_only_search_worker_path",
       "args": [
         "python",
         "scripts/validate_read_only_search_worker_path.py"
       ],
-      "name": "read_only_search_worker_path",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] read_only_search_worker_path\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "worker_failure_receipt",
       "args": [
         "python",
         "scripts/validate_worker_failure_receipt.py"
       ],
-      "name": "worker_failure_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] worker_failure_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_task_run_producer_evidence",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_task_run_producer_evidence.py"
       ],
-      "name": "agentic_service_harness_live_task_run_producer_evidence",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_task_run_producer_evidence\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_task_run_producer_rehearsal",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_task_run_producer_rehearsal.py"
       ],
-      "name": "agentic_service_harness_live_task_run_producer_rehearsal",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_task_run_producer_rehearsal\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_admission_gate",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_admission_gate.py"
       ],
-      "name": "agentic_service_harness_live_producer_admission_gate",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_admission_gate\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_witness_requirements",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_witness_requirements.py"
       ],
-      "name": "agentic_service_harness_live_producer_witness_requirements",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_witness_requirements\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_approval_request",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_approval_request.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_approval_request",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_approval_request\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_response_witness",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_response_witness.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_response_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_response_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_decision_evidence",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_decision_evidence.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_decision_evidence",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_evidence\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_decision_record",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_decision_record.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_decision_record",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_record\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_absence",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_absence.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_decision_value_absence",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_absence\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_decision_pending_status",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_decision_pending_status.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_decision_pending_status",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_pending_status\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_intake_preflight",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_intake_preflight.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_decision_value_intake_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_intake_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_generic_continuation_rejection\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_request",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_request.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_decision_value_request",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_request\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_template",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_template.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_decision_value_template",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_template\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_collection_gate",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_collection_gate.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_decision_value_collection_gate",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_collection_gate\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_record_path",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_record_path.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_decision_value_record_path",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_record_path\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "agentic_service_harness_live_producer_operator_decision_value_record",
       "args": [
         "python",
         "scripts/validate_agentic_service_harness_live_producer_operator_decision_value_record.py"
       ],
-      "name": "agentic_service_harness_live_producer_operator_decision_value_record",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] agentic_service_harness_live_producer_operator_decision_value_record\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_operator_readiness_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_operator_readiness_boundary.py"
       ],
-      "name": "foundation_operator_readiness_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_operator_readiness_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_solo_daily_loop_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_solo_daily_loop_boundary.py"
       ],
-      "name": "foundation_solo_daily_loop_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_solo_daily_loop_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_learning_path_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_learning_path_boundary.py"
       ],
-      "name": "foundation_learning_path_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_learning_path_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_learning_loop_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_learning_loop_rehearsal_boundary.py"
       ],
-      "name": "foundation_learning_loop_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_learning_loop_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_concept_glossary_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_concept_glossary_rehearsal_boundary.py"
       ],
-      "name": "foundation_concept_glossary_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_concept_glossary_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_life_meaning_doctrine_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_life_meaning_doctrine_rehearsal_boundary.py"
       ],
-      "name": "foundation_life_meaning_doctrine_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_life_meaning_doctrine_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_architecture_map_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_architecture_map_boundary.py"
       ],
-      "name": "foundation_architecture_map_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_architecture_map_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_system_boundary_inventory_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_system_boundary_inventory_boundary.py"
       ],
-      "name": "foundation_system_boundary_inventory_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_system_boundary_inventory_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_module_inventory_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_module_inventory_boundary.py"
       ],
-      "name": "foundation_module_inventory_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_module_inventory_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_component_contract_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_component_contract_boundary.py"
       ],
-      "name": "foundation_component_contract_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_component_contract_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_interface_map_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_interface_map_boundary.py"
       ],
-      "name": "foundation_interface_map_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_interface_map_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_dependency_graph_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_dependency_graph_boundary.py"
       ],
-      "name": "foundation_dependency_graph_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_dependency_graph_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_invariant_map_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_invariant_map_boundary.py"
       ],
-      "name": "foundation_invariant_map_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_invariant_map_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_hazard_map_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_hazard_map_boundary.py"
       ],
-      "name": "foundation_hazard_map_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_hazard_map_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_proof_reference_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_proof_reference_boundary.py"
       ],
-      "name": "foundation_proof_reference_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_proof_reference_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_gap_register_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_gap_register_boundary.py"
       ],
-      "name": "foundation_gap_register_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_gap_register_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_diff_review_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_diff_review_boundary.py"
       ],
-      "name": "foundation_diff_review_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_diff_review_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_change_handoff_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_change_handoff_boundary.py"
       ],
-      "name": "foundation_change_handoff_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_change_handoff_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_local_workstation_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_local_workstation_boundary.py"
       ],
-      "name": "foundation_local_workstation_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_local_workstation_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_documentation_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_documentation_boundary.py"
       ],
-      "name": "foundation_documentation_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_documentation_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_plain_language_status_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_plain_language_status_boundary.py"
       ],
-      "name": "foundation_plain_language_status_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_plain_language_status_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_accessibility_language_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_accessibility_language_boundary.py"
       ],
-      "name": "foundation_accessibility_language_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_accessibility_language_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_claim_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_claim_boundary.py"
       ],
-      "name": "foundation_claim_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_claim_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_website_posture_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_website_posture_boundary.py"
       ],
-      "name": "foundation_website_posture_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_website_posture_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_research_notebook_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_research_notebook_boundary.py"
       ],
-      "name": "foundation_research_notebook_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_research_notebook_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_evidence_ledger_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_evidence_ledger_boundary.py"
       ],
-      "name": "foundation_evidence_ledger_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_evidence_ledger_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_decision_journal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_decision_journal_boundary.py"
       ],
-      "name": "foundation_decision_journal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_decision_journal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_next_action_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_next_action_boundary.py"
       ],
-      "name": "foundation_next_action_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_next_action_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_test_evidence_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_test_evidence_boundary.py"
       ],
-      "name": "foundation_test_evidence_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_test_evidence_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_local_proof_thread",
       "args": [
         "python",
         "scripts/validate_foundation_local_proof_thread.py"
       ],
-      "name": "foundation_local_proof_thread",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_local_proof_thread\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_private_recovery_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_private_recovery_boundary.py"
       ],
-      "name": "foundation_private_recovery_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_private_recovery_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_private_recovery_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_private_recovery_rehearsal_boundary.py"
       ],
-      "name": "foundation_private_recovery_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_private_recovery_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_secrets_credentials_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_secrets_credentials_boundary.py"
       ],
-      "name": "foundation_secrets_credentials_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_secrets_credentials_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_security_baseline_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_security_baseline_boundary.py"
       ],
-      "name": "foundation_security_baseline_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_security_baseline_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_cost_budget_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_cost_budget_boundary.py"
       ],
-      "name": "foundation_cost_budget_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_cost_budget_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_payment_provider_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_payment_provider_boundary.py"
       ],
-      "name": "foundation_payment_provider_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_payment_provider_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_runtime_environment_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_runtime_environment_boundary.py"
       ],
-      "name": "foundation_runtime_environment_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_runtime_environment_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_backup_export_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_backup_export_boundary.py"
       ],
-      "name": "foundation_backup_export_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_backup_export_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_deployment_deferral_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_deployment_deferral_boundary.py"
       ],
-      "name": "foundation_deployment_deferral_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_deployment_deferral_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_external_infrastructure_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_external_infrastructure_boundary.py"
       ],
-      "name": "foundation_external_infrastructure_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_external_infrastructure_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_runtime_secret_handoff_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_runtime_secret_handoff_rehearsal_boundary.py"
       ],
-      "name": "foundation_runtime_secret_handoff_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_runtime_secret_handoff_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_runtime_witness_deferral_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_runtime_witness_deferral_boundary.py"
       ],
-      "name": "foundation_runtime_witness_deferral_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_runtime_witness_deferral_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_production_dependency_evidence_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_production_dependency_evidence_rehearsal_boundary.py"
       ],
-      "name": "foundation_production_dependency_evidence_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_production_dependency_evidence_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_external_evidence_acceptance_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_external_evidence_acceptance_rehearsal_boundary.py"
       ],
-      "name": "foundation_external_evidence_acceptance_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_external_evidence_acceptance_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_deployment_upstream_api_gate_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py"
       ],
-      "name": "foundation_deployment_upstream_api_gate_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_deployment_upstream_api_gate_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_gateway_dns_target_binding_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_gateway_dns_target_binding_rehearsal_boundary.py"
       ],
-      "name": "foundation_gateway_dns_target_binding_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_gateway_dns_target_binding_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_gateway_dns_publication_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_gateway_dns_publication_rehearsal_boundary.py"
       ],
-      "name": "foundation_gateway_dns_publication_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_gateway_dns_publication_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_gateway_dns_resolution_receipt_rehearsal_boundary.py"
       ],
-      "name": "foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_gateway_dns_resolution_receipt_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_gateway_endpoint_reachability_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_gateway_endpoint_reachability_rehearsal_boundary.py"
       ],
-      "name": "foundation_gateway_endpoint_reachability_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_gateway_endpoint_reachability_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary.py"
       ],
-      "name": "foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_public_health_declaration_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_public_health_declaration_rehearsal_boundary.py"
       ],
-      "name": "foundation_public_health_declaration_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_public_health_declaration_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_deployment_witness_input_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_deployment_witness_input_boundary.py"
       ],
-      "name": "foundation_deployment_witness_input_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_deployment_witness_input_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_deployment_witness_preflight_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_deployment_witness_preflight_rehearsal_boundary.py"
       ],
-      "name": "foundation_deployment_witness_preflight_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_deployment_witness_preflight_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_deployment_witness_dispatch_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_deployment_witness_dispatch_rehearsal_boundary.py"
       ],
-      "name": "foundation_deployment_witness_dispatch_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_deployment_witness_dispatch_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_deployment_witness_artifact_validation_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_deployment_witness_artifact_validation_rehearsal_boundary.py"
       ],
-      "name": "foundation_deployment_witness_artifact_validation_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_deployment_witness_artifact_validation_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_deployment_witness_evidence_handoff_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_deployment_witness_evidence_handoff_boundary.py"
       ],
-      "name": "foundation_deployment_witness_evidence_handoff_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_deployment_witness_evidence_handoff_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_deployment_witness_evidence_ledger_routing_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_deployment_witness_evidence_ledger_routing_boundary.py"
       ],
-      "name": "foundation_deployment_witness_evidence_ledger_routing_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_deployment_witness_evidence_ledger_routing_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_domain_email_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_domain_email_boundary.py"
       ],
-      "name": "foundation_domain_email_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_domain_email_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_legal_business_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_legal_business_boundary.py"
       ],
-      "name": "foundation_legal_business_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_legal_business_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_legal_business_question_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_legal_business_question_rehearsal_boundary.py"
       ],
-      "name": "foundation_legal_business_question_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_legal_business_question_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_legal_review_deferral_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_legal_review_deferral_boundary.py"
       ],
-      "name": "foundation_legal_review_deferral_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_legal_review_deferral_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_company_formation_deferral_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_company_formation_deferral_boundary.py"
       ],
-      "name": "foundation_company_formation_deferral_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_company_formation_deferral_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_patent_disclosure_deferral_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_patent_disclosure_deferral_boundary.py"
       ],
-      "name": "foundation_patent_disclosure_deferral_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_patent_disclosure_deferral_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_product_scope_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_product_scope_boundary.py"
       ],
-      "name": "foundation_product_scope_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_product_scope_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_capability_roadmap_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_capability_roadmap_boundary.py"
       ],
-      "name": "foundation_capability_roadmap_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_capability_roadmap_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_agentic_management_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_agentic_management_boundary.py"
       ],
-      "name": "foundation_agentic_management_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_agentic_management_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_operations_runbook_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_operations_runbook_boundary.py"
       ],
-      "name": "foundation_operations_runbook_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_operations_runbook_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_market_research_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_market_research_boundary.py"
       ],
-      "name": "foundation_market_research_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_market_research_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_pilot_deferral_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_pilot_deferral_boundary.py"
       ],
-      "name": "foundation_pilot_deferral_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_pilot_deferral_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_pilot_deferral_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_pilot_deferral_rehearsal_boundary.py"
       ],
-      "name": "foundation_pilot_deferral_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_pilot_deferral_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_reassessment_gate_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_reassessment_gate_boundary.py"
       ],
-      "name": "foundation_reassessment_gate_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_reassessment_gate_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_support_readiness_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_support_readiness_boundary.py"
       ],
-      "name": "foundation_support_readiness_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_support_readiness_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_support_triage_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_support_triage_rehearsal_boundary.py"
       ],
-      "name": "foundation_support_triage_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_support_triage_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_intake_onboarding_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_intake_onboarding_boundary.py"
       ],
-      "name": "foundation_intake_onboarding_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_intake_onboarding_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_intake_questionnaire_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_intake_questionnaire_rehearsal_boundary.py"
       ],
-      "name": "foundation_intake_questionnaire_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_intake_questionnaire_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_customer_access_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_customer_access_boundary.py"
       ],
-      "name": "foundation_customer_access_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_customer_access_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_customer_access_policy_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_customer_access_policy_rehearsal_boundary.py"
       ],
-      "name": "foundation_customer_access_policy_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_customer_access_policy_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_github_app_token_format_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_github_app_token_format_boundary.py"
       ],
-      "name": "foundation_github_app_token_format_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_github_app_token_format_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_public_ci_window_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_public_ci_window_boundary.py"
       ],
-      "name": "foundation_public_ci_window_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_public_ci_window_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_privacy_data_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_privacy_data_boundary.py"
       ],
-      "name": "foundation_privacy_data_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_privacy_data_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_privacy_minimization_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_privacy_minimization_rehearsal_boundary.py"
       ],
-      "name": "foundation_privacy_minimization_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_privacy_minimization_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_funding_team_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_funding_team_boundary.py"
       ],
-      "name": "foundation_funding_team_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_funding_team_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_funding_team_obligation_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_funding_team_obligation_rehearsal_boundary.py"
       ],
-      "name": "foundation_funding_team_obligation_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_funding_team_obligation_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_community_network_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_community_network_boundary.py"
       ],
-      "name": "foundation_community_network_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_community_network_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "foundation_community_network_no_outreach_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_community_network_no_outreach_rehearsal_boundary.py"
       ],
-      "name": "foundation_community_network_no_outreach_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] foundation_community_network_no_outreach_rehearsal_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "protocol_manifest",
       "args": [
         "python",
         "scripts/validate_protocol_manifest.py"
       ],
-      "name": "protocol_manifest",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] protocol_manifest\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "simple_assistant_ui_boundary",
       "args": [
         "python",
         "scripts/validate_simple_assistant_ui_boundary.py"
       ],
-      "name": "simple_assistant_ui_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] simple_assistant_ui_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "logic_governance_application",
       "args": [
         "python",
         "scripts/validate_logic_governance_application.py"
       ],
-      "name": "logic_governance_application",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] logic_governance_application\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "life_meaning_governance",
       "args": [
         "python",
         "scripts/validate_life_meaning_governance.py"
       ],
-      "name": "life_meaning_governance",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] life_meaning_governance\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "phi_gps_v3_platform_spec",
       "args": [
         "python",
         "scripts/validate_phi_gps_v3_platform_spec.py"
       ],
-      "name": "phi_gps_v3_platform_spec",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] phi_gps_v3_platform_spec\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "governance_normalization_map",
       "args": [
         "python",
         "scripts/validate_governance_normalization_map.py"
       ],
-      "name": "governance_normalization_map",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] governance_normalization_map\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "holistic_loop_reasoning_admission_binding",
       "args": [
         "python",
         "scripts/validate_holistic_loop_reasoning_admission_binding.py"
       ],
-      "name": "holistic_loop_reasoning_admission_binding",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] holistic_loop_reasoning_admission_binding\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "public_repository_surface",
       "args": [
         "python",
         "scripts/validate_public_repository_surface.py",
         "--local-only"
       ],
-      "name": "public_repository_surface",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] public_repository_surface\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "proprietary_boundary",
       "args": [
         "python",
         "scripts/validate_proprietary_boundary.py"
       ],
-      "name": "proprietary_boundary",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] proprietary_boundary\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "company_boundary_kernel",
       "args": [
         "python",
         "scripts/validate_foundation_company_boundary_kernel.py"
       ],
-      "name": "company_boundary_kernel",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] company_boundary_kernel\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "release_status",
       "args": [
         "python",
         "scripts/validate_release_status.py"
       ],
-      "name": "release_status",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] release_status\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "workspace_governance_preflight_receipt_contract",
       "args": [
         "python",
         "scripts/validate_workspace_governance_preflight_receipt_contract.py"
       ],
-      "name": "workspace_governance_preflight_receipt_contract",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] workspace_governance_preflight_receipt_contract\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "workspace_governance_preflight_receipt_example",
       "args": [
         "python",
         "scripts/validate_workspace_governance_preflight_receipt.py"
       ],
-      "name": "workspace_governance_preflight_receipt_example",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] workspace_governance_preflight_receipt_example\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "workspace_governance_witness_contract",
       "args": [
         "python",
         "scripts/validate_workspace_governance_witness.py"
       ],
-      "name": "workspace_governance_witness_contract",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] workspace_governance_witness_contract\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "workspace_governance_inventory_report",
       "args": [
         "python",
         "scripts/report_workspace_governance_inventory.py"
       ],
-      "name": "workspace_governance_inventory_report",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] workspace_governance_inventory_report\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "workspace_governance_inventory_report_contract",
       "args": [
         "python",
         "scripts/validate_workspace_governance_inventory_report_contract.py"
       ],
-      "name": "workspace_governance_inventory_report_contract",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] workspace_governance_inventory_report_contract\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "workspace_governance_integrity_report",
       "args": [
         "python",
         "scripts/report_workspace_governance_integrity.py"
       ],
-      "name": "workspace_governance_integrity_report",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] workspace_governance_integrity_report\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "workspace_governance_integrity_report_contract",
       "args": [
         "python",
         "scripts/validate_workspace_governance_integrity_report_contract.py"
       ],
-      "name": "workspace_governance_integrity_report_contract",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] workspace_governance_integrity_report_contract\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "governed_code_change_loop_sandbox_probe_example",
       "args": [
         "python",
         "scripts/validate_governed_code_change_loop_sandbox_probe.py",
         "--probe",
         "docs/governed-code-change-loop-sandbox-probe-example.json"
       ],
-      "name": "governed_code_change_loop_sandbox_probe_example",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] governed_code_change_loop_sandbox_probe_example\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "governed_code_change_loop_sandbox_readiness_runbook",
       "args": [
         "python",
         "scripts/validate_governed_code_change_loop_sandbox_readiness_runbook.py"
       ],
-      "name": "governed_code_change_loop_sandbox_readiness_runbook",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] governed_code_change_loop_sandbox_readiness_runbook\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "code_change_physics_packet",
       "args": [
         "python",
         "scripts/validate_code_change_physics_packet.py"
       ],
-      "name": "code_change_physics_packet",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] code_change_physics_packet\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "search_decision_receipt",
       "args": [
         "python",
         "scripts/validate_search_decision_receipt.py"
       ],
-      "name": "search_decision_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] search_decision_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "intelligence_coordination_episode_receipt",
       "args": [
         "python",
         "scripts/validate_intelligence_coordination_episode_receipt.py"
       ],
-      "name": "intelligence_coordination_episode_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] intelligence_coordination_episode_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "engineering_puzzle_universality_witness",
       "args": [
         "python",
         "scripts/validate_engineering_puzzle_universality_witness.py",
         "--output",
         ".tmp/engineering-puzzle-universality-witness.json"
       ],
-      "name": "engineering_puzzle_universality_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] engineering_puzzle_universality_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "mil_audit_runbook_operator_checklist",
       "args": [
         "python",
         "scripts/validate_mil_audit_runbook_operator_checklist.py",
@@ -2967,15 +2999,15 @@
         "examples/mil_audit_runbook_operator_checklist.json",
         "--json"
       ],
-      "name": "mil_audit_runbook_operator_checklist",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] mil_audit_runbook_operator_checklist\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "general_agent_promotion_handoff_packet",
       "args": [
         "python",
         "scripts/validate_general_agent_promotion_handoff_packet.py",
@@ -2983,15 +3015,15 @@
         "examples/general_agent_promotion_handoff_packet.json",
         "--json"
       ],
-      "name": "general_agent_promotion_handoff_packet",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] general_agent_promotion_handoff_packet\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "general_agent_promotion_operator_checklist",
       "args": [
         "python",
         "scripts/validate_general_agent_promotion_operator_checklist.py",
@@ -2999,15 +3031,15 @@
         "examples/general_agent_promotion_operator_checklist.json",
         "--json"
       ],
-      "name": "general_agent_promotion_operator_checklist",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] general_agent_promotion_operator_checklist\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "general_agent_promotion_environment_bindings",
       "args": [
         "python",
         "scripts/validate_general_agent_promotion_environment_bindings.py",
@@ -3017,15 +3049,15 @@
         "examples/general_agent_promotion_operator_checklist.json",
         "--json"
       ],
-      "name": "general_agent_promotion_environment_bindings",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] general_agent_promotion_environment_bindings\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "general_agent_promotion_handoff_preflight",
       "args": [
         "python",
         "scripts/preflight_general_agent_promotion_handoff.py",
@@ -3033,15 +3065,15 @@
         ".tmp/general-agent-promotion-handoff-preflight.json",
         "--json"
       ],
-      "name": "general_agent_promotion_handoff_preflight",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] general_agent_promotion_handoff_preflight\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "general_agent_promotion_closure_chain",
       "args": [
         "python",
         "scripts/run_general_agent_promotion_closure_chain.py",
@@ -3052,15 +3084,15 @@
         "--json",
         "--strict"
       ],
-      "name": "general_agent_promotion_closure_chain",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] general_agent_promotion_closure_chain\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "finance_approval_live_handoff_closure_run",
       "args": [
         "python",
         "scripts/run_finance_approval_live_handoff_closure.py",
@@ -3068,15 +3100,15 @@
         ".tmp/finance-approval-live-handoff-closure-run.json",
         "--json"
       ],
-      "name": "finance_approval_live_handoff_closure_run",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] finance_approval_live_handoff_closure_run\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "finance_approval_live_handoff_chain",
       "args": [
         "python",
         "scripts/run_finance_approval_live_handoff_chain.py",
@@ -3084,95 +3116,95 @@
         ".tmp/finance-approval-live-handoff-chain",
         "--json"
       ],
-      "name": "finance_approval_live_handoff_chain",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] finance_approval_live_handoff_chain\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "route_receipt_coverage",
       "args": [
         "python",
         "scripts/validate_receipt_coverage.py",
         "--strict"
       ],
-      "name": "route_receipt_coverage",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] route_receipt_coverage\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "route_guard_chain_coverage",
       "args": [
         "python",
         "scripts/validate_guard_chain_coverage.py",
         "--strict"
       ],
-      "name": "route_guard_chain_coverage",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] route_guard_chain_coverage\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "reflective_contract_guard",
       "args": [
         "python",
         "scripts/validate_reflective_contracts.py"
       ],
-      "name": "reflective_contract_guard",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] reflective_contract_guard\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "doc_code_consistency",
       "args": [
         "python",
         "scripts/validate_doc_code_consistency.py"
       ],
-      "name": "doc_code_consistency",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] doc_code_consistency\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "tenant_scope_coverage",
       "args": [
         "python",
         "scripts/validate_tenant_scope_coverage.py"
       ],
-      "name": "tenant_scope_coverage",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] tenant_scope_coverage\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "persistence_tenant_guard_coverage",
       "args": [
         "python",
         "scripts/validate_persistence_tenant_guard_coverage.py"
       ],
-      "name": "persistence_tenant_guard_coverage",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] persistence_tenant_guard_coverage\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "mcp_capability_manifest",
       "args": [
         "python",
         "scripts/validate_mcp_capability_manifest.py",
@@ -3180,15 +3212,15 @@
         "examples/mcp_capability_manifest.json",
         "--json"
       ],
-      "name": "mcp_capability_manifest",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] mcp_capability_manifest\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "mcp_operator_checklist",
       "args": [
         "python",
         "scripts/validate_mcp_operator_checklist.py",
@@ -3196,638 +3228,632 @@
         "examples/mcp_operator_handoff_checklist.json",
         "--json"
       ],
-      "name": "mcp_operator_checklist",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] mcp_operator_checklist\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "public_naming_readiness",
       "args": [
         "python",
         "scripts/validate_public_naming_readiness.py"
       ],
-      "name": "public_naming_readiness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] public_naming_readiness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "public_demo_surfaces",
       "args": [
         "python",
         "scripts/validate_public_demo_surfaces.py",
         "--output",
         ".tmp/public-demo-surface-validation.json"
       ],
-      "name": "public_demo_surfaces",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] public_demo_surfaces\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "snet_episode_replay",
       "args": [
         "python",
         "scripts/validate_snet_episode_replay.py",
         "--episode",
         "examples/snet_episode_seed_dependency.json"
       ],
-      "name": "snet_episode_replay",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] snet_episode_replay\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "strict_schema_validation",
       "args": [
         "python",
         "scripts/validate_schemas.py",
         "--strict"
       ],
-      "name": "strict_schema_validation",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] strict_schema_validation\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "strict_artifact_validation",
       "args": [
         "python",
         "scripts/validate_artifacts.py",
         "--strict"
       ],
-      "name": "strict_artifact_validation",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] strict_artifact_validation\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "terminal_closure_certificate",
       "args": [
         "python",
         "scripts/validate_terminal_closure_certificate.py",
         "--json"
       ],
-      "name": "terminal_closure_certificate",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] terminal_closure_certificate\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_action_orchestration_contract",
       "args": [
         "python",
         "scripts/validate_universal_action_orchestration.py"
       ],
-      "name": "universal_action_orchestration_contract",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_action_orchestration_contract\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_action_orchestration_validation_receipt_contract",
       "args": [
         "python",
         "scripts/validate_universal_action_orchestration_receipt_contract.py"
       ],
-      "name": "universal_action_orchestration_validation_receipt_contract",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_action_orchestration_validation_receipt_contract\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_action_orchestration_validation_receipt_example",
       "args": [
         "python",
         "scripts/validate_universal_action_orchestration_receipt.py"
       ],
-      "name": "universal_action_orchestration_validation_receipt_example",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_action_orchestration_validation_receipt_example\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_runtime_admission_policy",
       "args": [
         "python",
         "scripts/validate_universal_symbol_runtime_admission_policy.py"
       ],
-      "name": "universal_symbol_runtime_admission_policy",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_runtime_admission_policy\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_runtime_admission_evidence_receipt",
       "args": [
         "python",
         "scripts/validate_universal_symbol_runtime_admission_evidence_receipt.py"
       ],
-      "name": "universal_symbol_runtime_admission_evidence_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_runtime_admission_evidence_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_runtime_live_witness_input_receipt",
       "args": [
         "python",
         "scripts/validate_universal_symbol_runtime_live_witness_input_receipt.py"
       ],
-      "name": "universal_symbol_runtime_live_witness_input_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_runtime_live_witness_input_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_lane_runtime_authority_evidence_receipt",
       "args": [
         "python",
         "scripts/validate_universal_symbol_lane_runtime_authority_evidence_receipt.py"
       ],
-      "name": "universal_symbol_lane_runtime_authority_evidence_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_lane_runtime_authority_evidence_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_runtime_authority_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_runtime_authority_witness.py"
       ],
-      "name": "universal_symbol_runtime_authority_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_runtime_authority_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_runtime_authority_read_model",
       "args": [
         "python",
         "scripts/validate_universal_symbol_runtime_authority_read_model.py"
       ],
-      "name": "universal_symbol_runtime_authority_read_model",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_runtime_authority_read_model\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_skill_runtime_authority_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_skill_runtime_authority_witness.py"
       ],
-      "name": "universal_symbol_skill_runtime_authority_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_skill_runtime_authority_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_adapter_receipt_persistence_policy",
       "args": [
         "python",
         "scripts/validate_universal_symbol_adapter_receipt_persistence_policy.py"
       ],
-      "name": "universal_symbol_adapter_receipt_persistence_policy",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_adapter_receipt_persistence_policy\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_append_audit_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_append_audit_witness.py"
       ],
-      "name": "universal_symbol_append_audit_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_append_audit_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_operator_approval_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_operator_approval_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_operator_approval_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_operator_approval_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_operator_identity_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_operator_identity_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_operator_identity_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_operator_identity_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_operator_approval_decision_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_operator_approval_decision_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_operator_approval_decision_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_operator_approval_decision_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_operator_reapproval_expiry_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_operator_reapproval_expiry_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_operator_reapproval_expiry_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_operator_reapproval_expiry_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_operator_revocation_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_operator_revocation_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_operator_revocation_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_operator_revocation_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_replacement_decision_receipt",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_replacement_decision_receipt.py"
       ],
-      "name": "universal_symbol_receipt_store_replacement_decision_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_replacement_decision_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_replacement_decision_replay_idempotency_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_reapproval_revocation_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_reapproval_revocation_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_reapproval_revocation_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_reapproval_revocation_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_lifecycle_evidence_receipt",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_lifecycle_evidence_receipt.py"
       ],
-      "name": "universal_symbol_receipt_store_lifecycle_evidence_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_lifecycle_evidence_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_lifecycle_audit_receipt",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_lifecycle_audit_receipt.py"
       ],
-      "name": "universal_symbol_receipt_store_lifecycle_audit_receipt",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_lifecycle_audit_receipt\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_tenant_scope_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_tenant_scope_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_tenant_scope_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_tenant_scope_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_writer_duty_scope_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_writer_duty_scope_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_writer_duty_scope_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_writer_duty_scope_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_path_confinement_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_path_confinement_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_path_confinement_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_path_confinement_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_write_path_idempotency_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_write_path_idempotency_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_write_path_idempotency_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_write_path_idempotency_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_durability_replay_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_durability_replay_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_durability_replay_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_durability_replay_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_recovery_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_recovery_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_recovery_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_recovery_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_writer_identity_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_writer_identity_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_writer_identity_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_writer_identity_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_writer_registration_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_writer_registration_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_writer_registration_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_writer_registration_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_path_custody_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_path_custody_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_path_custody_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_path_custody_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_write_path_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_write_path_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_write_path_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_write_path_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_receipt_store_authority_witness",
       "args": [
         "python",
         "scripts/validate_universal_symbol_receipt_store_authority_witness.py"
       ],
-      "name": "universal_symbol_receipt_store_authority_witness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_receipt_store_authority_witness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "universal_symbol_kernel",
       "args": [
         "python",
         "scripts/validate_universal_symbol_kernel.py"
       ],
-      "name": "universal_symbol_kernel",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] universal_symbol_kernel\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "inceptadive_external_effect_adapter_readiness",
       "args": [
         "python",
         "scripts/validate_inceptadive_external_effect_adapter_readiness.py"
       ],
-      "name": "inceptadive_external_effect_adapter_readiness",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] inceptadive_external_effect_adapter_readiness\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "sdlc_artifact_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_artifact.py"
       ],
-      "name": "sdlc_artifact_validation",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] sdlc_artifact_validation\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "sdlc_route_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_route.py"
       ],
-      "name": "sdlc_route_validation",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] sdlc_route_validation\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "sdlc_state_machine_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_state_machine.py"
       ],
-      "name": "sdlc_state_machine_validation",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] sdlc_state_machine_validation\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "sdlc_release_readiness_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_release_readiness.py",
         "--strict"
       ],
-      "name": "sdlc_release_readiness_validation",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] sdlc_release_readiness_validation\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "sdlc_security_review_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_security_review.py",
         "--strict"
       ],
-      "name": "sdlc_security_review_validation",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] sdlc_security_review_validation\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     },
     {
+      "name": "sdlc_pr_enforcement_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_pr_enforcement.py"
       ],
-      "name": "sdlc_pr_enforcement_validation",
-      "passed": true,
       "return_code": 0,
-      "stderr": "",
       "stdout": "[PASS] sdlc_pr_enforcement_validation\nSTATUS: passed\n",
+      "stderr": "",
       "termination_reason": "completed",
-      "termination_signal": null
+      "termination_signal": null,
+      "passed": true
     }
-  ],
-  "generated_at_epoch": 1893456000.0,
-  "receipt_id": "workspace_governance_preflight_receipt",
-  "receipt_is_not_terminal_closure": true,
-  "status": "passed",
-  "terminal_closure_required": true
+  ]
 }
