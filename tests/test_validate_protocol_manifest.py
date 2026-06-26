@@ -2777,6 +2777,23 @@ def test_protocol_manifest_indexes_personal_assistant_operator_reapproval_decisi
     assert value_binding_admission_preflight_entry["surface"] == "approval"
 
 
+def test_protocol_manifest_indexes_personal_assistant_operator_reapproval_decision_receipt_value_binding_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    value_binding_contract_entry = entries[
+        "personal-assistant-operator-reapproval-decision-receipt-value-binding-contract"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert value_binding_contract_entry["path"] == (
+        "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_contract.schema.json"
+    )
+    assert value_binding_contract_entry["urn"] == (
+        "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-contract:1"
+    )
+    assert value_binding_contract_entry["surface"] == "approval"
+
+
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
     manifest = load_manifest()
     manifest["schemas"] = [
