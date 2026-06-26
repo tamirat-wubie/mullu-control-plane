@@ -1,5 +1,5 @@
 {
-  "artifact_count": 366,
+  "artifact_count": 369,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -892,6 +892,11 @@
       "purpose": "Foundation Proof Reference Boundary doctrine and Foundation Mode boundary evidence contract."
     },
     {
+      "name": "foundation_boundary_doc_foundation_public_ci_window_boundary",
+      "path": "docs/FOUNDATION_PUBLIC_CI_WINDOW_BOUNDARY.md",
+      "purpose": "Foundation Public CI Window Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
       "name": "foundation_boundary_doc_foundation_public_health_declaration_rehearsal_boundary",
       "path": "docs/FOUNDATION_PUBLIC_HEALTH_DECLARATION_REHEARSAL_BOUNDARY.md",
       "purpose": "Foundation Public Health Declaration Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
@@ -1322,6 +1327,11 @@
       "purpose": "Read-only validator for Foundation Proof Reference Boundary."
     },
     {
+      "name": "foundation_boundary_validator_foundation_public_ci_window_boundary",
+      "path": "scripts/validate_foundation_public_ci_window_boundary.py",
+      "purpose": "Read-only validator for Foundation Public CI Window Boundary."
+    },
+    {
       "name": "foundation_boundary_validator_foundation_public_health_declaration_rehearsal_boundary",
       "path": "scripts/validate_foundation_public_health_declaration_rehearsal_boundary.py",
       "purpose": "Read-only validator for Foundation Public Health Declaration Rehearsal Boundary."
@@ -1750,6 +1760,11 @@
       "name": "foundation_boundary_tests_foundation_proof_reference_boundary",
       "path": "tests/test_validate_foundation_proof_reference_boundary.py",
       "purpose": "Regression tests for Foundation Proof Reference Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_public_ci_window_boundary",
+      "path": "tests/test_validate_foundation_public_ci_window_boundary.py",
+      "purpose": "Regression tests for Foundation Public CI Window Boundary validation."
     },
     {
       "name": "foundation_boundary_tests_foundation_public_health_declaration_rehearsal_boundary",
