@@ -17,6 +17,7 @@ import json
 from pathlib import Path
 from typing import Deque, Iterable, Protocol
 
+from mcoi_runtime.core.inceptadive_external_effect_boundary import ExternalEffectBoundaryAdvisory
 from mcoi_runtime.core.inceptadive_shadow_types import ShadowPassResult, ShadowReceipt
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
@@ -30,11 +31,21 @@ class ShadowReceiptStore(Protocol):
     def append_receipt(self, receipt: ShadowReceipt) -> None:
         """Append one redacted shadow receipt."""
 
+    def append_external_effect_advisory(self, advisory: ExternalEffectBoundaryAdvisory) -> None:
+        """Append one redacted external-effect advisory."""
+
     def recent_results(self, *, limit: int = 25) -> tuple[ShadowPassResult, ...]:
         """Return recent result objects for in-process console summaries."""
 
     def recent_receipts(self, *, limit: int = 25) -> tuple[ShadowReceipt, ...]:
         """Return recent receipt objects for in-process console summaries."""
+
+    def recent_external_effect_advisories(
+        self,
+        *,
+        limit: int = 25,
+    ) -> tuple[ExternalEffectBoundaryAdvisory, ...]:
+        """Return recent advisory objects for obligation evidence summaries."""
 
 
 @dataclass
@@ -48,6 +59,7 @@ class InMemoryShadowReceiptStore:
             raise RuntimeCoreInvariantError("max_items must be positive")
         self._results: Deque[ShadowPassResult] = deque(maxlen=self.max_items)
         self._receipts: Deque[ShadowReceipt] = deque(maxlen=self.max_items)
+        self._external_effect_advisories: Deque[ExternalEffectBoundaryAdvisory] = deque(maxlen=self.max_items)
 
     def append_result(self, result: ShadowPassResult) -> None:
         self._results.append(result.with_integrity())
@@ -55,11 +67,21 @@ class InMemoryShadowReceiptStore:
     def append_receipt(self, receipt: ShadowReceipt) -> None:
         self._receipts.append(receipt.with_integrity())
 
+    def append_external_effect_advisory(self, advisory: ExternalEffectBoundaryAdvisory) -> None:
+        self._external_effect_advisories.append(advisory)
+
     def recent_results(self, *, limit: int = 25) -> tuple[ShadowPassResult, ...]:
         return _tail(self._results, limit)
 
     def recent_receipts(self, *, limit: int = 25) -> tuple[ShadowReceipt, ...]:
         return _tail(self._receipts, limit)
+
+    def recent_external_effect_advisories(
+        self,
+        *,
+        limit: int = 25,
+    ) -> tuple[ExternalEffectBoundaryAdvisory, ...]:
+        return _tail(self._external_effect_advisories, limit)
 
 
 @dataclass
@@ -85,11 +107,22 @@ class JsonlShadowReceiptStore:
         self._memory.append_receipt(checked)
         self._append_jsonl("shadow-receipts.jsonl", checked.to_dict())
 
+    def append_external_effect_advisory(self, advisory: ExternalEffectBoundaryAdvisory) -> None:
+        self._memory.append_external_effect_advisory(advisory)
+        self._append_jsonl("external-effect-advisories.jsonl", advisory.to_dict())
+
     def recent_results(self, *, limit: int = 25) -> tuple[ShadowPassResult, ...]:
         return self._memory.recent_results(limit=limit)
 
     def recent_receipts(self, *, limit: int = 25) -> tuple[ShadowReceipt, ...]:
         return self._memory.recent_receipts(limit=limit)
+
+    def recent_external_effect_advisories(
+        self,
+        *,
+        limit: int = 25,
+    ) -> tuple[ExternalEffectBoundaryAdvisory, ...]:
+        return self._memory.recent_external_effect_advisories(limit=limit)
 
     def _append_jsonl(self, filename: str, payload: dict[str, object]) -> None:
         self.root_path.mkdir(parents=True, exist_ok=True)

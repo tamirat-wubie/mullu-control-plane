@@ -106,6 +106,19 @@ def test_shadow_console_evidence_route_returns_redacted_recent_evidence() -> Non
                 "created_at": "2026-06-22T00:00:00+00:00",
             },
         )
+        advisory_response = client.post(
+            "/api/v1/shadow/external-effect/advisory",
+            json={
+                "request_id": "shadow-route-evidence-advisory-001",
+                "stage": "preflight",
+                "user_input": "deploy it with obligation-secret-token",
+                "candidate_action": "deploy it with obligation-secret-token",
+                "risk_level": "high",
+                "external_side_effect": True,
+                "required_evidence_refs": ["raw-evidence-secret-ref"],
+                "created_at": "2026-06-22T00:02:00+00:00",
+            },
+        )
         response = client.get("/api/v1/console/shadow/evidence")
     finally:
         deps._store.clear()
@@ -114,7 +127,9 @@ def test_shadow_console_evidence_route_returns_redacted_recent_evidence() -> Non
     payload = response.json()
     recent_result = payload["recent_results"][0]
     recent_receipt = payload["recent_receipts"][0]
+    recent_advisory = payload["recent_external_effect_advisories"][0]
     assert inspect_response.status_code == 200
+    assert advisory_response.status_code == 200
     assert response.status_code == 200
     assert payload["governed"] is True
     assert payload["registered"] is True
@@ -129,9 +144,10 @@ def test_shadow_console_evidence_route_returns_redacted_recent_evidence() -> Non
     assert payload["raw_request_text_exposed"] is False
     assert payload["private_memory_exposed"] is False
     assert payload["raw_evidence_refs_exposed"] is False
-    assert payload["obligation_history_available"] is False
-    assert payload["obligation_history_unavailable_reason"] == "external_effect_advisory_history_not_recorded"
-    assert payload["missing_authority_obligation_count"] == 0
+    assert payload["obligation_history_available"] is True
+    assert payload["obligation_history_unavailable_reason"] == ""
+    assert payload["recent_advisory_count"] == 1
+    assert payload["missing_authority_obligation_count"] == 1
     assert payload["missing_evidence_obligation_count"] == 0
     assert recent_result["result_id"].startswith("shadow-result-")
     assert recent_result["request_id"] == "shadow-route-evidence-001"
@@ -142,8 +158,19 @@ def test_shadow_console_evidence_route_returns_redacted_recent_evidence() -> Non
     assert recent_receipt["request_id"] == "shadow-route-evidence-001"
     assert recent_receipt["retrieval_receipt_count"] == 0
     assert recent_receipt["execution_authority"] is False
+    assert recent_advisory["advisory_id"].startswith("inceptadive-external-effect-advisory-")
+    assert recent_advisory["request_id"] == "shadow-route-evidence-advisory-001"
+    assert recent_advisory["missing_authority_obligation_count"] == 1
+    assert recent_advisory["missing_evidence_obligation_count"] == 0
+    assert recent_advisory["required_evidence_ref_count"] == 1
+    assert recent_advisory["authority_receipt_count"] == 0
+    assert recent_advisory["execution_authority"] is False
+    assert recent_advisory["connector_dispatch_authority"] is False
     assert "deploy it with evidence-secret-token" not in str(payload)
+    assert "deploy it with obligation-secret-token" not in str(payload)
     assert "evidence-secret-token" not in str(payload)
+    assert "obligation-secret-token" not in str(payload)
+    assert "raw-evidence-secret-ref" not in str(payload)
 
 
 def test_shadow_inspect_route_runs_runtime_and_redacts_raw_text() -> None:

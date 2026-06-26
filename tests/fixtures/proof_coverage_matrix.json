@@ -7068,9 +7068,10 @@
         "mcoi/mcoi_runtime/core/inceptadive_deep_engine.py",
         "mcoi/mcoi_runtime/core/inceptadive_shadow_receipt_store.py",
         "mcoi/tests/test_inceptadive_shadow_routes.py",
+        "mcoi/tests/test_inceptadive_external_effect_boundary.py",
         "mcoi/tests/test_assistant_router.py"
       ],
-      "notes": "InceptaDive shadow inspection routes expose bounded advisory results, redacted receipts, and assistant planning hook metadata without execution authority, raw request text exposure, or private memory exposure.",
+      "notes": "InceptaDive shadow inspection routes expose bounded advisory results, redacted receipts, redacted external-effect advisory history, and assistant planning hook metadata without execution authority, raw request text exposure, or private memory exposure.",
       "representative_paths": [
         "/api/v1/shadow/inspect",
         "/api/v1/shadow/external-effect/advisory"
@@ -7082,6 +7083,7 @@
         "external_effect_advisory_route_returns_missing_obligations_redacted",
         "external_effect_advisory_route_closes_refs_without_exposing_refs",
         "external_effect_advisory_route_rejects_invalid_request_bounded",
+        "runtime_records_jsonl_external_effect_advisory_without_raw_refs",
         "default_routers_include_shadow_inspect_path",
         "personal_assistant_preview_compiles_inbox_request_without_execution",
         "finance_ops_plan_records_inceptadive_shadow_advisory_history"
@@ -15472,8 +15474,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1956,
-    "runtime_witness_count": 1956,
+    "exact_test_anchor_count": 1957,
+    "runtime_witness_count": 1957,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19219,6 +19221,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_inceptadive_external_effect_boundary.py::test_runtime_records_jsonl_external_effect_advisory_without_raw_refs"
+            ],
+            "witness": "runtime_records_jsonl_external_effect_advisory_without_raw_refs"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_inceptadive_shadow_routes.py::test_default_routers_include_shadow_inspect_path"
             ],
             "witness": "default_routers_include_shadow_inspect_path"
@@ -19236,8 +19244,8 @@
             "witness": "finance_ops_plan_records_inceptadive_shadow_advisory_history"
           }
         ],
-        "exact_test_anchor_count": 8,
-        "runtime_witness_count": 8,
+        "exact_test_anchor_count": 9,
+        "runtime_witness_count": 9,
         "surface_id": "inceptadive_shadow_inspection_routes",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

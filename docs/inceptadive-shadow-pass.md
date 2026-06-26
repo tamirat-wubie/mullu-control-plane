@@ -96,6 +96,10 @@ Shadow path:
   evidence and authority obligations for effect-bearing candidates without
   dispatching connectors, approving execution, writing memory, or replacing a
   governance verdict.
+- Redacted external-effect advisory history through the shadow receipt store.
+  The console evidence route can aggregate missing authority and evidence
+  obligation counts without exposing raw request text, raw evidence refs, raw
+  authority refs, private memory, or execution handles.
 - Focused tests covering gate, light pass, preflight, receipts, scoring, and disabled integration.
 - Phi-GPS v3 bridge report in `mcoi_runtime.core.phi_inceptadive_bridge` that
   projects `ProblemStar` fields into Concept Boxes, runs bounded axis
@@ -126,12 +130,13 @@ module for effect-bearing integration. The current integration applies bounded
 repository-local deep advisory findings to strict preflight only when the deep
 engine is explicitly enabled, and now exposes a redacted external-effect
 boundary advisory for authority/evidence obligations. It still returns
-`deep_required` when the gate selects deep mode and the bounded deep engine is
-unavailable, instead of silently pretending that a full live adapter engine has
-run.
+  `deep_required` when the gate selects deep mode and the bounded deep engine is
+  unavailable, instead of silently pretending that a full live adapter engine has
+  run. Redacted advisory history improves operator evidence visibility but does
+  not add live adapter execution.
 
 STATUS:
-  Completeness: v1 foundation complete; repository-local Phi-GPS bridge, bounded preflight deep advisory, external-effect boundary advisory, and route projection added
-  Invariants verified: no execution authority, strict preflight separation, deterministic receipts, denominator guard, no connector dispatch authority
+  Completeness: v1 foundation complete; repository-local Phi-GPS bridge, bounded preflight deep advisory, external-effect boundary advisory, redacted advisory history, and route projection added
+  Invariants verified: no execution authority, strict preflight separation, deterministic receipts, denominator guard, no connector dispatch authority, no raw external-effect refs in advisory history
   Open issues: live external-effect adapter engine remains intentionally deferred
   Next action: keep full effect-bearing integration behind explicit governance and live adapter evidence
