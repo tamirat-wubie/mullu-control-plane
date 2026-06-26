@@ -1,0 +1,49 @@
+{
+  "blocked_claims": [
+    "public readiness",
+    "public launch",
+    "customer access",
+    "production deployment",
+    "legal filing",
+    "fundraising readiness",
+    "raw secret exposure"
+  ],
+  "branch": "manual_window_branch_pending",
+  "closed_at": null,
+  "closure_decision": "Keep public readiness AwaitingEvidence; close public visibility when the CI window no longer requires it, or record a bounded exposure decision.",
+  "customer_access_claimed": false,
+  "exposure_decision": "No live public CI window is claimed by this committed example; any future public exposure must remain bounded to Actions evidence and receipt closure.",
+  "head_sha": "manual_window_sha_pending",
+  "opened_at": null,
+  "production_deployment_claimed": false,
+  "public_launch_claimed": false,
+  "public_readiness_claimed": false,
+  "raw_secrets_committed": false,
+  "reason": "Foundation Mode budget constraints may require temporary public repository visibility for GitHub Actions.",
+  "repo_visibility_after": "private_or_bounded_public_awaiting_evidence",
+  "repo_visibility_before": "private_or_unknown",
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "validators": [
+    {
+      "command": "python scripts/validate_public_repository_surface.py --local-only",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "command": "python scripts/validate_proprietary_boundary.py",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "command": "python scripts/validate_release_status.py",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "command": "python scripts/report_ci_health.py --repo tamirat-wubie/mullu-control-plane --branch main --json",
+      "state": "AwaitingEvidence"
+    }
+  ],
+  "window_id": "foundation_public_ci_window.awaiting_evidence.v1",
+  "witness_id": "foundation_public_ci_window_boundary_witness.awaiting_evidence.v1",
+  "workflow_run_urls": []
+}

@@ -1092,6 +1092,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_github_app_token_format_boundary.py"),
         ),
         CheckCommand(
+            "foundation_public_ci_window_boundary",
+            (python_executable, "scripts/validate_foundation_public_ci_window_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_privacy_data_boundary",
             (python_executable, "scripts/validate_foundation_privacy_data_boundary.py"),
         ),

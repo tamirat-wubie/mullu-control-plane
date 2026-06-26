@@ -1,5 +1,5 @@
 {
-  "check_count": 283,
+  "check_count": 284,
   "checks": [
     {
       "args": [
@@ -603,27 +603,27 @@
     },
     {
       "args": [
-        "C:\\Python313\\python.exe",
+        "python",
         "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.py"
       ],
       "name": "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate",
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE OPERATOR APPROVAL GATE VALID\n",
+      "stdout": "STATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
     {
       "args": [
-        "C:\\Python313\\python.exe",
+        "python",
         "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.py"
       ],
       "name": "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE OPERATOR DECISION CONTRACT VALID\n",
+      "stdout": "STATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -636,7 +636,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE GENERIC CONTINUATION REJECTION VALID\n",
+      "stdout": "STATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -649,7 +649,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE OPERATOR DECISION VALUE REQUEST VALID\n",
+      "stdout": "STATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -662,7 +662,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "AGENTIC SERVICE HARNESS GITHUB PR TERMINAL CLOSURE OPERATOR DECISION VALUE RECORD VALID\n",
+      "stdout": "STATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -2489,6 +2489,19 @@
     {
       "args": [
         "python",
+        "scripts/validate_foundation_public_ci_window_boundary.py"
+      ],
+      "name": "foundation_public_ci_window_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_foundation_privacy_data_boundary.py"
       ],
       "name": "foundation_privacy_data_boundary",
@@ -2638,7 +2651,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "[PASS] governance_normalization_map\nSTATUS: passed\n",
+      "stdout": "STATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
@@ -3649,7 +3662,7 @@
       "passed": true,
       "return_code": 0,
       "stderr": "",
-      "stdout": "INCEPTADIVE EXTERNAL EFFECT ADAPTER READINESS VALID\n",
+      "stdout": "STATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },

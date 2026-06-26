@@ -332,6 +332,12 @@ jobs:
       - name: Validate proprietary boundary
         run: python scripts/validate_proprietary_boundary.py
 
+      - name: Validate public CI window boundary
+        run: python scripts/validate_foundation_public_ci_window_boundary.py
+
+      - name: Test public CI window boundary
+        run: python -m pytest tests/test_validate_foundation_public_ci_window_boundary.py -q
+
       - name: Validate tenant-scope coverage (cross-tenant IDOR guard)
         run: python scripts/validate_tenant_scope_coverage.py
 

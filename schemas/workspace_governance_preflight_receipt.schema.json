@@ -256,6 +256,7 @@
             "foundation_customer_access_boundary",
             "foundation_customer_access_policy_rehearsal_boundary",
             "foundation_github_app_token_format_boundary",
+            "foundation_public_ci_window_boundary",
             "foundation_privacy_data_boundary",
             "foundation_privacy_minimization_rehearsal_boundary",
             "foundation_funding_team_boundary",
