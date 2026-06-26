@@ -34,14 +34,9 @@ for candidate in (REPO_ROOT, MCOI_ROOT):
         sys.path.insert(0, str(candidate))
 
 from mcoi_runtime.personal_assistant import (  # noqa: E402
-    CalendarEventDraftInput,
-    ConnectorProofRef,
-    EmailDraftInput,
-    TaskDraftInput,
-    draft_calendar_event,
-    draft_email_response,
-    draft_task,
-    interpret_user_request,
+    DEFAULT_DRAFT_PROJECTION_GENERATED_AT,
+    build_default_personal_assistant_draft_projection,
+    build_personal_assistant_draft_projection_envelope,
 )
 from scripts.validate_personal_assistant_receipt import validate_personal_assistant_receipt_payload  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
@@ -49,7 +44,7 @@ from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 DEFAULT_PROJECTION = REPO_ROOT / "examples" / "personal_assistant_draft_projection.json"
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "personal_assistant_draft_projection.schema.json"
 DEFAULT_RECEIPT_SCHEMA = REPO_ROOT / "schemas" / "personal_assistant_receipt.schema.json"
-RUNTIME_GENERATED_AT = "2026-06-14T00:02:00+00:00"
+RUNTIME_GENERATED_AT = DEFAULT_DRAFT_PROJECTION_GENERATED_AT
 
 FALSE_EFFECT_BOUNDARY_FIELDS = frozenset(
     {
@@ -184,88 +179,7 @@ def validate_personal_assistant_draft_projection(
 
 def build_runtime_draft_projection() -> dict[str, Any]:
     """Build a deterministic runtime envelope from redacted fixture inputs."""
-    email_intent = interpret_user_request(
-        "Draft a response to this email.",
-        request_id="pa_request_draft_email_001",
-        submitted_at="2026-06-14T00:00:00+00:00",
-        connector_refs=(
-            ConnectorProofRef(
-                connector_id="connector:gmail:operator",
-                connector_name="gmail",
-                proof_state="Pass",
-                private_data_allowed=True,
-                scopes=("gmail.readonly",),
-            ),
-        ),
-    )
-    calendar_intent = interpret_user_request(
-        "Draft a calendar event for today.",
-        request_id="pa_request_draft_calendar_001",
-        submitted_at="2026-06-14T00:00:00+00:00",
-        connector_refs=(
-            ConnectorProofRef(
-                connector_id="connector:google-calendar:operator",
-                connector_name="google_calendar",
-                proof_state="Pass",
-                private_data_allowed=True,
-                scopes=("calendar.readonly",),
-            ),
-        ),
-    )
-    task_intent = interpret_user_request(
-        "Create a task draft for reviewing the release notes.",
-        request_id="pa_request_draft_task_001",
-        submitted_at="2026-06-14T00:00:00+00:00",
-    )
-    email_projection = draft_email_response(
-        email_intent,
-        EmailDraftInput(
-            message_ref="msg:123",
-            recipient_label="operator-visible recipient",
-            sender_label="operator",
-            subject_digest="project update digest",
-            thread_summary_digest="redacted thread summary",
-            response_goal="I can review the packet today and send comments tomorrow.",
-            tone="direct",
-            constraints=("do not promise deployment",),
-        ),
-        generated_at=RUNTIME_GENERATED_AT,
-    )
-    calendar_projection = draft_calendar_event(
-        calendar_intent,
-        CalendarEventDraftInput(
-            meeting_goal="Review the handoff packet.",
-            title_digest="handoff review digest",
-            proposed_window="2026-06-14 afternoon",
-            duration_minutes=30,
-            attendee_labels=("operator-visible teammate",),
-            location_label="video call label",
-            agenda_digest="review blockers and next action",
-            constraints=("do not invite before approval",),
-        ),
-        generated_at=RUNTIME_GENERATED_AT,
-    )
-    task_projection = draft_task(
-        task_intent,
-        TaskDraftInput(
-            task_goal="Review release notes before the next closure step.",
-            source_ref="conversation:release-notes",
-            title_digest="review release notes digest",
-            priority="medium",
-            due_hint="next working session",
-            acceptance_digest="notes reviewed and blockers recorded",
-            constraints=("do not write task state before approval",),
-        ),
-        generated_at=RUNTIME_GENERATED_AT,
-    )
-    return build_draft_projection_envelope(
-        generated_at=RUNTIME_GENERATED_AT,
-        drafts=(
-            ("pa_draft_projection_item_email_001", email_projection.as_dict()),
-            ("pa_draft_projection_item_calendar_001", calendar_projection.as_dict()),
-            ("pa_draft_projection_item_task_001", task_projection.as_dict()),
-        ),
-    )
+    return build_default_personal_assistant_draft_projection(generated_at=RUNTIME_GENERATED_AT)
 
 
 def build_draft_projection_envelope(
@@ -274,98 +188,10 @@ def build_draft_projection_envelope(
     drafts: tuple[tuple[str, Mapping[str, Any]], ...],
 ) -> dict[str, Any]:
     """Build a schema-shaped no-effect envelope around draft projections."""
-    draft_items: list[dict[str, Any]] = []
-    draft_ids: list[str] = []
-    receipt_ids: list[str] = []
-    connector_names: list[str] = []
-    for draft_id, projection in drafts:
-        receipt = _mapping(projection.get("receipt"))
-        draft = _mapping(projection.get("draft"))
-        draft_ids.append(draft_id)
-        receipt_id = str(receipt.get("receipt_id", ""))
-        if receipt_id and receipt_id not in receipt_ids:
-            receipt_ids.append(receipt_id)
-        for connector_name in receipt.get("connectors_used", ()):
-            if isinstance(connector_name, str) and connector_name not in connector_names:
-                connector_names.append(connector_name)
-        draft_items.append(
-            {
-                "draft_id": draft_id,
-                "request_id": str(projection.get("request_id", "")),
-                "skill_id": str(projection.get("skill_id", "")),
-                "draft_type": str(draft.get("draft_type", "")),
-                "draft": dict(draft),
-                "receipt": dict(receipt),
-            }
-        )
-    return {
-        "draft_set_id": "pa_draft_projection_foundation_001",
-        "generated_at": generated_at,
-        "governed": True,
-        "source_projection": "operator_supplied_redacted_projection",
-        "draft_count": len(draft_items),
-        "draft_ids": draft_ids,
-        "receipt_ids": receipt_ids,
-        "connectors_used": connector_names,
-        "drafts": draft_items,
-        "effect_boundary": {
-            "draft_preparation_allowed": True,
-            "execution_allowed": False,
-            "live_connector_execution_allowed": False,
-            "mailbox_mutation_allowed": False,
-            "external_send_allowed": False,
-            "calendar_write_allowed": False,
-            "task_write_allowed": False,
-            "memory_write_allowed": False,
-            "connector_mutation_allowed": False,
-            "system_of_record_write_allowed": False,
-            "deployment_mutation_allowed": False,
-            "public_readiness_claim_allowed": False,
-        },
-        "private_payload_policy": {
-            "raw_private_payload_serialized": False,
-            "secret_values_serialized": False,
-            "connector_payload_projection": "mixed_redacted_or_no_connector",
-            "body_projection": "operator_visible_draft",
-        },
-        "approval_boundary": {
-            "risk_level": "P2",
-            "approval_required_before_external_action": True,
-            "approval_required_before_system_write": True,
-            "approval_required_before_connector_mutation": True,
-        },
-        "assurance": {
-            "assurance_id": "personal_assistant_draft_projection_no_effect_assurance",
-            "outcome": "SolvedVerified",
-            "foundation_only": True,
-            "ready_for_live_execution": False,
-            "ready_for_customer_readiness_claim": False,
-            "authority_drift_detected": False,
-            "checked_controls": [
-                "operator_redacted_projection_only",
-                "draft_preparation_only",
-                "no_live_connector_execution",
-                "no_external_send",
-                "no_calendar_write",
-                "no_task_write",
-                "no_memory_write",
-                "no_connector_mutation",
-                "receipt_actions_not_taken_recorded",
-            ],
-            "blocking_reasons": [],
-            "next_action": "continue approval-queue hardening before any effect-bearing draft execution",
-        },
-        "metadata": {
-            "foundation_only": True,
-            "projection_contract": "draft_only_redacted_evidence",
-            "runtime_boundary": "no_live_connector_calls",
-            "live_connector_execution_allowed": False,
-            "connector_mutation_allowed": False,
-            "external_send_allowed": False,
-            "system_of_record_write_allowed": False,
-            "memory_write_allowed": False,
-        },
-    }
+    return build_personal_assistant_draft_projection_envelope(
+        generated_at=generated_at,
+        drafts=drafts,
+    )
 
 
 def _validate_projection_semantics(

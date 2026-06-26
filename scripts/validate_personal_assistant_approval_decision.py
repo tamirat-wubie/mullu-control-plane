@@ -33,10 +33,9 @@ for candidate in (REPO_ROOT, MCOI_ROOT):
         sys.path.insert(0, str(candidate))
 
 from mcoi_runtime.personal_assistant import (  # noqa: E402
-    ApprovalDecision,
-    ApprovalProposedAction,
-    ApprovalScope,
-    PersonalAssistantApprovalQueue,
+    DEFAULT_APPROVAL_DECISION_DECIDED_AT,
+    build_default_personal_assistant_approval_decision_evidence,
+    build_personal_assistant_approval_decision_evidence_envelope,
 )
 from scripts.personal_assistant_source_digest import canonical_source_sha256  # noqa: E402
 from scripts.validate_personal_assistant_receipt import validate_personal_assistant_receipt_payload  # noqa: E402
@@ -47,8 +46,7 @@ DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "personal_assistant_approval_decision.s
 DEFAULT_APPROVAL_SCHEMA = REPO_ROOT / "schemas" / "personal_assistant_approval.schema.json"
 DEFAULT_RECEIPT_SCHEMA = REPO_ROOT / "schemas" / "personal_assistant_receipt.schema.json"
 DEFAULT_APPROVAL_REVIEW_PACKET = REPO_ROOT / "examples" / "personal_assistant_approval_review_packet.json"
-RUNTIME_CREATED_AT = "2026-06-14T00:00:00+00:00"
-RUNTIME_DECIDED_AT = "2026-06-14T00:03:00+00:00"
+RUNTIME_DECIDED_AT = DEFAULT_APPROVAL_DECISION_DECIDED_AT
 
 FALSE_EFFECT_BOUNDARY_FIELDS = frozenset(
     {
@@ -179,43 +177,7 @@ def validate_personal_assistant_approval_decision(
 
 def build_runtime_approval_decision_evidence() -> dict[str, Any]:
     """Build deterministic approval decision evidence for all decision states."""
-    decision_records: list[tuple[str, Mapping[str, Any], Mapping[str, Any]]] = []
-    for index, decision in enumerate(DECISION_VALUES, start=1):
-        queue = PersonalAssistantApprovalQueue()
-        approval_id = f"pa_approval_decision_{decision}_{index:03d}"
-        record = queue.enqueue(
-            request_id=f"pa_request_decision_{decision}_{index:03d}",
-            plan_id=f"pa_plan_decision_{decision}_{index:03d}",
-            approver_ref="operator:tamirat",
-            approval_scope=ApprovalScope.PER_RECIPIENT,
-            proposed_actions=(
-                ApprovalProposedAction(
-                    action_id="send_prepared_email_draft",
-                    skill_id="email.send.with_approval",
-                    risk_level="P4",
-                    effect_boundary="external_email_send",
-                    summary="Send one approved email draft to one named recipient.",
-                ),
-            ),
-            forbidden_without_approval=("send", "forward", "recipient_unapproved", "connector_mutation"),
-            evidence_refs=(f"proof://personal-assistant/approval/{decision}-{index:03d}",),
-            created_at=RUNTIME_CREATED_AT,
-            approval_id=approval_id,
-        )
-        source_record = record.as_dict()
-        updated = queue.record_decision(
-            record.approval_id,
-            decision=ApprovalDecision.coerce(decision),
-            reason_codes=(f"operator_{decision}_preview",),
-            decided_at=RUNTIME_DECIDED_AT,
-            decision_evidence_ref=f"proof://personal-assistant/approval/operator-{decision}-{index:03d}",
-            revision_request="Revise the draft before any future approval." if decision == "revised" else "",
-        )
-        decision_records.append((f"pa_approval_decision_{decision}_{index:03d}", source_record, updated.as_dict()))
-    return build_approval_decision_evidence_envelope(
-        generated_at=RUNTIME_DECIDED_AT,
-        decision_records=tuple(decision_records),
-    )
+    return build_default_personal_assistant_approval_decision_evidence(generated_at=RUNTIME_DECIDED_AT)
 
 
 def build_approval_decision_evidence_envelope(
@@ -224,103 +186,10 @@ def build_approval_decision_evidence_envelope(
     decision_records: tuple[tuple[str, Mapping[str, Any], Mapping[str, Any]], ...],
 ) -> dict[str, Any]:
     """Build a schema-shaped no-effect envelope around approval decisions."""
-    decisions: list[dict[str, Any]] = []
-    decision_ids: list[str] = []
-    approval_ids: list[str] = []
-    receipt_ids: list[str] = []
-    for decision_id, source_record, record in decision_records:
-        packet = _mapping(record.get("packet"))
-        receipts = record.get("receipts", ())
-        if not isinstance(receipts, Sequence) or isinstance(receipts, (str, bytes)) or not receipts:
-            receipt = {}
-        else:
-            receipt = _mapping(receipts[-1])
-        approval_id = str(record.get("approval_id", packet.get("approval_id", "")))
-        decision_record = _mapping(packet.get("decision_record"))
-        decision_ids.append(decision_id)
-        if approval_id and approval_id not in approval_ids:
-            approval_ids.append(approval_id)
-        receipt_id = str(receipt.get("receipt_id", ""))
-        if receipt_id and receipt_id not in receipt_ids:
-            receipt_ids.append(receipt_id)
-        decisions.append(
-            {
-                "decision_id": decision_id,
-                "approval_id": approval_id,
-                "request_id": str(packet.get("request_id", "")),
-                "plan_id": str(packet.get("plan_id", "")),
-                "decision": str(decision_record.get("decision", "")),
-                "decided_at": str(decision_record.get("decided_at", "")),
-                "reason_codes": list(decision_record.get("reason_codes", ())),
-                "queue_precondition_ref": _queue_precondition_ref(source_record),
-                "packet": dict(packet),
-                "receipt": dict(receipt),
-            }
-        )
-    return {
-        "decision_set_id": "pa_approval_decision_set_foundation_001",
-        "generated_at": generated_at,
-        "governed": True,
-        "source_projection": "operator_supplied_decision_evidence",
-        "decision_count": len(decisions),
-        "decision_ids": decision_ids,
-        "approval_ids": approval_ids,
-        "receipt_ids": receipt_ids,
-        "decisions": decisions,
-        "effect_boundary": {
-            "approval_decision_records_allowed": True,
-            "execution_allowed": False,
-            "approval_is_execution": False,
-            "live_connector_execution_allowed": False,
-            "external_send_allowed": False,
-            "calendar_write_allowed": False,
-            "task_write_allowed": False,
-            "memory_write_allowed": False,
-            "connector_mutation_allowed": False,
-            "system_of_record_write_allowed": False,
-            "deployment_mutation_allowed": False,
-            "nested_mind_live_activation_allowed": False,
-            "public_readiness_claim_allowed": False,
-        },
-        "private_payload_policy": {
-            "raw_private_payload_serialized": False,
-            "secret_values_serialized": False,
-            "connector_payload_projection": "ref_only",
-            "decision_payload_projection": "bounded_operator_decision_record",
-        },
-        "assurance": {
-            "assurance_id": "personal_assistant_approval_decision_no_effect_assurance",
-            "outcome": "SolvedVerified",
-            "foundation_only": True,
-            "ready_for_live_execution": False,
-            "ready_for_customer_readiness_claim": False,
-            "authority_drift_detected": False,
-            "checked_controls": [
-                "approval_decision_is_not_execution",
-                "approved_decision_deferred",
-                "rejected_decision_blocks_execution",
-                "revised_decision_deferred",
-                "expired_decision_blocks_execution",
-                "no_live_connector_execution",
-                "no_external_send",
-                "no_connector_mutation",
-                "no_memory_write",
-                "no_secret_value_serialization",
-            ],
-            "blocking_reasons": [],
-            "next_action": "continue execution-gate hardening before any effect-bearing dispatch",
-        },
-        "metadata": {
-            "foundation_only": True,
-            "projection_contract": "approval_decision_evidence_only",
-            "runtime_boundary": "decision_does_not_execute",
-            "live_connector_execution_allowed": False,
-            "connector_mutation_allowed": False,
-            "external_send_allowed": False,
-            "system_of_record_write_allowed": False,
-            "memory_write_allowed": False,
-        },
-    }
+    return build_personal_assistant_approval_decision_evidence_envelope(
+        generated_at=generated_at,
+        decision_records=decision_records,
+    )
 
 
 def _validate_decision_semantics(

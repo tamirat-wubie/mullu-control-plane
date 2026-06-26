@@ -1,0 +1,129 @@
+{
+  "report_id": "agentic_service_harness_dry_run_test_runner_plan_receipt",
+  "schema_version": 1,
+  "generated_at": "2026-06-25T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "plan_status": "AwaitingEvidence",
+  "source_contract_refs": [
+    "examples/agentic_service_harness_task_creation_admission_preflight.foundation.json",
+    "examples/agentic_service_harness_approved_branch_workspace_creation_preflight.foundation.json",
+    "scripts/validate_agentic_service_harness_readiness_map.py",
+    "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  ],
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "approved_branch_workspace_preflight_id": "gate.branchwrite",
+    "foundation_phase": "foundation_dry_run_test_runner_plan_receipt",
+    "plan_only": true,
+    "read_only_sources": true,
+    "test_execution_admitted": false,
+    "commands_executed": false,
+    "test_results_claimed": false,
+    "coverage_claimed": false,
+    "secret_values_serialized": false
+  },
+  "test_plan": {
+    "plan_id": "dry-run-test-runner-plan-foundation",
+    "execution_mode": "PLAN_ONLY",
+    "selected_commands": [
+      {
+        "command_id": "approved-branch-workspace-preflight-validator",
+        "command": "python scripts/validate_agentic_service_harness_approved_branch_workspace_creation_preflight.py --strict",
+        "command_class": "validator",
+        "path_scope": "repository_local",
+        "reason": "Proves the source approved branch workspace preflight remains valid before test-runner planning can reference it.",
+        "expected_result": "planned_only_no_result_claim"
+      },
+      {
+        "command_id": "dry-run-test-runner-plan-receipt-validator",
+        "command": "python scripts/validate_agentic_service_harness_dry_run_test_runner_plan_receipt.py --strict",
+        "command_class": "validator",
+        "path_scope": "repository_local",
+        "reason": "Validates the dry-run test runner plan receipt schema, example, source refs, and authority denials.",
+        "expected_result": "planned_only_no_result_claim"
+      },
+      {
+        "command_id": "readiness-map-validator",
+        "command": "python scripts/validate_agentic_service_harness_readiness_map.py",
+        "command_class": "validator",
+        "path_scope": "repository_local",
+        "reason": "Keeps readiness topology aligned after the test runner plan receipt becomes READY.",
+        "expected_result": "planned_only_no_result_claim"
+      },
+      {
+        "command_id": "dry-run-test-runner-plan-unit-tests",
+        "command": "python -m pytest tests/test_validate_agentic_service_harness_dry_run_test_runner_plan_receipt.py -q",
+        "command_class": "pytest",
+        "path_scope": "tests_only",
+        "reason": "Defines the focused unit test surface that must run only after command execution authority exists.",
+        "expected_result": "planned_only_no_result_claim"
+      }
+    ],
+    "selection_reason_refs": [
+      "evidence://approved-branch-workspace-preflight-valid",
+      "evidence://test-runner-plan-validator-contract",
+      "evidence://readiness-map-topology-boundary",
+      "evidence://focused-unit-test-contract"
+    ],
+    "command_execution_enabled": false,
+    "subprocess_execution_enabled": false,
+    "test_result_claim_enabled": false,
+    "coverage_claim_enabled": false
+  },
+  "authority_denials": {
+    "test_execution_enabled": false,
+    "command_execution_enabled": false,
+    "subprocess_execution_enabled": false,
+    "filesystem_write_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_calls_enabled": false,
+    "receipt_store_append_enabled": false,
+    "runtime_state_write_enabled": false,
+    "mutation_route_enabled": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "required_evidence": {
+    "must_have_before_command_execution": [
+      "approval://operator/test-command-execution",
+      "evidence://branch-workspace-created-with-approval",
+      "evidence://workspace-path-confinement",
+      "evidence://test-command-timeout-policy",
+      "evidence://subprocess-output-redaction-policy"
+    ],
+    "must_have_before_test_result_claim": [
+      "evidence://commands-executed-in-approved-workspace",
+      "evidence://test-command-exit-codes",
+      "evidence://test-output-captured-with-redaction"
+    ],
+    "must_have_before_receipt_append": [
+      "evidence://receipt-store-write-path",
+      "evidence://receipt-redaction-policy",
+      "evidence://receipt-append-rollback-plan"
+    ]
+  },
+  "receipt_refs": {
+    "dry_run_test_runner_plan_receipt_schema": "schemas/agentic_service_harness_dry_run_test_runner_plan_receipt.schema.json",
+    "dry_run_test_runner_plan_receipt_example": "examples/agentic_service_harness_dry_run_test_runner_plan_receipt.foundation.json",
+    "approved_branch_workspace_creation_preflight_schema": "schemas/agentic_service_harness_approved_branch_workspace_creation_preflight.schema.json",
+    "approved_branch_workspace_creation_preflight_example": "examples/agentic_service_harness_approved_branch_workspace_creation_preflight.foundation.json",
+    "readiness_map": "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-dry-run-test-runner-plan-receipt",
+      "command": "python scripts/validate_agentic_service_harness_dry_run_test_runner_plan_receipt.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add task record write UAO admission preflight; keep test command execution, subprocess execution, filesystem writes, adapter execution, receipt append, connector calls, secrets, result claims, and terminal closure blocked until explicit evidence exists.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

@@ -32,6 +32,13 @@ from .approval import (
     PersonalAssistantApprovalQueue,
     prepare_approval_proposal_from_plan,
 )
+from .approval_decision_evidence import (
+    DEFAULT_APPROVAL_DECISION_CREATED_AT,
+    DEFAULT_APPROVAL_DECISION_DECIDED_AT,
+    DEFAULT_APPROVAL_DECISION_SET_ID,
+    build_default_personal_assistant_approval_decision_evidence,
+    build_personal_assistant_approval_decision_evidence_envelope,
+)
 from .approval_matrix import (
     ApprovalRiskPolicy,
     PersonalAssistantApprovalMatrix,
@@ -47,6 +54,12 @@ from .drafts import (
     draft_email_response,
     draft_task,
 )
+from .draft_projection import (
+    DEFAULT_DRAFT_PROJECTION_GENERATED_AT,
+    DEFAULT_DRAFT_PROJECTION_SET_ID,
+    build_default_personal_assistant_draft_projection,
+    build_personal_assistant_draft_projection_envelope,
+)
 from .intake import (
     ApprovalScope,
     ConnectorProofRef,
@@ -56,6 +69,7 @@ from .intake import (
     RequestInterface,
     interpret_user_request,
 )
+from .intake_chain import build_personal_assistant_intake_chain_read_model
 from .github_codex import (
     GitHubCodexReviewProjection,
     plan_github_codex_review,
@@ -98,6 +112,12 @@ from .read_only import (
     summarize_calendar_day_read_only,
     summarize_inbox_read_only,
 )
+from .read_only_projection import (
+    DEFAULT_READ_ONLY_PROJECTION_GENERATED_AT,
+    DEFAULT_READ_ONLY_PROJECTION_SET_ID,
+    build_default_personal_assistant_read_only_projection,
+    build_personal_assistant_read_only_projection_envelope,
+)
 from .skill_registry import (
     PersonalAssistantSkillRegistry,
     load_default_skill_registry,
@@ -128,6 +148,9 @@ __all__ = (
     "ApprovalProposedAction",
     "ApprovalQueueRecord",
     "ApprovalRiskPolicy",
+    "DEFAULT_APPROVAL_DECISION_CREATED_AT",
+    "DEFAULT_APPROVAL_DECISION_DECIDED_AT",
+    "DEFAULT_APPROVAL_DECISION_SET_ID",
     "PersonalAssistantApprovalQueue",
     "PersonalAssistantApprovalMatrix",
     "CalendarEventDraftInput",
@@ -146,6 +169,10 @@ __all__ = (
     "PersonalAssistantMemoryObservationLedger",
     "PersonalAssistantPlanningEnvelope",
     "PlanningScheduleProjection",
+    "DEFAULT_DRAFT_PROJECTION_GENERATED_AT",
+    "DEFAULT_DRAFT_PROJECTION_SET_ID",
+    "DEFAULT_READ_ONLY_PROJECTION_GENERATED_AT",
+    "DEFAULT_READ_ONLY_PROJECTION_SET_ID",
     "MathReasoningProjection",
     "ReadOnlyAssistantProjection",
     "RedactedCalendarEvent",
@@ -164,8 +191,15 @@ __all__ = (
     "SkillMode",
     "SkillRiskLevel",
     "build_clarification_requests",
+    "build_personal_assistant_intake_chain_read_model",
     "build_personal_assistant_console_read_model",
+    "build_default_personal_assistant_approval_decision_evidence",
     "build_personal_assistant_preview_plan",
+    "build_default_personal_assistant_draft_projection",
+    "build_default_personal_assistant_read_only_projection",
+    "build_personal_assistant_draft_projection_envelope",
+    "build_personal_assistant_approval_decision_evidence_envelope",
+    "build_personal_assistant_read_only_projection_envelope",
     "draft_calendar_event",
     "draft_email_response",
     "draft_task",
