@@ -19,10 +19,10 @@ Invariants:
     READY surface.
   - Receipt-store append preflight remains closed as an admission-only
     READY surface.
-  - Executed-test receipt admission preflight remains closed as an
-    admission-only READY surface.
-  - The first next PR advances to a redacted executed-test receipt candidate
-    after executed-test receipt admission closes.
+  - Executed-test receipt admission remains closed as an admission-only
+    READY surface.
+  - The first next PR advances to non-empty diff receipt admission after
+    executed-test receipt admission closes.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -235,21 +235,17 @@ REQUIRED_RECEIPT_STORE_APPEND_PREFLIGHT_TERMS = (
 REQUIRED_EXECUTED_TEST_RECEIPT_ADMISSION_TERMS = (
     "Executed test receipt admission preflight PR",
     "agentic_service_harness_executed_test_receipt_admission_preflight",
-    "dry-run test-runner planning",
+    "dry-run test runner plan",
+    "approved branch workspace preflight",
     "receipt-store append preflight",
-    "command execution evidence",
-    "timeout",
-    "output redaction",
+    "command timeout",
+    "subprocess redaction",
     "exit-code",
-    "duration",
-    "result digest",
-    "receipt append authority",
-    "rollback",
-    "command execution",
-    "subprocess execution",
+    "output-digest",
+    "executed test receipt",
     "test result claims",
     "coverage claims",
-    "raw outputs",
+    "raw test output",
     "terminal closure remain blocked",
 )
 FORBIDDEN_PATTERNS = (
@@ -540,7 +536,7 @@ def _validate_dry_run_test_runner_plan_ready(map_text: str, errors: list[str]) -
         errors.append("missing ready row: Dry-run test runner plan receipt PR")
 
     test_runner_row = re.search(
-        r"^\| Test runner \| READY \| .+agentic_service_harness_dry_run_test_runner_plan_receipt.+terminal closure authority\. \| .+ \|$",
+        r"^\| Test runner \| READY \| .+agentic_service_harness_dry_run_test_runner_plan_receipt.+agentic_service_harness_executed_test_receipt_admission_preflight.+terminal closure remain blocked\. \| None for plan-only command selection or admission preflight\..+ \|$",
         map_text,
         re.MULTILINE,
     )
@@ -576,26 +572,18 @@ def _validate_executed_test_receipt_admission_ready(
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| Executed test receipt admission preflight PR \| READY \| .+command execution.+terminal closure remain blocked\. \|$",
+        r"^\| Executed test receipt admission preflight PR \| READY \| .+executed test receipt.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
     if closure_row is None:
         errors.append("missing ready row: Executed test receipt admission preflight PR")
 
-    test_runner_row = re.search(
-        r"^\| Test runner \| READY \| .+agentic_service_harness_executed_test_receipt_admission_preflight.+ \| None for admission-only test receipt planning\..+ \|$",
-        map_text,
-        re.MULTILINE,
-    )
-    if test_runner_row is None:
-        errors.append("missing ready row: Test runner executed-test admission preflight")
-
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(tests): add redacted executed test receipt candidate",
         "harness(diffs): add non-empty diff receipt admission preflight",
+        "harness(pr): add GitHub PR admission preflight",
     )
     positions: list[int] = []
     for marker in sequence_markers:
@@ -620,12 +608,12 @@ def _validate_current_main_ref(map_text: str, errors: list[str]) -> None:
 
 def _validate_open_pr_queue_boundary(map_text: str, errors: list[str]) -> None:
     open_pr_queue = re.search(
-        r"^Open PRs after readiness-map refresh: .+ outside this map-only closure\.$",
+        r"^Open PRs after readiness-map refresh: .+ outside this executed-test receipt admission preflight closure; .+does not grant harness execution authority\.$",
         map_text,
         re.MULTILINE,
     )
     if open_pr_queue is None:
-        errors.append("missing open PR queue map-only boundary")
+        errors.append("missing open PR queue execution-authority boundary")
 
 
 def _path_label(path: Path) -> str:

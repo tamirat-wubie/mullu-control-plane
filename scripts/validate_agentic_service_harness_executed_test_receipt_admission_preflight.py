@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """Validate Agentic Service Harness executed-test receipt admission preflight.
 
-Purpose: prove future executed-test receipts remain blocked until command
-execution authority, approved workspace evidence, timeout policy, output
-redaction, result evidence, receipt append authority, and rollback evidence are
-explicit.
+Purpose: prove executed-test receipt admission remains blocked until operator
+approval, approved workspace, command timeout, subprocess redaction, exit-code,
+output-digest, receipt-store append admission, and audit evidence are explicit.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: schemas/agentic_service_harness_executed_test_receipt_admission_preflight.schema.json,
 examples/agentic_service_harness_executed_test_receipt_admission_preflight.foundation.json,
 scripts.validate_agentic_service_harness_dry_run_test_runner_plan_receipt,
+scripts.validate_agentic_service_harness_approved_branch_workspace_creation_preflight,
 scripts.validate_agentic_service_harness_receipt_store_append_preflight, and
 scripts.validate_schemas.
 Invariants:
-  - Source dry-run test-runner plan and receipt-store append preflight pass.
-  - Command execution, subprocess execution, result claims, and coverage claims
-    are not admitted.
-  - Receipt-store append, runtime writes, raw outputs, secrets, mutation routes,
+  - Source dry-run plan, approved workspace, and receipt append preflight pass.
+  - Executed-test receipt admission is not granted.
+  - Command execution, subprocess execution, test-result claims, coverage claims,
+    receipt-store append, runtime writes, raw output, secrets, mutation routes,
     and terminal closure fail closed.
 """
 
@@ -35,6 +35,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from scripts.validate_agentic_service_harness_approved_branch_workspace_creation_preflight import (  # noqa: E402
+    validate_agentic_service_harness_approved_branch_workspace_creation_preflight,
+)
 from scripts.validate_agentic_service_harness_dry_run_test_runner_plan_receipt import (  # noqa: E402
     validate_agentic_service_harness_dry_run_test_runner_plan_receipt,
 )
@@ -61,81 +64,89 @@ DEFAULT_OUTPUT = (
 )
 EXPECTED_REPORT_ID = "agentic_service_harness_executed_test_receipt_admission_preflight"
 EXPECTED_ROUTE_REF = "route://harness/tests/executed-receipt/not-admitted"
-EXPECTED_DECISION = "BLOCKED_PENDING_COMMAND_EXECUTION_AND_RESULT_EVIDENCE"
+EXPECTED_DECISION = (
+    "BLOCKED_PENDING_APPROVED_WORKSPACE_COMMAND_EXECUTION_AND_RESULT_EVIDENCE"
+)
 REQUIRED_SOURCE_REFS = (
     "examples/agentic_service_harness_dry_run_test_runner_plan_receipt.foundation.json",
+    "examples/agentic_service_harness_approved_branch_workspace_creation_preflight.foundation.json",
     "examples/agentic_service_harness_receipt_store_append_preflight.foundation.json",
+    "schemas/agentic_service_harness.schema.json",
     "scripts/validate_agentic_service_harness_readiness_map.py",
     "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md",
 )
 REQUIRED_BEFORE_EXECUTION_REFS = (
     "approval://operator/test-command-execution",
-    "evidence://approved-branch-workspace-created",
+    "evidence://branch-workspace-created-with-approval",
     "evidence://workspace-path-confinement",
-    "policy://test-command-timeout",
-    "policy://subprocess-output-redaction",
-    "authority://harness-command-execution",
-)
-REQUIRED_BEFORE_RECEIPT_REFS = (
+    "evidence://test-command-timeout-policy",
+    "evidence://subprocess-output-redaction-policy",
     "evidence://test-command-exit-code",
-    "evidence://test-command-duration",
-    "evidence://test-output-redacted-ref",
-    "evidence://test-result-digest",
-    "evidence://receipt-store-append-authority",
-    "recovery://executed-test-receipt-rollback",
+    "evidence://test-output-redaction-digest",
+    "evidence://receipt-store-append-admission",
 )
 REQUIRED_BLOCKERS = (
-    "blocked://executed-test-receipt/operator-approval-missing",
-    "blocked://executed-test-receipt/workspace-not-created",
-    "blocked://executed-test-receipt/command-execution-authority-missing",
-    "blocked://executed-test-receipt/timeout-policy-missing",
-    "blocked://executed-test-receipt/output-redaction-missing",
-    "blocked://executed-test-receipt/exit-code-evidence-missing",
-    "blocked://executed-test-receipt/result-digest-missing",
-    "blocked://executed-test-receipt/receipt-append-authority-missing",
+    "blocked://test-execution/operator-approval-missing",
+    "blocked://test-execution/live-workspace-not-created",
+    "blocked://test-execution/timeout-policy-missing",
+    "blocked://test-execution/subprocess-redaction-missing",
+    "blocked://test-execution/commands-not-executed",
+    "blocked://test-results/exit-code-not-observed",
+    "blocked://test-results/output-not-redacted",
+    "blocked://receipt-store-append/not-admitted",
     "blocked://runtime-state-write/not-admitted",
     "blocked://terminal-closure/not-authorized",
 )
 REQUIRED_NEXT_EVIDENCE = (
-    "approval://test-command-execution/operator-decision",
-    "witness://approved-workspace-command-execution",
-    "receipt://redacted-executed-test-result-candidate",
+    "evidence://non-empty-diff-receipt-admission",
+    "approval://executed-test-receipt/operator-decision",
+    "witness://harness-executed-test-receipt-audit",
+)
+REQUIRED_ALLOWED_METADATA_REFS = (
+    "field://executed-test-receipt/id",
+    "field://executed-test-receipt/agent_run_id",
+    "field://executed-test-receipt/command_id",
+    "field://executed-test-receipt/exit_code_ref",
+    "field://executed-test-receipt/output_digest_ref",
+    "field://executed-test-receipt/evidence_refs",
+)
+REQUIRED_FORBIDDEN_INLINE_FIELDS = (
+    "field://executed-test-receipt/raw-secret",
+    "field://executed-test-receipt/raw-stdout",
+    "field://executed-test-receipt/raw-stderr",
+    "field://executed-test-receipt/raw-diff",
+    "field://executed-test-receipt/external-token",
 )
 REQUIRED_FALSE_FLAGS = (
-    "command_execution_admitted",
     "test_execution_admitted",
-    "test_receipt_emitted",
+    "commands_executed",
     "test_results_claimed",
-    "coverage_claimed",
-    "receipt_store_appended",
-    "runtime_state_write_enabled",
+    "executed_test_receipt_admitted",
+    "receipt_store_append_enabled",
     "secret_values_serialized",
     "operator_approval_collected",
-    "approved_workspace_created",
-    "command_execution_authority_valid",
-    "timeout_policy_valid",
-    "output_redaction_valid",
-    "exit_code_evidence_collected",
-    "duration_evidence_collected",
-    "result_digest_evidence_collected",
-    "coverage_evidence_collected",
-    "receipt_append_authority_valid",
-    "rollback_evidence_collected",
-    "executed_test_receipt_admitted",
-    "result_claimed",
+    "live_workspace_created",
+    "command_timeout_policy_valid",
+    "subprocess_redaction_policy_valid",
+    "command_execution_performed",
+    "exit_code_observed",
+    "test_output_redacted",
+    "coverage_claimed",
+    "receipt_store_append_admitted",
+    "test_result_claimed",
+    "test_execution_enabled",
     "command_execution_enabled",
     "subprocess_execution_enabled",
-    "test_execution_enabled",
     "test_result_claim_enabled",
     "coverage_claim_enabled",
-    "receipt_store_append_enabled",
     "receipt_store_append_performed",
+    "runtime_state_write_enabled",
     "filesystem_write_enabled",
     "branch_write_enabled",
     "adapter_execution_enabled",
     "connector_calls_enabled",
     "mutation_route_enabled",
-    "raw_output_stored",
+    "raw_test_output_stored",
     "terminal_closure",
     "default_high_risk_authority",
 )
@@ -143,6 +154,7 @@ REQUIRED_TRUE_FLAGS = (
     "admission_only",
     "read_only_sources",
     "dry_run_test_runner_plan_valid",
+    "approved_branch_workspace_preflight_valid",
     "receipt_store_append_preflight_valid",
     "report_is_not_terminal_closure",
     "terminal_closure_required",
@@ -229,7 +241,7 @@ def write_executed_test_receipt_admission_preflight_validation(
     validation: ExecutedTestReceiptAdmissionPreflightValidation,
     output_path: Path,
 ) -> Path:
-    """Write a deterministic harness executed-test receipt validation report."""
+    """Write a deterministic executed-test receipt admission validation report."""
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -263,6 +275,10 @@ def _validate_sources() -> list[str]:
             validate_agentic_service_harness_dry_run_test_runner_plan_receipt,
         ),
         (
+            "approved_branch_workspace_creation_preflight",
+            validate_agentic_service_harness_approved_branch_workspace_creation_preflight,
+        ),
+        (
             "receipt_store_append_preflight",
             validate_agentic_service_harness_receipt_store_append_preflight,
         ),
@@ -270,18 +286,40 @@ def _validate_sources() -> list[str]:
     errors: list[str] = []
     for validator_id, validator in validators:
         source_validation = validator()
-        if getattr(source_validation, "ok", False):
+        if _source_validation_ok(source_validation):
             continue
         errors.extend(
             f"source {validator_id} invalid: {error}"
-            for error in getattr(source_validation, "errors", ())
+            for error in _source_validation_errors(source_validation)
         )
     return errors
+
+
+def _source_validation_ok(source_validation: object) -> bool:
+    if isinstance(source_validation, Mapping):
+        return bool(source_validation.get("ok", source_validation.get("valid", False)))
+    return bool(getattr(source_validation, "ok", False))
+
+
+def _source_validation_errors(source_validation: object) -> tuple[str, ...]:
+    if isinstance(source_validation, Mapping):
+        errors = source_validation.get("errors", ())
+    else:
+        errors = getattr(source_validation, "errors", ())
+    if isinstance(errors, list):
+        return tuple(str(error) for error in errors)
+    if isinstance(errors, tuple):
+        return tuple(str(error) for error in errors)
+    if errors:
+        return (str(errors),)
+    return ("unknown source validation failure",)
 
 
 def _validate_semantics(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
     if payload.get("report_id") != EXPECTED_REPORT_ID:
         errors.append(f"{label}: report_id must be {EXPECTED_REPORT_ID}")
+    if payload.get("admission_status") != "AwaitingEvidence":
+        errors.append(f"{label}: admission_status must remain AwaitingEvidence")
     _validate_source_refs(payload, errors, label)
     _validate_reference_integrity(payload, errors, label)
     _validate_ref_sets(payload, errors, label)
@@ -304,57 +342,65 @@ def _validate_source_refs(payload: Mapping[str, Any], errors: list[str], label: 
 
 def _validate_reference_integrity(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
     scope = _mapping(payload.get("scope"))
-    admission = _mapping(payload.get("executed_test_receipt_admission"))
+    admission = _mapping(payload.get("test_execution_admission"))
     if scope.get("repository_slug") != "tamirat-wubie/mullu-control-plane":
         errors.append(f"{label}: scope.repository_slug must bind the repository")
     if scope.get("foundation_phase") != "foundation_executed_test_receipt_admission_preflight":
-        errors.append(f"{label}: scope.foundation_phase is invalid")
-    if admission.get("requested_action") != "admit_harness_executed_test_receipt":
-        errors.append(f"{label}: executed_test_receipt_admission.requested_action is invalid")
+        errors.append(f"{label}: scope.foundation_phase must bind executed-test receipt admission")
+    if admission.get("requested_action") != "admit_executed_test_receipt":
+        errors.append(f"{label}: test_execution_admission.requested_action is invalid")
     if admission.get("requested_route_ref") != EXPECTED_ROUTE_REF:
-        errors.append(f"{label}: executed_test_receipt_admission.requested_route_ref must remain not-admitted")
+        errors.append(
+            f"{label}: test_execution_admission.requested_route_ref must remain not-admitted"
+        )
     if admission.get("admission_decision") != EXPECTED_DECISION:
-        errors.append(f"{label}: executed_test_receipt_admission.admission_decision must be {EXPECTED_DECISION}")
+        errors.append(
+            f"{label}: test_execution_admission.admission_decision must be {EXPECTED_DECISION}"
+        )
 
 
 def _validate_ref_sets(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
-    admission = _mapping(payload.get("executed_test_receipt_admission"))
+    admission = _mapping(payload.get("test_execution_admission"))
     _require_refs(
         admission.get("required_before_execution_refs"),
         REQUIRED_BEFORE_EXECUTION_REFS,
-        f"{label}: executed_test_receipt_admission.required_before_execution_refs",
-        errors,
-    )
-    _require_refs(
-        admission.get("required_before_receipt_refs"),
-        REQUIRED_BEFORE_RECEIPT_REFS,
-        f"{label}: executed_test_receipt_admission.required_before_receipt_refs",
+        f"{label}: test_execution_admission.required_before_execution_refs",
         errors,
     )
     _require_refs(
         admission.get("blocked_reason_refs"),
         REQUIRED_BLOCKERS,
-        f"{label}: executed_test_receipt_admission.blocked_reason_refs",
+        f"{label}: test_execution_admission.blocked_reason_refs",
         errors,
     )
     _require_refs(
         admission.get("next_required_evidence_refs"),
         REQUIRED_NEXT_EVIDENCE,
-        f"{label}: executed_test_receipt_admission.next_required_evidence_refs",
+        f"{label}: test_execution_admission.next_required_evidence_refs",
         errors,
     )
 
 
 def _validate_receipt_contract(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
-    contract = _mapping(payload.get("test_receipt_contract"))
-    allowed = contract.get("allowed_metadata_refs")
-    forbidden = contract.get("forbidden_inline_fields")
-    if not isinstance(allowed, list) or len(allowed) < 8:
-        errors.append(f"{label}: test_receipt_contract.allowed_metadata_refs incomplete")
-    if not isinstance(forbidden, list) or len(forbidden) < 5:
-        errors.append(f"{label}: test_receipt_contract.forbidden_inline_fields incomplete")
-    if contract.get("stored_receipt_ref") != "receipt-store://not-appended":
-        errors.append(f"{label}: test_receipt_contract.stored_receipt_ref must remain not-appended")
+    contract = _mapping(payload.get("executed_test_receipt_contract"))
+    if contract.get("receipt_shape_ref") != "schema://agentic-service-harness/ExecutedTestReceipt":
+        errors.append(f"{label}: executed_test_receipt_contract.receipt_shape_ref invalid")
+    _require_refs(
+        contract.get("allowed_metadata_refs"),
+        REQUIRED_ALLOWED_METADATA_REFS,
+        f"{label}: executed_test_receipt_contract.allowed_metadata_refs",
+        errors,
+    )
+    _require_refs(
+        contract.get("forbidden_inline_fields"),
+        REQUIRED_FORBIDDEN_INLINE_FIELDS,
+        f"{label}: executed_test_receipt_contract.forbidden_inline_fields",
+        errors,
+    )
+    if contract.get("stored_receipt_ref") != "executed-test-receipt://not-admitted":
+        errors.append(
+            f"{label}: executed_test_receipt_contract.stored_receipt_ref must remain not-admitted"
+        )
 
 
 def _validate_boolean_flags(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
@@ -393,11 +439,10 @@ def _validate_next_action(payload: Mapping[str, Any], errors: list[str], label: 
         errors.append(f"{label}: next_action must be a string")
         return
     required_phrases = (
-        "redacted executed test receipt candidate",
-        "command execution",
-        "receipt-store append",
-        "terminal closure",
+        "non-empty diff receipt admission preflight",
+        "executed test receipt",
         "blocked",
+        "terminal closure",
     )
     for phrase in required_phrases:
         if phrase not in next_action:
@@ -472,7 +517,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Run harness executed-test receipt admission preflight validation."""
+    """Run executed-test receipt admission preflight validation."""
 
     args = parse_args(argv)
     example_paths = tuple(args.examples) if args.examples else DEFAULT_EXAMPLES

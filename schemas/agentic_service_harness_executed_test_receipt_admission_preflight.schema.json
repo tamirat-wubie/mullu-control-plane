@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:agentic-service-harness-executed-test-receipt-admission-preflight:1",
   "title": "Agentic Service Harness Executed Test Receipt Admission Preflight",
-  "description": "Foundation Mode admission preflight for a future executed-test receipt. This contract binds dry-run test-runner planning, receipt-store append preflight, command execution evidence, redaction, result digest, timeout, rollback, and receipt append prerequisites while keeping command execution, subprocess execution, test result claims, coverage claims, receipt append, runtime writes, mutation routes, adapter execution, filesystem writes, branch writes, raw output storage, secret serialization, and terminal closure blocked.",
+  "description": "Foundation Mode admission preflight for future executed-test receipts. This contract binds the dry-run test runner plan, approved branch workspace preflight, and receipt-store append preflight while keeping command execution, subprocess execution, test result claims, coverage claims, receipt append, runtime state writes, mutation routes, raw output storage, secret serialization, and terminal closure blocked.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,8 +13,8 @@
     "admission_status",
     "source_contract_refs",
     "scope",
-    "executed_test_receipt_admission",
-    "test_receipt_contract",
+    "test_execution_admission",
+    "executed_test_receipt_contract",
     "authority_denials",
     "validators",
     "next_action",
@@ -32,13 +32,13 @@
     "admission_status": { "type": "string", "const": "AwaitingEvidence" },
     "source_contract_refs": {
       "type": "array",
-      "minItems": 4,
+      "minItems": 6,
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/evidence_ref" }
     },
     "scope": { "$ref": "#/$defs/scope" },
-    "executed_test_receipt_admission": { "$ref": "#/$defs/executed_test_receipt_admission" },
-    "test_receipt_contract": { "$ref": "#/$defs/test_receipt_contract" },
+    "test_execution_admission": { "$ref": "#/$defs/test_execution_admission" },
+    "executed_test_receipt_contract": { "$ref": "#/$defs/executed_test_receipt_contract" },
     "authority_denials": { "$ref": "#/$defs/authority_denials" },
     "validators": {
       "type": "array",
@@ -83,13 +83,11 @@
         "foundation_phase",
         "admission_only",
         "read_only_sources",
-        "command_execution_admitted",
         "test_execution_admitted",
-        "test_receipt_emitted",
+        "commands_executed",
         "test_results_claimed",
-        "coverage_claimed",
-        "receipt_store_appended",
-        "runtime_state_write_enabled",
+        "executed_test_receipt_admitted",
+        "receipt_store_append_enabled",
         "secret_values_serialized"
       ],
       "properties": {
@@ -110,17 +108,15 @@
         },
         "admission_only": { "type": "boolean", "const": true },
         "read_only_sources": { "type": "boolean", "const": true },
-        "command_execution_admitted": { "type": "boolean", "const": false },
         "test_execution_admitted": { "type": "boolean", "const": false },
-        "test_receipt_emitted": { "type": "boolean", "const": false },
+        "commands_executed": { "type": "boolean", "const": false },
         "test_results_claimed": { "type": "boolean", "const": false },
-        "coverage_claimed": { "type": "boolean", "const": false },
-        "receipt_store_appended": { "type": "boolean", "const": false },
-        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "executed_test_receipt_admitted": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
         "secret_values_serialized": { "type": "boolean", "const": false }
       }
     },
-    "executed_test_receipt_admission": {
+    "test_execution_admission": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -128,28 +124,26 @@
         "requested_route_ref",
         "admission_decision",
         "dry_run_test_runner_plan_valid",
+        "approved_branch_workspace_preflight_valid",
         "receipt_store_append_preflight_valid",
         "operator_approval_collected",
-        "approved_workspace_created",
-        "command_execution_authority_valid",
-        "timeout_policy_valid",
-        "output_redaction_valid",
-        "exit_code_evidence_collected",
-        "duration_evidence_collected",
-        "result_digest_evidence_collected",
-        "coverage_evidence_collected",
-        "receipt_append_authority_valid",
-        "rollback_evidence_collected",
+        "live_workspace_created",
+        "command_timeout_policy_valid",
+        "subprocess_redaction_policy_valid",
+        "command_execution_performed",
+        "exit_code_observed",
+        "test_output_redacted",
+        "coverage_claimed",
+        "receipt_store_append_admitted",
         "executed_test_receipt_admitted",
         "required_before_execution_refs",
-        "required_before_receipt_refs",
         "blocked_reason_refs",
         "next_required_evidence_refs"
       ],
       "properties": {
         "requested_action": {
           "type": "string",
-          "const": "admit_harness_executed_test_receipt"
+          "const": "admit_executed_test_receipt"
         },
         "requested_route_ref": {
           "type": "string",
@@ -157,46 +151,44 @@
         },
         "admission_decision": {
           "type": "string",
-          "const": "BLOCKED_PENDING_COMMAND_EXECUTION_AND_RESULT_EVIDENCE"
+          "const": "BLOCKED_PENDING_APPROVED_WORKSPACE_COMMAND_EXECUTION_AND_RESULT_EVIDENCE"
         },
         "dry_run_test_runner_plan_valid": { "type": "boolean", "const": true },
+        "approved_branch_workspace_preflight_valid": { "type": "boolean", "const": true },
         "receipt_store_append_preflight_valid": { "type": "boolean", "const": true },
         "operator_approval_collected": { "type": "boolean", "const": false },
-        "approved_workspace_created": { "type": "boolean", "const": false },
-        "command_execution_authority_valid": { "type": "boolean", "const": false },
-        "timeout_policy_valid": { "type": "boolean", "const": false },
-        "output_redaction_valid": { "type": "boolean", "const": false },
-        "exit_code_evidence_collected": { "type": "boolean", "const": false },
-        "duration_evidence_collected": { "type": "boolean", "const": false },
-        "result_digest_evidence_collected": { "type": "boolean", "const": false },
-        "coverage_evidence_collected": { "type": "boolean", "const": false },
-        "receipt_append_authority_valid": { "type": "boolean", "const": false },
-        "rollback_evidence_collected": { "type": "boolean", "const": false },
+        "live_workspace_created": { "type": "boolean", "const": false },
+        "command_timeout_policy_valid": { "type": "boolean", "const": false },
+        "subprocess_redaction_policy_valid": { "type": "boolean", "const": false },
+        "command_execution_performed": { "type": "boolean", "const": false },
+        "exit_code_observed": { "type": "boolean", "const": false },
+        "test_output_redacted": { "type": "boolean", "const": false },
+        "coverage_claimed": { "type": "boolean", "const": false },
+        "receipt_store_append_admitted": { "type": "boolean", "const": false },
         "executed_test_receipt_admitted": { "type": "boolean", "const": false },
         "required_before_execution_refs": { "$ref": "#/$defs/evidence_ref_list" },
-        "required_before_receipt_refs": { "$ref": "#/$defs/evidence_ref_list" },
         "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
         "next_required_evidence_refs": { "$ref": "#/$defs/evidence_ref_list" }
       }
     },
-    "test_receipt_contract": {
+    "executed_test_receipt_contract": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "receipt_shape_ref",
         "allowed_metadata_refs",
         "forbidden_inline_fields",
-        "result_claimed",
+        "test_result_claimed",
         "stored_receipt_ref"
       ],
       "properties": {
         "receipt_shape_ref": { "$ref": "#/$defs/evidence_ref" },
         "allowed_metadata_refs": { "$ref": "#/$defs/evidence_ref_list" },
         "forbidden_inline_fields": { "$ref": "#/$defs/evidence_ref_list" },
-        "result_claimed": { "type": "boolean", "const": false },
+        "test_result_claimed": { "type": "boolean", "const": false },
         "stored_receipt_ref": {
           "type": "string",
-          "const": "receipt-store://not-appended"
+          "const": "executed-test-receipt://not-admitted"
         }
       }
     },
@@ -204,9 +196,9 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "test_execution_enabled",
         "command_execution_enabled",
         "subprocess_execution_enabled",
-        "test_execution_enabled",
         "test_result_claim_enabled",
         "coverage_claim_enabled",
         "receipt_store_append_enabled",
@@ -217,15 +209,15 @@
         "adapter_execution_enabled",
         "connector_calls_enabled",
         "mutation_route_enabled",
-        "raw_output_stored",
+        "raw_test_output_stored",
         "secret_values_serialized",
         "terminal_closure",
         "default_high_risk_authority"
       ],
       "properties": {
+        "test_execution_enabled": { "type": "boolean", "const": false },
         "command_execution_enabled": { "type": "boolean", "const": false },
         "subprocess_execution_enabled": { "type": "boolean", "const": false },
-        "test_execution_enabled": { "type": "boolean", "const": false },
         "test_result_claim_enabled": { "type": "boolean", "const": false },
         "coverage_claim_enabled": { "type": "boolean", "const": false },
         "receipt_store_append_enabled": { "type": "boolean", "const": false },
@@ -236,7 +228,7 @@
         "adapter_execution_enabled": { "type": "boolean", "const": false },
         "connector_calls_enabled": { "type": "boolean", "const": false },
         "mutation_route_enabled": { "type": "boolean", "const": false },
-        "raw_output_stored": { "type": "boolean", "const": false },
+        "raw_test_output_stored": { "type": "boolean", "const": false },
         "secret_values_serialized": { "type": "boolean", "const": false },
         "terminal_closure": { "type": "boolean", "const": false },
         "default_high_risk_authority": { "type": "boolean", "const": false }
@@ -247,7 +239,7 @@
       "additionalProperties": false,
       "required": ["validator_id", "command", "required_for_closure"],
       "properties": {
-        "validator_id": { "$ref": "#/$defs/identifier" },
+        "validator_id": { "type": "string", "minLength": 1 },
         "command": { "type": "string", "minLength": 1 },
         "required_for_closure": { "type": "boolean", "const": true }
       }

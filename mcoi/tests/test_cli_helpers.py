@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from mcoi_runtime.app import cli
@@ -36,6 +38,33 @@ def test_autonomous_demo_renders_local_continuation_summary(capsys: pytest.Captu
     assert "approval_stages:    0" in output
     assert "external_stages:    0" in output
     assert "prompt_count:       0" in output
+
+
+def test_autonomous_demo_renders_json_continuation_summary(capsys: pytest.CaptureFixture[str]) -> None:
+    exit_code = cli.main(
+        [
+            "autonomous-demo",
+            "--target",
+            "workspace",
+            "--objective",
+            "prepare local change",
+            "--change",
+            "apply local patch",
+            "--json",
+        ]
+    )
+
+    body = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert body["operation"] == "autonomous-demo"
+    assert body["automation_state"] == "settled_without_prompt"
+    assert body["workflow_stage_count"] == 3
+    assert body["workflow_approval_stage_count"] == 0
+    assert body["workflow_external_stage_count"] == 0
+    assert body["prompt_count"] == 0
+    assert body["workflow_descriptor_ref"].startswith("workflow://")
+    assert body["rollback_ref"].endswith("/local-effects")
 
 
 def test_autonomous_demo_rejects_negative_retry_count(capsys: pytest.CaptureFixture[str]) -> None:
