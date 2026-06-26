@@ -1,5 +1,5 @@
 {
-  "check_count": 286,
+  "check_count": 287,
   "checks": [
     {
       "args": [
@@ -334,6 +334,19 @@
         "scripts/validate_agentic_service_harness_approved_branch_workspace_creation_preflight.py"
       ],
       "name": "agentic_service_harness_approved_branch_workspace_creation_preflight",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_approved_branch_workspace_creation_authority_binding.py"
+      ],
+      "name": "agentic_service_harness_approved_branch_workspace_creation_authority_binding",
       "passed": true,
       "return_code": 0,
       "stderr": "",
