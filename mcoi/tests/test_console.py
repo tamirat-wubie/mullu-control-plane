@@ -11,6 +11,7 @@ import sys
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.config import AppConfig
 from mcoi_runtime.app.console import (
+    render_autonomous_request_episode_summary,
     render_coordination_summary,
     render_execution_summary,
     render_note_memory_summary,
@@ -22,6 +23,7 @@ from mcoi_runtime.app.console import (
 from mcoi_runtime.contracts.dashboard import NoteMemorySummary
 from mcoi_runtime.app.operator_loop import OperatorLoop, OperatorRequest
 from mcoi_runtime.app.view_models import (
+    AutonomousRequestEpisodeSummaryView,
     CoordinationSummaryView,
     ExecutionSummaryView,
     ReplaySummaryView,
@@ -328,3 +330,31 @@ def test_note_memory_summary_renders_operator_counts() -> None:
     assert "retrieval_receipts_total: 2" in output
     assert "retrieval_receipts_filtered_out: 1" in output
     assert "index_proof_state:      Pass" in output
+
+
+def test_autonomous_request_episode_summary_renders_workflow_continuation() -> None:
+    view = AutonomousRequestEpisodeSummaryView(
+        episode_id="episode-local",
+        goal_id="goal-autonomous-request",
+        automation_state="settled_without_prompt",
+        solver_outcome="SolvedUnverified",
+        action_count=3,
+        dispatched_count=3,
+        prompt_count=0,
+        workflow_descriptor_ref="workflow://descriptor-1",
+        workflow_stage_count=3,
+        workflow_approval_stage_count=0,
+        workflow_external_stage_count=0,
+        plan_receipt_ref="receipt://plan-1",
+        rollback_ref="rollback://autonomous-request/episode-local/local-effects",
+    )
+
+    output = render_autonomous_request_episode_summary(view)
+
+    assert "Autonomous Request Episode Summary" in output
+    assert "episode_id:         episode-local" in output
+    assert "automation_state:   settled_without_prompt" in output
+    assert "workflow_ref:       workflow://descriptor-1" in output
+    assert "workflow_stages:    3" in output
+    assert "approval_stages:    0" in output
+    assert "rollback_ref:       rollback://autonomous-request/episode-local/local-effects" in output

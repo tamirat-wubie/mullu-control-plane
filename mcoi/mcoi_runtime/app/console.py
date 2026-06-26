@@ -12,6 +12,7 @@ from __future__ import annotations
 from mcoi_runtime.contracts.dashboard import NoteMemorySummary
 
 from .view_models import (
+    AutonomousRequestEpisodeSummaryView,
     CoordinationSummaryView,
     ExecutionSummaryView,
     GoalSummaryView,
@@ -252,6 +253,29 @@ def render_workflow_summary(view: WorkflowSummaryView) -> str:
     ]
     if view.failed_stage_id:
         lines.append(f"  failed_stage_id:    {view.failed_stage_id}")
+    return "\n".join(lines)
+
+
+def render_autonomous_request_episode_summary(
+    view: AutonomousRequestEpisodeSummaryView,
+) -> str:
+    """Render an autonomous request episode continuation summary as text."""
+    lines = [
+        "=== Autonomous Request Episode Summary ===",
+        f"  episode_id:         {view.episode_id}",
+        f"  goal_id:            {view.goal_id}",
+        f"  automation_state:   {view.automation_state}",
+        f"  solver_outcome:     {view.solver_outcome}",
+        f"  action_count:       {view.action_count}",
+        f"  dispatched_count:   {view.dispatched_count}",
+        f"  prompt_count:       {view.prompt_count}",
+        f"  workflow_ref:       {view.workflow_descriptor_ref or '(none)'}",
+        f"  workflow_stages:    {view.workflow_stage_count}",
+        f"  approval_stages:    {view.workflow_approval_stage_count}",
+        f"  external_stages:    {view.workflow_external_stage_count}",
+        f"  plan_receipt_ref:   {view.plan_receipt_ref or '(none)'}",
+        f"  rollback_ref:       {view.rollback_ref}",
+    ]
     return "\n".join(lines)
 
 
