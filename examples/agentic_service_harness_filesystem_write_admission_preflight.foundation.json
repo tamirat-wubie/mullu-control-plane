@@ -1,0 +1,126 @@
+{
+  "report_id": "agentic_service_harness_filesystem_write_admission_preflight",
+  "schema_version": 1,
+  "generated_at": "2026-06-26T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "admission_status": "AwaitingEvidence",
+  "source_contract_refs": [
+    "examples/agentic_service_harness_dry_run_test_runner_plan_receipt.foundation.json",
+    "examples/agentic_service_harness_dry_run_test_execution_observation_receipt.foundation.json",
+    "examples/agentic_service_harness_approved_branch_workspace_creation_observation_receipt.foundation.json",
+    "examples/agentic_service_harness_non_empty_diff_receipt_admission_preflight.foundation.json",
+    "examples/agentic_service_harness_receipt_store_append_preflight.foundation.json",
+    "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  ],
+  "scope": {
+    "project_id": "project-agentic-service-harness",
+    "task_id": "task.branchwrite",
+    "run_id": "run.branchwrite",
+    "sandbox_id": "sandbox.branchwrite",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "mode": "branch_write",
+    "foundation_phase": "foundation_filesystem_write_admission_preflight"
+  },
+  "source_receipts": {
+    "dry_run_receipt_ref": "examples/agentic_service_harness_dry_run_test_execution_observation_receipt.foundation.json",
+    "dry_run_test_runner_plan_receipt_ref": "examples/agentic_service_harness_dry_run_test_runner_plan_receipt.foundation.json",
+    "approved_branch_workspace_creation_observation_receipt_ref": "examples/agentic_service_harness_approved_branch_workspace_creation_observation_receipt.foundation.json",
+    "dry_run_receipt_verified": true,
+    "dry_run_changed_file_count": 0,
+    "dry_run_refs": []
+  },
+  "admission_gates": {
+    "filesystem_write_admitted": false,
+    "branch_write_authority_verified": false,
+    "workspace_write_authority_verified": false,
+    "operator_approval_collected": false,
+    "cleanup_receipt_verified": false,
+    "redaction_evidence_verified": false,
+    "uao_filesystem_write_admission_verified": false,
+    "receipt_store_write_path_verified": false,
+    "required_before_filesystem_write_refs": [
+      "approval://operator/filesystem-write-admission",
+      "evidence://branch-write-authority-binding",
+      "evidence://workspace-write-authority",
+      "evidence://cleanup-receipt-after-workspace-use",
+      "evidence://redaction-policy-for-file-change-collection",
+      "evidence://uao-filesystem-write-admission",
+      "evidence://receipt-store-write-path-for-filesystem-write",
+      "evidence://filesystem-write-rollback-plan",
+      "evidence://non-empty-diff-admission-preflight",
+      "witness://no-secret-paths-in-filesystem-write",
+      "witness://filesystem-write-output-redacted",
+      "digest://redacted-filesystem-write-diff-bundle"
+    ],
+    "blocked_reason_refs": [
+      "blocked://operator-approval/not-collected",
+      "blocked://branch-write-authority/not-verified",
+      "blocked://workspace-write-authority/not-verified",
+      "blocked://cleanup-receipt/not-verified",
+      "blocked://redaction-evidence/not-verified",
+      "blocked://uao-filesystem-write/not-verified",
+      "blocked://receipt-store-write-path/not-verified",
+      "blocked://filesystem-write-authority/not-verified",
+      "blocked://raw-diff-body/not-allowed",
+      "blocked://secret-paths/not-allowed"
+    ],
+    "next_required_evidence_refs": [
+      "witness://actual-diff-collection-receipt",
+      "evidence://branch-write-authority-binding",
+      "evidence://receipt-store-write-path-for-filesystem-write",
+      "witness://filesystem-write-output-redacted"
+    ]
+  },
+  "filesystem_write_contract": {
+    "candidate_changed_file_count": 0,
+    "changed_file_refs": [],
+    "diff_refs": [],
+    "redacted_diff_bundle_ref": "diff-bundle://not-admitted",
+    "raw_diff_body_serialized": false,
+    "raw_file_content_serialized": false,
+    "absolute_paths_allowed": false,
+    "parent_traversal_allowed": false,
+    "secret_paths_allowed": false,
+    "production_paths_allowed": false,
+    "receipt_append_ref": "blocked://receipt-store-write-path/not-verified"
+  },
+  "authority_denials": {
+    "branch_write_enabled": false,
+    "workspace_write_enabled": false,
+    "filesystem_write_admitted": false,
+    "raw_diff_body_stored": false,
+    "raw_file_content_stored": false,
+    "receipt_store_append_enabled": false,
+    "runtime_state_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false
+  },
+  "redaction_policy": {
+    "secret_redaction_required": true,
+    "diff_redaction_required": true,
+    "redaction_evidence_ref": "evidence://redaction-policy-for-file-change-collection",
+    "raw_secret_value_storage_allowed": false,
+    "raw_output_storage_allowed": false
+  },
+  "receipt_refs": {
+    "filesystem_write_admission_preflight_schema": "schemas/agentic_service_harness_filesystem_write_admission_preflight.schema.json",
+    "dry_run_test_execution_observation_example": "examples/agentic_service_harness_dry_run_test_execution_observation_receipt.foundation.json",
+    "dry_run_test_execution_observation_schema": "schemas/agentic_service_harness_dry_run_test_execution_observation_receipt.schema.json",
+    "receipt_store_write_path_ref": "evidence://receipt-store-write-path-for-filesystem-write",
+    "cleanup_receipt_ref": "evidence://cleanup-receipt-after-workspace-use",
+    "uao_filesystem_write_admission_ref": "evidence://uao-filesystem-write-admission"
+  },
+  "validators": [
+    {
+      "validator_id": "filesystem_write_admission_preflight",
+      "command": "python scripts/validate_agentic_service_harness_filesystem_write_admission_preflight.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add actual diff collection receipt admission; keep filesystem write admission, branch writes, workspace writes, raw diff bodies, raw file content, receipt-store append, connector calls, mutation routes, secrets, and terminal closure blocked until operator approval, branch/workspace authority, cleanup receipt, redaction, UAO admission, and receipt-store evidence exist.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

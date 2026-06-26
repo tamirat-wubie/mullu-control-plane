@@ -199,6 +199,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_non_empty_diff_receip
     assert diff_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_filesystem_write_admission_preflight() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    write_entry = entries[
+        "agentic-service-harness-filesystem-write-admission-preflight"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert write_entry["path"] == (
+        "schemas/agentic_service_harness_filesystem_write_admission_preflight.schema.json"
+    )
+    assert write_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-filesystem-write-admission-preflight:1"
+    )
+    assert write_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_evidence_bundle_projection() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
