@@ -26,8 +26,10 @@ Invariants:
   - GitHub PR admission remains closed as an admission-only READY surface.
   - GitHub PR CI gate before ready-for-review remains closed as a
     non-authorizing witness surface.
-  - The first next PR advances to PR effect reconciliation after PR admission
-    and CI-gate witness closure.
+  - GitHub PR effect reconciliation remains closed as a read-only evidence
+    surface.
+  - The first next PR advances to terminal closure candidate after effect
+    reconciliation closure.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -297,6 +299,19 @@ REQUIRED_GITHUB_PR_CI_GATE_TERMS = (
     "CI gate authority remains AwaitingEvidence",
     "no branch, PR, ready-for-review, repository, connector, network, mutation-route, receipt-store, secret, destructive, or terminal authority",
 )
+REQUIRED_GITHUB_PR_EFFECT_RECONCILIATION_TERMS = (
+    "GitHub PR effect reconciliation witness PR",
+    "agentic_service_harness_github_pr_effect_reconciliation_witness",
+    "GitHub PR effect reconciliation evidence contract PR",
+    "agentic_service_harness_github_pr_effect_reconciliation_evidence_contract",
+    "GitHub PR effect reconciliation live evidence PR",
+    "agentic_service_harness_github_pr_effect_reconciliation_live_evidence",
+    "effect reconciliation remains AwaitingEvidence",
+    "read-only GitHub PR state observation",
+    "branch state, pull request state, required checks, merge state, and branch deletion state",
+    "no branch, PR, ready-for-review, merge, repository, connector, network, mutation-route, receipt-store, secret, destructive, or terminal authority",
+    "granting no repository mutation, secret, destructive, or terminal closure authority",
+)
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
     ("fastapi_mutation_decorator", re.compile(r"@\w+\.(?:post|put|patch|delete)\(", re.IGNORECASE)),
@@ -437,6 +452,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         "github_pr_ci_gate_term",
         errors,
     )
+    _require_all(
+        map_text,
+        REQUIRED_GITHUB_PR_EFFECT_RECONCILIATION_TERMS,
+        "github_pr_effect_reconciliation_term",
+        errors,
+    )
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
@@ -455,6 +476,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_non_empty_diff_receipt_admission_ready(map_text, errors)
     _validate_github_pr_admission_ready(map_text, errors)
     _validate_github_pr_ci_gate_ready(map_text, errors)
+    _validate_github_pr_effect_reconciliation_ready(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -689,10 +711,39 @@ def _validate_github_pr_ci_gate_ready(
         errors.append("missing ready row: GitHub PR CI gate before ready-for-review witness PR")
 
 
+def _validate_github_pr_effect_reconciliation_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    witness_row = re.search(
+        r"^\| GitHub PR effect reconciliation witness PR \| READY \| .+effect reconciliation remains AwaitingEvidence.+terminal authority is granted\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if witness_row is None:
+        errors.append("missing ready row: GitHub PR effect reconciliation witness PR")
+
+    contract_row = re.search(
+        r"^\| GitHub PR effect reconciliation evidence contract PR \| READY \| .+read-only GitHub PR state observation.+terminal authority is granted\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if contract_row is None:
+        errors.append("missing ready row: GitHub PR effect reconciliation evidence contract PR")
+
+    live_row = re.search(
+        r"^\| GitHub PR effect reconciliation live evidence PR \| READY \| .+read-only GitHub metadata observations.+terminal closure authority\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if live_row is None:
+        errors.append("missing ready row: GitHub PR effect reconciliation live evidence PR")
+
+
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind PR effect reconciliation evidence",
         "harness(pr): close PR terminal closure certificate candidate",
+        "harness(pr): bind PR terminal closure certificate witness",
     )
     positions: list[int] = []
     for marker in sequence_markers:
@@ -717,7 +768,7 @@ def _validate_current_main_ref(map_text: str, errors: list[str]) -> None:
 
 def _validate_open_pr_queue_boundary(map_text: str, errors: list[str]) -> None:
     open_pr_queue = re.search(
-        r"^Open PRs after readiness-map refresh: .+ outside this GitHub PR admission readiness-map closure; .+does not grant harness execution authority\.$",
+        r"^Open PRs after readiness-map refresh: .+ outside this PR effect reconciliation readiness-map closure; .+does not grant harness execution authority\.$",
         map_text,
         re.MULTILINE,
     )
