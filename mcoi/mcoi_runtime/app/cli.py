@@ -384,6 +384,7 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
     envelope = _autonomous_demo_summary_envelope(view)
     receipt_path = args.receipt_path
     if args.receipt_dir:
+        envelope["receipt_directory_path"] = str(Path(args.receipt_dir))
         receipt_path = str(_autonomous_demo_receipt_dir_path(args.receipt_dir, view.episode_id))
     if latest_path:
         envelope["latest_receipt_path"] = str(latest_path)
