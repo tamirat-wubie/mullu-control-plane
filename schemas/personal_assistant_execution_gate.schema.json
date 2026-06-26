@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-execution-gate:1",
+  "title": "Personal Assistant Execution Gate",
+  "description": "No-effect preflight envelope that binds approved personal-assistant approval decisions to future execution review without executing sends, connector mutation, memory writes, system-of-record writes, deployment mutation, or readiness claims.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "gate_set_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_decision_set_id",
+    "gate_count",
+    "gate_ids",
+    "approval_ids",
+    "receipt_ids",
+    "gates",
+    "effect_boundary",
+    "private_payload_policy",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "gate_set_id": {
+      "type": "string",
+      "pattern": "^pa_execution_gate_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {"type": "string", "minLength": 1},
+    "governed": {"const": true},
+    "source_projection": {"const": "approval_decision_evidence"},
+    "source_decision_set_id": {
+      "type": "string",
+      "pattern": "^pa_approval_decision_set_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "gate_count": {"type": "integer", "minimum": 1},
+    "gate_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_execution_gate_item_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "approval_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/gate_item"}
+    },
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "gate_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate_id",
+        "decision_id",
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "skill_id",
+        "risk_level",
+        "proposed_actions",
+        "approval_decision_ref",
+        "dispatch_preconditions",
+        "receipt"
+      ],
+      "properties": {
+        "gate_id": {"type": "string", "pattern": "^pa_execution_gate_item_[a-z0-9][a-z0-9_:-]*$"},
+        "decision_id": {"type": "string", "pattern": "^pa_approval_decision_[a-z0-9][a-z0-9_:-]*$"},
+        "approval_id": {"type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$"},
+        "request_id": {"type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$"},
+        "plan_id": {"type": "string", "pattern": "^pa_plan_[a-z0-9][a-z0-9_:-]*$"},
+        "skill_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$"},
+        "risk_level": {"enum": ["P3", "P4", "P5"]},
+        "proposed_actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "object", "additionalProperties": true}
+        },
+        "approval_decision_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_decision_set_id",
+            "decision",
+            "decision_receipt_id",
+            "decision_receipt_state",
+            "queue_precondition_sha256",
+            "payload_digest_only",
+            "approved_but_not_executed"
+          ],
+          "properties": {
+            "source_decision_set_id": {"type": "string", "minLength": 1},
+            "decision": {"const": "approved"},
+            "decision_receipt_id": {"type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$"},
+            "decision_receipt_state": {"const": "deferred"},
+            "queue_precondition_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "payload_digest_only": {"const": true},
+            "approved_but_not_executed": {"const": true}
+          }
+        },
+        "dispatch_preconditions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "approval_decision_approved",
+            "decision_receipt_deferred",
+            "live_connector_witness_present",
+            "execution_worker_bound",
+            "operator_reapproval_required",
+            "replay_plan_required",
+            "execution_allowed"
+          ],
+          "properties": {
+            "approval_decision_approved": {"const": true},
+            "decision_receipt_deferred": {"const": true},
+            "live_connector_witness_present": {"const": false},
+            "execution_worker_bound": {"const": false},
+            "operator_reapproval_required": {"const": true},
+            "replay_plan_required": {"const": true},
+            "execution_allowed": {"const": false}
+          }
+        },
+        "receipt": {"type": "object", "additionalProperties": true}
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_gate_evaluation_allowed",
+        "execution_allowed",
+        "live_connector_execution_allowed",
+        "external_send_allowed",
+        "calendar_write_allowed",
+        "task_write_allowed",
+        "memory_write_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "deployment_mutation_allowed",
+        "nested_mind_live_activation_allowed",
+        "public_readiness_claim_allowed"
+      ],
+      "properties": {
+        "execution_gate_evaluation_allowed": {"const": true},
+        "execution_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "calendar_write_allowed": {"const": false},
+        "task_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "connector_payload_projection",
+        "decision_payload_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "connector_payload_projection": {"const": "ref_only"},
+        "decision_payload_projection": {"const": "approved_decision_ref_only"}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "ready_for_live_execution",
+        "ready_for_customer_readiness_claim",
+        "authority_drift_detected",
+        "checked_controls",
+        "blocking_reasons",
+        "next_action"
+      ],
+      "properties": {
+        "assurance_id": {"const": "personal_assistant_execution_gate_no_effect_assurance"},
+        "outcome": {"enum": ["SolvedVerified", "GovernanceBlocked"]},
+        "foundation_only": {"const": true},
+        "ready_for_live_execution": {"const": false},
+        "ready_for_customer_readiness_claim": {"const": false},
+        "authority_drift_detected": {"type": "boolean"},
+        "checked_controls": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "blocking_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "foundation_only",
+        "projection_contract",
+        "runtime_boundary",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_send_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed"
+      ],
+      "properties": {
+        "foundation_only": {"const": true},
+        "projection_contract": {"const": "execution_gate_evidence_only"},
+        "runtime_boundary": {"const": "gate_does_not_execute"},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false}
+      }
+    }
+  }
+}

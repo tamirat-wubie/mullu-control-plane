@@ -1631,6 +1631,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-dry-run-packet:1"
     },
     {
+      "path": "schemas/personal_assistant_execution_gate.schema.json",
+      "schema_id": "personal-assistant-execution-gate",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-execution-gate:1"
+    },
+    {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
       "schema_id": "personal-assistant-foundation-closure-packet",
       "surface": "assistant",
