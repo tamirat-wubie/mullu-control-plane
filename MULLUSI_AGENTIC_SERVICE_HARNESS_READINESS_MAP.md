@@ -13,7 +13,7 @@ Outcome: `AwaitingEvidence`
 
 This is a readiness audit, not an implementation change. The repository is no longer blocked by the earlier architecture gap; it is in safety and hardening cleanup. The next harness phase must still close durable user, project, repository, run, approval, sandbox, and receipt foundations before any user-facing dashboard or live coding adapter is started.
 
-Current `origin/main`: `c8fa9fe3518eb8c1d58801b5dab20c9f9d12caa2`
+Current `origin/main`: `4047c8bdfa727a5026f2eb4696787087b108bfb9`
 
 Open PRs after readiness-map refresh: the external PR queue remains outside this PR terminal closure readiness-map closure; the queue is live, may change after this branch, and does not grant harness execution authority.
 
@@ -51,7 +51,7 @@ Open PRs after readiness-map refresh: the external PR queue remains outside this
 | GitHub PR terminal closure operator decision contract PR | READY | Existing repository artifacts include `agentic_service_harness_github_pr_terminal_closure_operator_decision_contract` schema, fixture, validator, manifest entry, workspace-preflight wiring, CI coverage, and receipt example coverage. It requires an explicit typed operator decision value of `approve_terminal_certificate` or `deny_terminal_certificate`; generic continuation remains rejected and no certificate minting or terminal closure authority is granted. |
 | GitHub PR terminal closure generic continuation rejection PR | READY | Existing repository artifacts include `agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection` schema, fixture, validator, manifest entry, workspace-preflight wiring, CI coverage, and receipt example coverage. It proves generic continuation text is rejected as terminal approval, operator decision value remains absent, and no certificate minting, repository mutation, connector call, receipt-store append, secret serialization, destructive operation, or terminal closure authority is granted. |
 | GitHub PR terminal closure operator decision value request PR | READY | This proof thread adds `agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request` schema, fixture, validator, manifest entry, workspace-preflight wiring, and CI coverage. It requests exactly `approve_terminal_certificate` or `deny_terminal_certificate` after generic continuation rejection while recording no operator decision value, minting no certificate, and granting no repository mutation, connector call, receipt-store append, secret serialization, destructive operation, or terminal closure authority. |
-| Remote CI | READY | `origin/main` is verified at `c8fa9fe3518eb8c1d58801b5dab20c9f9d12caa2`; this terminal closure readiness-map branch requires current PR CI before merge. |
+| Remote CI | READY | `origin/main` is verified at `4047c8bdfa727a5026f2eb4696787087b108bfb9`; this terminal closure readiness-map branch requires current PR CI before merge. |
 | Public API probes | READY | `https://api.mullusi.com/health`, `/deployment/witness`, `/proof/verify`, and `/audit/verify` returned HTTP 200 on 2026-06-18. |
 | Open PR queue | PARTIAL | External open PRs remain outside this PR terminal closure readiness-map closure; the queue is live, may change after this branch, and does not grant harness execution authority. |
 
