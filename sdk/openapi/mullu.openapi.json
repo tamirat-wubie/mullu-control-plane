@@ -2197,6 +2197,7 @@
         "type": "object"
       },
       "ExternalEffectAdvisoryRequest": {
+        "additionalProperties": false,
         "description": "Request body for a redacted external-effect boundary advisory.",
         "properties": {
           "authority_receipt_refs": {
@@ -6179,6 +6180,7 @@
         "type": "object"
       },
       "ShadowInspectRequest": {
+        "additionalProperties": false,
         "description": "Request body for a redacted non-executing shadow inspection.",
         "properties": {
           "candidate_action": {
