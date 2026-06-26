@@ -90,6 +90,12 @@ from .operator_reapproval_gate import (
     build_default_personal_assistant_operator_reapproval_gate,
     build_personal_assistant_operator_reapproval_gate_envelope,
 )
+from .operator_reapproval_decision_intake import (
+    DEFAULT_OPERATOR_REAPPROVAL_DECISION_INTAKE_GENERATED_AT,
+    DEFAULT_OPERATOR_REAPPROVAL_DECISION_INTAKE_SET_ID,
+    build_default_personal_assistant_operator_reapproval_decision_intake,
+    build_personal_assistant_operator_reapproval_decision_intake_envelope,
+)
 from .intake import (
     ApprovalScope,
     ConnectorProofRef,
@@ -183,6 +189,8 @@ __all__ = (
     "DEFAULT_APPROVAL_DECISION_SET_ID",
     "DEFAULT_CONNECTOR_LEASE_WITNESS_GENERATED_AT",
     "DEFAULT_CONNECTOR_LEASE_WITNESS_SET_ID",
+    "DEFAULT_OPERATOR_REAPPROVAL_DECISION_INTAKE_GENERATED_AT",
+    "DEFAULT_OPERATOR_REAPPROVAL_DECISION_INTAKE_SET_ID",
     "DEFAULT_OPERATOR_REAPPROVAL_GATE_GENERATED_AT",
     "DEFAULT_OPERATOR_REAPPROVAL_GATE_SET_ID",
     "PersonalAssistantApprovalQueue",
@@ -235,6 +243,7 @@ __all__ = (
     "build_personal_assistant_console_read_model",
     "build_default_personal_assistant_approval_decision_evidence",
     "build_default_personal_assistant_connector_lease_witness",
+    "build_default_personal_assistant_operator_reapproval_decision_intake",
     "build_default_personal_assistant_operator_reapproval_gate",
     "build_personal_assistant_preview_plan",
     "build_default_personal_assistant_draft_projection",
@@ -245,6 +254,7 @@ __all__ = (
     "build_personal_assistant_draft_projection_envelope",
     "build_personal_assistant_approval_decision_evidence_envelope",
     "build_personal_assistant_connector_lease_witness_envelope",
+    "build_personal_assistant_operator_reapproval_decision_intake_envelope",
     "build_personal_assistant_operator_reapproval_gate_envelope",
     "build_personal_assistant_execution_gate_envelope",
     "build_personal_assistant_read_only_projection_envelope",

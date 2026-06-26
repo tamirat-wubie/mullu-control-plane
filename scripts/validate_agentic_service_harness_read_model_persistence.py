@@ -30,8 +30,10 @@ from typing import Any, Iterable, Mapping, Sequence
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+MCOI_ROOT = REPO_ROOT / "mcoi"
+for import_root in (REPO_ROOT, MCOI_ROOT):
+    if str(import_root) not in sys.path:
+        sys.path.insert(0, str(import_root))
 
 from gateway.command_spine import canonical_hash  # noqa: E402
 from scripts.validate_agentic_service_harness_read_models import (  # noqa: E402
