@@ -23,8 +23,11 @@ Invariants:
     READY surface.
   - Non-empty diff receipt admission remains closed as an admission-only
     READY surface.
-  - The first next PR advances to GitHub PR admission after non-empty diff
-    receipt admission closes.
+  - GitHub PR admission remains closed as an admission-only READY surface.
+  - GitHub PR CI gate before ready-for-review remains closed as a
+    non-authorizing witness surface.
+  - The first next PR advances to PR effect reconciliation after PR admission
+    and CI-gate witness closure.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -265,6 +268,35 @@ REQUIRED_NON_EMPTY_DIFF_RECEIPT_ADMISSION_TERMS = (
     "connector calls",
     "terminal closure remain blocked",
 )
+REQUIRED_GITHUB_PR_ADMISSION_TERMS = (
+    "GitHub PR admission preflight PR",
+    "agentic_service_harness_github_pr_admission_preflight",
+    "GitHub task receipt-emitter dry-run",
+    "operator approval",
+    "branch-write authority",
+    "UAO admission",
+    "rollback",
+    "CI evidence",
+    "PR admission is denied",
+    "branch writes",
+    "PR creation",
+    "repository writes",
+    "adapter execution",
+    "connector calls",
+    "mutation routes",
+    "secret material",
+    "terminal closure fail closed",
+)
+REQUIRED_GITHUB_PR_CI_GATE_TERMS = (
+    "GitHub PR CI gate before ready-for-review witness PR",
+    "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
+    "repository effect rollback plan",
+    "requested CI evidence ref",
+    "required check result",
+    "effect_reconciliation",
+    "CI gate authority remains AwaitingEvidence",
+    "no branch, PR, ready-for-review, repository, connector, network, mutation-route, receipt-store, secret, destructive, or terminal authority",
+)
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
     ("fastapi_mutation_decorator", re.compile(r"@\w+\.(?:post|put|patch|delete)\(", re.IGNORECASE)),
@@ -393,6 +425,18 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         "non_empty_diff_receipt_admission_term",
         errors,
     )
+    _require_all(
+        map_text,
+        REQUIRED_GITHUB_PR_ADMISSION_TERMS,
+        "github_pr_admission_term",
+        errors,
+    )
+    _require_all(
+        map_text,
+        REQUIRED_GITHUB_PR_CI_GATE_TERMS,
+        "github_pr_ci_gate_term",
+        errors,
+    )
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
@@ -409,6 +453,8 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_receipt_store_append_preflight_ready(map_text, errors)
     _validate_executed_test_receipt_admission_ready(map_text, errors)
     _validate_non_empty_diff_receipt_admission_ready(map_text, errors)
+    _validate_github_pr_admission_ready(map_text, errors)
+    _validate_github_pr_ci_gate_ready(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -617,10 +663,36 @@ def _validate_non_empty_diff_receipt_admission_ready(
         errors.append("missing ready row: Non-empty diff receipt admission preflight PR")
 
 
+def _validate_github_pr_admission_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR admission preflight PR \| READY \| .+PR admission is denied.+terminal closure fail closed\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR admission preflight PR")
+
+
+def _validate_github_pr_ci_gate_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR CI gate before ready-for-review witness PR \| READY \| .+CI gate authority remains AwaitingEvidence.+terminal authority is granted\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR CI gate before ready-for-review witness PR")
+
+
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): add GitHub PR admission preflight",
-        "harness(pr): bind PR ready-for-review CI evidence",
+        "harness(pr): bind PR effect reconciliation evidence",
+        "harness(pr): close PR terminal closure certificate candidate",
     )
     positions: list[int] = []
     for marker in sequence_markers:
@@ -645,7 +717,7 @@ def _validate_current_main_ref(map_text: str, errors: list[str]) -> None:
 
 def _validate_open_pr_queue_boundary(map_text: str, errors: list[str]) -> None:
     open_pr_queue = re.search(
-        r"^Open PRs after readiness-map refresh: .+ outside this non-empty diff receipt admission preflight closure; .+does not grant harness execution authority\.$",
+        r"^Open PRs after readiness-map refresh: .+ outside this GitHub PR admission readiness-map closure; .+does not grant harness execution authority\.$",
         map_text,
         re.MULTILINE,
     )
