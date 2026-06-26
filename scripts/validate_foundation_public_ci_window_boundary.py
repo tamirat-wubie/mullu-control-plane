@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sys
@@ -308,6 +309,18 @@ def _is_hex_sha(value: Any) -> bool:
     return isinstance(value, str) and len(value) == 40 and all(char in "0123456789abcdef" for char in value)
 
 
+def _parse_utc_timestamp(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value.endswith("Z"):
+        return None
+    try:
+        parsed = datetime.fromisoformat(f"{value[:-1]}+00:00")
+    except ValueError:
+        return None
+    if parsed.tzinfo != timezone.utc:
+        return None
+    return parsed
+
+
 def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
     """Validate one window-specific public CI receipt."""
 
@@ -381,12 +394,39 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
     if pull_request_number is None:
         findings.append(Finding("public_ci_window_receipt_pull_request_invalid", "pull_request must be a repository PR URL"))
 
+    opened_at = payload.get("opened_at")
+    parsed_opened_at = _parse_utc_timestamp(opened_at)
+    if parsed_opened_at is None:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_opened_at_invalid",
+                "opened_at must be an ISO-8601 UTC timestamp ending in Z",
+            )
+        )
+
     closed_at = payload.get("closed_at")
     if status == "closed" and not _is_non_empty_string(closed_at):
         findings.append(Finding("public_ci_window_receipt_closed_at_invalid", "closed receipts require closed_at"))
+    parsed_closed_at = None
+    if _is_non_empty_string(closed_at):
+        parsed_closed_at = _parse_utc_timestamp(closed_at)
+        if parsed_closed_at is None:
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_closed_at_invalid",
+                    "closed_at must be an ISO-8601 UTC timestamp ending in Z",
+                )
+            )
     if status == "bounded_public_awaiting_evidence" and closed_at is not None:
         findings.append(
             Finding("public_ci_window_receipt_closed_at_invalid", "bounded public receipts must keep closed_at null")
+        )
+    if parsed_opened_at is not None and parsed_closed_at is not None and parsed_closed_at < parsed_opened_at:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_timestamp_order_invalid",
+                "closed_at must be greater than or equal to opened_at",
+            )
         )
 
     workflow_urls = payload.get("workflow_run_urls")

@@ -111,6 +111,31 @@ def test_public_ci_window_receipt_rejects_missing_closure_for_closed_window() ->
     assert any("closed receipts require closed_at" in finding.message for finding in findings)
 
 
+def test_public_ci_window_receipt_rejects_invalid_opened_at_timestamp() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["opened_at"] = "2026-06-26 10:51:56"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_opened_at_invalid" for finding in findings)
+    assert any("opened_at must be an ISO-8601 UTC timestamp ending in Z" in finding.message for finding in findings)
+    assert all("2026-06-26 10:51:56" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_closed_at_before_opened_at() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["opened_at"] = "2026-06-26T11:15:28Z"
+    payload["closed_at"] = "2026-06-26T10:51:56Z"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_timestamp_order_invalid" for finding in findings)
+    assert any("closed_at must be greater than or equal to opened_at" in finding.message for finding in findings)
+    assert all("2026-06-26T10:51:56Z" not in finding.message for finding in findings)
+
+
 def test_public_ci_window_receipt_rejects_secret_shaped_text() -> None:
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["exposure_decision"] = "accidentally included client_secret value"
