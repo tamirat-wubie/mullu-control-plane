@@ -97,6 +97,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_approved_branch_works
     assert workspace_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_task_record_write_uao_admission_preflight() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    task_record_entry = entries[
+        "agentic-service-harness-task-record-write-uao-admission-preflight"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert task_record_entry["path"] == (
+        "schemas/agentic_service_harness_task_record_write_uao_admission_preflight.schema.json"
+    )
+    assert task_record_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-task-record-write-uao-admission-preflight:1"
+    )
+    assert task_record_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_evidence_bundle_projection() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

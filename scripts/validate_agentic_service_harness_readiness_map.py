@@ -15,8 +15,10 @@ Invariants:
   - EvidenceBundle remains closed as a read-only AgentRun-indexed projection.
   - LoopStatus remains closed as a read-only projection.
   - Task creation admission remains closed as an admission-only READY surface.
-  - The first next PR advances to task record write UAO admission after
-    dry-run test runner plan receipt closes.
+  - Task record write UAO admission remains closed as an admission-only
+    READY surface.
+  - The first next PR advances to harness receipt-store append preflight
+    after task record write UAO admission closes.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -201,6 +203,18 @@ REQUIRED_DRY_RUN_TEST_RUNNER_PLAN_TERMS = (
     "terminal closure remain blocked",
     "task record write UAO admission preflight",
 )
+REQUIRED_TASK_RECORD_WRITE_UAO_TERMS = (
+    "Task record write UAO admission preflight PR",
+    "agentic_service_harness_task_record_write_uao_admission_preflight",
+    "tenant/project identity",
+    "idempotency",
+    "rollback",
+    "receipt-store write-path",
+    "task record writes",
+    "runtime state writes",
+    "mutation routes",
+    "terminal closure remain blocked",
+)
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
     ("fastapi_mutation_decorator", re.compile(r"@\w+\.(?:post|put|patch|delete)\(", re.IGNORECASE)),
@@ -305,6 +319,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
         "dry_run_test_runner_plan_term",
         errors,
     )
+    _require_all(
+        map_text,
+        REQUIRED_TASK_RECORD_WRITE_UAO_TERMS,
+        "task_record_write_uao_term",
+        errors,
+    )
     _validate_forbidden_patterns(map_text, errors)
     _validate_repository_connection_ready(map_text, errors)
     _validate_agent_run_ready(map_text, errors)
@@ -317,6 +337,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_task_creation_admission_ready(map_text, errors)
     _validate_approved_branch_workspace_ready(map_text, errors)
     _validate_dry_run_test_runner_plan_ready(map_text, errors)
+    _validate_task_record_write_uao_ready(map_text, errors)
     _validate_next_pr_sequence(map_text, errors)
     _validate_current_main_ref(map_text, errors)
     _validate_open_pr_queue_boundary(map_text, errors)
@@ -476,10 +497,20 @@ def _validate_dry_run_test_runner_plan_ready(map_text: str, errors: list[str]) -
         errors.append("missing ready row: Test runner dry-run plan receipt")
 
 
+def _validate_task_record_write_uao_ready(map_text: str, errors: list[str]) -> None:
+    closure_row = re.search(
+        r"^\| Task record write UAO admission preflight PR \| READY \| .+task record writes.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Task record write UAO admission preflight PR")
+
+
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(tasks): add task record write UAO admission preflight",
         "harness(receipts): add harness receipt-store append preflight",
+        "harness(tests): add executed test receipt admission preflight",
     )
     positions: list[int] = []
     for marker in sequence_markers:
