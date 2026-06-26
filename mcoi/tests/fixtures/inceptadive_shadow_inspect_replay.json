@@ -12,11 +12,11 @@
     "private_memory_exposed": false,
     "raw_request_text_exposed": false,
     "receipt": {
-      "context_hash": "8f1f61682065c87f28db263e2be87bb25bb1fdee568653da817eba2288753b22",
+      "context_hash": "b69e9c1ceb6bba4496e7895e3fef2616e40552cad98af053b9a8a24ffbd00cd5",
       "execution_authority": false,
       "governance_verdict": "not_evaluated",
       "mode": "strict_preflight",
-      "receipt_id": "shadow-receipt-dec1f1711f8d",
+      "receipt_id": "shadow-receipt-0bb15a4b3276",
       "retrieval_receipt_count": 1,
       "shadow_verdict": "block_recommended",
       "stage": "preflight"
@@ -66,6 +66,7 @@
     "raw_request_text_absent_from_response",
     "raw_retrieval_refs_absent_from_response",
     "raw_evidence_refs_absent_from_response",
+    "raw_context_refs_absent_from_receipts",
     "recent_activity_count_only"
   ],
   "method": "POST",
