@@ -17,7 +17,10 @@ from collections.abc import Iterable
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from fastapi.exceptions import RequestValidationError
+from fastapi.routing import APIRoute
+from pydantic import BaseModel, ConfigDict, Field
+from starlette.requests import Request
 
 from mcoi_runtime.app.inceptadive_shadow_integration import (
     InceptaDiveShadowRuntime,
@@ -35,11 +38,33 @@ from mcoi_runtime.core.inceptadive_shadow_types import (
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 
-router = APIRouter()
+
+class ShadowRedactingRoute(APIRoute):
+    """Route wrapper that prevents validation errors from echoing raw shadow input."""
+
+    def get_route_handler(self) -> Any:
+        original_route_handler = super().get_route_handler()
+
+        async def bounded_shadow_route_handler(request: Request) -> Any:
+            try:
+                return await original_route_handler(request)
+            except RequestValidationError as exc:
+                _inc_metric("requests_rejected")
+                raise HTTPException(
+                    status_code=400,
+                    detail=_shadow_validation_error_detail(str(request.url.path)),
+                ) from exc
+
+        return bounded_shadow_route_handler
+
+
+router = APIRouter(route_class=ShadowRedactingRoute)
 
 
 class ShadowInspectRequest(BaseModel):
     """Request body for a redacted non-executing shadow inspection."""
+
+    model_config = ConfigDict(extra="forbid")
 
     request_id: str = ""
     stage: str = ShadowStage.INTERPRETATION.value
@@ -588,6 +613,15 @@ def _count_by(values: Iterable[str]) -> dict[str, int]:
 
 def _shadow_error_detail(error: str, error_code: str) -> dict[str, object]:
     return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _shadow_validation_error_detail(path: str) -> dict[str, object]:
+    if path.endswith("/external-effect/advisory"):
+        return _shadow_error_detail(
+            "invalid external-effect advisory request",
+            "invalid_external_effect_advisory_request",
+        )
+    return _shadow_error_detail("invalid shadow inspect request", "invalid_shadow_inspect_request")
 
 
 def _created_at() -> str:

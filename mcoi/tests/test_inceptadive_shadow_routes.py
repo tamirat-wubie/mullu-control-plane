@@ -296,6 +296,61 @@ def test_shadow_inspect_route_rejects_invalid_request_bounded() -> None:
     assert "unknown-stage" not in str(response.json())
 
 
+def test_shadow_inspect_route_rejects_validation_errors_without_raw_echo() -> None:
+    previous_store = dict(deps._store)
+    raw_marker = "validation-secret-token"
+    deps._store.clear()
+    deps.set("inceptadive_shadow_runtime", build_inceptadive_shadow_runtime({}))
+    try:
+        array_response = _client().post("/api/v1/shadow/inspect", json=[raw_marker])
+        type_response = _client().post(
+            "/api/v1/shadow/inspect",
+            json={
+                "request_id": "shadow-route-validation-001",
+                "stage": "interpretation",
+                "user_input": {"secret": raw_marker},
+            },
+        )
+    finally:
+        deps._store.clear()
+        deps._store.update(previous_store)
+
+    for response in (array_response, type_response):
+        detail = response.json()["detail"]
+        assert response.status_code == 400
+        assert detail["error"] == "invalid shadow inspect request"
+        assert detail["error_code"] == "invalid_shadow_inspect_request"
+        assert detail["governed"] is True
+        assert raw_marker not in str(response.json())
+
+
+def test_shadow_inspect_route_rejects_unknown_fields_without_silent_acceptance() -> None:
+    previous_store = dict(deps._store)
+    raw_marker = "unknown-field-secret-token"
+    deps._store.clear()
+    deps.set("inceptadive_shadow_runtime", build_inceptadive_shadow_runtime({}))
+    try:
+        response = _client().post(
+            "/api/v1/shadow/inspect",
+            json={
+                "request_id": "shadow-route-extra-field-001",
+                "stage": "interpretation",
+                "user_input": "inspect bounded request",
+                "unexpected_secret": raw_marker,
+            },
+        )
+    finally:
+        deps._store.clear()
+        deps._store.update(previous_store)
+
+    detail = response.json()["detail"]
+    assert response.status_code == 400
+    assert detail["error"] == "invalid shadow inspect request"
+    assert detail["error_code"] == "invalid_shadow_inspect_request"
+    assert detail["governed"] is True
+    assert raw_marker not in str(response.json())
+
+
 def test_shadow_routes_fallback_when_runtime_unregistered() -> None:
     previous_store = dict(deps._store)
     deps._store.clear()
@@ -486,6 +541,33 @@ def test_external_effect_advisory_route_rejects_invalid_request_bounded() -> Non
     assert detail["error_code"] == "invalid_external_effect_advisory_request"
     assert detail["governed"] is True
     assert "not-a-severity" not in str(response.json())
+
+
+def test_external_effect_advisory_route_rejects_validation_errors_without_raw_echo() -> None:
+    previous_store = dict(deps._store)
+    raw_marker = "advisory-validation-secret-token"
+    deps._store.clear()
+    deps.set("inceptadive_shadow_runtime", build_inceptadive_shadow_runtime({}))
+    try:
+        response = _client().post(
+            "/api/v1/shadow/external-effect/advisory",
+            json={
+                "request_id": "shadow-route-advisory-validation-001",
+                "stage": "preflight",
+                "user_input": "inspect external effect",
+                "unexpected_secret": raw_marker,
+            },
+        )
+    finally:
+        deps._store.clear()
+        deps._store.update(previous_store)
+
+    detail = response.json()["detail"]
+    assert response.status_code == 400
+    assert detail["error"] == "invalid external-effect advisory request"
+    assert detail["error_code"] == "invalid_external_effect_advisory_request"
+    assert detail["governed"] is True
+    assert raw_marker not in str(response.json())
 
 
 def test_default_routers_include_shadow_inspect_path() -> None:
