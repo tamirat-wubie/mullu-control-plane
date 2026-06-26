@@ -895,6 +895,26 @@ def test_runtime_authority_witness_rejects_missing_requirement(tmp_path: Path) -
         )
 
 
+def test_runtime_authority_witness_rejects_unexpected_requirement(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["authority_requirements"].append(
+        {
+            "requirement_id": "requirement://unbounded-runtime-authority",
+            "proof_state": "Unknown",
+            "required_evidence_ref": "policy://unbounded-runtime-authority",
+            "current_decision": "runtime_authority_blocked",
+            "delta_reject_ref": "delta-reject://universal-symbol/unbounded-runtime-authority",
+        }
+    )
+    changed["contract_summary"]["authority_requirement_count"] = len(changed["authority_requirements"])
+    with pytest.raises(UniversalSymbolRuntimeAuthorityWitnessError, match="unbounded-runtime-authority"):
+        validate_universal_symbol_runtime_authority_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_AUTHORITY_SCHEMA_PATH,
+        )
+
+
 def test_runtime_authority_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
     witness = json.loads(DEFAULT_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
     changed = copy.deepcopy(witness)
@@ -911,6 +931,18 @@ def test_runtime_authority_witness_rejects_constraint_drift(tmp_path: Path) -> N
     changed = copy.deepcopy(witness)
     changed["runtime_constraints"]["runtime_admission_policy_required"] = False
     with pytest.raises(UniversalSymbolRuntimeAuthorityWitnessError, match="runtime_admission_policy_required"):
+        validate_universal_symbol_runtime_authority_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_AUTHORITY_SCHEMA_PATH,
+        )
+
+
+def test_runtime_authority_witness_rejects_unexpected_blocked_reason(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["blocked_reasons"].append("unbounded_runtime_authority_reason")
+    changed["contract_summary"]["blocked_reason_count"] = len(changed["blocked_reasons"])
+    with pytest.raises(UniversalSymbolRuntimeAuthorityWitnessError, match="unbounded_runtime_authority_reason"):
         validate_universal_symbol_runtime_authority_witness(
             _write_policy_case(tmp_path, changed),
             DEFAULT_RUNTIME_AUTHORITY_SCHEMA_PATH,
