@@ -269,6 +269,10 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["component_request_simulator"]["exact_test_anchor_count"] == 5
     assert surfaces["component_bundle_compiler"]["unanchored_witness_count"] == 0
     assert surfaces["component_bundle_compiler"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_evidence_request_queue"]["unanchored_witness_count"] == 0
+    assert surfaces["component_evidence_request_queue"]["exact_test_anchor_count"] == 5
+    assert surfaces["component_evidence_submission_intake"]["unanchored_witness_count"] == 0
+    assert surfaces["component_evidence_submission_intake"]["exact_test_anchor_count"] == 6
     assert surfaces["component_route_family_ownership"]["unanchored_witness_count"] == 0
     assert surfaces["component_route_family_ownership"]["exact_test_anchor_count"] == 5
     assert surfaces["component_route_family_promotion_preflight"]["unanchored_witness_count"] == 0
@@ -888,6 +892,38 @@ def test_component_bundle_compiler_surface_is_preview_only() -> None:
     assert "component_bundle_compiler_compiles_personal_assistant_v0_preview" in witnesses
     assert "component_bundle_compiler_rejects_live_authority_drift" in witnesses
     assert closure_actions["publish_component_bundle_compiler"]["status"] == "closed"
+
+
+def test_component_evidence_request_queue_surface_is_request_only() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    queue_surface = surfaces["component_evidence_request_queue"]
+    witnesses = set(queue_surface["runtime_witnesses"])
+
+    assert queue_surface["coverage_state"] == "proven"
+    assert queue_surface["representative_paths"] == ["component_evidence_request_queue"]
+    assert "mcoi/mcoi_runtime/app/component_evidence_request_queue.py" in queue_surface["evidence_files"]
+    assert "schemas/component_evidence_request_queue.schema.json" in queue_surface["evidence_files"]
+    assert "component_evidence_request_queue_schema_valid" in witnesses
+    assert "component_evidence_request_queue_runtime_rejects_unsafe_bundle_source" in witnesses
+    assert closure_actions["publish_component_evidence_request_queue"]["status"] == "closed"
+
+
+def test_component_evidence_submission_intake_surface_is_observation_only() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    intake_surface = surfaces["component_evidence_submission_intake"]
+    witnesses = set(intake_surface["runtime_witnesses"])
+
+    assert intake_surface["coverage_state"] == "proven"
+    assert intake_surface["representative_paths"] == ["component_evidence_submission_intake"]
+    assert "mcoi/mcoi_runtime/app/component_evidence_submission_intake.py" in intake_surface["evidence_files"]
+    assert "schemas/component_evidence_submission_intake.schema.json" in intake_surface["evidence_files"]
+    assert "component_evidence_submission_intake_schema_valid" in witnesses
+    assert "component_evidence_submission_intake_observes_submitted_refs_without_acceptance" in witnesses
+    assert closure_actions["publish_component_evidence_submission_intake"]["status"] == "closed"
 
 
 def test_component_route_family_ownership_surface_is_read_only() -> None:

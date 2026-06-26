@@ -637,6 +637,14 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_component_bundle_compiler.py"),
         ),
         CheckCommand(
+            "component_evidence_request_queue",
+            (python_executable, "scripts/validate_component_evidence_request_queue.py"),
+        ),
+        CheckCommand(
+            "component_evidence_submission_intake",
+            (python_executable, "scripts/validate_component_evidence_submission_intake.py"),
+        ),
+        CheckCommand(
             "component_graph",
             (python_executable, "scripts/validate_component_graph.py"),
         ),

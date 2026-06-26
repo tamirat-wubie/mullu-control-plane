@@ -1,0 +1,82 @@
+{
+  "security_review_id": "SEC-component-evidence-queue-and-intake-20260626",
+  "change_id": "component-evidence-queue-and-intake-20260626",
+  "impact_categories": [
+    "auth",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Evidence request and submission surfaces could collapse into authority if queued slots, submitted refs, or validators treat missing evidence as satisfied, submitted refs as accepted, or read-model projections as execution, connector, mutation, promotion, or terminal closure authority. The mitigation is schema-backed hard false authority fields, Unknown/AwaitingEvidence proof states, source drift rejection, focused negative tests, and preflight receipt order validation.",
+  "required_checks": [
+    {
+      "category": "auth",
+      "check": "request queue rejects execution, evidence acceptance, authority grant, promotion, and terminal closure drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_component_evidence_request_queue.py::test_component_evidence_request_queue_rejects_execution_and_acceptance_drift"
+    },
+    {
+      "category": "auth",
+      "check": "submission intake rejects evidence acceptance, evidence rejection, authority grant, promotion, and terminal closure drift",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_component_evidence_submission_intake.py::test_component_evidence_submission_intake_rejects_acceptance_and_closure_drift"
+    },
+    {
+      "category": "policy",
+      "check": "unsafe bundle compiler and queue sources fail closed before projection",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_component_evidence_request_queue.py::test_component_evidence_request_queue_runtime_rejects_unsafe_bundle_source"
+    },
+    {
+      "category": "receipts",
+      "check": "workspace preflight receipt schema and example preserve canonical check order including the two new validators",
+      "status": "passed",
+      "evidence_ref": "tests/test_run_workspace_governance_checks.py::test_main_json_emits_machine_readable_receipt"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "component-evidence-acceptance-authority-collapse",
+      "severity": "high",
+      "status": "resolved",
+      "mitigation": "The queue and intake schemas, validators, and tests hard-deny evidence_accepted, authority_granted, promotion_approved, terminal_closure_allowed, can_execute, can_mutate, and can_call_connector.",
+      "evidence_refs": [
+        "schemas/component_evidence_request_queue.schema.json",
+        "schemas/component_evidence_submission_intake.schema.json",
+        "tests/test_validate_component_evidence_request_queue.py",
+        "tests/test_validate_component_evidence_submission_intake.py"
+      ],
+      "residual_risk": "low"
+    },
+    {
+      "finding_id": "component-evidence-submitted-ref-overclaim",
+      "severity": "medium",
+      "status": "resolved",
+      "mitigation": "Submitted evidence refs are recorded as observations only, remain submitted_not_verified, and require a separate governed verifier before acceptance or authority changes.",
+      "evidence_refs": [
+        "mcoi/mcoi_runtime/app/component_evidence_submission_intake.py",
+        "tests/test_validate_component_evidence_submission_intake.py::test_component_evidence_submission_intake_observes_submitted_refs_without_acceptance"
+      ],
+      "residual_risk": "low"
+    }
+  ],
+  "mitigations": [
+    "keep both surfaces local, deterministic, read-only, and Foundation Mode scoped",
+    "fail closed on unsafe source authority drift",
+    "preserve Unknown/AwaitingEvidence until separate verifier evidence exists",
+    "bind validators into workspace governance preflight and receipt contract",
+    "record both surfaces in proof coverage as read_model audit_chain surfaces"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "scripts/validate_component_evidence_request_queue.py",
+    "scripts/validate_component_evidence_submission_intake.py",
+    "tests/test_validate_component_evidence_request_queue.py",
+    "tests/test_validate_component_evidence_submission_intake.py",
+    "receipt://sdlc/component-evidence-queue-and-intake/security"
+  ],
+  "uao_ref": "uao://sdlc/component-evidence-queue-and-intake/security",
+  "causal_decision_trace_ref": "trace://sdlc/component-evidence-queue-and-intake/security",
+  "receipt_ref": "receipt://sdlc/component-evidence-queue-and-intake/security"
+}
