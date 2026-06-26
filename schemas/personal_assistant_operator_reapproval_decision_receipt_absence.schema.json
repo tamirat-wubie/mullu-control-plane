@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-absence:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Absence",
+  "description": "Foundation Mode no-effect witness that the required fresh operator reapproval decision receipt is absent.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "absence_set_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_operator_reapproval_decision_receipt_contract_set_id",
+    "absence_count",
+    "absence_ids",
+    "source_contract_ids",
+    "receipt_ids",
+    "absences",
+    "effect_boundary",
+    "private_payload_policy",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "absence_set_id": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_absence_[a-z0-9][a-z0-9_:-]*$"},
+    "generated_at": {"type": "string", "minLength": 1},
+    "governed": {"const": true},
+    "source_projection": {"const": "operator_reapproval_decision_receipt_contract"},
+    "source_operator_reapproval_decision_receipt_contract_set_id": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_contract_[a-z0-9][a-z0-9_:-]*$"},
+    "absence_count": {"type": "integer", "minimum": 1},
+    "absence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_absence_item_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "source_contract_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_contract_item_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "absences": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/absence_item"}
+    },
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "absence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "absence_id",
+        "source_contract_id",
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "skill_id",
+        "risk_level",
+        "receipt_contract_ref",
+        "absence_witness",
+        "execution_admission_block",
+        "receipt"
+      ],
+      "properties": {
+        "absence_id": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_absence_item_[a-z0-9][a-z0-9_:-]*$"},
+        "source_contract_id": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_contract_item_[a-z0-9][a-z0-9_:-]*$"},
+        "approval_id": {"type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$"},
+        "request_id": {"type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$"},
+        "plan_id": {"type": "string", "pattern": "^pa_plan_[a-z0-9][a-z0-9_:-]*$"},
+        "skill_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$"},
+        "risk_level": {"enum": ["P3", "P4", "P5"]},
+        "receipt_contract_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_contract_set_id",
+            "source_contract_id",
+            "required_receipt_ref",
+            "required_receipt_digest",
+            "decision_receipt_required",
+            "decision_receipt_present",
+            "raw_operator_decision_serialized",
+            "secret_values_serialized"
+          ],
+          "properties": {
+            "source_contract_set_id": {"type": "string", "minLength": 1},
+            "source_contract_id": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_contract_item_[a-z0-9][a-z0-9_:-]*$"},
+            "required_receipt_ref": {"type": "string", "pattern": "^receipt://personal-assistant/operator-reapproval-decision/pa_approval_[a-z0-9][a-z0-9_:-]*$"},
+            "required_receipt_digest": {"$ref": "#/$defs/digest"},
+            "decision_receipt_required": {"const": true},
+            "decision_receipt_present": {"const": false},
+            "raw_operator_decision_serialized": {"const": false},
+            "secret_values_serialized": {"const": false}
+          }
+        },
+        "absence_witness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "absence_reason",
+            "required_next_evidence",
+            "operator_decision_value_present",
+            "operator_identity_ref_present",
+            "operator_signature_ref_present",
+            "execution_worker_admission_allowed",
+            "dispatch_allowed"
+          ],
+          "properties": {
+            "absence_reason": {"const": "operator_reapproval_decision_receipt_absent"},
+            "required_next_evidence": {"const": "governed_operator_reapproval_decision_receipt"},
+            "operator_decision_value_present": {"const": false},
+            "operator_identity_ref_present": {"const": false},
+            "operator_signature_ref_present": {"const": false},
+            "execution_worker_admission_allowed": {"const": false},
+            "dispatch_allowed": {"const": false}
+          }
+        },
+        "execution_admission_block": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["execution_worker_admission_state", "execution_worker_admission_allowed", "dispatch_allowed"],
+          "properties": {
+            "execution_worker_admission_state": {"const": "blocked_missing_operator_reapproval_decision_receipt"},
+            "execution_worker_admission_allowed": {"const": false},
+            "dispatch_allowed": {"const": false}
+          }
+        },
+        "receipt": {"type": "object", "additionalProperties": true}
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_reapproval_decision_receipt_absence_witness_allowed",
+        "receipt_contract_ref_binding_allowed",
+        "decision_receipt_required",
+        "fresh_operator_decision_present",
+        "operator_identity_ref_present",
+        "operator_signature_ref_present",
+        "operator_reapproval_receipt_present",
+        "decision_receipt_present",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed",
+        "dispatch_lease_active",
+        "live_connector_receipt_present",
+        "live_connector_execution_allowed",
+        "external_send_allowed",
+        "calendar_write_allowed",
+        "task_write_allowed",
+        "memory_write_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "deployment_mutation_allowed",
+        "nested_mind_live_activation_allowed",
+        "public_readiness_claim_allowed"
+      ],
+      "properties": {
+        "operator_reapproval_decision_receipt_absence_witness_allowed": {"const": true},
+        "receipt_contract_ref_binding_allowed": {"const": true},
+        "decision_receipt_required": {"const": true},
+        "fresh_operator_decision_present": {"const": false},
+        "operator_identity_ref_present": {"const": false},
+        "operator_signature_ref_present": {"const": false},
+        "operator_reapproval_receipt_present": {"const": false},
+        "decision_receipt_present": {"const": false},
+        "execution_worker_admission_allowed": {"const": false},
+        "dispatch_allowed": {"const": false},
+        "dispatch_lease_active": {"const": false},
+        "live_connector_receipt_present": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "calendar_write_allowed": {"const": false},
+        "task_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "receipt_contract_projection",
+        "decision_receipt_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "receipt_contract_projection": {"const": "ref_only"},
+        "decision_receipt_projection": {"const": "absent"}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "ready_for_execution_worker_admission",
+        "ready_for_live_execution",
+        "ready_for_customer_readiness_claim"
+      ],
+      "properties": {
+        "assurance_id": {"const": "personal_assistant_operator_reapproval_decision_receipt_absence_no_effect_assurance"},
+        "outcome": {"enum": ["AwaitingEvidence", "GovernanceBlocked"]},
+        "foundation_only": {"const": true},
+        "ready_for_execution_worker_admission": {"const": false},
+        "ready_for_live_execution": {"const": false},
+        "ready_for_customer_readiness_claim": {"const": false}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "foundation_only",
+        "projection_contract",
+        "runtime_boundary",
+        "decision_receipt_present",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_send_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed"
+      ],
+      "properties": {
+        "foundation_only": {"const": true},
+        "projection_contract": {"const": "operator_reapproval_decision_receipt_absence_evidence_only"},
+        "runtime_boundary": {"const": "absence_witness_blocks_execution_until_decision_receipt_is_bound"},
+        "decision_receipt_present": {"const": false},
+        "execution_worker_admission_allowed": {"const": false},
+        "dispatch_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false}
+      }
+    }
+  }
+}
