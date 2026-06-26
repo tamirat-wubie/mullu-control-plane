@@ -1,0 +1,131 @@
+{
+  "audit_findings": [
+    {
+      "evidence_refs": [
+        "component_evidence_request_queue_validator"
+      ],
+      "finding_id": "queue_runtime_alignment",
+      "outcome": "SolvedVerified",
+      "proof_state": "Pass",
+      "required_validator_refs": [
+        "component_evidence_request_queue_validator",
+        "component_evidence_submission_intake_validator",
+        "component_evidence_postmerge_audit_validator"
+      ],
+      "statement": "request queue matches runtime projection and remains request-only"
+    },
+    {
+      "evidence_refs": [
+        "component_evidence_submission_intake_validator"
+      ],
+      "finding_id": "intake_runtime_alignment",
+      "outcome": "SolvedVerified",
+      "proof_state": "Pass",
+      "required_validator_refs": [
+        "component_evidence_request_queue_validator",
+        "component_evidence_submission_intake_validator",
+        "component_evidence_postmerge_audit_validator"
+      ],
+      "statement": "submission intake matches runtime projection and remains observation-only"
+    },
+    {
+      "evidence_refs": [
+        "component_evidence_request_queue",
+        "component_evidence_submission_intake"
+      ],
+      "finding_id": "request_to_intake_coverage",
+      "outcome": "SolvedVerified",
+      "proof_state": "Pass",
+      "required_validator_refs": [
+        "component_evidence_request_queue_validator",
+        "component_evidence_submission_intake_validator",
+        "component_evidence_postmerge_audit_validator"
+      ],
+      "statement": "every queued request ID has one intake slot"
+    },
+    {
+      "evidence_refs": [
+        "authority_denial_receipt"
+      ],
+      "finding_id": "authority_denial_preserved",
+      "outcome": "SolvedVerified",
+      "proof_state": "Pass",
+      "required_validator_refs": [
+        "component_evidence_request_queue_validator",
+        "component_evidence_submission_intake_validator",
+        "component_evidence_postmerge_audit_validator"
+      ],
+      "statement": "acceptance, rejection, authority, and promotion remain denied"
+    },
+    {
+      "evidence_refs": [
+        "terminal_closure_denial_receipt"
+      ],
+      "finding_id": "terminal_closure_denial_preserved",
+      "outcome": "SolvedVerified",
+      "proof_state": "Pass",
+      "required_validator_refs": [
+        "component_evidence_request_queue_validator",
+        "component_evidence_submission_intake_validator",
+        "component_evidence_postmerge_audit_validator"
+      ],
+      "statement": "post-merge audit is not terminal closure"
+    }
+  ],
+  "audit_id": "component_evidence_postmerge_audit.foundation.v1",
+  "audit_is_not_authority_grant": true,
+  "audit_is_not_evidence_acceptance": true,
+  "audit_is_not_evidence_rejection": true,
+  "audit_is_not_evidence_submission": true,
+  "audit_is_not_execution_authority": true,
+  "audit_is_not_promotion_approval": true,
+  "audit_is_not_terminal_closure": true,
+  "authority_granted": false,
+  "can_call_connector": false,
+  "can_claim_terminal_closure": false,
+  "can_execute": false,
+  "can_mutate": false,
+  "evidence_accepted": false,
+  "evidence_rejected": false,
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "next_action": "Verify submitted evidence in a separate governed lane before acceptance or authority changes.",
+  "postmerge_blockers": [
+    "submitted_evidence_not_verified",
+    "evidence_acceptance_not_performed",
+    "authority_grant_not_performed",
+    "terminal_closure_denied"
+  ],
+  "promotion_approved": false,
+  "schema_version": 1,
+  "source_refs": {
+    "component_evidence_request_queue": "examples/component_evidence_request_queue.foundation.json",
+    "component_evidence_submission_intake": "examples/component_evidence_submission_intake.foundation.json"
+  },
+  "summary": {
+    "accepted_evidence_count": 0,
+    "audit_finding_count": 5,
+    "authority_grant_count": 0,
+    "intake_slot_count": 7,
+    "postmerge_blocker_count": 4,
+    "rejected_evidence_count": 0,
+    "request_slot_count": 7,
+    "submitted_evidence_ref_count": 0,
+    "submitted_slot_count": 0,
+    "terminal_closure_allowed_count": 0
+  },
+  "terminal_closure_allowed": false,
+  "validators": [
+    {
+      "command": "python scripts/validate_component_evidence_postmerge_audit.py",
+      "required_for_closure": true,
+      "validator_id": "component_evidence_postmerge_audit_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_component_evidence_postmerge_audit.py -q",
+      "required_for_closure": true,
+      "validator_id": "component_evidence_postmerge_audit_tests"
+    }
+  ]
+}

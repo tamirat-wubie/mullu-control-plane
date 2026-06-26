@@ -188,3 +188,37 @@ def test_projection_symbol_id_is_deterministic() -> None:
     assert first["symbol_id"] == second["symbol_id"]
     assert first["symbol_version"] == "universal_symbol.v1"
     assert first["contract_summary"]["authority_denial_count"] == 9
+
+
+def test_projection_normalizes_refs_and_preserves_relation_constraints() -> None:
+    record = {
+        "receipt_id": "receipt-ref-normalization-0001",
+        "evidence_refs": (" receipt://normalized/0001 ",),
+        "target_refs": (" target://normalized/0001 ",),
+        "constraint_refs": (" policy://normalized/0001 ",),
+    }
+
+    symbol = universal_symbol_from_record(
+        record,
+        SymbolAdapterSurface.GENERIC_RECEIPT,
+        generated_at=NOW,
+    )
+
+    assert "receipt://normalized/0001" in symbol["evidence_refs"]
+    assert " receipt://normalized/0001 " not in symbol["evidence_refs"]
+    assert "target://normalized/0001" in symbol["symbol_relations"]["downstream_refs"]
+    assert " target://normalized/0001 " not in symbol["symbol_relations"]["downstream_refs"]
+    assert "policy://normalized/0001" in symbol["symbol_governance"]["policy_refs"]
+    assert " policy://normalized/0001 " not in symbol["symbol_governance"]["policy_refs"]
+
+    duplicate_record = {
+        "receipt_id": "receipt-ref-normalization-0002",
+        "evidence_refs": ("receipt://duplicate/0001", " receipt://duplicate/0001 "),
+    }
+
+    with pytest.raises(RuntimeCoreInvariantError, match="evidence_refs must not contain duplicate refs"):
+        universal_symbol_from_record(
+            duplicate_record,
+            SymbolAdapterSurface.GENERIC_RECEIPT,
+            generated_at=NOW,
+        )

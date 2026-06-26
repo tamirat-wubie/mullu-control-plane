@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:component-evidence-postmerge-audit:1",
+  "title": "Mullu Component Evidence Postmerge Audit",
+  "description": "Read-only Component Harness post-merge audit that checks request queue and submission intake alignment without granting execution, evidence acceptance, authority, promotion, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "audit_id",
+    "mode",
+    "source_refs",
+    "audit_is_not_execution_authority",
+    "audit_is_not_evidence_submission",
+    "audit_is_not_evidence_acceptance",
+    "audit_is_not_evidence_rejection",
+    "audit_is_not_authority_grant",
+    "audit_is_not_promotion_approval",
+    "audit_is_not_terminal_closure",
+    "live_execution_enabled",
+    "live_connector_send_enabled",
+    "can_execute",
+    "can_mutate",
+    "can_call_connector",
+    "can_claim_terminal_closure",
+    "evidence_accepted",
+    "evidence_rejected",
+    "authority_granted",
+    "promotion_approved",
+    "terminal_closure_allowed",
+    "summary",
+    "audit_findings",
+    "postmerge_blockers",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "audit_id": { "$ref": "#/$defs/identifier" },
+    "mode": { "type": "string", "const": "foundation" },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_evidence_request_queue", "component_evidence_submission_intake"],
+      "properties": {
+        "component_evidence_request_queue": { "$ref": "#/$defs/source_ref" },
+        "component_evidence_submission_intake": { "$ref": "#/$defs/source_ref" }
+      }
+    },
+    "audit_is_not_execution_authority": { "type": "boolean", "const": true },
+    "audit_is_not_evidence_submission": { "type": "boolean", "const": true },
+    "audit_is_not_evidence_acceptance": { "type": "boolean", "const": true },
+    "audit_is_not_evidence_rejection": { "type": "boolean", "const": true },
+    "audit_is_not_authority_grant": { "type": "boolean", "const": true },
+    "audit_is_not_promotion_approval": { "type": "boolean", "const": true },
+    "audit_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "live_execution_enabled": { "type": "boolean", "const": false },
+    "live_connector_send_enabled": { "type": "boolean", "const": false },
+    "can_execute": { "type": "boolean", "const": false },
+    "can_mutate": { "type": "boolean", "const": false },
+    "can_call_connector": { "type": "boolean", "const": false },
+    "can_claim_terminal_closure": { "type": "boolean", "const": false },
+    "evidence_accepted": { "type": "boolean", "const": false },
+    "evidence_rejected": { "type": "boolean", "const": false },
+    "authority_granted": { "type": "boolean", "const": false },
+    "promotion_approved": { "type": "boolean", "const": false },
+    "terminal_closure_allowed": { "type": "boolean", "const": false },
+    "summary": { "$ref": "#/$defs/summary" },
+    "audit_findings": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/audit_finding" }
+    },
+    "postmerge_blockers": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "contains": { "const": "terminal_closure_denied" },
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1, "maxLength": 320 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 360,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "source_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_slot_count",
+        "intake_slot_count",
+        "submitted_slot_count",
+        "submitted_evidence_ref_count",
+        "accepted_evidence_count",
+        "rejected_evidence_count",
+        "authority_grant_count",
+        "terminal_closure_allowed_count",
+        "audit_finding_count",
+        "postmerge_blocker_count"
+      ],
+      "properties": {
+        "request_slot_count": { "type": "integer", "minimum": 1 },
+        "intake_slot_count": { "type": "integer", "minimum": 1 },
+        "submitted_slot_count": { "type": "integer", "const": 0 },
+        "submitted_evidence_ref_count": { "type": "integer", "const": 0 },
+        "accepted_evidence_count": { "type": "integer", "const": 0 },
+        "rejected_evidence_count": { "type": "integer", "const": 0 },
+        "authority_grant_count": { "type": "integer", "const": 0 },
+        "terminal_closure_allowed_count": { "type": "integer", "const": 0 },
+        "audit_finding_count": { "type": "integer", "minimum": 1 },
+        "postmerge_blocker_count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "audit_finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "finding_id",
+        "proof_state",
+        "outcome",
+        "statement",
+        "evidence_refs",
+        "required_validator_refs"
+      ],
+      "properties": {
+        "finding_id": { "$ref": "#/$defs/identifier" },
+        "proof_state": { "type": "string", "const": "Pass" },
+        "outcome": { "type": "string", "const": "SolvedVerified" },
+        "statement": { "type": "string", "minLength": 1, "maxLength": 320 },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        },
+        "required_validator_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier" }
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "receipt_id": "agentic_service_harness_approved_branch_workspace_creation_observation_receipt",
+  "schema_version": 1,
+  "generated_at": "2026-06-26T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_authority_binding_ref": "examples/agentic_service_harness_approved_branch_workspace_creation_authority_binding.foundation.json",
+  "observation_status": "workspace_creation_observed_without_later_effects",
+  "workspace_creation_observed": true,
+  "workspace_created": true,
+  "planning_only": false,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "source_authority_binding_id": "agentic_service_harness_approved_branch_workspace_creation_authority_binding",
+    "workspace_root_policy_ref": "policy://foundation/workspace-root-confined",
+    "branch_name": "codex/harness-branch-workspace-observation-20260626",
+    "workspace_mode": "approved_branch_workspace_creation_observation_only",
+    "foundation_phase": "foundation_approved_branch_workspace_creation_observation"
+  },
+  "observation": {
+    "authority_request_id": "authority-binding.approved-branch-workspace-create",
+    "source_authority_binding_satisfied": true,
+    "observed_effect": "created_one_confined_branch_workspace_without_file_writes",
+    "workspace_path_ref": "evidence://workspace/path/confined-branch-workspace",
+    "workspace_path_confined": true,
+    "created_branch_name": "codex/harness-branch-workspace-observation-20260626",
+    "create_command_ref": "evidence://workspace/create-command-redacted",
+    "post_create_observation_ref": "evidence://workspace/post-create-observation",
+    "cleanup_required_before_close": true
+  },
+  "effect_boundary": {
+    "workspace_create_authorized": true,
+    "workspace_created": true,
+    "filesystem_written": false,
+    "branch_pushed": false,
+    "pull_request_opened": false,
+    "adapter_executed": false,
+    "connector_called": false,
+    "receipt_store_appended": false,
+    "mutation_route_admitted": false,
+    "secret_values_serialized": false,
+    "network_policy": "none"
+  },
+  "authority_denials": {
+    "filesystem_write_enabled": false,
+    "branch_push_enabled": false,
+    "pull_request_creation_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_calls_enabled": false,
+    "receipt_store_append_enabled": false,
+    "runtime_state_write_enabled": false,
+    "mutation_route_enabled": false,
+    "secret_values_serialized": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "required_next_evidence": {
+    "before_filesystem_write": [
+      "evidence://workspace/post-create-observation",
+      "evidence://filesystem-write-rollback-plan",
+      "evidence://non-empty-diff-admission-preflight"
+    ],
+    "before_adapter_execution": [
+      "approval://adapter-execution/operator-decision",
+      "evidence://worker-lease-sandbox-boundary",
+      "evidence://executed-test-receipt-admission-preflight"
+    ],
+    "before_receipt_append": [
+      "evidence://receipt-store-append-preflight",
+      "evidence://workspace-post-create-observation-digest",
+      "evidence://receipt-append-idempotency-key"
+    ],
+    "before_pull_request_creation": [
+      "evidence://github-pr-admission-preflight",
+      "evidence://branch-write-authority-binding",
+      "evidence://effect-reconciliation-before-pr"
+    ],
+    "before_terminal_closure": [
+      "evidence://cleanup-receipt-after-workspace-use",
+      "evidence://effect-reconciliation-before-terminal-closure",
+      "evidence://terminal-closure-certificate-candidate"
+    ]
+  },
+  "receipt_refs": {
+    "observation_schema": "schemas/agentic_service_harness_approved_branch_workspace_creation_observation_receipt.schema.json",
+    "source_authority_binding_schema": "schemas/agentic_service_harness_approved_branch_workspace_creation_authority_binding.schema.json",
+    "source_preflight_schema": "schemas/agentic_service_harness_approved_branch_workspace_creation_preflight.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-approved-branch-workspace-creation-observation-receipt",
+      "command": "python scripts/validate_agentic_service_harness_approved_branch_workspace_creation_observation_receipt.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Use the observed confined branch workspace only after filesystem-write, adapter-execution, receipt-append, pull-request, and terminal-closure evidence gates are separately satisfied."
+}
