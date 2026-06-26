@@ -1721,6 +1721,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-absence:1"
     },
     {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_intake.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-intake",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-intake:1"
+    },
+    {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
       "schema_id": "personal-assistant-foundation-closure-packet",
       "surface": "assistant",

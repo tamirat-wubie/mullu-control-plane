@@ -108,6 +108,12 @@ from .operator_reapproval_decision_receipt_absence import (
     build_default_personal_assistant_operator_reapproval_decision_receipt_absence,
     build_personal_assistant_operator_reapproval_decision_receipt_absence_envelope,
 )
+from .operator_reapproval_decision_receipt_intake import (
+    DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_INTAKE_GENERATED_AT,
+    DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_INTAKE_SET_ID,
+    build_default_personal_assistant_operator_reapproval_decision_receipt_intake,
+    build_personal_assistant_operator_reapproval_decision_receipt_intake_envelope,
+)
 from .intake import (
     ApprovalScope,
     ConnectorProofRef,
@@ -207,6 +213,8 @@ __all__ = (
     "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_CONTRACT_SET_ID",
     "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_ABSENCE_GENERATED_AT",
     "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_ABSENCE_SET_ID",
+    "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_INTAKE_GENERATED_AT",
+    "DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_INTAKE_SET_ID",
     "DEFAULT_OPERATOR_REAPPROVAL_GATE_GENERATED_AT",
     "DEFAULT_OPERATOR_REAPPROVAL_GATE_SET_ID",
     "PersonalAssistantApprovalQueue",
@@ -262,6 +270,7 @@ __all__ = (
     "build_default_personal_assistant_operator_reapproval_decision_intake",
     "build_default_personal_assistant_operator_reapproval_decision_receipt_contract",
     "build_default_personal_assistant_operator_reapproval_decision_receipt_absence",
+    "build_default_personal_assistant_operator_reapproval_decision_receipt_intake",
     "build_default_personal_assistant_operator_reapproval_gate",
     "build_personal_assistant_preview_plan",
     "build_default_personal_assistant_draft_projection",
@@ -275,6 +284,7 @@ __all__ = (
     "build_personal_assistant_operator_reapproval_decision_intake_envelope",
     "build_personal_assistant_operator_reapproval_decision_receipt_contract_envelope",
     "build_personal_assistant_operator_reapproval_decision_receipt_absence_envelope",
+    "build_personal_assistant_operator_reapproval_decision_receipt_intake_envelope",
     "build_personal_assistant_operator_reapproval_gate_envelope",
     "build_personal_assistant_execution_gate_envelope",
     "build_personal_assistant_read_only_projection_envelope",
