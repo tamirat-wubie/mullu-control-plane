@@ -165,6 +165,74 @@ def test_autonomous_demo_receipt_dir_derives_filename_and_creates_directory(
     assert body["automation_state"] == "settled_without_prompt"
 
 
+def test_autonomous_demo_receipt_dir_writes_latest_receipt(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    receipt_dir = tmp_path / "receipts" / "autonomous"
+
+    exit_code = cli.main(
+        [
+            "autonomous-demo",
+            "--episode-id",
+            "episode-latest",
+            "--receipt-dir",
+            str(receipt_dir),
+            "--receipt-latest-name",
+            "latest.json",
+            "--quiet",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    receipt_path = receipt_dir / "episode-latest.json"
+    latest_path = receipt_dir / "latest.json"
+    receipt_body = json.loads(receipt_path.read_text(encoding="utf-8"))
+    latest_body = json.loads(latest_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert captured.out == ""
+    assert captured.err == ""
+    assert receipt_body["receipt_path"] == str(receipt_path)
+    assert "latest_receipt_path" not in receipt_body
+    assert latest_body["receipt_path"] == str(receipt_path)
+    assert latest_body["latest_receipt_path"] == str(latest_path)
+    assert latest_body["automation_state"] == "settled_without_prompt"
+
+
+def test_autonomous_demo_latest_receipt_requires_receipt_dir(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(["autonomous-demo", "--receipt-latest-name", "latest.json"])
+
+    captured = capsys.readouterr()
+
+    assert exc_info.value.code == 1
+    assert "autonomous demo latest receipt requires --receipt-dir" in captured.err
+    assert captured.out == ""
+
+
+def test_autonomous_demo_rejects_unsafe_latest_receipt_name(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(
+            [
+                "autonomous-demo",
+                "--receipt-dir",
+                str(tmp_path),
+                "--receipt-latest-name",
+                "../latest.json",
+            ]
+        )
+
+    captured = capsys.readouterr()
+
+    assert exc_info.value.code == 1
+    assert "autonomous demo latest receipt name must be a filename" in captured.err
+    assert captured.out == ""
+
+
 def test_autonomous_demo_rejects_ambiguous_receipt_targets(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

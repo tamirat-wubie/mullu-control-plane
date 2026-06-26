@@ -354,8 +354,15 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
         _fatal("max-local-retries must be non-negative")
     if args.receipt_path and args.receipt_dir:
         _fatal("autonomous demo accepts either --receipt-path or --receipt-dir")
+    if args.receipt_latest_name and not args.receipt_dir:
+        _fatal("autonomous demo latest receipt requires --receipt-dir")
     if args.quiet and not (args.receipt_path or args.receipt_dir):
         _fatal("quiet autonomous demo requires --receipt-path or --receipt-dir")
+    latest_path = (
+        _autonomous_demo_receipt_latest_path(args.receipt_dir, args.receipt_latest_name)
+        if args.receipt_latest_name
+        else None
+    )
     config = _resolve_config(args)
     runtime = bootstrap_runtime(config=config)
     loop = OperatorLoop(runtime=runtime)
@@ -381,6 +388,10 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
     if receipt_path:
         envelope["receipt_path"] = str(Path(receipt_path))
         _write_autonomous_demo_receipt(envelope, receipt_path)
+    if latest_path:
+        latest_envelope = dict(envelope)
+        latest_envelope["latest_receipt_path"] = str(latest_path)
+        _write_autonomous_demo_receipt(latest_envelope, str(latest_path))
     if not args.quiet:
         if args.json:
             print(json.dumps(envelope, sort_keys=True, indent=2))
@@ -431,6 +442,15 @@ def _autonomous_demo_receipt_dir_path(receipt_dir: str, episode_id: str) -> Path
     except OSError as exc:
         _fatal(f"cannot prepare autonomous demo receipt directory: {_classify_cli_os_error(exc)}")
     return path / f"{safe_episode_id}.json"
+
+
+def _autonomous_demo_receipt_latest_path(receipt_dir: str, latest_name: str) -> Path:
+    """Return a bounded stable latest-receipt path under a local receipt directory."""
+    if Path(latest_name).name != latest_name or latest_name in {"", ".", ".."}:
+        _fatal("autonomous demo latest receipt name must be a filename")
+    if not latest_name.endswith(".json"):
+        _fatal("autonomous demo latest receipt name must end with .json")
+    return Path(receipt_dir) / latest_name
 
 
 def profiles_command(args: argparse.Namespace) -> int:
@@ -1059,6 +1079,10 @@ def build_parser() -> argparse.ArgumentParser:
     autonomous_demo_parser.add_argument(
         "--receipt-dir",
         help="Write the autonomous demo JSON envelope under a local receipt directory",
+    )
+    autonomous_demo_parser.add_argument(
+        "--receipt-latest-name",
+        help="Also write a stable latest receipt filename under --receipt-dir",
     )
     autonomous_demo_parser.add_argument(
         "--quiet",
