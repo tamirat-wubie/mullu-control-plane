@@ -164,6 +164,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "logic_governance_application",
         "life_meaning_governance",
         "phi_gps_v3_platform_spec",
+        "governance_normalization_map",
         "public_repository_surface",
         "proprietary_boundary",
         "company_boundary_kernel",
@@ -650,6 +651,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("foundation_community_network_boundary", "foundation_community_network_no_outreach_rehearsal_boundary")
     assert_ordered("foundation_community_network_no_outreach_rehearsal_boundary", "protocol_manifest")
     assert_ordered("protocol_manifest", "simple_assistant_ui_boundary")
+    assert_ordered("life_meaning_governance", "phi_gps_v3_platform_spec")
+    assert_ordered("phi_gps_v3_platform_spec", "governance_normalization_map")
+    assert_ordered("governance_normalization_map", "public_repository_surface")
     assert_ordered("code_change_physics_packet", "search_decision_receipt")
     assert_ordered("search_decision_receipt", "intelligence_coordination_episode_receipt")
 
@@ -667,6 +671,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["phi_gps_v3_platform_spec"][1:] == (
         "scripts/validate_phi_gps_v3_platform_spec.py",
+    )
+    assert args_by_name["governance_normalization_map"][1:] == (
+        "scripts/validate_governance_normalization_map.py",
     )
     assert args_by_name["company_boundary_kernel"][1:] == (
         "scripts/validate_foundation_company_boundary_kernel.py",
