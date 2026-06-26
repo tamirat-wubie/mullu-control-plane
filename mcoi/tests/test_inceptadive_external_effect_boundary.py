@@ -26,6 +26,12 @@ def _context(user_input: str, **overrides: object) -> ShadowContext:
     return ShadowContext(**values).with_integrity()
 
 
+def _set_first_jsonl_field(path, field_name: str, field_value: object) -> None:
+    payload = json.loads(path.read_text(encoding="utf-8").splitlines()[0])
+    payload[field_name] = field_value
+    path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def test_external_effect_boundary_requires_authority_and_evidence_without_dispatch() -> None:
     context = _context(
         "deploy it with secret-token",
@@ -205,6 +211,87 @@ def test_jsonl_shadow_store_rejects_tampered_result_snapshot(tmp_path) -> None:
     assert "line 1" in str(exc_info.value)
     assert "invalid JSONL record" in str(exc_info.value)
     assert "tamper-secret-token" not in str(exc_info.value)
+
+
+def test_jsonl_shadow_store_rejects_tampered_result_authority_flag(tmp_path) -> None:
+    env = {
+        "MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(tmp_path),
+        "MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1",
+    }
+    runtime = build_inceptadive_shadow_runtime(env)
+    context = _context(
+        "deploy it with result-authority-secret-token",
+        request_id="req-external-effect-result-authority-1",
+        stage=ShadowStage.INTERPRETATION,
+        candidate_action="deploy it with result-authority-secret-token",
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+    )
+    runtime.inspect_request(context)
+    _set_first_jsonl_field(tmp_path / "shadow-results.jsonl", "execution_authority", True)
+
+    with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+        build_inceptadive_shadow_runtime(env)
+
+    assert "shadow-results.jsonl" in str(exc_info.value)
+    assert "line 1" in str(exc_info.value)
+    assert isinstance(exc_info.value.__cause__, RuntimeCoreInvariantError)
+    assert "execution_authority must be false" in str(exc_info.value.__cause__)
+    assert "result-authority-secret-token" not in str(exc_info.value)
+
+
+def test_jsonl_shadow_store_rejects_tampered_receipt_authority_flag(tmp_path) -> None:
+    env = {
+        "MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(tmp_path),
+        "MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1",
+    }
+    runtime = build_inceptadive_shadow_runtime(env)
+    context = _context(
+        "deploy it with receipt-authority-secret-token",
+        request_id="req-external-effect-receipt-authority-1",
+        stage=ShadowStage.INTERPRETATION,
+        candidate_action="deploy it with receipt-authority-secret-token",
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+    )
+    runtime.inspect_request(context)
+    _set_first_jsonl_field(tmp_path / "shadow-receipts.jsonl", "execution_authority", True)
+
+    with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+        build_inceptadive_shadow_runtime(env)
+
+    assert "shadow-receipts.jsonl" in str(exc_info.value)
+    assert "line 1" in str(exc_info.value)
+    assert isinstance(exc_info.value.__cause__, RuntimeCoreInvariantError)
+    assert "execution_authority must be false" in str(exc_info.value.__cause__)
+    assert "receipt-authority-secret-token" not in str(exc_info.value)
+
+
+@pytest.mark.parametrize("flag_name", ("execution_authority", "raw_request_text_exposed"))
+def test_jsonl_shadow_store_rejects_tampered_advisory_authority_or_exposure_flag(
+    tmp_path,
+    flag_name: str,
+) -> None:
+    env = {"MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(tmp_path)}
+    runtime = build_inceptadive_shadow_runtime(env)
+    context = _context(
+        "send advisory-authority-secret-token",
+        request_id=f"req-external-effect-advisory-{flag_name}",
+        candidate_action="send advisory-authority-secret-token",
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+    )
+    runtime.external_effect_advisory(context)
+    _set_first_jsonl_field(tmp_path / "external-effect-advisories.jsonl", flag_name, True)
+
+    with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+        build_inceptadive_shadow_runtime(env)
+
+    assert "external-effect-advisories.jsonl" in str(exc_info.value)
+    assert "line 1" in str(exc_info.value)
+    assert isinstance(exc_info.value.__cause__, RuntimeCoreInvariantError)
+    assert f"{flag_name} must be false" in str(exc_info.value.__cause__)
+    assert "advisory-authority-secret-token" not in str(exc_info.value)
 
 
 def test_external_effect_boundary_rejects_authority_flags() -> None:
