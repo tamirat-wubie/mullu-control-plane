@@ -392,6 +392,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request.py",
+            ),
+        ),
+        CheckCommand(
             "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
             (
                 python_executable,
