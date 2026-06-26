@@ -42,6 +42,13 @@
       ],
       "action_requirement_satisfied": false,
       "authority_decision_id": "promotion_authority_decision.governed_connector_framework.route_binding_gate.v1",
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "blocks_promotion": true,
@@ -75,6 +82,7 @@
       "record_kind": "route_binding",
       "rejected_evidence_refs": [],
       "requires_authority_upgrade_witness": true,
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition": true,
       "requires_product_ownership_decision": true,
       "requires_route_binding_decision": true,
@@ -94,6 +102,13 @@
       ],
       "action_requirement_satisfied": false,
       "authority_decision_id": "promotion_authority_decision.governed_connector_framework.lifecycle_gate.v1",
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "blocks_promotion": true,
@@ -127,6 +142,7 @@
       "record_kind": "lifecycle_transition",
       "rejected_evidence_refs": [],
       "requires_authority_upgrade_witness": true,
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition": true,
       "requires_product_ownership_decision": true,
       "requires_route_binding_decision": true,
@@ -146,6 +162,13 @@
       ],
       "action_requirement_satisfied": false,
       "authority_decision_id": "promotion_authority_decision.governed_connector_framework.authority_upgrade_gate.v1",
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "blocks_promotion": true,
@@ -179,6 +202,7 @@
       "record_kind": "authority_upgrade",
       "rejected_evidence_refs": [],
       "requires_authority_upgrade_witness": true,
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition": true,
       "requires_product_ownership_decision": true,
       "requires_route_binding_decision": true,
@@ -198,6 +222,13 @@
       ],
       "action_requirement_satisfied": false,
       "authority_decision_id": "promotion_authority_decision.governed_connector_framework.product_specific_boundary_gate.v1",
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "blocks_promotion": true,
@@ -231,6 +262,7 @@
       "record_kind": "product_specific_ownership",
       "rejected_evidence_refs": [],
       "requires_authority_upgrade_witness": true,
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition": true,
       "requires_product_ownership_decision": true,
       "requires_route_binding_decision": true,
@@ -243,6 +275,13 @@
       "source_operator_submitted_record_id": "promotion_operator_submitted_evidence_record.governed_connector_framework.product_specific_boundary_gate.v1",
       "terminal_closure_authorized": false
     }
+  ],
+  "authority_fuse_blocking_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
+  "authority_fuse_enforced": true,
+  "authority_fuse_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
   ],
   "authority_grant_refs": [],
   "blocked_actions": [
@@ -330,6 +369,7 @@
   "separate_product_ownership_decision_required": true,
   "separate_route_binding_decision_required": true,
   "source_refs": {
+    "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
     "gate_satisfaction_evaluator": "examples/component_route_family_promotion_gate_satisfaction_evaluator.governed_connector_framework.json",
     "operator_submitted_evidence_records": "examples/component_route_family_promotion_operator_submitted_evidence_records.governed_connector_framework.json",
     "promotion_preflight": "examples/component_route_family_promotion_preflight.governed_connector_framework.json",
@@ -342,6 +382,7 @@
     "approval_artifact_requirement_count": 8,
     "authority_decision_count": 4,
     "authority_denial_count": 4,
+    "authority_fuse_blocking_count": 1,
     "authority_grant_count": 0,
     "blocking_decision_count": 4,
     "connector_authorization_count": 0,
@@ -360,6 +401,7 @@
   "validators": [
     "component_route_family_promotion_authority_decision_report_validator",
     "component_route_family_promotion_authority_decision_report_tests",
-    "component_route_family_promotion_gate_satisfaction_evaluator_validator"
+    "component_route_family_promotion_gate_satisfaction_evaluator_validator",
+    "component_authority_fuse_validator"
   ]
 }

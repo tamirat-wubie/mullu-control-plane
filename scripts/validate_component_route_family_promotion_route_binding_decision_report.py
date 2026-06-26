@@ -254,6 +254,14 @@ def _validate_route_binding_decision_semantics(report: dict[str, Any], errors: l
         errors.append(f"{label}: route_binding_decision_refs must match route_binding_decision_id")
     if _string_list(report.get("source_authority_decision_refs")) != [source_authority_id]:
         errors.append(f"{label}: source_authority_decision_refs must match source authority decision id")
+    authority_fuse_refs = _string_list(report.get("authority_fuse_refs"))
+    authority_fuse_blocking_refs = _string_list(report.get("authority_fuse_blocking_refs"))
+    if len(authority_fuse_refs) != 1:
+        errors.append(f"{label}: authority_fuse_refs must contain exactly one target component fuse")
+    if authority_fuse_blocking_refs != authority_fuse_refs:
+        errors.append(f"{label}: authority_fuse_blocking_refs must match authority_fuse_refs")
+    if _string_list(decision.get("authority_fuse_refs")) != authority_fuse_refs:
+        errors.append(f"{label}: route-binding decision authority_fuse_refs must match report authority_fuse_refs")
     if _string_list(report.get("satisfied_gate_evaluation_refs")) != [source_gate_id]:
         errors.append(f"{label}: satisfied_gate_evaluation_refs must match source gate evaluation id")
     if _string_list(report.get("accepted_record_refs")) != [accepted_record_id]:
@@ -289,6 +297,7 @@ def _validate_route_binding_decision_semantics(report: dict[str, Any], errors: l
         "rejected_evidence_count": len(_string_list(decision.get("rejected_evidence_refs"))),
         "accepted_record_count": len(_string_list(decision.get("accepted_record_refs"))),
         "route_binding_receipt_count": len(_string_list(decision.get("route_binding_receipt_refs"))),
+        "authority_fuse_blocking_count": len(set(_string_list(decision.get("authority_fuse_blocking_refs")))),
         "router_inventory_delta_ref_count": len(_string_list(decision.get("router_inventory_delta_refs"))),
         "approval_artifact_requirement_count": len(reported_required),
         "required_followup_decision_count": len(required_followups),
@@ -332,6 +341,8 @@ def _validate_route_binding_decision(decision: dict[str, Any], errors: list[str]
     for field_name in (
         "record_evidence_satisfied",
         "source_authority_decision_denied",
+        "authority_fuse_blocks_promotion",
+        "requires_external_authority_upgrade_evidence",
         "requires_router_inventory_delta",
         "requires_component_route_binding_receipt",
         "requires_lifecycle_transition",
@@ -365,6 +376,10 @@ def _validate_route_binding_decision(decision: dict[str, Any], errors: list[str]
         str(decision.get("source_authority_decision_id"))
     ]:
         errors.append(f"{label}: source_authority_decision_refs must contain only the source authority decision id")
+    if len(_string_list(decision.get("authority_fuse_refs"))) != 1:
+        errors.append(f"{label}: route-binding decision authority_fuse_refs must contain exactly one target component fuse")
+    if _string_list(decision.get("authority_fuse_blocking_refs")) != _string_list(decision.get("authority_fuse_refs")):
+        errors.append(f"{label}: route-binding decision authority_fuse_blocking_refs must match authority_fuse_refs")
     if _string_list(decision.get("satisfied_gate_evaluation_refs")) != [
         str(decision.get("source_gate_evaluation_id"))
     ]:

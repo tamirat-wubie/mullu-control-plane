@@ -1034,21 +1034,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_route_binding_decision_report.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_route_binding_decision_report.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_route_binding_decision_report.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_route_binding_decision_report.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_route_binding_decision_report.py",
             ],
-            "Component Harness promotion route-binding decision report consumes a denied authority decision and records one denial-only route-binding decision while router inventory mutation, selected-component binding, promotion approval, authority grants, execution, connector calls, and terminal closure remain blocked.",
+            "Component Harness promotion route-binding decision report consumes a denied authority decision and the target component authority-fuse denial, then records one denial-only route-binding decision while router inventory mutation, selected-component binding, promotion approval, authority grants, execution, connector calls, and terminal closure remain blocked.",
             [
                 "component_route_family_promotion_route_binding_decision_report_schema_valid",
                 "component_route_family_promotion_route_binding_decision_report_match_runtime_projection",
                 "component_route_family_promotion_route_binding_decision_report_reject_route_authorization_overclaim",
                 "component_route_family_promotion_route_binding_decision_report_reject_missing_decision",
                 "component_route_family_promotion_route_binding_decision_report_reject_record_satisfaction_drift",
+                "component_route_family_promotion_route_binding_decision_report_reject_authority_fuse_drift",
                 "component_route_family_promotion_route_binding_decision_report_reject_router_inventory_mutation_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1067,6 +1072,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "component_route_family_promotion_route_binding_decision_report_reject_record_satisfaction_drift": [
                     "component_route_family_promotion_route_binding_decision_report_reject_record_satisfaction_drift",
                 ],
+                "component_route_family_promotion_route_binding_decision_report_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_route_binding_decision_report_reject_authority_fuse_drift",
+                ],
                 "component_route_family_promotion_route_binding_decision_report_reject_router_inventory_mutation_drift": [
                     "component_route_family_promotion_route_binding_decision_report_reject_router_inventory_mutation_drift",
                 ],
@@ -1081,21 +1089,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_lifecycle_transition_decision_report.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_lifecycle_transition_decision_report.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_lifecycle_transition_decision_report.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_lifecycle_transition_decision_report.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_lifecycle_transition_decision_report.py",
             ],
-            "Component Harness promotion lifecycle-transition decision report consumes a denied route-binding decision and records one denial-only lifecycle decision while lifecycle state change, lifecycle receipts, promotion approval, authority grants, execution, connector calls, and terminal closure remain blocked.",
+            "Component Harness promotion lifecycle-transition decision report consumes a denied route-binding decision and inherited authority-fuse denial, then records one denial-only lifecycle decision while lifecycle state change, lifecycle receipts, promotion approval, authority grants, execution, connector calls, and terminal closure remain blocked.",
             [
                 "component_route_family_promotion_lifecycle_transition_decision_report_schema_valid",
                 "component_route_family_promotion_lifecycle_transition_decision_report_match_runtime_projection",
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_state_change_overclaim",
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_missing_decision",
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_proof_drift",
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_authority_fuse_drift",
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_lifecycle_receipt_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1114,6 +1127,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_proof_drift": [
                     "component_route_family_promotion_lifecycle_transition_decision_report_reject_proof_drift",
                 ],
+                "component_route_family_promotion_lifecycle_transition_decision_report_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_lifecycle_transition_decision_report_reject_authority_fuse_drift",
+                ],
                 "component_route_family_promotion_lifecycle_transition_decision_report_reject_lifecycle_receipt_drift": [
                     "component_route_family_promotion_lifecycle_transition_decision_report_reject_lifecycle_receipt_drift",
                 ],
@@ -1128,21 +1144,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_authority_upgrade_witness_decision_report.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_authority_upgrade_witness_decision_report.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_authority_upgrade_witness_decision_report.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_authority_upgrade_witness_decision_report.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_authority_upgrade_witness_decision_report.py",
             ],
-            "Component Harness promotion authority-upgrade witness decision report consumes a denied lifecycle-transition decision and records one denial-only authority-upgrade decision while authority grants, witness emission, authority-envelope mutation, execution, connector calls, and terminal closure remain blocked.",
+            "Component Harness promotion authority-upgrade witness decision report consumes a denied lifecycle-transition decision and inherited authority-fuse denial, then records one denial-only authority-upgrade decision while authority grants, witness emission, authority-envelope mutation, execution, connector calls, and terminal closure remain blocked.",
             [
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_schema_valid",
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_match_runtime_projection",
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_authority_overclaim",
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_missing_decision",
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_proof_drift",
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_authority_fuse_drift",
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_witness_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1161,6 +1182,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_proof_drift": [
                     "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_proof_drift",
                 ],
+                "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_authority_fuse_drift",
+                ],
                 "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_witness_drift": [
                     "component_route_family_promotion_authority_upgrade_witness_decision_report_reject_witness_drift",
                 ],
@@ -1175,21 +1199,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_product_ownership_decision_report.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_product_ownership_decision_report.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_product_ownership_decision_report.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_product_ownership_decision_report.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_product_ownership_decision_report.py",
             ],
-            "Component Harness promotion product-ownership decision report consumes a denied authority-upgrade decision and records one denial-only product-specific ownership decision while product ownership, product bundle binding, authority grants, execution, connector calls, router mutation, and terminal closure remain blocked.",
+            "Component Harness promotion product-ownership decision report consumes a denied authority-upgrade decision and inherited authority-fuse denial, then records one denial-only product-specific ownership decision while product ownership, product bundle binding, authority grants, execution, connector calls, router mutation, and terminal closure remain blocked.",
             [
                 "component_route_family_promotion_product_ownership_decision_report_schema_valid",
                 "component_route_family_promotion_product_ownership_decision_report_match_runtime_projection",
                 "component_route_family_promotion_product_ownership_decision_report_reject_ownership_overclaim",
                 "component_route_family_promotion_product_ownership_decision_report_reject_missing_decision",
                 "component_route_family_promotion_product_ownership_decision_report_reject_source_ref_drift",
+                "component_route_family_promotion_product_ownership_decision_report_reject_authority_fuse_drift",
                 "component_route_family_promotion_product_ownership_decision_report_reject_witness_binding_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1208,6 +1237,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "component_route_family_promotion_product_ownership_decision_report_reject_source_ref_drift": [
                     "component_route_family_promotion_product_ownership_decision_report_reject_source_ref_drift",
                 ],
+                "component_route_family_promotion_product_ownership_decision_report_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_product_ownership_decision_report_reject_authority_fuse_drift",
+                ],
                 "component_route_family_promotion_product_ownership_decision_report_reject_witness_binding_drift": [
                     "component_route_family_promotion_product_ownership_decision_report_reject_witness_binding_drift",
                 ],
@@ -1222,21 +1254,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_terminal_closure_denial_report.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_terminal_closure_denial_report.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_terminal_closure_denial_report.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_terminal_closure_denial_report.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_terminal_closure_denial_report.py",
             ],
-            "Component Harness promotion terminal-closure denial report consumes a denied product-ownership decision and records one denial-only terminal-closure decision while terminal certificates, closure claims, promotion approval, authority grants, execution, connector calls, and router mutation remain blocked.",
+            "Component Harness promotion terminal-closure denial report consumes a denied product-ownership decision and inherited authority-fuse denial, then records one denial-only terminal-closure decision while terminal certificates, closure claims, promotion approval, authority grants, execution, connector calls, and router mutation remain blocked.",
             [
                 "component_route_family_promotion_terminal_closure_denial_report_schema_valid",
                 "component_route_family_promotion_terminal_closure_denial_report_match_runtime_projection",
                 "component_route_family_promotion_terminal_closure_denial_report_reject_closure_overclaim",
                 "component_route_family_promotion_terminal_closure_denial_report_reject_missing_decision",
                 "component_route_family_promotion_terminal_closure_denial_report_reject_source_ref_drift",
+                "component_route_family_promotion_terminal_closure_denial_report_reject_authority_fuse_drift",
                 "component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1255,6 +1292,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "component_route_family_promotion_terminal_closure_denial_report_reject_source_ref_drift": [
                     "component_route_family_promotion_terminal_closure_denial_report_reject_source_ref_drift",
                 ],
+                "component_route_family_promotion_terminal_closure_denial_report_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_terminal_closure_denial_report_reject_authority_fuse_drift",
+                ],
                 "component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift": [
                     "component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift",
                 ],
@@ -1269,21 +1309,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_missing_evidence_ledger.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_missing_evidence_ledger.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_missing_evidence_ledger.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_missing_evidence_ledger.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_missing_evidence_ledger.py",
             ],
-            "Component Harness promotion missing-evidence ledger consumes terminal-closure denial and records six missing promotion blockers without creating witnesses, terminal certificates, authority grants, promotion approvals, execution, connector calls, or router mutation.",
+            "Component Harness promotion missing-evidence ledger consumes terminal-closure denial and binds the target component authority-fuse denial while recording six missing promotion blockers without creating witnesses, terminal certificates, authority grants, promotion approvals, execution, connector calls, or router mutation.",
             [
                 "component_route_family_promotion_missing_evidence_ledger_schema_valid",
                 "component_route_family_promotion_missing_evidence_ledger_match_runtime_projection",
                 "component_route_family_promotion_missing_evidence_ledger_reject_evidence_overclaim",
                 "component_route_family_promotion_missing_evidence_ledger_reject_missing_record",
                 "component_route_family_promotion_missing_evidence_ledger_reject_source_ref_drift",
+                "component_route_family_promotion_missing_evidence_ledger_reject_authority_fuse_drift",
                 "component_route_family_promotion_missing_evidence_ledger_reject_witness_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1301,6 +1346,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "component_route_family_promotion_missing_evidence_ledger_reject_source_ref_drift": [
                     "component_route_family_promotion_missing_evidence_ledger_reject_source_ref_drift",
+                ],
+                "component_route_family_promotion_missing_evidence_ledger_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_missing_evidence_ledger_reject_authority_fuse_drift",
                 ],
                 "component_route_family_promotion_missing_evidence_ledger_reject_witness_drift": [
                     "component_route_family_promotion_missing_evidence_ledger_reject_witness_drift",

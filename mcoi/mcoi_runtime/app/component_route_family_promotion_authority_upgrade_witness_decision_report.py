@@ -5,7 +5,7 @@ denial-only authority-upgrade witness decision without granting authority or
 mutating the component authority envelope.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: component route-family promotion lifecycle-transition decision
-report projection.
+report projection and component authority-fuse denial references.
 Invariants:
   - Authority-upgrade decisions can deny without changing authority level.
   - A denied authority-upgrade decision cannot emit an authority-upgrade witness
@@ -87,7 +87,12 @@ def build_component_route_family_promotion_authority_upgrade_witness_decision_re
         component_id=component_id,
     )
     _validate_lifecycle_report(lifecycle_report, surface_id, component_id)
+    authority_fuse_refs = _authority_fuse_refs(lifecycle_report)
     source_decision = _source_lifecycle_transition_decision(lifecycle_report)
+    if list(_string_list(source_decision.get("authority_fuse_refs"))) != authority_fuse_refs:
+        raise ComponentRouteFamilyPromotionAuthorityUpgradeWitnessDecisionReportError(
+            "authority-upgrade source lifecycle decision must cite the report authority fuse"
+        )
     authority_decision = _authority_upgrade_witness_decision(source_decision, surface_id)
     approval_evidence_required = list(_string_list(lifecycle_report.get("approval_evidence_required")))
     return {
@@ -152,6 +157,7 @@ def build_component_route_family_promotion_authority_upgrade_witness_decision_re
                 "examples/"
                 "component_route_family_promotion_authority_decision_report.governed_connector_framework.json"
             ),
+            "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
             "proof_matrix": "docs/40_proof_coverage_matrix.md",
         },
         "summary": _summary(authority_decision, approval_evidence_required),
@@ -162,6 +168,8 @@ def build_component_route_family_promotion_authority_upgrade_witness_decision_re
         ],
         "source_route_binding_decision_refs": [str(authority_decision["source_route_binding_decision_id"])],
         "source_authority_decision_refs": [str(authority_decision["source_authority_decision_id"])],
+        "authority_fuse_refs": authority_fuse_refs,
+        "authority_fuse_blocking_refs": authority_fuse_refs,
         "satisfied_gate_evaluation_refs": [str(authority_decision["source_gate_evaluation_id"])],
         "accepted_record_refs": [str(authority_decision["source_operator_submitted_record_id"])],
         "authority_upgrade_witness_refs": [],
@@ -185,6 +193,7 @@ def build_component_route_family_promotion_authority_upgrade_witness_decision_re
             "component_route_family_promotion_authority_upgrade_witness_decision_report_validator",
             "component_route_family_promotion_authority_upgrade_witness_decision_report_tests",
             "component_route_family_promotion_lifecycle_transition_decision_report_validator",
+            "component_authority_fuse_validator",
         ],
         "next_action": (
             "Create a product-specific ownership decision while authority upgrade remains denied until separate "
@@ -237,6 +246,20 @@ def _validate_lifecycle_report(report: dict[str, Any], surface_id: str, componen
             )
 
 
+def _authority_fuse_refs(report: dict[str, Any]) -> list[str]:
+    fuse_refs = list(_string_list(report.get("authority_fuse_refs")))
+    blocking_refs = list(_string_list(report.get("authority_fuse_blocking_refs")))
+    if len(fuse_refs) != 1:
+        raise ComponentRouteFamilyPromotionAuthorityUpgradeWitnessDecisionReportError(
+            "authority-upgrade decision report requires exactly one component authority-fuse reference"
+        )
+    if blocking_refs != fuse_refs:
+        raise ComponentRouteFamilyPromotionAuthorityUpgradeWitnessDecisionReportError(
+            "authority-upgrade decision report requires authority-fuse blocking refs to match authority-fuse refs"
+        )
+    return fuse_refs
+
+
 def _source_lifecycle_transition_decision(report: dict[str, Any]) -> dict[str, Any]:
     decisions = report.get("lifecycle_transition_decisions")
     if not isinstance(decisions, list):
@@ -259,6 +282,18 @@ def _source_lifecycle_transition_decision(report: dict[str, Any]) -> dict[str, A
     if decision.get("requires_authority_upgrade_witness") is not True:
         raise ComponentRouteFamilyPromotionAuthorityUpgradeWitnessDecisionReportError(
             "source lifecycle transition decision must still require authority-upgrade witness"
+        )
+    if decision.get("authority_fuse_blocks_promotion") is not True:
+        raise ComponentRouteFamilyPromotionAuthorityUpgradeWitnessDecisionReportError(
+            "source lifecycle transition decision must remain blocked by authority fuse"
+        )
+    if len(_string_list(decision.get("authority_fuse_refs"))) != 1:
+        raise ComponentRouteFamilyPromotionAuthorityUpgradeWitnessDecisionReportError(
+            "source lifecycle transition decision must cite exactly one authority fuse"
+        )
+    if _string_list(decision.get("authority_fuse_blocking_refs")) != _string_list(decision.get("authority_fuse_refs")):
+        raise ComponentRouteFamilyPromotionAuthorityUpgradeWitnessDecisionReportError(
+            "source lifecycle transition decision authority-fuse blocking refs must match authority-fuse refs"
         )
     return decision
 
@@ -303,6 +338,8 @@ def _authority_upgrade_witness_decision(source_decision: dict[str, Any], surface
         "resulting_authority_level": RESULTING_AUTHORITY_LEVEL,
         "record_evidence_satisfied": True,
         "source_lifecycle_transition_decision_denied": True,
+        "authority_fuse_blocks_promotion": True,
+        "requires_external_authority_upgrade_evidence": True,
         "action_requirement_satisfied": False,
         "authority_upgrade_authorized": False,
         "authority_level_changed": False,
@@ -340,6 +377,8 @@ def _authority_upgrade_witness_decision(source_decision: dict[str, Any], surface
         "source_authority_decision_refs": [
             _required_text(source_decision, "source_authority_decision_id", "source lifecycle transition decision")
         ],
+        "authority_fuse_refs": list(_string_list(source_decision.get("authority_fuse_refs"))),
+        "authority_fuse_blocking_refs": list(_string_list(source_decision.get("authority_fuse_refs"))),
         "satisfied_gate_evaluation_refs": [
             _required_text(source_decision, "source_gate_evaluation_id", "source lifecycle transition decision")
         ],
@@ -359,7 +398,7 @@ def _authority_upgrade_witness_decision(source_decision: dict[str, Any], surface
         "missing_authority_upgrade_witnesses": list(MISSING_AUTHORITY_UPGRADE_WITNESSES),
         "decision_reason": (
             "authority_upgrade_gate remains denied because authority-upgrade, lifecycle, route-binding, "
-            "and router-inventory witnesses are absent"
+            "router-inventory witnesses are absent, and the component authority fuse remains blocked"
         ),
     }
 
@@ -390,6 +429,7 @@ def _summary(authority_decision: dict[str, Any], approval_evidence_required: lis
         "accepted_record_count": len(authority_decision["accepted_record_refs"]),
         "authority_upgrade_witness_count": len(authority_decision["authority_upgrade_witness_refs"]),
         "authority_envelope_mutation_ref_count": len(authority_decision["authority_envelope_mutation_refs"]),
+        "authority_fuse_blocking_count": len(authority_decision["authority_fuse_blocking_refs"]),
         "approval_artifact_requirement_count": len(approval_evidence_required),
         "required_followup_decision_count": len(REQUIRED_FOLLOWUP_DECISIONS),
     }

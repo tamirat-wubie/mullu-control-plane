@@ -2,6 +2,12 @@
   "accepted_evidence_refs": [],
   "authority_envelope_mutated": false,
   "authority_envelope_mutation_refs": [],
+  "authority_fuse_blocking_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
+  "authority_fuse_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
   "authority_grant_refs": [],
   "authority_granted": false,
   "authority_level_changed": false,
@@ -60,6 +66,13 @@
     {
       "accepted_evidence_refs": [],
       "artifact_id": "selected_component_bound_router_inventory_delta",
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "blocks_promotion": true,
@@ -101,6 +114,13 @@
     {
       "accepted_evidence_refs": [],
       "artifact_id": "component_route_binding_receipt",
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "blocks_promotion": true,
@@ -142,6 +162,13 @@
     {
       "accepted_evidence_refs": [],
       "artifact_id": "component_lifecycle_transition_receipt",
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "blocks_promotion": true,
@@ -183,6 +210,13 @@
     {
       "accepted_evidence_refs": [],
       "artifact_id": "authority_upgrade_witness",
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "blocks_promotion": true,
@@ -224,6 +258,13 @@
     {
       "accepted_evidence_refs": [],
       "artifact_id": "product_specific_ownership_witness",
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "blocks_promotion": true,
@@ -265,6 +306,13 @@
     {
       "accepted_evidence_refs": [],
       "artifact_id": "terminal_closure_certificate",
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "blocks_promotion": true,
@@ -353,6 +401,7 @@
   "separate_router_inventory_delta_required": true,
   "separate_terminal_closure_certificate_required": true,
   "source_refs": {
+    "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
     "product_ownership_decision_report": "examples/component_route_family_promotion_product_ownership_decision_report.governed_connector_framework.json",
     "proof_matrix": "docs/40_proof_coverage_matrix.md",
     "terminal_closure_denial_report": "examples/component_route_family_promotion_terminal_closure_denial_report.governed_connector_framework.json"
@@ -361,6 +410,7 @@
     "promotion_terminal_closure_denial.governed_connector_framework.personal_assistant_v0.v1"
   ],
   "summary": {
+    "authority_fuse_blocking_count": 6,
     "authority_grant_count": 0,
     "authority_upgrade_missing_count": 1,
     "blocking_record_count": 6,
@@ -396,6 +446,7 @@
   "validators": [
     "component_route_family_promotion_missing_evidence_ledger_validator",
     "component_route_family_promotion_missing_evidence_ledger_tests",
-    "component_route_family_promotion_terminal_closure_denial_report_validator"
+    "component_route_family_promotion_terminal_closure_denial_report_validator",
+    "component_authority_fuse_validator"
   ]
 }

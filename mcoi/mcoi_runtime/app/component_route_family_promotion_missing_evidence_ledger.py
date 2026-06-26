@@ -4,7 +4,8 @@ Purpose: consume terminal-closure denial reports and record the unresolved
 promotion evidence gap set without creating witnesses, terminal certificates,
 authority grants, router mutations, promotion approvals, or closure claims.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
-Dependencies: component route-family promotion terminal-closure denial report.
+Dependencies: component route-family promotion terminal-closure denial report
+and component authority-fuse denial refs.
 Invariants:
   - A missing-evidence ledger is not missing evidence.
   - Unknown proof state on required evidence keeps promotion blocked.
@@ -78,9 +79,14 @@ def build_component_route_family_promotion_missing_evidence_ledger(
         product_bundle_id=product_bundle_id,
     )
     _validate_terminal_denial_report(terminal_report, surface_id, component_id, product_bundle_id)
+    authority_fuse_refs = _authority_fuse_refs(terminal_report)
     terminal_decision = _source_terminal_closure_decision(terminal_report)
+    if _string_list(terminal_decision.get("authority_fuse_refs")) != authority_fuse_refs:
+        raise ComponentRouteFamilyPromotionMissingEvidenceLedgerError(
+            "source terminal-closure decision authority_fuse_refs must match report authority_fuse_refs"
+        )
     missing_records = [
-        _missing_evidence_record(artifact_id, terminal_decision, surface_id, product_bundle_id)
+        _missing_evidence_record(artifact_id, terminal_decision, surface_id, product_bundle_id, authority_fuse_refs)
         for artifact_id in MISSING_EVIDENCE_ORDER
     ]
     missing_record_refs = [str(record["missing_evidence_id"]) for record in missing_records]
@@ -153,6 +159,7 @@ def build_component_route_family_promotion_missing_evidence_ledger(
                 "examples/"
                 "component_route_family_promotion_product_ownership_decision_report.governed_connector_framework.json"
             ),
+            "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
             "proof_matrix": "docs/40_proof_coverage_matrix.md",
         },
         "summary": _summary(missing_records),
@@ -162,6 +169,8 @@ def build_component_route_family_promotion_missing_evidence_ledger(
         "source_terminal_closure_decision_refs": [
             str(terminal_decision["terminal_closure_decision_id"])
         ],
+        "authority_fuse_refs": list(authority_fuse_refs),
+        "authority_fuse_blocking_refs": list(authority_fuse_refs),
         "terminal_closure_certificate_refs": [],
         "terminal_closure_witness_refs": [],
         "terminal_closure_refs": [],
@@ -184,6 +193,7 @@ def build_component_route_family_promotion_missing_evidence_ledger(
             "component_route_family_promotion_missing_evidence_ledger_validator",
             "component_route_family_promotion_missing_evidence_ledger_tests",
             "component_route_family_promotion_terminal_closure_denial_report_validator",
+            "component_authority_fuse_validator",
         ],
         "next_action": (
             "Collect the six named evidence artifacts in order; do not promote until each missing "
@@ -272,6 +282,19 @@ def _source_terminal_closure_decision(report: dict[str, Any]) -> dict[str, Any]:
         raise ComponentRouteFamilyPromotionMissingEvidenceLedgerError(
             "source terminal-closure decision must not authorize closure"
         )
+    if decision.get("authority_fuse_blocks_promotion") is not True:
+        raise ComponentRouteFamilyPromotionMissingEvidenceLedgerError(
+            "source terminal-closure decision must keep authority_fuse_blocks_promotion true"
+        )
+    authority_fuse_refs = _string_list(decision.get("authority_fuse_refs"))
+    if len(authority_fuse_refs) != 1:
+        raise ComponentRouteFamilyPromotionMissingEvidenceLedgerError(
+            "source terminal-closure decision must carry exactly one authority_fuse_refs entry"
+        )
+    if _string_list(decision.get("authority_fuse_blocking_refs")) != authority_fuse_refs:
+        raise ComponentRouteFamilyPromotionMissingEvidenceLedgerError(
+            "source terminal-closure decision authority_fuse_blocking_refs must match authority_fuse_refs"
+        )
     return decision
 
 
@@ -280,6 +303,7 @@ def _missing_evidence_record(
     terminal_decision: dict[str, Any],
     surface_id: str,
     product_bundle_id: str,
+    authority_fuse_refs: tuple[str, ...],
 ) -> dict[str, Any]:
     required_stage = MISSING_EVIDENCE_STAGES[artifact_id]
     terminal_decision_id = _required_text(
@@ -295,6 +319,9 @@ def _missing_evidence_record(
         "source_terminal_closure_decision_id": terminal_decision_id,
         "source_terminal_closure_decision_refs": [terminal_decision_id],
         "source_terminal_closure_decision_denied": True,
+        "authority_fuse_blocks_promotion": True,
+        "authority_fuse_refs": list(authority_fuse_refs),
+        "authority_fuse_blocking_refs": list(authority_fuse_refs),
         "evidence_state": "missing",
         "proof_state": "Unknown",
         "hard_constraint_unknown_blocks_action": True,
@@ -356,8 +383,24 @@ def _summary(records: list[dict[str, Any]]) -> dict[str, int]:
         "router_inventory_mutation_count": sum(
             1 for record in records if record["mutates_router_inventory"] is True
         ),
+        "authority_fuse_blocking_count": sum(
+            len(record["authority_fuse_blocking_refs"]) for record in records
+        ),
         **stage_counts,
     }
+
+
+def _authority_fuse_refs(report: dict[str, Any]) -> tuple[str, ...]:
+    refs = _string_list(report.get("authority_fuse_refs"))
+    if len(refs) != 1:
+        raise ComponentRouteFamilyPromotionMissingEvidenceLedgerError(
+            "terminal-closure denial report must carry exactly one authority_fuse_refs entry"
+        )
+    if _string_list(report.get("authority_fuse_blocking_refs")) != refs:
+        raise ComponentRouteFamilyPromotionMissingEvidenceLedgerError(
+            "terminal-closure denial report authority_fuse_blocking_refs must match authority_fuse_refs"
+        )
+    return refs
 
 
 def _required_text(payload: dict[str, Any], field_name: str, label: str) -> str:

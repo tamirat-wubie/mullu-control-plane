@@ -15,6 +15,12 @@
     "selected_component_bound_router_inventory_delta"
   ],
   "authority_decision_state": "denied_pending_governed_witnesses",
+  "authority_fuse_blocking_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
+  "authority_fuse_refs": [
+    "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+  ],
   "authority_grant_refs": [],
   "authority_granted": false,
   "blocked_actions": [
@@ -104,6 +110,13 @@
         "promotion_operator_submitted_evidence_record.governed_connector_framework.route_binding_gate.v1"
       ],
       "action_requirement_satisfied": false,
+      "authority_fuse_blocking_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
+      "authority_fuse_blocks_promotion": true,
+      "authority_fuse_refs": [
+        "component_authority_fuse.gmail_account_binding_gate.foundation.v1"
+      ],
       "authority_grant_refs": [],
       "authority_granted": false,
       "can_call_connector": false,
@@ -114,7 +127,7 @@
       "decision_is_not_authority_grant": true,
       "decision_is_not_promotion_approval": true,
       "decision_is_not_router_mutation": true,
-      "decision_reason": "route_binding_gate remains denied because no component route-binding receipt or selected-component router-inventory delta exists",
+      "decision_reason": "route_binding_gate remains denied because no component route-binding receipt or selected-component router-inventory delta exists and the component authority fuse remains blocked",
       "decision_state": "denied",
       "evidence_key": "missing_selected_component_route_binding",
       "foundation_fixture_decision_is_not_live_operator_evidence": true,
@@ -132,6 +145,7 @@
       "rejected_evidence_refs": [],
       "requires_authority_upgrade_witness": true,
       "requires_component_route_binding_receipt": true,
+      "requires_external_authority_upgrade_evidence": true,
       "requires_lifecycle_transition": true,
       "requires_product_ownership_decision": true,
       "requires_router_inventory_delta": true,
@@ -176,6 +190,7 @@
   ],
   "source_refs": {
     "authority_decision_report": "examples/component_route_family_promotion_authority_decision_report.governed_connector_framework.json",
+    "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
     "gate_satisfaction_evaluator": "examples/component_route_family_promotion_gate_satisfaction_evaluator.governed_connector_framework.json",
     "promotion_preflight": "examples/component_route_family_promotion_preflight.governed_connector_framework.json",
     "proof_matrix": "docs/40_proof_coverage_matrix.md"
@@ -184,6 +199,7 @@
     "accepted_evidence_count": 0,
     "accepted_record_count": 1,
     "approval_artifact_requirement_count": 8,
+    "authority_fuse_blocking_count": 1,
     "authority_grant_count": 0,
     "promotion_approval_count": 0,
     "rejected_evidence_count": 0,
@@ -204,6 +220,7 @@
   "validators": [
     "component_route_family_promotion_route_binding_decision_report_validator",
     "component_route_family_promotion_route_binding_decision_report_tests",
-    "component_route_family_promotion_authority_decision_report_validator"
+    "component_route_family_promotion_authority_decision_report_validator",
+    "component_authority_fuse_validator"
   ]
 }

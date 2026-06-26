@@ -7,6 +7,8 @@
     "accepted_evidence_refs",
     "authority_envelope_mutated",
     "authority_envelope_mutation_refs",
+    "authority_fuse_refs",
+    "authority_fuse_blocking_refs",
     "authority_grant_refs",
     "authority_granted",
     "authority_level_changed",
@@ -91,6 +93,20 @@
     "accepted_evidence_refs": { "$ref": "#/$defs/empty_ref_array" },
     "authority_envelope_mutated": { "type": "boolean", "const": false },
     "authority_envelope_mutation_refs": { "$ref": "#/$defs/empty_ref_array" },
+    "authority_fuse_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identifier_or_ref" }
+    },
+    "authority_fuse_blocking_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identifier_or_ref" }
+    },
     "authority_grant_refs": { "$ref": "#/$defs/empty_ref_array" },
     "authority_granted": { "type": "boolean", "const": false },
     "authority_level_changed": { "type": "boolean", "const": false },
@@ -180,11 +196,13 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "component_authority_fuse",
         "product_ownership_decision_report",
         "proof_matrix",
         "terminal_closure_denial_report"
       ],
       "properties": {
+        "component_authority_fuse": { "$ref": "#/$defs/identifier_or_ref" },
         "product_ownership_decision_report": { "$ref": "#/$defs/identifier_or_ref" },
         "proof_matrix": { "$ref": "#/$defs/identifier_or_ref" },
         "terminal_closure_denial_report": { "$ref": "#/$defs/identifier_or_ref" }
@@ -201,6 +219,7 @@
       "additionalProperties": false,
       "required": [
         "authority_grant_count",
+        "authority_fuse_blocking_count",
         "authority_upgrade_missing_count",
         "blocking_record_count",
         "lifecycle_transition_missing_count",
@@ -221,6 +240,7 @@
       ],
       "properties": {
         "authority_grant_count": { "type": "integer", "minimum": 0 },
+        "authority_fuse_blocking_count": { "type": "integer", "const": 6 },
         "authority_upgrade_missing_count": { "type": "integer", "const": 1 },
         "blocking_record_count": { "type": "integer", "const": 6 },
         "lifecycle_transition_missing_count": { "type": "integer", "const": 1 },
@@ -276,6 +296,9 @@
       "required": [
         "accepted_evidence_refs",
         "artifact_id",
+        "authority_fuse_refs",
+        "authority_fuse_blocking_refs",
+        "authority_fuse_blocks_promotion",
         "authority_grant_refs",
         "authority_granted",
         "blocks_promotion",
@@ -315,6 +338,21 @@
       "properties": {
         "accepted_evidence_refs": { "$ref": "#/$defs/empty_ref_array" },
         "artifact_id": { "$ref": "#/$defs/identifier_or_ref" },
+        "authority_fuse_refs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier_or_ref" }
+        },
+        "authority_fuse_blocking_refs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/identifier_or_ref" }
+        },
+        "authority_fuse_blocks_promotion": { "type": "boolean", "const": true },
         "authority_grant_refs": { "$ref": "#/$defs/empty_ref_array" },
         "authority_granted": { "type": "boolean", "const": false },
         "blocks_promotion": { "type": "boolean", "const": true },

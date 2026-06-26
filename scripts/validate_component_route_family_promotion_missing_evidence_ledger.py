@@ -251,12 +251,17 @@ def _validate_missing_evidence_semantics(report: dict[str, Any], errors: list[st
     source_terminal_refs = _string_list(report.get("source_terminal_closure_decision_refs"))
     if len(source_terminal_refs) != 1:
         errors.append(f"{label}: source_terminal_closure_decision_refs must contain one terminal decision")
+    authority_fuse_refs = _string_list(report.get("authority_fuse_refs"))
+    if len(authority_fuse_refs) != 1:
+        errors.append(f"{label}: authority_fuse_refs must contain exactly one component authority-fuse ref")
+    if _string_list(report.get("authority_fuse_blocking_refs")) != authority_fuse_refs:
+        errors.append(f"{label}: authority_fuse_blocking_refs must match authority_fuse_refs")
 
     for record in records:
         if not isinstance(record, dict):
             errors.append(f"{label}: missing_evidence_records entries must be objects")
             continue
-        _validate_missing_record(record, source_terminal_refs, errors, label)
+        _validate_missing_record(record, source_terminal_refs, authority_fuse_refs, errors, label)
 
     expected_counts = {
         "missing_evidence_record_count": len(records),
@@ -291,6 +296,11 @@ def _validate_missing_evidence_semantics(report: dict[str, Any], errors: list[st
         "router_inventory_mutation_count": sum(
             1 for record in records if isinstance(record, dict) and record.get("mutates_router_inventory") is True
         ),
+        "authority_fuse_blocking_count": sum(
+            len(_string_list(record.get("authority_fuse_blocking_refs")))
+            for record in records
+            if isinstance(record, dict)
+        ),
     }
     for stage in MISSING_EVIDENCE_STAGES.values():
         expected_counts[f"{stage}_missing_count"] = sum(
@@ -309,6 +319,7 @@ def _validate_missing_evidence_semantics(report: dict[str, Any], errors: list[st
 def _validate_missing_record(
     record: dict[str, Any],
     source_terminal_refs: list[str],
+    authority_fuse_refs: list[str],
     errors: list[str],
     label: str,
 ) -> None:
@@ -328,6 +339,7 @@ def _validate_missing_record(
             errors.append(f"{label}: missing record {field_name} must be {expected_value}")
     for field_name in (
         "source_terminal_closure_decision_denied",
+        "authority_fuse_blocks_promotion",
         "hard_constraint_unknown_blocks_action",
         "required",
         "blocks_promotion",
@@ -359,6 +371,10 @@ def _validate_missing_record(
             errors.append(f"{label}: missing record {field_name} must be false")
     if _string_list(record.get("source_terminal_closure_decision_refs")) != source_terminal_refs:
         errors.append(f"{label}: source_terminal_closure_decision_refs must match ledger source terminal ref")
+    if _string_list(record.get("authority_fuse_refs")) != authority_fuse_refs:
+        errors.append(f"{label}: missing record authority_fuse_refs must match ledger authority_fuse_refs")
+    if _string_list(record.get("authority_fuse_blocking_refs")) != authority_fuse_refs:
+        errors.append(f"{label}: missing record authority_fuse_blocking_refs must match ledger authority_fuse_refs")
     for field_name in (
         "accepted_evidence_refs",
         "witness_refs",

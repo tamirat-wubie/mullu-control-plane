@@ -89,8 +89,15 @@ def test_component_route_family_promotion_terminal_closure_denial_report_match_r
     assert example["summary"]["terminal_closure_denial_count"] == 1
     assert example["summary"]["terminal_closure_authorization_count"] == 0
     assert example["summary"]["terminal_certificate_mint_count"] == 0
+    assert example["summary"]["authority_fuse_blocking_count"] == 1
+    assert example["authority_fuse_refs"] == ["component_authority_fuse.gmail_account_binding_gate.foundation.v1"]
+    assert example["authority_fuse_blocking_refs"] == example["authority_fuse_refs"]
     assert decision["gate_id"] == "terminal_closure_gate"
     assert decision["decision_state"] == "denied"
+    assert decision["authority_fuse_blocks_promotion"] is True
+    assert decision["requires_external_authority_upgrade_evidence"] is True
+    assert decision["authority_fuse_refs"] == example["authority_fuse_refs"]
+    assert decision["authority_fuse_blocking_refs"] == example["authority_fuse_refs"]
     assert decision["requires_terminal_closure_certificate"] is True
 
 
@@ -165,6 +172,33 @@ def test_component_route_family_promotion_terminal_closure_denial_report_reject_
     assert "source_product_ownership_decision_denied must be true" in serialized_errors
     assert "source_product_ownership_decision_refs must contain only the source product id" in serialized_errors
     assert "source_authority_upgrade_decision_refs must contain only the source authority id" in serialized_errors
+
+
+def test_component_route_family_promotion_terminal_closure_denial_report_reject_authority_fuse_drift(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    decision = _terminal_decision(payload)
+    payload["authority_fuse_refs"] = []
+    payload["authority_fuse_blocking_refs"] = ["component_authority_fuse.gmail_account_binding_gate.foundation.v1"]
+    payload["summary"]["authority_fuse_blocking_count"] = 0
+    decision["authority_fuse_blocks_promotion"] = False
+    decision["requires_external_authority_upgrade_evidence"] = False
+    decision["authority_fuse_refs"] = ["component_authority_fuse.drifted.v1"]
+    decision["authority_fuse_blocking_refs"] = []
+
+    validation = validate_component_route_family_promotion_terminal_closure_denial_report(
+        example_path=_write_payload(tmp_path, payload)
+    )
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "authority_fuse_refs must contain exactly one component authority-fuse ref" in serialized_errors
+    assert "authority_fuse_blocking_refs must match authority_fuse_refs" in serialized_errors
+    assert "authority_fuse_blocks_promotion must be true" in serialized_errors
+    assert "requires_external_authority_upgrade_evidence must be true" in serialized_errors
+    assert "terminal decision authority_fuse_refs must match report authority_fuse_refs" in serialized_errors
+    assert "summary.authority_fuse_blocking_count" in serialized_errors
 
 
 def test_component_route_family_promotion_terminal_closure_denial_report_reject_certificate_witness_drift(

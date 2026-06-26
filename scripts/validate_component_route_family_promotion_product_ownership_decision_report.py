@@ -284,6 +284,17 @@ def _validate_product_ownership_decision_semantics(report: dict[str, Any], error
         str(decision.get("source_route_binding_decision_id"))
     ]:
         errors.append(f"{label}: source_route_binding_decision_refs must match source route-binding decision id")
+    authority_fuse_refs = _string_list(report.get("authority_fuse_refs"))
+    if len(authority_fuse_refs) != 1:
+        errors.append(f"{label}: authority_fuse_refs must contain exactly one component authority-fuse ref")
+    if _string_list(report.get("authority_fuse_blocking_refs")) != authority_fuse_refs:
+        errors.append(f"{label}: authority_fuse_blocking_refs must match authority_fuse_refs")
+    if _string_list(decision.get("authority_fuse_refs")) != authority_fuse_refs:
+        errors.append(f"{label}: product-ownership decision authority_fuse_refs must match report authority_fuse_refs")
+    if _string_list(decision.get("authority_fuse_blocking_refs")) != authority_fuse_refs:
+        errors.append(
+            f"{label}: product-ownership decision authority_fuse_blocking_refs must match report authority_fuse_refs"
+        )
 
     reported_required = set(_string_list(report.get("approval_evidence_required")))
     submission_channels = set(_string_list(report.get("operator_submission_channels")))
@@ -329,6 +340,7 @@ def _validate_product_ownership_decision_semantics(report: dict[str, Any], error
         "terminal_closure_count": 1 if decision.get("can_claim_terminal_closure") is True else 0,
         "accepted_evidence_count": len(_string_list(decision.get("accepted_evidence_refs"))),
         "rejected_evidence_count": len(_string_list(decision.get("rejected_evidence_refs"))),
+        "authority_fuse_blocking_count": len(_string_list(decision.get("authority_fuse_blocking_refs"))),
         "approval_artifact_requirement_count": len(reported_required),
         "required_followup_decision_count": len(required_followups),
     }
@@ -370,6 +382,8 @@ def _validate_product_ownership_decision(decision: dict[str, Any], errors: list[
             errors.append(f"{label}: product-ownership decision {field_name} must be {expected_value}")
     for field_name in (
         "source_authority_upgrade_decision_denied",
+        "authority_fuse_blocks_promotion",
+        "requires_external_authority_upgrade_evidence",
         "requires_product_ownership_witness",
         "requires_authority_upgrade_witness",
         "requires_lifecycle_transition_receipt",
@@ -426,6 +440,15 @@ def _validate_product_ownership_decision(decision: dict[str, Any], errors: list[
     ]:
         errors.append(
             f"{label}: source_route_binding_decision_refs must contain only the source route-binding decision id"
+        )
+    authority_fuse_refs = _string_list(decision.get("authority_fuse_refs"))
+    if len(authority_fuse_refs) != 1:
+        errors.append(
+            f"{label}: product-ownership decision authority_fuse_refs must contain exactly one component authority-fuse ref"
+        )
+    if _string_list(decision.get("authority_fuse_blocking_refs")) != authority_fuse_refs:
+        errors.append(
+            f"{label}: product-ownership decision authority_fuse_blocking_refs must match authority_fuse_refs"
         )
     for field_name in (
         "product_ownership_witness_refs",

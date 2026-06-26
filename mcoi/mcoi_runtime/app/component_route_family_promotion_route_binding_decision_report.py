@@ -5,7 +5,7 @@ route-binding decision without mutating router inventory or promoting a route
 family.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: component route-family promotion authority decision report
-projection.
+projection and component authority-fuse denial references.
 Invariants:
   - Route-binding decisions can deny without binding a route family.
   - A denied route-binding decision cannot mutate router inventory.
@@ -87,7 +87,12 @@ def build_component_route_family_promotion_route_binding_decision_report(
         component_id=component_id,
     )
     _validate_authority_report(authority_report, surface_id, component_id)
+    authority_fuse_refs = _authority_fuse_refs(authority_report)
     source_decision = _route_binding_authority_decision(authority_report)
+    if list(_string_list(source_decision.get("authority_fuse_refs"))) != authority_fuse_refs:
+        raise ComponentRouteFamilyPromotionRouteBindingDecisionReportError(
+            "route-binding source authority decision must cite the report authority fuse"
+        )
     route_binding_decision = _route_binding_decision(source_decision, surface_id)
     approval_evidence_required = list(_string_list(authority_report.get("approval_evidence_required")))
     return {
@@ -135,6 +140,7 @@ def build_component_route_family_promotion_route_binding_decision_report(
                 "examples/"
                 "component_route_family_promotion_authority_decision_report.governed_connector_framework.json"
             ),
+            "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
             "gate_satisfaction_evaluator": (
                 "examples/"
                 "component_route_family_promotion_gate_satisfaction_evaluator.governed_connector_framework.json"
@@ -146,6 +152,8 @@ def build_component_route_family_promotion_route_binding_decision_report(
         "route_binding_decisions": [route_binding_decision],
         "route_binding_decision_refs": [str(route_binding_decision["route_binding_decision_id"])],
         "source_authority_decision_refs": [str(route_binding_decision["source_authority_decision_id"])],
+        "authority_fuse_refs": authority_fuse_refs,
+        "authority_fuse_blocking_refs": authority_fuse_refs,
         "satisfied_gate_evaluation_refs": [str(route_binding_decision["source_gate_evaluation_id"])],
         "accepted_record_refs": [str(route_binding_decision["source_operator_submitted_record_id"])],
         "route_binding_receipt_refs": [],
@@ -167,6 +175,7 @@ def build_component_route_family_promotion_route_binding_decision_report(
             "component_route_family_promotion_route_binding_decision_report_validator",
             "component_route_family_promotion_route_binding_decision_report_tests",
             "component_route_family_promotion_authority_decision_report_validator",
+            "component_authority_fuse_validator",
         ],
         "next_action": (
             "Create a lifecycle transition decision witness after a separate route-binding receipt and "
@@ -209,10 +218,28 @@ def _validate_authority_report(report: dict[str, Any], surface_id: str, componen
         raise ComponentRouteFamilyPromotionRouteBindingDecisionReportError(
             "route-binding decision report requires all source authority decisions denied"
         )
+    if report.get("authority_fuse_enforced") is not True:
+        raise ComponentRouteFamilyPromotionRouteBindingDecisionReportError(
+            "route-binding decision report requires enforced component authority fuse"
+        )
     if report.get("ready_for_promotion") is not False:
         raise ComponentRouteFamilyPromotionRouteBindingDecisionReportError(
             "route-binding decision report requires source report to remain not ready for promotion"
         )
+
+
+def _authority_fuse_refs(report: dict[str, Any]) -> list[str]:
+    fuse_refs = list(_string_list(report.get("authority_fuse_refs")))
+    blocking_refs = list(_string_list(report.get("authority_fuse_blocking_refs")))
+    if len(fuse_refs) != 1:
+        raise ComponentRouteFamilyPromotionRouteBindingDecisionReportError(
+            "route-binding decision report requires exactly one component authority-fuse reference"
+        )
+    if blocking_refs != fuse_refs:
+        raise ComponentRouteFamilyPromotionRouteBindingDecisionReportError(
+            "route-binding decision report requires authority-fuse blocking refs to match authority-fuse refs"
+        )
+    return fuse_refs
 
 
 def _route_binding_authority_decision(report: dict[str, Any]) -> dict[str, Any]:
@@ -245,6 +272,18 @@ def _route_binding_authority_decision(report: dict[str, Any]) -> dict[str, Any]:
         raise ComponentRouteFamilyPromotionRouteBindingDecisionReportError(
             "route-binding authority decision must not mutate router inventory"
         )
+    if decision.get("authority_fuse_blocks_promotion") is not True:
+        raise ComponentRouteFamilyPromotionRouteBindingDecisionReportError(
+            "route-binding authority decision must remain blocked by authority fuse"
+        )
+    if len(_string_list(decision.get("authority_fuse_refs"))) != 1:
+        raise ComponentRouteFamilyPromotionRouteBindingDecisionReportError(
+            "route-binding authority decision must cite exactly one authority fuse"
+        )
+    if _string_list(decision.get("authority_fuse_blocking_refs")) != _string_list(decision.get("authority_fuse_refs")):
+        raise ComponentRouteFamilyPromotionRouteBindingDecisionReportError(
+            "route-binding authority decision authority-fuse blocking refs must match authority-fuse refs"
+        )
     return decision
 
 
@@ -274,6 +313,8 @@ def _route_binding_decision(authority_decision: dict[str, Any], surface_id: str)
         "proof_state": "Pass",
         "record_evidence_satisfied": True,
         "source_authority_decision_denied": True,
+        "authority_fuse_blocks_promotion": True,
+        "requires_external_authority_upgrade_evidence": True,
         "action_requirement_satisfied": False,
         "route_binding_authorized": False,
         "router_inventory_delta_authorized": False,
@@ -299,6 +340,8 @@ def _route_binding_decision(authority_decision: dict[str, Any], surface_id: str)
         "source_authority_decision_refs": [
             _required_text(authority_decision, "authority_decision_id", "route-binding authority decision")
         ],
+        "authority_fuse_refs": list(_string_list(authority_decision.get("authority_fuse_refs"))),
+        "authority_fuse_blocking_refs": list(_string_list(authority_decision.get("authority_fuse_refs"))),
         "satisfied_gate_evaluation_refs": [
             _required_text(authority_decision, "source_gate_evaluation_id", "route-binding authority decision")
         ],
@@ -315,7 +358,7 @@ def _route_binding_decision(authority_decision: dict[str, Any], surface_id: str)
         "missing_route_binding_witnesses": list(MISSING_ROUTE_BINDING_WITNESSES),
         "decision_reason": (
             "route_binding_gate remains denied because no component route-binding receipt or "
-            "selected-component router-inventory delta exists"
+            "selected-component router-inventory delta exists and the component authority fuse remains blocked"
         ),
     }
 
@@ -340,6 +383,7 @@ def _summary(route_binding_decision: dict[str, Any], approval_evidence_required:
         "rejected_evidence_count": len(route_binding_decision["rejected_evidence_refs"]),
         "accepted_record_count": len(route_binding_decision["accepted_record_refs"]),
         "route_binding_receipt_count": len(route_binding_decision["route_binding_receipt_refs"]),
+        "authority_fuse_blocking_count": len(route_binding_decision["authority_fuse_blocking_refs"]),
         "router_inventory_delta_ref_count": len(route_binding_decision["router_inventory_delta_refs"]),
         "approval_artifact_requirement_count": len(approval_evidence_required),
         "required_followup_decision_count": len(REQUIRED_FOLLOWUP_DECISIONS),
