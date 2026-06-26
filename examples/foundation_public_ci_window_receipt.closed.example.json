@@ -1,0 +1,45 @@
+{
+  "branch": "codex/public-ci-window-protocol-20260626",
+  "closed_at": "2026-06-26T11:15:28Z",
+  "closure_decision": "Public CI evidence was collected, all observed checks passed, and repository exposure was closed or bounded without changing public-readiness state.",
+  "customer_access_claimed": false,
+  "exposure_decision": "The public window was used only for GitHub Actions evidence and PR verification. No public launch, customer access, production deployment, legal filing, fundraising readiness, or raw secret exposure was claimed.",
+  "head_sha": "fc4977f2bcd16a76cd61c690c9dc6bf216a0629a",
+  "opened_at": "2026-06-26T10:51:56Z",
+  "production_deployment_claimed": false,
+  "public_launch_claimed": false,
+  "public_readiness_claimed": false,
+  "pull_request": "https://github.com/tamirat-wubie/mullu-control-plane/pull/2213",
+  "raw_secrets_committed": false,
+  "reason": "Foundation Mode budget constraints required a temporary public repository visibility window for GitHub Actions execution.",
+  "receipt_id": "foundation_public_ci_window_receipt.closed.example.v1",
+  "repo": "tamirat-wubie/mullu-control-plane",
+  "repo_visibility_after": "private_or_bounded_public",
+  "repo_visibility_before": "private",
+  "schema_version": 1,
+  "solver_outcome": "SolvedVerified",
+  "status": "closed",
+  "validators": [
+    {
+      "command": "python scripts/validate_public_repository_surface.py --local-only",
+      "state": "passed"
+    },
+    {
+      "command": "python scripts/validate_proprietary_boundary.py",
+      "state": "passed"
+    },
+    {
+      "command": "python scripts/validate_release_status.py",
+      "state": "passed"
+    },
+    {
+      "command": "gh pr checks 2213",
+      "state": "passed"
+    }
+  ],
+  "window_id": "foundation_public_ci_window.20260626.pr2213",
+  "workflow_run_urls": [
+    "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28233991896",
+    "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28233993595"
+  ]
+}

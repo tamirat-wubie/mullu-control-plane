@@ -95,6 +95,14 @@ The committed AwaitingEvidence witness is
 It is a template-level boundary witness only. It does not claim that any live
 public CI window is currently open, closed, or deployment-ready.
 
+The committed closed receipt example is
+[`../examples/foundation_public_ci_window_receipt.closed.example.json`](../examples/foundation_public_ci_window_receipt.closed.example.json).
+It records the minimum post-window shape for a CI-only visibility window: PR
+URL, branch, commit SHA, workflow run URLs, local validator states, visibility
+before/after labels, false public-readiness flags, false secret-exposure flags,
+and closure decision. Future live receipts may replace the example values only
+when the observed window evidence is available.
+
 ## Status
 
 - Solver outcome: AwaitingEvidence for public readiness.
