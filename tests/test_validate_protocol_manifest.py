@@ -2709,22 +2709,21 @@ def test_protocol_manifest_indexes_personal_assistant_operator_reapproval_decisi
     )
     assert value_absence_entry["surface"] == "approval"
 
-
-def test_protocol_manifest_indexes_github_pr_terminal_certificate_minting() -> None:
+def test_protocol_manifest_indexes_personal_assistant_operator_reapproval_decision_receipt_value_template() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
-    minting_entry = entries[
-        "agentic-service-harness-github-pr-terminal-closure-certificate-minting"
+    value_template_entry = entries[
+        "personal-assistant-operator-reapproval-decision-receipt-value-template"
     ]
 
     assert validate_protocol_manifest(manifest) == []
-    assert minting_entry["path"] == (
-        "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_minting.schema.json"
+    assert value_template_entry["path"] == (
+        "schemas/personal_assistant_operator_reapproval_decision_receipt_value_template.schema.json"
     )
-    assert minting_entry["urn"] == (
-        "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-certificate-minting:1"
+    assert value_template_entry["urn"] == (
+        "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-template:1"
     )
-    assert minting_entry["surface"] == "runtime"
+    assert value_template_entry["surface"] == "approval"
 
 
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
