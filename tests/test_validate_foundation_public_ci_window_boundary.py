@@ -150,6 +150,35 @@ def test_public_ci_window_receipt_rejects_secret_shaped_text() -> None:
     assert all("client_secret value" not in finding.message for finding in findings)
 
 
+def test_public_ci_window_receipt_rejects_job_url_as_workflow_run_url() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["workflow_run_urls"] = [
+        "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28233991896/job/83700000000"
+    ]
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_workflow_urls_invalid" for finding in findings)
+    assert any("exact repository GitHub Actions run URLs" in finding.message for finding in findings)
+    assert all("83700000000" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_duplicate_workflow_run_urls() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["workflow_run_urls"] = [
+        "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28233991896",
+        "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28233991896",
+    ]
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_workflow_urls_duplicate" for finding in findings)
+    assert any("must not repeat a GitHub Actions run" in finding.message for finding in findings)
+    assert all("28233991896" not in finding.message for finding in findings)
+
+
 def test_public_ci_window_receipt_derives_pr_check_command_from_pull_request() -> None:
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["pull_request"] = "https://github.com/tamirat-wubie/mullu-control-plane/pull/2230"
