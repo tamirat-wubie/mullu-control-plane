@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-task-record-write-uao-admission-preflight:1",
+  "title": "Agentic Service Harness Task Record Write UAO Admission Preflight",
+  "description": "Foundation Mode UAO admission preflight for future AgentTask record writes. This contract binds source preflights, tenant/project identity, idempotency, rollback, and receipt-store prerequisites while keeping task persistence, runtime state writes, mutation routes, adapter execution, filesystem writes, receipt append, secret serialization, and terminal closure blocked.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "admission_status",
+    "source_contract_refs",
+    "scope",
+    "uao_admission",
+    "task_record_contract",
+    "authority_denials",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "const": "agentic_service_harness_task_record_write_uao_admission_preflight"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "SolvedVerified"
+    },
+    "admission_status": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "source_contract_refs": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": { "$ref": "#/$defs/scope" },
+    "uao_admission": { "$ref": "#/$defs/uao_admission" },
+    "task_record_contract": { "$ref": "#/$defs/task_record_contract" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "task_creation_preflight_id",
+        "dry_run_test_runner_plan_id",
+        "foundation_phase",
+        "admission_only",
+        "read_only_sources",
+        "task_record_write_admitted",
+        "task_record_persisted",
+        "runtime_state_write_enabled",
+        "receipt_store_append_enabled",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "task_creation_preflight_id": { "$ref": "#/$defs/identifier" },
+        "dry_run_test_runner_plan_id": { "$ref": "#/$defs/identifier" },
+        "foundation_phase": {
+          "type": "string",
+          "const": "foundation_task_record_write_uao_admission_preflight"
+        },
+        "admission_only": { "type": "boolean", "const": true },
+        "read_only_sources": { "type": "boolean", "const": true },
+        "task_record_write_admitted": { "type": "boolean", "const": false },
+        "task_record_persisted": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false }
+      }
+    },
+    "uao_admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requested_action",
+        "requested_route_ref",
+        "uao_decision",
+        "task_creation_admission_valid",
+        "dry_run_test_runner_plan_valid",
+        "operator_approval_collected",
+        "tenant_project_binding_valid",
+        "idempotency_key_required",
+        "rollback_evidence_collected",
+        "receipt_store_write_path_valid",
+        "task_record_write_admitted",
+        "required_before_write_refs",
+        "blocked_reason_refs",
+        "next_required_evidence_refs"
+      ],
+      "properties": {
+        "requested_action": {
+          "type": "string",
+          "const": "admit_task_record_write"
+        },
+        "requested_route_ref": {
+          "type": "string",
+          "const": "route://harness/tasks/write/not-admitted"
+        },
+        "uao_decision": {
+          "type": "string",
+          "const": "BLOCKED_PENDING_OPERATOR_APPROVAL_AND_RECEIPT_STORE"
+        },
+        "task_creation_admission_valid": { "type": "boolean", "const": true },
+        "dry_run_test_runner_plan_valid": { "type": "boolean", "const": true },
+        "operator_approval_collected": { "type": "boolean", "const": false },
+        "tenant_project_binding_valid": { "type": "boolean", "const": true },
+        "idempotency_key_required": { "type": "boolean", "const": true },
+        "rollback_evidence_collected": { "type": "boolean", "const": false },
+        "receipt_store_write_path_valid": { "type": "boolean", "const": false },
+        "task_record_write_admitted": { "type": "boolean", "const": false },
+        "required_before_write_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "next_required_evidence_refs": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "task_record_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_shape_ref",
+        "allowed_field_refs",
+        "forbidden_inline_fields",
+        "write_result_claimed",
+        "stored_record_ref"
+      ],
+      "properties": {
+        "record_shape_ref": { "$ref": "#/$defs/evidence_ref" },
+        "allowed_field_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "forbidden_inline_fields": { "$ref": "#/$defs/evidence_ref_list" },
+        "write_result_claimed": { "type": "boolean", "const": false },
+        "stored_record_ref": {
+          "type": "string",
+          "const": "task-record://not-written"
+        }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_record_write_enabled",
+        "task_creation_route_enabled",
+        "runtime_state_write_enabled",
+        "filesystem_write_enabled",
+        "branch_write_enabled",
+        "adapter_execution_enabled",
+        "connector_calls_enabled",
+        "receipt_store_append_enabled",
+        "mutation_route_enabled",
+        "secret_values_serialized",
+        "terminal_closure",
+        "default_high_risk_authority"
+      ],
+      "properties": {
+        "task_record_write_enabled": { "type": "boolean", "const": false },
+        "task_creation_route_enabled": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "filesystem_write_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "adapter_execution_enabled": { "type": "boolean", "const": false },
+        "connector_calls_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "default_high_risk_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

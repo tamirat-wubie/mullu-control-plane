@@ -1,0 +1,106 @@
+{
+  "report_id": "agentic_service_harness_task_record_write_uao_admission_preflight",
+  "schema_version": 1,
+  "generated_at": "2026-06-25T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "admission_status": "AwaitingEvidence",
+  "source_contract_refs": [
+    "examples/agentic_service_harness_task_creation_admission_preflight.foundation.json",
+    "examples/agentic_service_harness_dry_run_test_runner_plan_receipt.foundation.json",
+    "examples/agentic_service_harness_approved_branch_workspace_creation_preflight.foundation.json",
+    "schemas/agentic_service_harness.schema.json",
+    "MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md"
+  ],
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_creation_preflight_id": "task-creation-admission-foundation",
+    "dry_run_test_runner_plan_id": "dry-run-test-runner-plan-foundation",
+    "foundation_phase": "foundation_task_record_write_uao_admission_preflight",
+    "admission_only": true,
+    "read_only_sources": true,
+    "task_record_write_admitted": false,
+    "task_record_persisted": false,
+    "runtime_state_write_enabled": false,
+    "receipt_store_append_enabled": false,
+    "secret_values_serialized": false
+  },
+  "uao_admission": {
+    "requested_action": "admit_task_record_write",
+    "requested_route_ref": "route://harness/tasks/write/not-admitted",
+    "uao_decision": "BLOCKED_PENDING_OPERATOR_APPROVAL_AND_RECEIPT_STORE",
+    "task_creation_admission_valid": true,
+    "dry_run_test_runner_plan_valid": true,
+    "operator_approval_collected": false,
+    "tenant_project_binding_valid": true,
+    "idempotency_key_required": true,
+    "rollback_evidence_collected": false,
+    "receipt_store_write_path_valid": false,
+    "task_record_write_admitted": false,
+    "required_before_write_refs": [
+      "approval://operator/task-record-write",
+      "evidence://tenant-project-binding",
+      "evidence://task-record-idempotency-key",
+      "evidence://task-record-rollback-plan",
+      "evidence://receipt-store-write-path"
+    ],
+    "blocked_reason_refs": [
+      "blocked://operator-approval/not-collected",
+      "blocked://task-record-write/uao-not-admitted",
+      "blocked://rollback-evidence/not-collected",
+      "blocked://receipt-store/write-path-not-verified",
+      "blocked://runtime-state-write/not-admitted",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "next_required_evidence_refs": [
+      "evidence://receipt-store-append-admission",
+      "evidence://executed-test-receipt",
+      "approval://task-record-write/operator-decision"
+    ]
+  },
+  "task_record_contract": {
+    "record_shape_ref": "schema://agentic-service-harness/AgentTask",
+    "allowed_field_refs": [
+      "field://agent-task/id",
+      "field://agent-task/project_id",
+      "field://agent-task/repository_connection_id",
+      "field://agent-task/request_ref",
+      "field://agent-task/status"
+    ],
+    "forbidden_inline_fields": [
+      "field://agent-task/raw-secret",
+      "field://agent-task/raw-command-output",
+      "field://agent-task/raw-diff",
+      "field://agent-task/external-token"
+    ],
+    "write_result_claimed": false,
+    "stored_record_ref": "task-record://not-written"
+  },
+  "authority_denials": {
+    "task_record_write_enabled": false,
+    "task_creation_route_enabled": false,
+    "runtime_state_write_enabled": false,
+    "filesystem_write_enabled": false,
+    "branch_write_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_calls_enabled": false,
+    "receipt_store_append_enabled": false,
+    "mutation_route_enabled": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-task-record-write-uao-admission-preflight",
+      "command": "python scripts/validate_agentic_service_harness_task_record_write_uao_admission_preflight.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add receipt-store append admission preflight; keep task record writes, runtime state writes, filesystem writes, adapter execution, connector calls, receipt append, secrets, and terminal closure blocked until operator approval, UAO, rollback, idempotency, and receipt-store evidence exist.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

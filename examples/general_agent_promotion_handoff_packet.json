@@ -1,5 +1,5 @@
 {
-  "aggregate_closure_actions": 11,
+  "aggregate_closure_actions": 10,
   "approval_required_actions": 8,
   "approval_required_blockers": [
     "voice_dependency_missing:OPENAI_API_KEY",

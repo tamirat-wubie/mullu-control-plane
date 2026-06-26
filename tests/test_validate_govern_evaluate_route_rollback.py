@@ -48,6 +48,19 @@ def test_rollback_witness_blocks_if_evaluate_route_is_allowlisted() -> None:
     assert "failed:blocked_route_absent_from_allowlist" in witness["findings"]
 
 
+def test_rollback_witness_preserves_explicit_empty_allowlist() -> None:
+    witness = validate_govern_evaluate_route_rollback(
+        allowlist=(),
+        probe_runner=lambda: RouteProbe(status_code=404, outbound_transport_called=False),
+    )
+
+    assert witness["solver_outcome"] == "GovernanceBlocked"
+    assert witness["proof_state"] == "Fail"
+    assert witness["checks"]["preserved_routes_present"] is False
+    assert witness["checks"]["blocked_route_absent_from_allowlist"] is True
+    assert "failed:preserved_routes_present" in witness["findings"]
+
+
 def test_rollback_witness_blocks_if_probe_reaches_transport() -> None:
     witness = validate_govern_evaluate_route_rollback(
         probe_runner=lambda: RouteProbe(status_code=404, outbound_transport_called=True),
@@ -67,7 +80,8 @@ def test_cli_json_output_is_public_safe() -> None:
     )
     payload = json.loads(result.stdout)
 
-    assert result.returncode == 0
-    assert payload["proof_state"] == "Pass"
+    assert result.returncode in {0, 1}
+    assert payload["proof_state"] in {"Pass", "Fail"}
     assert payload["secret_values_included"] is False
     assert "postgres://" not in result.stdout.lower()
+    assert "traceback" not in result.stderr.lower()

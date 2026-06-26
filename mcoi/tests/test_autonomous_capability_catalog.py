@@ -25,6 +25,7 @@ from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.operator_loop import OperatorLoop
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.solver_outcome import SolverOutcome
+from mcoi_runtime.contracts.workflow import StageType
 
 
 @dataclass
@@ -102,6 +103,30 @@ def test_default_catalog_compiles_apply_dependency_chain_without_prompt() -> Non
     assert receipt.prompt_count == 0
     assert receipt.planned_stage_count == 3
     assert receipt.blocked_dependency_count == 0
+    assert receipt.workflow_descriptor_ref is not None
+    assert receipt.workflow_stage_count == 3
+    assert receipt.workflow_approval_stage_count == 0
+    assert receipt.workflow_external_stage_count == 0
+
+    descriptor = episode.to_workflow_descriptor(
+        workflow_id="workflow-default-catalog",
+        created_at="2026-06-25T12:00:00+00:00",
+    )
+    assert tuple(stage.stage_id for stage in descriptor.stages) == (
+        "stage-local.inspect",
+        "stage-local.plan",
+        "stage-local.apply",
+    )
+    assert tuple(stage.stage_type for stage in descriptor.stages) == (
+        StageType.SKILL_EXECUTION,
+        StageType.SKILL_EXECUTION,
+        StageType.SKILL_EXECUTION,
+    )
+    assert tuple(stage.predecessors for stage in descriptor.stages) == (
+        (),
+        ("stage-local.inspect",),
+        ("stage-local.plan",),
+    )
 
 
 def test_default_catalog_passes_binding_values_as_arguments() -> None:

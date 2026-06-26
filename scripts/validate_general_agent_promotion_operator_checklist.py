@@ -106,7 +106,7 @@ REQUIRED_STEP_EVIDENCE = {
         "adapter action receipt_validator present",
     }),
     "validate_aggregate_closure_plan": frozenset({
-        "general_agent_promotion_closure_plan.json total_action_count=11",
+        "general_agent_promotion_closure_plan.json total_action_count=10",
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "capability_improvement_portfolio.json plan_count=5",

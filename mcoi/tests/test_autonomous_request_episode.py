@@ -24,9 +24,11 @@ from mcoi_runtime.app.autonomous_request import (
 )
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.operator_loop import OperatorLoop, OperatorRequest
+from mcoi_runtime.app.view_models import AutonomousRequestEpisodeSummaryView
 from mcoi_runtime.contracts.autonomy import AutonomyDecisionStatus
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.solver_outcome import SolverOutcome
+from mcoi_runtime.contracts.workflow import StageType
 from mcoi_runtime.core.planning_boundary import KnowledgeLifecycle, PlanningKnowledge
 
 
@@ -78,6 +80,25 @@ def _local_request(
         bindings={"message": "ok"} if bindings is None else bindings,
         knowledge_entries=(
             PlanningKnowledge("knowledge-local", "constraint", KnowledgeLifecycle.ADMITTED),
+        ),
+    )
+
+
+def _external_request(request_id: str = "request-send-1") -> OperatorRequest:
+    return OperatorRequest(
+        request_id=request_id,
+        subject_id="operator-1",
+        goal_id="goal-autonomous-request",
+        template={
+            "template_id": "template-send",
+            "action_type": "smtp_send",
+            "action_class": "communicate",
+            "command_argv": ("send", "{message}"),
+            "required_parameters": ("message",),
+        },
+        bindings={"message": "hello"},
+        knowledge_entries=(
+            PlanningKnowledge("knowledge-send", "constraint", KnowledgeLifecycle.ADMITTED),
         ),
     )
 
@@ -135,6 +156,18 @@ def test_autonomous_request_episode_runs_local_step_without_prompt() -> None:
     assert receipt.repair_attempt_count == 0
     assert receipt.repaired_step_count == 0
     assert receipt.repair_receipt_refs == ()
+    assert receipt.workflow_descriptor_ref is not None
+    assert receipt.workflow_descriptor_ref.startswith("workflow://")
+    assert receipt.workflow_stage_count == 1
+    assert receipt.workflow_approval_stage_count == 0
+    assert receipt.workflow_external_stage_count == 0
+
+    summary = AutonomousRequestEpisodeSummaryView.from_receipt(receipt)
+    assert summary.episode_id == "episode-local"
+    assert summary.workflow_descriptor_ref == receipt.workflow_descriptor_ref
+    assert summary.workflow_stage_count == 1
+    assert summary.workflow_approval_stage_count == 0
+    assert summary.workflow_external_stage_count == 0
 
 
 def test_autonomous_request_episode_records_local_retry_repair() -> None:
@@ -219,6 +252,122 @@ def test_autonomous_request_episode_runs_validated_plan_in_dependency_order() ->
     )
     assert receipt.step_receipts[1].plan_predecessors == ("stage-analyze",)
     assert len(receipt.receipt_refs) == 2
+
+
+def test_autonomous_request_plan_compiles_to_workflow_descriptor_without_prompt_gate() -> None:
+    plan = AutonomousRequestPlan(
+        plan_id="plan-local-workflow",
+        steps=(
+            AutonomousRequestPlanStep(
+                stage_id="stage-inspect",
+                request=_local_request("request-inspect", bindings={"message": "inspect"}),
+            ),
+            AutonomousRequestPlanStep(
+                stage_id="stage-apply",
+                request=_local_request("request-apply", bindings={"message": "apply"}),
+                predecessors=("stage-inspect",),
+            ),
+        ),
+    )
+
+    descriptor = plan.to_workflow_descriptor(
+        workflow_id="workflow-local",
+        created_at="2026-06-25T12:00:00+00:00",
+    )
+
+    assert descriptor.workflow_id == "workflow-local"
+    assert descriptor.name == "autonomous-request-continuation"
+    assert tuple(stage.stage_id for stage in descriptor.stages) == ("stage-inspect", "stage-apply")
+    assert tuple(stage.stage_type for stage in descriptor.stages) == (
+        StageType.SKILL_EXECUTION,
+        StageType.SKILL_EXECUTION,
+    )
+    assert tuple(stage.predecessors for stage in descriptor.stages) == ((), ("stage-inspect",))
+    assert tuple(stage.skill_id for stage in descriptor.stages) == ("template-local", "template-local")
+
+
+def test_autonomous_request_plan_adds_approval_gate_for_external_boundary() -> None:
+    plan = AutonomousRequestPlan(
+        plan_id="plan-external-workflow",
+        steps=(
+            AutonomousRequestPlanStep(stage_id="stage-plan", request=_local_request()),
+            AutonomousRequestPlanStep(
+                stage_id="stage-send",
+                request=_external_request(),
+                predecessors=("stage-plan",),
+            ),
+        ),
+    )
+
+    descriptor = plan.to_workflow_descriptor(
+        workflow_id="workflow-external",
+        created_at="2026-06-25T12:00:00+00:00",
+        has_approval=False,
+    )
+
+    assert tuple(stage.stage_id for stage in descriptor.stages) == (
+        "stage-plan",
+        "approval-stage-send",
+        "stage-send",
+    )
+    assert tuple(stage.stage_type for stage in descriptor.stages) == (
+        StageType.SKILL_EXECUTION,
+        StageType.APPROVAL_GATE,
+        StageType.COMMUNICATION,
+    )
+    assert descriptor.stages[1].predecessors == ("stage-plan",)
+    assert descriptor.stages[2].predecessors == ("stage-plan", "approval-stage-send")
+    assert descriptor.stages[2].skill_id == "template-send"
+
+
+def test_autonomous_request_plan_omits_external_gate_when_approval_exists() -> None:
+    plan = AutonomousRequestPlan(
+        plan_id="plan-approved-external-workflow",
+        steps=(
+            AutonomousRequestPlanStep(
+                stage_id="stage-send",
+                request=_external_request(),
+            ),
+        ),
+    )
+
+    descriptor = plan.to_workflow_descriptor(
+        created_at="2026-06-25T12:00:00+00:00",
+        has_approval=True,
+    )
+
+    assert descriptor.workflow_id == "workflow-plan-approved-external-workflow"
+    assert len(descriptor.stages) == 1
+    assert descriptor.stages[0].stage_id == "stage-send"
+    assert descriptor.stages[0].stage_type is StageType.COMMUNICATION
+    assert descriptor.stages[0].predecessors == ()
+
+
+def test_autonomous_request_episode_compiles_raw_requests_to_workflow_descriptor() -> None:
+    episode = AutonomousRequestEpisode(
+        episode_id="episode-raw-external",
+        subject_id="operator-1",
+        goal_id="goal-autonomous-request",
+        requests=(_external_request("request-send-raw"),),
+        has_approval=False,
+    )
+
+    descriptor = episode.to_workflow_descriptor(
+        workflow_id="workflow-raw-external",
+        created_at="2026-06-25T12:00:00+00:00",
+    )
+
+    assert descriptor.workflow_id == "workflow-raw-external"
+    assert tuple(stage.stage_id for stage in descriptor.stages) == (
+        "approval-request-send-raw",
+        "request-send-raw",
+    )
+    assert tuple(stage.stage_type for stage in descriptor.stages) == (
+        StageType.APPROVAL_GATE,
+        StageType.COMMUNICATION,
+    )
+    assert descriptor.stages[0].predecessors == ()
+    assert descriptor.stages[1].predecessors == ("approval-request-send-raw",)
 
 
 def test_autonomous_request_episode_blocks_plan_dependent_stage_after_failed_predecessor() -> None:
@@ -420,22 +569,7 @@ def test_autonomous_request_episode_blocks_external_retry_candidate() -> None:
             max_local_retries=1,
             retry_requests={
                 "request-bad": (
-                    OperatorRequest(
-                        request_id="request-external-repair",
-                        subject_id="operator-1",
-                        goal_id="goal-autonomous-request",
-                        template={
-                            "template_id": "template-send",
-                            "action_type": "smtp_send",
-                            "action_class": "communicate",
-                            "command_argv": ("send", "{message}"),
-                            "required_parameters": ("message",),
-                        },
-                        bindings={"message": "hello"},
-                        knowledge_entries=(
-                            PlanningKnowledge("knowledge-send", "constraint", KnowledgeLifecycle.ADMITTED),
-                        ),
-                    ),
+                    _external_request("request-external-repair"),
                 ),
             },
         )
@@ -463,22 +597,7 @@ def test_autonomous_request_episode_blocks_external_communication_without_approv
             subject_id="operator-1",
             goal_id="goal-autonomous-request",
             requests=(
-                OperatorRequest(
-                    request_id="request-send-1",
-                    subject_id="operator-1",
-                    goal_id="goal-autonomous-request",
-                    template={
-                        "template_id": "template-send",
-                        "action_type": "smtp_send",
-                        "action_class": "communicate",
-                        "command_argv": ("send", "{message}"),
-                        "required_parameters": ("message",),
-                    },
-                    bindings={"message": "hello"},
-                    knowledge_entries=(
-                        PlanningKnowledge("knowledge-send", "constraint", KnowledgeLifecycle.ADMITTED),
-                    ),
-                ),
+                _external_request(),
             ),
         )
     )
@@ -496,6 +615,10 @@ def test_autonomous_request_episode_blocks_external_communication_without_approv
     assert receipt.step_receipts[0].autonomy_status == AutonomyDecisionStatus.BLOCKED_PENDING_APPROVAL.value
     assert receipt.repair_attempt_count == 0
     assert receipt.repaired_step_count == 0
+    assert receipt.workflow_descriptor_ref is not None
+    assert receipt.workflow_stage_count == 2
+    assert receipt.workflow_approval_stage_count == 1
+    assert receipt.workflow_external_stage_count == 1
 
 
 def test_autonomous_request_episode_rejects_empty_request_tuple() -> None:
