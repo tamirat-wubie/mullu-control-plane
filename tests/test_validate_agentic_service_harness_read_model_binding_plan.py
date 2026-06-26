@@ -321,14 +321,14 @@ def test_readiness_map_rejects_missing_receipt_store_append_ready_row(
     )
 
 
-def test_readiness_map_rejects_missing_executed_test_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_redacted_executed_test_first_pr(tmp_path: Path) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(tests): add executed test receipt admission preflight`",
+            "1. `harness(tests): add redacted executed test receipt candidate`",
             "1. `harness(diffs): add non-empty diff receipt admission preflight`",
         ),
         encoding="utf-8",
@@ -339,7 +339,7 @@ def test_readiness_map_rejects_missing_executed_test_first_pr(tmp_path: Path) ->
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(tests): add executed test receipt admission preflight"
+        "missing next PR marker: harness(tests): add redacted executed test receipt candidate"
         in serialized_errors
     )
 
