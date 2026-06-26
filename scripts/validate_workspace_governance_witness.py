@@ -196,6 +196,8 @@ REQUIRED_BLOCK_CONDITIONS = frozenset(
         "witness artifact path escapes the repository",
         "workspace governance witness schema absent or failing",
         "governance inventory report counts contradict artifact records",
+        "governance integrity report omits a digest for an existing artifact",
+        "governance integrity report counts contradict artifact records",
         "workspace governance preflight omits inventory, integrity, or witness validation",
         "workspace governance witness omits Foundation boundary docs validators or tests",
         "workspace governance witness omits governance normalization map artifacts",
@@ -350,6 +352,9 @@ def _validate_string_set(field_name: str, value: Any, required_values: frozenset
     missing_values = sorted(required_values - set(observed_values))
     if missing_values:
         errors.append(f"{field_name} missing required value(s): {', '.join(missing_values)}")
+    unexpected_values = sorted(set(observed_values) - required_values)
+    if unexpected_values:
+        errors.append(f"{field_name} has unexpected value(s): {', '.join(unexpected_values)}")
     return errors
 
 
