@@ -1,0 +1,394 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-admission-preflight:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Value Binding Record Admission Preflight",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "value_binding_record_admission_preflight_set_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_operator_reapproval_decision_receipt_value_binding_record_guard_set_id",
+    "admission_preflight_count",
+    "admission_preflight_ids",
+    "source_record_guard_ids",
+    "receipt_ids",
+    "admission_preflights",
+    "effect_boundary",
+    "private_payload_policy",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "value_binding_record_admission_preflight_set_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_admission_preflight_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {"type": "string", "format": "date-time"},
+    "governed": {"const": true},
+    "source_projection": {"const": "operator_reapproval_decision_receipt_value_binding_record_guard"},
+    "source_operator_reapproval_decision_receipt_value_binding_record_guard_set_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_guard_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "admission_preflight_count": {"type": "integer", "minimum": 1},
+    "admission_preflight_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_admission_preflight_item_[a-z0-9][a-z0-9_:-]*$"
+      }
+    },
+    "source_record_guard_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_guard_item_[a-z0-9][a-z0-9_:-]*$"
+      }
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_receipt_operator_reapproval_decision_receipt_value_binding_record_admission_preflight_[a-z0-9][a-z0-9_:-]*$"
+      }
+    },
+    "admission_preflights": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/admission_preflight"}
+    },
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "admission_preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "admission_preflight_id",
+        "source_record_guard_id",
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "skill_id",
+        "risk_level",
+        "value_binding_record_guard_ref",
+        "missing_operator_evidence",
+        "admission_decision",
+        "execution_admission_block",
+        "receipt"
+      ],
+      "properties": {
+        "admission_preflight_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_admission_preflight_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "source_record_guard_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_guard_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "approval_id": {"type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$"},
+        "request_id": {"type": "string"},
+        "plan_id": {"type": "string"},
+        "skill_id": {"type": "string"},
+        "risk_level": {"enum": ["P0", "P1", "P2", "P3", "P4", "P5"]},
+        "value_binding_record_guard_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_record_guard_set_id",
+            "source_record_guard_id",
+            "guard_outcome",
+            "binding_record_created",
+            "execution_worker_admission_allowed"
+          ],
+          "properties": {
+            "source_record_guard_set_id": {
+              "type": "string",
+              "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_guard_[a-z0-9][a-z0-9_:-]*$"
+            },
+            "source_record_guard_id": {
+              "type": "string",
+              "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_guard_item_[a-z0-9][a-z0-9_:-]*$"
+            },
+            "guard_outcome": {"const": "AwaitingEvidence"},
+            "binding_record_created": {"const": false},
+            "execution_worker_admission_allowed": {"const": false}
+          }
+        },
+        "missing_operator_evidence": {"$ref": "#/$defs/missing_operator_evidence"},
+        "admission_decision": {"$ref": "#/$defs/admission_decision"},
+        "execution_admission_block": {"$ref": "#/$defs/execution_admission_block"},
+        "receipt": {"type": "object"}
+      }
+    },
+    "missing_operator_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_submitted_value_present",
+        "operator_identity_ref_present",
+        "operator_signature_ref_present",
+        "decision_receipt_ref_present",
+        "allowed_decision_values",
+        "required_next_evidence"
+      ],
+      "properties": {
+        "operator_submitted_value_present": {"const": false},
+        "operator_identity_ref_present": {"const": false},
+        "operator_signature_ref_present": {"const": false},
+        "decision_receipt_ref_present": {"const": false},
+        "allowed_decision_values": {
+          "type": "array",
+          "prefixItems": [
+            {"const": "approved"},
+            {"const": "rejected"},
+            {"const": "revised"},
+            {"const": "expired"}
+          ],
+          "items": false,
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "required_next_evidence": {"const": "governed_operator_reapproval_decision_receipt_value_binding_record"}
+      }
+    },
+    "admission_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "admission_state",
+        "outcome",
+        "operator_value_bound",
+        "binding_record_created",
+        "binding_record_admitted",
+        "authority_granted",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed"
+      ],
+      "properties": {
+        "decision": {"const": "blocked"},
+        "admission_state": {"const": "blocked_missing_governed_operator_value_binding_record_evidence"},
+        "outcome": {"const": "GovernanceBlocked"},
+        "operator_value_bound": {"const": false},
+        "binding_record_created": {"const": false},
+        "binding_record_admitted": {"const": false},
+        "authority_granted": {"const": false},
+        "execution_worker_admission_allowed": {"const": false},
+        "dispatch_allowed": {"const": false}
+      }
+    },
+    "execution_admission_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_worker_admission_state",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_send_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed"
+      ],
+      "properties": {
+        "execution_worker_admission_state": {"const": "blocked_missing_governed_operator_value_binding_record_evidence"},
+        "execution_worker_admission_allowed": {"const": false},
+        "dispatch_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false}
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_reapproval_decision_receipt_value_binding_record_admission_preflight_allowed",
+        "value_binding_record_guard_ref_binding_allowed",
+        "missing_operator_evidence_detection_allowed",
+        "admission_decision_allowed",
+        "operator_submitted_value_required",
+        "operator_identity_ref_required",
+        "operator_signature_ref_required",
+        "decision_receipt_required",
+        "operator_value_collected",
+        "explicit_operator_value_present",
+        "operator_value_bound",
+        "accepted_value_present",
+        "binding_record_candidate_accepted",
+        "binding_record_created",
+        "binding_record_admitted",
+        "admission_approved",
+        "authority_granted",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed",
+        "dispatch_lease_active",
+        "live_connector_receipt_present",
+        "live_connector_execution_allowed",
+        "external_send_allowed",
+        "calendar_write_allowed",
+        "task_write_allowed",
+        "memory_write_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "deployment_mutation_allowed",
+        "nested_mind_live_activation_allowed",
+        "public_readiness_claim_allowed"
+      ],
+      "properties": {
+        "operator_reapproval_decision_receipt_value_binding_record_admission_preflight_allowed": {"const": true},
+        "value_binding_record_guard_ref_binding_allowed": {"const": true},
+        "missing_operator_evidence_detection_allowed": {"const": true},
+        "admission_decision_allowed": {"const": true},
+        "operator_submitted_value_required": {"const": true},
+        "operator_identity_ref_required": {"const": true},
+        "operator_signature_ref_required": {"const": true},
+        "decision_receipt_required": {"const": true},
+        "operator_value_collected": {"const": false},
+        "explicit_operator_value_present": {"const": false},
+        "operator_value_bound": {"const": false},
+        "accepted_value_present": {"const": false},
+        "binding_record_candidate_accepted": {"const": false},
+        "binding_record_created": {"const": false},
+        "binding_record_admitted": {"const": false},
+        "admission_approved": {"const": false},
+        "authority_granted": {"const": false},
+        "execution_worker_admission_allowed": {"const": false},
+        "dispatch_allowed": {"const": false},
+        "dispatch_lease_active": {"const": false},
+        "live_connector_receipt_present": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "calendar_write_allowed": {"const": false},
+        "task_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "value_binding_record_guard_projection",
+        "candidate_record_projection",
+        "decision_value_projection",
+        "operator_identity_ref_projection",
+        "operator_signature_projection",
+        "decision_receipt_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "value_binding_record_guard_projection": {"const": "ref_only"},
+        "candidate_record_projection": {"const": "requirements_only"},
+        "decision_value_projection": {"const": "absent"},
+        "operator_identity_ref_projection": {"const": "absent"},
+        "operator_signature_projection": {"const": "absent"},
+        "decision_receipt_projection": {"const": "absent"}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "ready_for_binding_record_admission",
+        "ready_for_execution_worker_admission",
+        "ready_for_live_execution",
+        "ready_for_customer_readiness_claim",
+        "authority_drift_detected",
+        "checked_controls",
+        "blocking_reasons",
+        "next_action"
+      ],
+      "properties": {
+        "assurance_id": {"const": "personal_assistant_operator_reapproval_decision_receipt_value_binding_record_admission_preflight_no_effect_assurance"},
+        "outcome": {"const": "GovernanceBlocked"},
+        "foundation_only": {"const": true},
+        "ready_for_binding_record_admission": {"const": false},
+        "ready_for_execution_worker_admission": {"const": false},
+        "ready_for_live_execution": {"const": false},
+        "ready_for_customer_readiness_claim": {"const": false},
+        "authority_drift_detected": {"const": false},
+        "checked_controls": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "blocking_reasons": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "next_action": {"type": "string"}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "foundation_only",
+        "projection_contract",
+        "runtime_boundary",
+        "operator_value_collected",
+        "explicit_operator_value_present",
+        "operator_value_bound",
+        "accepted_value_present",
+        "binding_record_candidate_accepted",
+        "binding_record_created",
+        "binding_record_admitted",
+        "admission_approved",
+        "authority_granted",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_send_allowed",
+        "calendar_write_allowed",
+        "task_write_allowed",
+        "system_of_record_write_allowed",
+        "deployment_mutation_allowed",
+        "nested_mind_live_activation_allowed",
+        "public_readiness_claim_allowed",
+        "memory_write_allowed"
+      ],
+      "properties": {
+        "foundation_only": {"const": true},
+        "projection_contract": {"const": "operator_reapproval_decision_receipt_value_binding_record_admission_preflight_evidence_only"},
+        "runtime_boundary": {"const": "record_admission_preflight_blocks_missing_operator_evidence"},
+        "operator_value_collected": {"const": false},
+        "explicit_operator_value_present": {"const": false},
+        "operator_value_bound": {"const": false},
+        "accepted_value_present": {"const": false},
+        "binding_record_candidate_accepted": {"const": false},
+        "binding_record_created": {"const": false},
+        "binding_record_admitted": {"const": false},
+        "admission_approved": {"const": false},
+        "authority_granted": {"const": false},
+        "execution_worker_admission_allowed": {"const": false},
+        "dispatch_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "external_send_allowed": {"const": false},
+        "calendar_write_allowed": {"const": false},
+        "task_write_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false},
+        "memory_write_allowed": {"const": false}
+      }
+    }
+  }
+}

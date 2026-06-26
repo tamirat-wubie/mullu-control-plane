@@ -2811,6 +2811,23 @@ def test_protocol_manifest_indexes_personal_assistant_operator_reapproval_decisi
     assert value_binding_record_guard_entry["surface"] == "approval"
 
 
+def test_protocol_manifest_indexes_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_admission_preflight() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    record_admission_preflight_entry = entries[
+        "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-admission-preflight"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert record_admission_preflight_entry["path"] == (
+        "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_admission_preflight.schema.json"
+    )
+    assert record_admission_preflight_entry["urn"] == (
+        "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-admission-preflight:1"
+    )
+    assert record_admission_preflight_entry["surface"] == "approval"
+
+
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
     manifest = load_manifest()
     manifest["schemas"] = [
