@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-intake-preflight:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Value Binding Record Verifier Execution Decision Intake Preflight",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision_intake_preflight_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_verifier_execution_approval_request_id",
+    "decision_intake_preflight_state",
+    "decision",
+    "outcome",
+    "decision_intake_preflight_count",
+    "decision_intake_preflight_item_ids",
+    "receipt_ids",
+    "decision_intake_preflights",
+    "effect_boundary",
+    "private_payload_policy",
+    "summary",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "decision_intake_preflight_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_intake_preflight_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {"type": "string", "format": "date-time"},
+    "governed": {"const": true},
+    "source_projection": {"const": "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_approval_request"},
+    "source_verifier_execution_approval_request_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_approval_request_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "decision_intake_preflight_state": {"const": "operator_decision_required_not_present_not_admitted"},
+    "decision": {"const": "blocked"},
+    "outcome": {"const": "AwaitingEvidence"},
+    "decision_intake_preflight_count": {"type": "integer", "minimum": 1},
+    "decision_intake_preflight_item_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_intake_preflight_item_[a-z0-9][a-z0-9_:-]*$"
+      }
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_receipt_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_intake_preflight_[a-z0-9][a-z0-9_:-]*$"
+      }
+    },
+    "decision_intake_preflights": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/decision_intake_preflight_item"}
+    },
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "summary": {"$ref": "#/$defs/summary"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "evidence_kind": {
+      "enum": [
+        "operator_decision_value_ref",
+        "operator_identity_ref",
+        "operator_signature_ref",
+        "operator_reapproval_decision_receipt_ref"
+      ]
+    },
+    "requirement_kind": {
+      "enum": [
+        "verifier_identity_ref",
+        "verification_method_ref",
+        "evidence_integrity_hash_ref",
+        "source_ref_reachability_witness_ref",
+        "decision_receipt_crosscheck_ref"
+      ]
+    },
+    "decision_intake_preflight_item": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "decision_intake_preflight_item_id",
+        "source_verifier_execution_approval_request_item_id",
+        "evidence_kind",
+        "requirement_kind",
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "skill_id",
+        "risk_level",
+        "submitted_evidence_ref",
+        "submitted_verifier_ref",
+        "verifier_execution_approval_request_ref",
+        "decision_intake_preflight",
+        "authority_status",
+        "receipt"
+      ],
+      "properties": {
+        "decision_intake_preflight_item_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_intake_preflight_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "source_verifier_execution_approval_request_item_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_approval_request_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "evidence_kind": {"$ref": "#/$defs/evidence_kind"},
+        "requirement_kind": {"$ref": "#/$defs/requirement_kind"},
+        "approval_id": {"type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$"},
+        "request_id": {"type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$"},
+        "plan_id": {"type": "string"},
+        "skill_id": {"type": "string"},
+        "risk_level": {"enum": ["P0", "P1", "P2", "P3", "P4", "P5"]},
+        "submitted_evidence_ref": {"type": "string", "pattern": "^evidence://personal-assistant/operator-reapproval-decision-receipt-value-binding-record/.+$"},
+        "submitted_verifier_ref": {"type": "string", "pattern": "^verifier-ref://personal-assistant/operator-reapproval-decision-receipt-value-binding-record/.+$"},
+        "verifier_execution_approval_request_ref": {
+          "type": "object",
+          "properties": {
+            "source_approval_request_state": {"const": "approval_requested_not_decided_not_run"},
+            "source_outcome": {"const": "AwaitingEvidence"},
+            "source_approval_requested": {"const": true},
+            "source_operator_decision_present": {"const": false},
+            "source_operator_approval_granted": {"const": false},
+            "source_operator_approval_rejected": {"const": false},
+            "source_verifier_execution_allowed": {"const": false},
+            "source_verifier_execution_started": {"const": false},
+            "source_authority_granted": {"const": false}
+          }
+        },
+        "decision_intake_preflight": {"$ref": "#/$defs/decision_intake_preflight"},
+        "authority_status": {"$ref": "#/$defs/authority_status"},
+        "receipt": {"type": "object"}
+      }
+    },
+    "decision_intake_preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operator_decision_required": {"const": true},
+        "operator_decision_value_required": {"const": true},
+        "operator_decision_value_present": {"const": false},
+        "operator_decision_present": {"const": false},
+        "operator_decision_intake_completed": {"const": false},
+        "operator_approval_granted": {"const": false},
+        "operator_approval_rejected": {"const": false},
+        "operator_decision_value_accepted": {"const": false},
+        "operator_decision_value_rejected": {"const": false},
+        "ready_for_verifier_execution": {"const": false},
+        "verifier_execution_allowed": {"const": false},
+        "verifier_execution_started": {"const": false},
+        "verifier_result_present": {"const": false},
+        "verifier_ref_validated": {"const": false},
+        "evidence_accepted": {"const": false},
+        "authority_granted": {"const": false},
+        "blocking_reason": {"const": "operator_decision_value_not_present"}
+      }
+    },
+    "authority_status": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "binding_record_created": {"const": false},
+        "binding_record_admitted": {"const": false},
+        "authority_granted": {"const": false},
+        "execution_worker_admission_allowed": {"const": false},
+        "dispatch_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false}
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_intake_preflight_allowed": {"const": true},
+        "verifier_execution_approval_request_ref_binding_allowed": {"const": true},
+        "operator_decision_requirement_check_allowed": {"const": true},
+        "approval_requests_present": {"const": true},
+        "verifier_refs_present": {"const": true},
+        "verifier_ref_only": {"const": true},
+        "raw_operator_value_present": {"const": false},
+        "operator_decision_value_present": {"const": false},
+        "operator_decision_present": {"const": false},
+        "operator_approval_granted": {"const": false},
+        "operator_approval_rejected": {"const": false},
+        "verifier_execution_allowed": {"const": false},
+        "verifier_execution_started": {"const": false},
+        "verifier_result_present": {"const": false},
+        "verifier_ref_validated": {"const": false},
+        "evidence_accepted": {"const": false},
+        "authority_granted": {"const": false},
+        "dispatch_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "verifier_execution_approval_request_projection": {"const": "ref_only"},
+        "approval_request_projection": {"const": "metadata_only"},
+        "operator_decision_value_projection": {"const": "absent"},
+        "operator_identity_ref_projection": {"const": "absent"},
+        "operator_signature_ref_projection": {"const": "absent"},
+        "decision_receipt_projection": {"const": "absent"},
+        "verifier_execution_payload_projection": {"const": "absent"},
+        "verification_evidence_projection": {"const": "absent"}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "decision_intake_preflight_count": {"type": "integer", "minimum": 1},
+        "operator_decision_required_count": {"type": "integer", "minimum": 1},
+        "operator_decision_value_present_count": {"const": 0},
+        "operator_decision_present_count": {"const": 0},
+        "operator_approval_grant_count": {"const": 0},
+        "operator_approval_rejection_count": {"const": 0},
+        "verifier_execution_allowed_count": {"const": 0},
+        "verifier_execution_started_count": {"const": 0},
+        "verifier_result_count": {"const": 0},
+        "validated_verifier_ref_count": {"const": 0},
+        "accepted_evidence_count": {"const": 0},
+        "authority_grant_count": {"const": 0},
+        "binding_record_creation_count": {"const": 0}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "outcome": {"const": "AwaitingEvidence"},
+        "foundation_only": {"const": true},
+        "decision_intake_preflight_only": {"const": true},
+        "operator_decision_required": {"const": true},
+        "operator_decision_present": {"const": false},
+        "operator_approval_granted": {"const": false},
+        "ready_for_verifier_execution": {"const": false},
+        "ready_for_live_execution": {"const": false},
+        "ready_for_customer_readiness_claim": {"const": false},
+        "authority_drift_detected": {"const": false}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "foundation_only": {"const": true},
+        "projection_contract": {"const": "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_intake_preflight"},
+        "runtime_boundary": {"const": "operator_decision_required_not_present_not_admitted"},
+        "decision_intake_preflight_only": {"const": true},
+        "operator_decision_present": {"const": false},
+        "operator_approval_granted": {"const": false},
+        "verifier_execution_allowed": {"const": false},
+        "verifier_execution_started": {"const": false},
+        "evidence_accepted": {"const": false},
+        "authority_granted": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false}
+      }
+    }
+  }
+}
