@@ -1,0 +1,120 @@
+{
+  "read_model_id": "agentic-service-harness-github-pr-terminal-closure-certificate-read-model",
+  "schema_version": 1,
+  "generated_at": "2026-06-26T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_minting_ref": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_minting.foundation.json",
+  "source_certificate_id": "terminal-closure-certificate.github-pr-chain.foundation",
+  "projection_scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "read_only": true,
+    "projection_only": true,
+    "source_terminal_scope": "github_pr_terminal_closure_proof_thread_only",
+    "terminal_certificate_authority_projected": true,
+    "new_terminal_closure_authority_granted": false,
+    "repository_mutation_authority_granted": false,
+    "connector_authority_granted": false,
+    "deployment_authority_granted": false,
+    "secret_authority_granted": false,
+    "destructive_authority_granted": false
+  },
+  "certificate_summary": {
+    "certificate_id": "terminal-closure-certificate.github-pr-chain.foundation",
+    "command_id": "github-pr-terminal-closure-chain",
+    "execution_id": "terminal-closure-certificate-candidate.github-pr-chain",
+    "disposition": "committed",
+    "closed_at": "2026-06-26T00:00:00Z",
+    "verification_result_id": "verification.github-pr-chain.effect-reconciliation-live-evidence",
+    "effect_reconciliation_id": "effect-reconciliation.github-pr-before-terminal-closure",
+    "operator_decision_value": "approve_terminal_certificate",
+    "terminal_scope": "github_pr_terminal_closure_proof_thread_only",
+    "terminal_closure_projected": true,
+    "terminal_certificate_minted": true,
+    "effect_reconciliation_match": true,
+    "forbidden_effects_checked": true,
+    "evidence_refs": [
+      "examples/agentic_service_harness_github_pr_effect_reconciliation_live_evidence.foundation.json",
+      "examples/agentic_service_harness_github_pr_terminal_closure_certificate_candidate.foundation.json",
+      "examples/agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.foundation.json",
+      "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.foundation.json",
+      "examples/agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection.foundation.json",
+      "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request.foundation.json",
+      "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record.foundation.json",
+      "examples/agentic_service_harness_github_pr_terminal_closure_certificate_witness.foundation.json"
+    ],
+    "graph_refs": [
+      "command:github-pr-terminal-closure-chain",
+      "execution:terminal-closure-certificate-candidate.github-pr-chain",
+      "verification:verification.github-pr-chain.effect-reconciliation-live-evidence",
+      "effect-reconciliation:effect-reconciliation.github-pr-before-terminal-closure",
+      "operator-decision:approve_terminal_certificate"
+    ]
+  },
+  "operator_view": {
+    "display_title": "GitHub PR terminal closure certificate",
+    "state": "closed_for_github_pr_proof_thread",
+    "risk_posture": "terminal_certificate_visible_repository_authority_denied",
+    "primary_evidence_refs": [
+      "examples/agentic_service_harness_github_pr_terminal_closure_certificate_minting.foundation.json",
+      "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record.foundation.json",
+      "examples/agentic_service_harness_github_pr_effect_reconciliation_live_evidence.foundation.json"
+    ],
+    "blocked_authority_refs": [
+      "blocked://repository-write/not-granted-by-certificate-read-model",
+      "blocked://connector-call/not-granted-by-certificate-read-model",
+      "blocked://deployment/not-granted-by-certificate-read-model",
+      "blocked://receipt-store-append/not-granted-by-certificate-read-model",
+      "blocked://secret-mutation/not-granted-by-certificate-read-model",
+      "blocked://destructive-operation/not-granted-by-certificate-read-model",
+      "blocked://new-terminal-closure/not-granted-by-read-model"
+    ],
+    "redaction_policy": "reference_only_no_raw_payloads",
+    "contains_secret_values": false,
+    "inline_evidence_payloads_allowed": false
+  },
+  "authority_denials": {
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "ready_for_review_enabled": false,
+    "pull_request_merge_enabled": false,
+    "repository_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "new_terminal_closure_enabled": false
+  },
+  "effect_boundary": {
+    "repository_written_by_read_model": false,
+    "connector_called_by_read_model": false,
+    "mutation_route_admitted_by_read_model": false,
+    "receipt_store_appended_by_read_model": false,
+    "secret_values_serialized_by_read_model": false,
+    "terminal_certificate_minted_by_read_model": false,
+    "network_policy": "none"
+  },
+  "source_refs": [
+    "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.schema.json",
+    "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_minting.schema.json",
+    "examples/agentic_service_harness_github_pr_terminal_closure_certificate_minting.foundation.json",
+    "schemas/terminal_closure_certificate.schema.json",
+    "docs/FOUNDATION_MODE.md"
+  ],
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-terminal-closure-certificate-read-model",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_read_model.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "read_model_is_not_terminal_closure": true,
+  "next_action": "Use this read-only certificate read model for operator inspection only. Do not infer repository mutation, connector, deployment, receipt-store append, secret, destructive, or new terminal-closure authority from this projection."
+}

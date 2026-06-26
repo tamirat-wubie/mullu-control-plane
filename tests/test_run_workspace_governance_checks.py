@@ -94,6 +94,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
         "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record",
         "agentic_service_harness_github_pr_terminal_closure_certificate_minting",
+        "agentic_service_harness_github_pr_terminal_closure_certificate_read_model",
         "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
         "agentic_service_harness_read_only_status_route_design",
         "agentic_service_harness_read_only_status_route",
@@ -354,6 +355,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered(
         "agentic_service_harness_read_only_status_route_design",
         "agentic_service_harness_read_only_status_route",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_terminal_closure_certificate_minting",
+        "agentic_service_harness_github_pr_terminal_closure_certificate_read_model",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_terminal_closure_certificate_read_model",
+        "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
     )
     assert_ordered(
         "agentic_service_harness_read_only_status_route",

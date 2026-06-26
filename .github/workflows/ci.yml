@@ -556,6 +556,9 @@ jobs:
       - name: Test Agentic Service Harness GitHub PR terminal certificate minting
         run: python -m pytest tests/test_validate_agentic_service_harness_github_pr_terminal_closure_certificate_minting.py -q
 
+      - name: Test Agentic Service Harness GitHub PR terminal certificate read model
+        run: python -m pytest tests/test_validate_agentic_service_harness_github_pr_terminal_closure_certificate_read_model.py -q
+
       - name: Test Agentic Service Harness receipt projection
         run: python -m pytest tests/test_validate_agentic_service_harness_receipt_projection.py -q
 
