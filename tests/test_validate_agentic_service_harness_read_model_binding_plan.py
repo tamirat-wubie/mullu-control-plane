@@ -396,15 +396,17 @@ def test_readiness_map_rejects_missing_github_pr_ci_gate_ready_row(
     )
 
 
-def test_readiness_map_rejects_missing_effect_reconciliation_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_terminal_closure_decision_intake_pr(
+    tmp_path: Path,
+) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind PR effect reconciliation evidence`",
-            "1. `harness(pr): close PR terminal closure certificate candidate`",
+            "1. `harness(pr): add explicit terminal closure operator decision value intake`",
+            "1. `harness(pr): mint terminal closure certificate only after approved decision value`",
         ),
         encoding="utf-8",
     )
@@ -414,7 +416,57 @@ def test_readiness_map_rejects_missing_effect_reconciliation_first_pr(tmp_path: 
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind PR effect reconciliation evidence"
+        "missing next PR marker: harness(pr): add explicit terminal closure operator decision value intake"
+        in serialized_errors
+    )
+
+
+def test_readiness_map_rejects_missing_github_pr_effect_reconciliation_row(
+    tmp_path: Path,
+) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "| GitHub PR effect reconciliation evidence PR | READY |",
+            "| GitHub PR effect reconciliation evidence PR | PARTIAL |",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing ready row: GitHub PR effect reconciliation evidence PR"
+        in serialized_errors
+    )
+
+
+def test_readiness_map_rejects_missing_github_pr_terminal_closure_candidate_row(
+    tmp_path: Path,
+) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "| GitHub PR terminal closure candidate and approval gates PR | READY |",
+            "| GitHub PR terminal closure candidate and approval gates PR | PARTIAL |",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing ready row: GitHub PR terminal closure candidate and approval gates PR"
         in serialized_errors
     )
 
