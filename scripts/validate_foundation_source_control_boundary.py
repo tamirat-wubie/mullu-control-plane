@@ -119,6 +119,7 @@ EXPECTED_CHANGE_FAMILIES = (
     "customer_access_boundary",
     "customer_access_policy_rehearsal_boundary",
     "github_app_token_format_boundary",
+    "public_ci_window_boundary",
     "privacy_data_boundary",
     "privacy_minimization_rehearsal_boundary",
     "funding_team_boundary",

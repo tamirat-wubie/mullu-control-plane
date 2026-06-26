@@ -925,6 +925,17 @@
       "summary": "GitHub-App-token-format preparation records public-safe token compatibility labels without live token storage, fixed token length assumptions, JWT parsing, repository secret readiness, workflow dispatch readiness, publication, or deployment claims."
     },
     {
+      "family_id": "public_ci_window_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PUBLIC_CI_WINDOW_BOUNDARY.md",
+        "examples/foundation_public_ci_window_boundary_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_public_ci_window_boundary.py",
+        "tests/test_validate_foundation_public_ci_window_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Public-CI-window preparation keeps budget-constrained public repository visibility bounded to GitHub Actions evidence without public-readiness, launch, customer access, production deployment, legal clearance, fundraising readiness, raw-secret exposure, external publication, or deployment claims."
+    },
+    {
       "family_id": "privacy_data_boundary",
       "required_evidence": [
         "docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md",
@@ -1128,6 +1139,7 @@
     "python scripts/validate_foundation_customer_access_boundary.py",
     "python scripts/validate_foundation_customer_access_policy_rehearsal_boundary.py",
     "python scripts/validate_foundation_github_app_token_format_boundary.py",
+    "python scripts/validate_foundation_public_ci_window_boundary.py",
     "python scripts/validate_foundation_privacy_data_boundary.py",
     "python scripts/validate_foundation_privacy_minimization_rehearsal_boundary.py",
     "python scripts/validate_foundation_funding_team_boundary.py",

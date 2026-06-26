@@ -525,6 +525,11 @@ which keeps installation tokens opaque, long-token-ready, dot-tolerant, and
 free of committed live credentials without claiming live GitHub validation,
 repository secret readiness, workflow dispatch readiness, publication, or
 deployment.
+Temporary public CI windows are bounded by
+[`docs/FOUNDATION_PUBLIC_CI_WINDOW_BOUNDARY.md`](docs/FOUNDATION_PUBLIC_CI_WINDOW_BOUNDARY.md),
+which keeps budget-constrained public repository visibility limited to GitHub
+Actions evidence without public-readiness, launch, customer-access,
+production-deployment, legal, fundraising, or raw-secret exposure claims.
 The first technical proof thread is
 [`docs/FOUNDATION_LOCAL_PROOF_THREAD.md`](docs/FOUNDATION_LOCAL_PROOF_THREAD.md),
 backed by a local workflow descriptor, validator, and ignored local receipt
