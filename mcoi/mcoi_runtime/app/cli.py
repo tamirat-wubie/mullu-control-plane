@@ -370,8 +370,31 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
     episode = compile_default_autonomous_request_episode(intent)
     receipt = loop.run_autonomous_request_episode(episode)
     view = AutonomousRequestEpisodeSummaryView.from_receipt(receipt)
-    print(render_autonomous_request_episode_summary(view))
+    if args.json:
+        print(json.dumps(_autonomous_demo_summary_envelope(view), sort_keys=True, indent=2))
+    else:
+        print(render_autonomous_request_episode_summary(view))
     return 0 if receipt.automation_state == AutonomousRequestAutomationState.SETTLED_WITHOUT_PROMPT.value else 1
+
+
+def _autonomous_demo_summary_envelope(view: AutonomousRequestEpisodeSummaryView) -> dict[str, object]:
+    """Return a machine-readable autonomous demo summary envelope."""
+    return {
+        "operation": "autonomous-demo",
+        "episode_id": view.episode_id,
+        "goal_id": view.goal_id,
+        "automation_state": view.automation_state,
+        "solver_outcome": view.solver_outcome,
+        "action_count": view.action_count,
+        "dispatched_count": view.dispatched_count,
+        "prompt_count": view.prompt_count,
+        "workflow_descriptor_ref": view.workflow_descriptor_ref,
+        "workflow_stage_count": view.workflow_stage_count,
+        "workflow_approval_stage_count": view.workflow_approval_stage_count,
+        "workflow_external_stage_count": view.workflow_external_stage_count,
+        "plan_receipt_ref": view.plan_receipt_ref,
+        "rollback_ref": view.rollback_ref,
+    }
 
 
 def profiles_command(args: argparse.Namespace) -> int:
@@ -992,6 +1015,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=0,
         help="Maximum local repair retries for validation failures",
     )
+    autonomous_demo_parser.add_argument("--json", action="store_true", help="Emit JSON envelope")
     pilot_parser = subparsers.add_parser("pilot", help="Pilot bring-up commands")
     pilot_subparsers = pilot_parser.add_subparsers(dest="pilot_command")
     pilot_init_parser = pilot_subparsers.add_parser("init", help="Scaffold a governed pilot bundle")
