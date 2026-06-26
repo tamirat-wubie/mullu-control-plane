@@ -1661,6 +1661,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-worker-replay-preflight:1"
     },
     {
+      "path": "schemas/personal_assistant_replay_rollback_witness.schema.json",
+      "schema_id": "personal-assistant-replay-rollback-witness",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-replay-rollback-witness:1"
+    },
+    {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
       "schema_id": "personal-assistant-foundation-closure-packet",
       "surface": "assistant",
