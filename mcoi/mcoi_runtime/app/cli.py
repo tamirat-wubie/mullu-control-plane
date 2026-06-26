@@ -19,9 +19,12 @@ from pathlib import Path
 from typing import Any, Mapping, NoReturn
 
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
+from .autonomous_capabilities import compile_default_autonomous_request_episode
+from .autonomous_request import AutonomousRequestAutomationState, AutonomousRequestIntent
 from .bootstrap import bootstrap_runtime
 from .config import AppConfig
 from .console import (
+    render_autonomous_request_episode_summary,
     render_execution_summary,
     render_run_summary,
 )
@@ -30,7 +33,7 @@ from .operator_loop import OperatorLoop
 from .pilot_init import PilotInitRequest, initialize_pilot
 from .policy_packs import PolicyPackRegistry
 from .profiles import ProfileLoadError, load_profile, list_profiles
-from .view_models import ExecutionSummaryView, RunSummaryView
+from .view_models import AutonomousRequestEpisodeSummaryView, ExecutionSummaryView, RunSummaryView
 from mcoi_runtime.adapters.proxy_policy import assert_proxy_environment_allowed
 from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
 from mcoi_runtime.contracts.policy import DecisionReason
@@ -343,6 +346,32 @@ def status_command(args: argparse.Namespace) -> int:
     ]
     print("\n".join(lines))
     return 0
+
+
+def autonomous_demo_command(args: argparse.Namespace) -> int:
+    """Run the default local autonomous capability chain and render its receipt."""
+    if args.max_local_retries < 0:
+        _fatal("max-local-retries must be non-negative")
+    config = _resolve_config(args)
+    runtime = bootstrap_runtime(config=config)
+    loop = OperatorLoop(runtime=runtime)
+    intent = AutonomousRequestIntent(
+        episode_id=args.episode_id,
+        subject_id=args.subject_id,
+        goal_id=args.goal_id,
+        capability_ids=("local.apply",),
+        bindings={
+            "target": args.target,
+            "objective": args.objective,
+            "change": args.change,
+        },
+        max_local_retries=args.max_local_retries,
+    )
+    episode = compile_default_autonomous_request_episode(intent)
+    receipt = loop.run_autonomous_request_episode(episode)
+    view = AutonomousRequestEpisodeSummaryView.from_receipt(receipt)
+    print(render_autonomous_request_episode_summary(view))
+    return 0 if receipt.automation_state == AutonomousRequestAutomationState.SETTLED_WITHOUT_PROMPT.value else 1
 
 
 def profiles_command(args: argparse.Namespace) -> int:
@@ -927,6 +956,42 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("packs", help="List available policy packs")
     subparsers.add_parser("init", help="Initialize a new Mullu project in current directory")
     subparsers.add_parser("demo", help="Run a governed demo showing allow/deny flow")
+    autonomous_demo_parser = subparsers.add_parser(
+        "autonomous-demo",
+        help="Run the local autonomous capability chain and render continuation state",
+    )
+    autonomous_demo_parser.add_argument("--target", default="workspace", help="Local inspection target")
+    autonomous_demo_parser.add_argument(
+        "--objective",
+        default="prepare local change",
+        help="Planning objective for the local capability chain",
+    )
+    autonomous_demo_parser.add_argument(
+        "--change",
+        default="apply local patch",
+        help="Local change description for the apply stage",
+    )
+    autonomous_demo_parser.add_argument(
+        "--episode-id",
+        default="episode-autonomous-cli-demo",
+        help="Autonomous episode identifier",
+    )
+    autonomous_demo_parser.add_argument(
+        "--subject-id",
+        default="operator-cli",
+        help="Operator subject identifier",
+    )
+    autonomous_demo_parser.add_argument(
+        "--goal-id",
+        default="goal-autonomous-request",
+        help="Goal identifier for the autonomous episode",
+    )
+    autonomous_demo_parser.add_argument(
+        "--max-local-retries",
+        type=int,
+        default=0,
+        help="Maximum local repair retries for validation failures",
+    )
     pilot_parser = subparsers.add_parser("pilot", help="Pilot bring-up commands")
     pilot_subparsers = pilot_parser.add_subparsers(dest="pilot_command")
     pilot_init_parser = pilot_subparsers.add_parser("init", help="Scaffold a governed pilot bundle")
@@ -1813,6 +1878,7 @@ def main(argv: list[str] | None = None) -> int:
         "status": status_command,
         "profiles": profiles_command,
         "packs": packs_command,
+        "autonomous-demo": autonomous_demo_command,
         "pilot": pilot_command,
         "init": init_command,
         "demo": demo_command,
