@@ -5,21 +5,25 @@ audit inspection, and operator read models.
 Governance scope: append/read metadata only; stores cannot approve, execute,
 mutate candidate actions, retrieve private memory, or expose raw request text.
 Dependencies: shared shadow types, JSONL, pathlib, and runtime invariant helpers.
-Invariants: only redacted result and receipt records are stored; context payloads
-and raw request text are never persisted here.
+Invariants: only redacted result, receipt, and advisory records are stored;
+context payloads and raw request text are never persisted here; corrupt replay
+records fail closed with explicit invariant errors.
 """
 
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import Deque, Iterable, Protocol
+from typing import Deque, Iterable, Protocol, TypeVar
 
 from mcoi_runtime.core.inceptadive_external_effect_boundary import ExternalEffectBoundaryAdvisory
 from mcoi_runtime.core.inceptadive_shadow_types import ShadowPassResult, ShadowReceipt
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+
+LoadedRecordT = TypeVar("LoadedRecordT")
 
 
 class ShadowReceiptStore(Protocol):
@@ -96,6 +100,7 @@ class JsonlShadowReceiptStore:
             raise RuntimeCoreInvariantError("max_items must be positive")
         self.root_path = Path(self.root_path)
         self._memory = InMemoryShadowReceiptStore(max_items=self.max_items)
+        self._hydrate_recent_cache()
 
     def append_result(self, result: ShadowPassResult) -> None:
         checked = result.with_integrity()
@@ -131,9 +136,58 @@ class JsonlShadowReceiptStore:
             handle.write(json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str))
             handle.write("\n")
 
+    def _hydrate_recent_cache(self) -> None:
+        for result in _read_jsonl_tail(
+            self.root_path / "shadow-results.jsonl",
+            limit=self.max_items,
+            parser=ShadowPassResult.from_dict,
+        ):
+            self._memory.append_result(result)
+        for receipt in _read_jsonl_tail(
+            self.root_path / "shadow-receipts.jsonl",
+            limit=self.max_items,
+            parser=ShadowReceipt.from_dict,
+        ):
+            self._memory.append_receipt(receipt)
+        for advisory in _read_jsonl_tail(
+            self.root_path / "external-effect-advisories.jsonl",
+            limit=self.max_items,
+            parser=ExternalEffectBoundaryAdvisory.from_dict,
+        ):
+            self._memory.append_external_effect_advisory(advisory)
+
 
 def _tail(values: Iterable[object], limit: int) -> tuple:
     if limit < 1:
         raise RuntimeCoreInvariantError("limit must be positive")
     materialized = tuple(values)
     return materialized[-limit:]
+
+
+def _read_jsonl_tail(
+    path: Path,
+    *,
+    limit: int,
+    parser: Callable[[Mapping[str, object]], LoadedRecordT],
+) -> tuple[LoadedRecordT, ...]:
+    if limit < 1:
+        raise RuntimeCoreInvariantError("limit must be positive")
+    if not path.exists():
+        return ()
+    loaded: list[LoadedRecordT] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                payload = json.loads(stripped)
+            except json.JSONDecodeError as exc:
+                raise RuntimeCoreInvariantError(f"invalid JSONL record in {path.name} at line {line_number}") from exc
+            if not isinstance(payload, Mapping):
+                raise RuntimeCoreInvariantError(f"JSONL record in {path.name} at line {line_number} must be an object")
+            try:
+                loaded.append(parser(payload))
+            except RuntimeCoreInvariantError as exc:
+                raise RuntimeCoreInvariantError(f"invalid JSONL record in {path.name} at line {line_number}") from exc
+    return tuple(loaded[-limit:])

@@ -13,6 +13,7 @@ execution_authority=false.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 import re
 from typing import Sequence
@@ -94,6 +95,35 @@ class ExternalEffectBoundaryAdvisory:
             "raw_request_text_exposed": False,
             "private_memory_exposed": False,
         }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, object]) -> "ExternalEffectBoundaryAdvisory":
+        """Rebuild a redacted advisory from persisted JSONL metadata."""
+
+        try:
+            return cls(
+                advisory_id=_mapping_text(value, "advisory_id"),
+                request_id=_mapping_text(value, "request_id"),
+                context_hash=_mapping_text(value, "context_hash"),
+                action_families=_tuple_text_object(value.get("action_families")),
+                authority_obligations=_tuple_text_object(value.get("authority_obligations")),
+                evidence_obligations=_tuple_text_object(value.get("evidence_obligations")),
+                missing_authority_obligations=_tuple_text_object(value.get("missing_authority_obligations")),
+                missing_evidence_obligations=_tuple_text_object(value.get("missing_evidence_obligations")),
+                required_evidence_ref_count=_mapping_int(value, "required_evidence_ref_count"),
+                authority_receipt_count=_mapping_int(value, "authority_receipt_count"),
+                retrieval_receipt_count=_mapping_int(value, "retrieval_receipt_count"),
+                external_side_effect=_mapping_bool(value, "external_side_effect"),
+                strict_preflight_required=_mapping_bool(value, "strict_preflight_required"),
+                recommended_outcome=_mapping_text(value, "recommended_outcome"),
+                recommended_action=_mapping_text(value, "recommended_action"),
+                execution_authority=False,
+                connector_dispatch_authority=False,
+                memory_write_authority=False,
+                governance_verdict_authority=False,
+            )
+        except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
+            raise RuntimeCoreInvariantError("invalid persisted ExternalEffectBoundaryAdvisory") from exc
 
 
 def build_external_effect_boundary_advisory(
@@ -215,3 +245,31 @@ def _non_empty_count(values: Sequence[str] | None) -> int:
 
 def _word_tokens(value: str) -> tuple[str, ...]:
     return tuple(re.findall(r"[a-z0-9_#.-]+", value.lower()))
+
+
+def _tuple_text_object(value: object) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if not isinstance(value, (list, tuple)):
+        raise RuntimeCoreInvariantError("expected a list or tuple of text values")
+    return tuple(str(item).strip() for item in value if str(item).strip())
+
+
+def _mapping_text(value: Mapping[str, object], key: str, *, default: str = "") -> str:
+    return str(value.get(key, default) or default)
+
+
+def _mapping_bool(value: Mapping[str, object], key: str, *, default: bool = False) -> bool:
+    item = value.get(key, default)
+    if not isinstance(item, bool):
+        raise RuntimeCoreInvariantError(f"{key} must be a boolean")
+    return item
+
+
+def _mapping_int(value: Mapping[str, object], key: str, *, default: int = 0) -> int:
+    item = value.get(key, default)
+    if not isinstance(item, int) or isinstance(item, bool):
+        raise RuntimeCoreInvariantError(f"{key} must be an integer")
+    if item < 0:
+        raise RuntimeCoreInvariantError(f"{key} must not be negative")
+    return item

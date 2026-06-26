@@ -7071,7 +7071,7 @@
         "mcoi/tests/test_inceptadive_external_effect_boundary.py",
         "mcoi/tests/test_assistant_router.py"
       ],
-      "notes": "InceptaDive shadow inspection routes expose bounded advisory results, redacted receipts, redacted external-effect advisory history, and assistant planning hook metadata without execution authority, raw request text exposure, or private memory exposure.",
+      "notes": "InceptaDive shadow inspection routes expose bounded advisory results, redacted receipts, replayed redacted external-effect advisory history, and assistant planning hook metadata without execution authority, raw request text exposure, or private memory exposure.",
       "representative_paths": [
         "/api/v1/shadow/inspect",
         "/api/v1/shadow/external-effect/advisory"
@@ -7084,6 +7084,9 @@
         "external_effect_advisory_route_closes_refs_without_exposing_refs",
         "external_effect_advisory_route_rejects_invalid_request_bounded",
         "runtime_records_jsonl_external_effect_advisory_without_raw_refs",
+        "jsonl_shadow_store_replays_recent_result_receipt_and_advisory_after_restart",
+        "jsonl_shadow_store_rejects_corrupt_replay_record",
+        "jsonl_shadow_store_rejects_tampered_result_snapshot",
         "default_routers_include_shadow_inspect_path",
         "personal_assistant_preview_compiles_inbox_request_without_execution",
         "finance_ops_plan_records_inceptadive_shadow_advisory_history"
@@ -15474,8 +15477,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1957,
-    "runtime_witness_count": 1957,
+    "exact_test_anchor_count": 1960,
+    "runtime_witness_count": 1960,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19227,6 +19230,24 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_inceptadive_external_effect_boundary.py::test_jsonl_shadow_store_replays_recent_result_receipt_and_advisory_after_restart"
+            ],
+            "witness": "jsonl_shadow_store_replays_recent_result_receipt_and_advisory_after_restart"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_inceptadive_external_effect_boundary.py::test_jsonl_shadow_store_rejects_corrupt_replay_record"
+            ],
+            "witness": "jsonl_shadow_store_rejects_corrupt_replay_record"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_inceptadive_external_effect_boundary.py::test_jsonl_shadow_store_rejects_tampered_result_snapshot"
+            ],
+            "witness": "jsonl_shadow_store_rejects_tampered_result_snapshot"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_inceptadive_shadow_routes.py::test_default_routers_include_shadow_inspect_path"
             ],
             "witness": "default_routers_include_shadow_inspect_path"
@@ -19244,8 +19265,8 @@
             "witness": "finance_ops_plan_records_inceptadive_shadow_advisory_history"
           }
         ],
-        "exact_test_anchor_count": 9,
-        "runtime_witness_count": 9,
+        "exact_test_anchor_count": 12,
+        "runtime_witness_count": 12,
         "surface_id": "inceptadive_shadow_inspection_routes",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

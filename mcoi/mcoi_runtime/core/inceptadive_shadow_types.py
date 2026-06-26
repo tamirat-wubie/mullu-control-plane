@@ -11,11 +11,12 @@ executes and never replaces the Mullu governance verdict.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from enum import StrEnum
 from hashlib import sha256
 import json
-from typing import Mapping, Sequence
+from typing import Sequence
 
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 
@@ -100,6 +101,25 @@ def _tuple_text(values: Sequence[str] | None) -> tuple[str, ...]:
     if values is None:
         return ()
     return tuple(str(value).strip() for value in values if str(value).strip())
+
+
+def _tuple_text_object(value: object) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if not isinstance(value, (list, tuple)):
+        raise RuntimeCoreInvariantError("expected a list or tuple of text values")
+    return _tuple_text(value)
+
+
+def _mapping_text(value: Mapping[str, object], key: str, *, default: str = "") -> str:
+    return str(value.get(key, default) or default)
+
+
+def _mapping_bool(value: Mapping[str, object], key: str, *, default: bool = False) -> bool:
+    item = value.get(key, default)
+    if not isinstance(item, bool):
+        raise RuntimeCoreInvariantError(f"{key} must be a boolean")
+    return item
 
 
 def _canonical_json(value: Mapping[str, object]) -> str:
@@ -247,6 +267,30 @@ class ShadowFinding:
         }
 
     @classmethod
+    def from_dict(cls, value: Mapping[str, object]) -> "ShadowFinding":
+        """Rebuild a redacted finding from persisted JSONL metadata."""
+
+        try:
+            return cls(
+                finding_id=_mapping_text(value, "finding_id"),
+                stage=ShadowStage(_mapping_text(value, "stage")),
+                kind=ShadowFindingKind(_mapping_text(value, "kind")),
+                severity=ShadowSeverity(_mapping_text(value, "severity")),
+                summary=_mapping_text(value, "summary"),
+                evidence_refs=_tuple_text_object(value.get("evidence_refs")),
+                source_note_ids=_tuple_text_object(value.get("source_note_ids")),
+                source_event_ids=_tuple_text_object(value.get("source_event_ids")),
+                confidence=float(value.get("confidence", 1.0)),
+                constructive_delta=_mapping_bool(value, "constructive_delta"),
+                fracture_delta=_mapping_bool(value, "fracture_delta"),
+                repair_required=_mapping_bool(value, "repair_required"),
+                recommended_action=_mapping_text(value, "recommended_action"),
+                created_at=_mapping_text(value, "created_at", default="1970-01-01T00:00:00+00:00"),
+            )
+        except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
+            raise RuntimeCoreInvariantError("invalid persisted ShadowFinding") from exc
+
+    @classmethod
     def create(
         cls,
         *,
@@ -346,6 +390,37 @@ class ShadowPassResult:
             value["snapshot_hash"] = self.snapshot_hash
         return value
 
+    @classmethod
+    def from_dict(cls, value: Mapping[str, object]) -> "ShadowPassResult":
+        """Rebuild a redacted result from persisted JSONL metadata."""
+
+        try:
+            findings_value = value.get("findings", ())
+            if not isinstance(findings_value, (list, tuple)):
+                raise RuntimeCoreInvariantError("findings must be a list")
+            if not all(isinstance(finding, Mapping) for finding in findings_value):
+                raise RuntimeCoreInvariantError("findings must contain mapping values")
+            return cls(
+                result_id=_mapping_text(value, "result_id"),
+                request_id=_mapping_text(value, "request_id"),
+                mode=ShadowMode(_mapping_text(value, "mode")),
+                stage=ShadowStage(_mapping_text(value, "stage")),
+                verdict=ShadowVerdict(_mapping_text(value, "verdict")),
+                findings=tuple(
+                    ShadowFinding.from_dict(finding)
+                    for finding in findings_value
+                ),
+                needs_deep_pass=_mapping_bool(value, "needs_deep_pass"),
+                needs_repair=_mapping_bool(value, "needs_repair"),
+                needs_escalation=_mapping_bool(value, "needs_escalation"),
+                block_recommended=_mapping_bool(value, "block_recommended"),
+                repaired_plan_candidate=_tuple_text_object(value.get("repaired_plan_candidate")),
+                created_at=_mapping_text(value, "created_at", default="1970-01-01T00:00:00+00:00"),
+                snapshot_hash=_mapping_text(value, "snapshot_hash"),
+            )
+        except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
+            raise RuntimeCoreInvariantError("invalid persisted ShadowPassResult") from exc
+
     def expected_snapshot_hash(self) -> str:
         return _snapshot_hash(self.to_dict(include_snapshot_hash=False))
 
@@ -438,6 +513,28 @@ class ShadowReceipt:
         if include_snapshot_hash:
             value["snapshot_hash"] = self.snapshot_hash
         return value
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, object]) -> "ShadowReceipt":
+        """Rebuild a redacted receipt from persisted JSONL metadata."""
+
+        try:
+            return cls(
+                receipt_id=_mapping_text(value, "receipt_id"),
+                request_id=_mapping_text(value, "request_id"),
+                mode=ShadowMode(_mapping_text(value, "mode")),
+                stage=ShadowStage(_mapping_text(value, "stage")),
+                context_hash=_mapping_text(value, "context_hash"),
+                result_id=_mapping_text(value, "result_id"),
+                finding_ids=_tuple_text_object(value.get("finding_ids")),
+                retrieval_receipt_ids=_tuple_text_object(value.get("retrieval_receipt_ids")),
+                shadow_verdict=ShadowVerdict(_mapping_text(value, "shadow_verdict")),
+                governance_verdict=_mapping_text(value, "governance_verdict", default="not_evaluated"),
+                created_at=_mapping_text(value, "created_at", default="1970-01-01T00:00:00+00:00"),
+                snapshot_hash=_mapping_text(value, "snapshot_hash"),
+            )
+        except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
+            raise RuntimeCoreInvariantError("invalid persisted ShadowReceipt") from exc
 
     def expected_snapshot_hash(self) -> str:
         return _snapshot_hash(self.to_dict(include_snapshot_hash=False))

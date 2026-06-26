@@ -100,6 +100,9 @@ Shadow path:
   The console evidence route can aggregate missing authority and evidence
   obligation counts without exposing raw request text, raw evidence refs, raw
   authority refs, private memory, or execution handles.
+- JSONL-backed replay for the shadow receipt store. Runtime startup hydrates
+  bounded recent redacted result, receipt, and advisory history, while corrupt
+  replay records fail closed with explicit invariant errors.
 - Focused tests covering gate, light pass, preflight, receipts, scoring, and disabled integration.
 - Phi-GPS v3 bridge report in `mcoi_runtime.core.phi_inceptadive_bridge` that
   projects `ProblemStar` fields into Concept Boxes, runs bounded axis
@@ -136,7 +139,7 @@ boundary advisory for authority/evidence obligations. It still returns
   not add live adapter execution.
 
 STATUS:
-  Completeness: v1 foundation complete; repository-local Phi-GPS bridge, bounded preflight deep advisory, external-effect boundary advisory, redacted advisory history, and route projection added
-  Invariants verified: no execution authority, strict preflight separation, deterministic receipts, denominator guard, no connector dispatch authority, no raw external-effect refs in advisory history
+  Completeness: v1 foundation complete; repository-local Phi-GPS bridge, bounded preflight deep advisory, external-effect boundary advisory, redacted advisory history, JSONL replay, and route projection added
+  Invariants verified: no execution authority, strict preflight separation, deterministic receipts, denominator guard, no connector dispatch authority, no raw external-effect refs in advisory history, corrupt replay records fail closed
   Open issues: live external-effect adapter engine remains intentionally deferred
   Next action: keep full effect-bearing integration behind explicit governance and live adapter evidence

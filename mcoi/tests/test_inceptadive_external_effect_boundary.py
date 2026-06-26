@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from mcoi_runtime.app.inceptadive_shadow_integration import build_inceptadive_shadow_runtime
@@ -131,6 +133,78 @@ def test_runtime_records_jsonl_external_effect_advisory_without_raw_refs(tmp_pat
     assert "approval-secret-ref" not in jsonl_text
     assert "authority-secret-ref" not in jsonl_text
     assert "secret-token" not in jsonl_text
+
+
+def test_jsonl_shadow_store_replays_recent_result_receipt_and_advisory_after_restart(tmp_path) -> None:
+    env = {
+        "MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(tmp_path),
+        "MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1",
+    }
+    runtime = build_inceptadive_shadow_runtime(env)
+    context = _context(
+        "deploy it with replay-secret-token",
+        request_id="req-external-effect-replay-1",
+        stage=ShadowStage.INTERPRETATION,
+        candidate_action="deploy it with replay-secret-token",
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+    )
+
+    result, receipt = runtime.inspect_request(context)
+    advisory = runtime.external_effect_advisory(context)
+    restarted_runtime = build_inceptadive_shadow_runtime(env)
+    replayed_results, replayed_receipts = restarted_runtime.recent_activity(limit=5)
+    replayed_advisories = restarted_runtime.recent_external_effect_advisories(limit=5)
+
+    assert receipt is not None
+    assert tuple(item.result_id for item in replayed_results) == (result.result_id,)
+    assert tuple(item.receipt_id for item in replayed_receipts) == (receipt.receipt_id,)
+    assert tuple(item.advisory_id for item in replayed_advisories) == (advisory.advisory_id,)
+    assert replayed_results[0].snapshot_hash == result.snapshot_hash
+    assert replayed_receipts[0].snapshot_hash == receipt.snapshot_hash
+    assert replayed_advisories[0].missing_authority_obligations == advisory.missing_authority_obligations
+    assert "replay-secret-token" not in str(replayed_results[0].to_dict())
+    assert "replay-secret-token" not in str(replayed_advisories[0].to_dict())
+
+
+def test_jsonl_shadow_store_rejects_corrupt_replay_record(tmp_path) -> None:
+    (tmp_path / "external-effect-advisories.jsonl").write_text("{not-json}\n", encoding="utf-8")
+
+    with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+        build_inceptadive_shadow_runtime({"MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(tmp_path)})
+
+    assert "external-effect-advisories.jsonl" in str(exc_info.value)
+    assert "line 1" in str(exc_info.value)
+    assert "invalid JSONL record" in str(exc_info.value)
+
+
+def test_jsonl_shadow_store_rejects_tampered_result_snapshot(tmp_path) -> None:
+    env = {
+        "MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(tmp_path),
+        "MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1",
+    }
+    runtime = build_inceptadive_shadow_runtime(env)
+    context = _context(
+        "deploy it with tamper-secret-token",
+        request_id="req-external-effect-tamper-1",
+        stage=ShadowStage.INTERPRETATION,
+        candidate_action="deploy it with tamper-secret-token",
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+    )
+    runtime.inspect_request(context)
+    result_path = tmp_path / "shadow-results.jsonl"
+    payload = json.loads(result_path.read_text(encoding="utf-8").splitlines()[0])
+    payload["snapshot_hash"] = "tampered"
+    result_path.write_text(json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(RuntimeCoreInvariantError) as exc_info:
+        build_inceptadive_shadow_runtime(env)
+
+    assert "shadow-results.jsonl" in str(exc_info.value)
+    assert "line 1" in str(exc_info.value)
+    assert "invalid JSONL record" in str(exc_info.value)
+    assert "tamper-secret-token" not in str(exc_info.value)
 
 
 def test_external_effect_boundary_rejects_authority_flags() -> None:
