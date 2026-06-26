@@ -18,6 +18,8 @@ Governance boundary: InceptaDive may inspect, classify, score, summarize, and re
 3. `mcoi_runtime.core.inceptadive_shadow_receipt_store`
    - Provides in-memory and JSONL-backed redacted result, receipt, and
      external-effect advisory stores.
+   - Hydrates bounded recent JSONL history on runtime startup and fails closed
+     on corrupt replay records.
    - Backs console summaries without storing raw request text, raw evidence
      refs, raw authority refs, or private memory.
 
@@ -99,6 +101,9 @@ request or candidate action
 - External-effect advisory history stores redacted obligation posture only; it
   does not store raw request text, raw evidence refs, raw authority refs,
   connector handles, memory handles, or execution handles.
+- JSONL-backed shadow history replay validates persisted snapshots before
+  serving console summaries; malformed replay records are explicit invariant
+  errors.
 
 ## Route slice closure
 
@@ -135,11 +140,13 @@ Focused tests cover:
   non-authority/redaction fields.
 - console evidence route exposing recent result and receipt summaries without
   raw request text, raw evidence refs, private memory, or authority flags.
+- JSONL-backed shadow store replaying recent result, receipt, and advisory
+  evidence after runtime restart and rejecting corrupt replay records.
 
 ## Status
 
 Completeness: core runtime activation and route-level embedding applied.
 
-Constructive delta: InceptaDive now has a bounded deep engine, action taxonomy, receipt store, outcome-learning candidate path, Phi-GPS solver advisory, assistant advisory embedding, a dedicated inspection route, external-effect preflight deep advisory supplementation, external-effect boundary advisory, external-effect advisory route projection, and focused tests.
+Constructive delta: InceptaDive now has a bounded deep engine, action taxonomy, replay-capable receipt store, outcome-learning candidate path, Phi-GPS solver advisory, assistant advisory embedding, a dedicated inspection route, external-effect preflight deep advisory supplementation, external-effect boundary advisory, external-effect advisory route projection, and focused tests.
 
 Fracture delta: live execution authority, memory write authority, connector dispatch authority, and governance verdict replacement remain intentionally absent.

@@ -106,6 +106,12 @@ adapter handles, connector dispatch handles, or any execution authority flag.
 The runtime records the same redacted advisory read model in the selected
 shadow receipt store when available.
 
+When `MULLU_INCEPTADIVE_SHADOW_STORE_PATH` selects the JSONL-backed store,
+recent redacted results, receipts, and external-effect advisories are hydrated
+back into the bounded recent cache on runtime construction. Malformed JSONL or
+records with invalid snapshot hashes fail closed with explicit invariant errors
+instead of being silently skipped.
+
 The console evidence response may include recent result ids, receipt ids,
 request ids, modes, stages, verdicts, finding counts, repair counts,
 escalation counts, block counts, receipt reference counts, redacted advisory
@@ -174,6 +180,6 @@ obligation history that the store does not hold.
 
 STATUS:
   Completeness: route contract, replay witness, external-effect advisory projection, and console evidence view defined
-  Invariants verified: advisory-only, read-only evidence posture, redacted response, receipt-count exposure, no execution authority, no connector dispatch authority
+  Invariants verified: advisory-only, read-only evidence posture, redacted response, receipt-count exposure, JSONL replay fails closed on corrupt records, no execution authority, no connector dispatch authority
   Open issues: none
   Next action: keep replay fixture aligned with route response shape

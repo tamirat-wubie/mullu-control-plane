@@ -3286,7 +3286,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_inceptadive_external_effect_boundary.py",
                 "mcoi/tests/test_assistant_router.py",
             ],
-            "InceptaDive shadow inspection routes expose bounded advisory results, redacted receipts, redacted external-effect advisory history, and assistant planning hook metadata without execution authority, raw request text exposure, or private memory exposure.",
+            "InceptaDive shadow inspection routes expose bounded advisory results, redacted receipts, replayed redacted external-effect advisory history, and assistant planning hook metadata without execution authority, raw request text exposure, or private memory exposure.",
             [
                 "shadow_inspect_route_runs_runtime_and_redacts_raw_text",
                 "shadow_inspect_route_rejects_invalid_request_bounded",
@@ -3294,6 +3294,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "external_effect_advisory_route_closes_refs_without_exposing_refs",
                 "external_effect_advisory_route_rejects_invalid_request_bounded",
                 "runtime_records_jsonl_external_effect_advisory_without_raw_refs",
+                "jsonl_shadow_store_replays_recent_result_receipt_and_advisory_after_restart",
+                "jsonl_shadow_store_rejects_corrupt_replay_record",
+                "jsonl_shadow_store_rejects_tampered_result_snapshot",
                 "default_routers_include_shadow_inspect_path",
                 "personal_assistant_preview_compiles_inbox_request_without_execution",
                 "finance_ops_plan_records_inceptadive_shadow_advisory_history",

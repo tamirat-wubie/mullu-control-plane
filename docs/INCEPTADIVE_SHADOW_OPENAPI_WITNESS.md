@@ -64,6 +64,9 @@ it stores obligation counts and labels, not raw request text, raw evidence refs,
 raw authority refs, connector handles, memory handles, or execution handles. If
 the receipt store is unavailable, the route reports
 `obligation_history_available=false` and `shadow_receipt_store_unavailable`.
+For JSONL-backed stores, recent redacted result, receipt, and advisory history
+is replayed on runtime construction; malformed replay records fail closed with
+explicit invariant errors.
 
 ## Verification
 
