@@ -12,6 +12,7 @@ from mcoi_runtime.app.inceptadive_shadow_integration import build_inceptadive_sh
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers.shadow import router
 from mcoi_runtime.app.server_http import include_default_routers
+from mcoi_runtime.core.inceptadive_shadow_types import ShadowContext, ShadowSeverity, ShadowStage
 
 _FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
@@ -214,6 +215,73 @@ def test_shadow_inspect_route_runs_runtime_and_redacts_raw_text() -> None:
     assert payload["recent_activity"]["receipt_count"] == 1
     assert "deploy it with secret-token" not in str(payload)
     assert "secret-token" not in str(payload)
+
+
+def test_shadow_inspect_route_redacts_context_refs_before_jsonl_persistence(tmp_path: Path) -> None:
+    previous_store = dict(deps._store)
+    raw_target = "operator-secret-target-001"
+    raw_scope = "tenant-private-scope-001"
+    raw_retrieval_ref = "retrieval-secret-ref-001"
+    raw_evidence_ref = "approval-secret-evidence-001"
+    store_path = tmp_path / "shadow-store"
+    deps._store.clear()
+    deps.set(
+        "inceptadive_shadow_runtime",
+        build_inceptadive_shadow_runtime(
+            {
+                "MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1",
+                "MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(store_path),
+            }
+        ),
+    )
+    request_payload = {
+        "request_id": "shadow-route-context-redaction-001",
+        "stage": "preflight",
+        "user_input": "deploy approved receipt with rollback",
+        "candidate_action": "deploy approved receipt with rollback",
+        "explicit_target": raw_target,
+        "scope": raw_scope,
+        "risk_level": "high",
+        "external_side_effect": True,
+        "retrieval_receipt_ids": [raw_retrieval_ref],
+        "required_evidence_refs": [raw_evidence_ref],
+        "created_at": "2026-06-26T00:00:00+00:00",
+    }
+    try:
+        response = _client().post("/api/v1/shadow/inspect", json=request_payload)
+    finally:
+        deps._store.clear()
+        deps._store.update(previous_store)
+
+    payload = response.json()
+    raw_context_hash = ShadowContext(
+        request_id=request_payload["request_id"],
+        stage=ShadowStage.PREFLIGHT,
+        user_input=request_payload["user_input"],
+        candidate_action=request_payload["candidate_action"],
+        explicit_target=raw_target,
+        scope=raw_scope,
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+        retrieval_receipt_ids=(raw_retrieval_ref,),
+        created_at=request_payload["created_at"],
+    ).with_integrity().context_hash
+    persisted_results = (store_path / "shadow-results.jsonl").read_text(encoding="utf-8")
+    persisted_receipts = (store_path / "shadow-receipts.jsonl").read_text(encoding="utf-8")
+    persisted_payload = persisted_results + persisted_receipts
+    assert response.status_code == 200
+    assert payload["receipt"]["context_hash"] != raw_context_hash
+    assert payload["receipt"]["retrieval_receipt_count"] == 1
+    assert raw_target not in str(payload)
+    assert raw_scope not in str(payload)
+    assert raw_retrieval_ref not in str(payload)
+    assert raw_evidence_ref not in str(payload)
+    assert raw_target not in persisted_payload
+    assert raw_scope not in persisted_payload
+    assert raw_retrieval_ref not in persisted_payload
+    assert raw_evidence_ref not in persisted_payload
+    assert "shadow_retrieval_receipt_" in persisted_receipts
+    assert "shadow_required_evidence_" in persisted_results
 
 
 def test_shadow_inspect_route_redacts_secret_shaped_request_id() -> None:
