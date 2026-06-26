@@ -1664,11 +1664,21 @@ def test_protocol_manifest_indexes_promotion_live_evidence_queue() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     queue_entry = entries["general-agent-promotion-live-evidence-queue"]
+    operator_request_entry = entries["general-agent-promotion-live-evidence-operator-input-request"]
 
     assert validate_protocol_manifest(manifest) == []
     assert queue_entry["path"] == "schemas/general_agent_promotion_live_evidence_queue.schema.json"
     assert queue_entry["urn"] == "urn:mullusi:schema:general-agent-promotion-live-evidence-queue:1"
     assert queue_entry["surface"] == "promotion"
+    assert (
+        operator_request_entry["path"]
+        == "schemas/general_agent_promotion_live_evidence_operator_input_request.schema.json"
+    )
+    assert (
+        operator_request_entry["urn"]
+        == "urn:mullusi:schema:general-agent-promotion-live-evidence-operator-input-request:1"
+    )
+    assert operator_request_entry["surface"] == "promotion"
 
 
 def test_protocol_manifest_indexes_promotion_terminal_certificate_gate() -> None:
@@ -2706,6 +2716,22 @@ def test_protocol_manifest_rejects_missing_promotion_live_evidence_queue_entry()
     assert len(errors) == 1
     assert "manifest missing public schemas" in errors[0]
     assert "general_agent_promotion_live_evidence_queue.schema.json" in errors[0]
+    assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_rejects_missing_promotion_live_evidence_operator_input_request_entry() -> None:
+    manifest = load_manifest()
+    manifest["schemas"] = [
+        entry
+        for entry in manifest["schemas"]
+        if entry["schema_id"] != "general-agent-promotion-live-evidence-operator-input-request"
+    ]
+
+    errors = validate_protocol_manifest(manifest)
+
+    assert len(errors) == 1
+    assert "manifest missing public schemas" in errors[0]
+    assert "general_agent_promotion_live_evidence_operator_input_request.schema.json" in errors[0]
     assert "schemas/" in errors[0]
 
 

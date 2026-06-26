@@ -1121,6 +1121,12 @@
       "urn": "urn:mullusi:schema:general-agent-promotion-live-evidence-queue:1"
     },
     {
+      "path": "schemas/general_agent_promotion_live_evidence_operator_input_request.schema.json",
+      "schema_id": "general-agent-promotion-live-evidence-operator-input-request",
+      "surface": "promotion",
+      "urn": "urn:mullusi:schema:general-agent-promotion-live-evidence-operator-input-request:1"
+    },
+    {
       "path": "schemas/general_agent_promotion_terminal_approvals.schema.json",
       "schema_id": "general-agent-promotion-terminal-approvals",
       "surface": "promotion",
