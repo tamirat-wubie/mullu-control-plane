@@ -7,8 +7,8 @@ Governance scope: receipts are audit records only; they cannot approve, mutate,
 promote, retrieve, or execute.
 Dependencies: shared shadow types and deterministic hashing.
 Invariants: every receipt records no execution authority, links finding IDs, and
-preserves context lineage without storing raw secrets beyond the already-redacted
-context hash.
+preserves context lineage without storing raw retrieval refs or raw secrets
+beyond the already-redacted context hash.
 """
 
 from __future__ import annotations
@@ -18,6 +18,9 @@ from mcoi_runtime.core.inceptadive_shadow_types import (
     ShadowPassResult,
     ShadowReceipt,
 )
+from mcoi_runtime.core.invariants import stable_identifier
+
+_PUBLIC_RETRIEVAL_RECEIPT_PREFIX = "shadow_retrieval_receipt_"
 
 
 def create_shadow_receipt(
@@ -42,7 +45,7 @@ def create_shadow_receipt(
         context_hash=checked_context.context_hash,
         result_id=checked_result.result_id,
         finding_ids=tuple(finding.finding_id for finding in checked_result.findings),
-        retrieval_receipt_ids=checked_context.retrieval_receipt_ids,
+        retrieval_receipt_ids=_public_retrieval_receipt_refs(checked_context.retrieval_receipt_ids),
         shadow_verdict=checked_result.verdict,
         governance_verdict=governance_verdict,
         created_at=checked_result.created_at,
@@ -66,8 +69,29 @@ def attach_governance_verdict(receipt: ShadowReceipt, *, governance_verdict: str
         context_hash=receipt.context_hash,
         result_id=receipt.result_id,
         finding_ids=receipt.finding_ids,
-        retrieval_receipt_ids=receipt.retrieval_receipt_ids,
+        retrieval_receipt_ids=_public_retrieval_receipt_refs(receipt.retrieval_receipt_ids),
         shadow_verdict=receipt.shadow_verdict,
         governance_verdict=governance_verdict,
         created_at=receipt.created_at,
     ).with_integrity()
+
+
+def _public_retrieval_receipt_refs(values: tuple[str, ...]) -> tuple[str, ...]:
+    """Return stable non-raw retrieval receipt refs for receipt persistence."""
+
+    refs: list[str] = []
+    for value in values:
+        normalized = " ".join(str(value or "").strip().split())
+        if not normalized:
+            continue
+        if normalized.startswith(_PUBLIC_RETRIEVAL_RECEIPT_PREFIX):
+            refs.append(normalized)
+        else:
+            refs.append(
+                _PUBLIC_RETRIEVAL_RECEIPT_PREFIX
+                + stable_identifier(
+                    "inceptadive-shadow-core-retrieval-receipt",
+                    {"value": normalized},
+                )
+            )
+    return tuple(refs)

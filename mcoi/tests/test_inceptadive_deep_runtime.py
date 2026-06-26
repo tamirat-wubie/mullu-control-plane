@@ -42,6 +42,34 @@ def test_deep_engine_runs_when_gate_selects_deep_and_records_receipt() -> None:
     assert "deploy it" not in str(summary.to_dict())
 
 
+def test_runtime_receipt_redacts_raw_retrieval_refs_before_persistence(tmp_path) -> None:
+    raw_retrieval_ref = "retrieval-secret-token-001"
+    store_path = tmp_path / "shadow-store"
+    runtime = build_inceptadive_shadow_runtime(
+        {
+            "MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1",
+            "MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(store_path),
+        }
+    )
+    context = _context(
+        "deploy it with receipt",
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+        retrieval_receipt_ids=(raw_retrieval_ref,),
+    )
+
+    _result, receipt = runtime.inspect_request(context)
+
+    assert receipt is not None
+    assert receipt.retrieval_receipt_ids[0].startswith("shadow_retrieval_receipt_")
+    assert raw_retrieval_ref not in str(receipt.to_dict())
+    assert receipt.to_dict()["retrieval_receipt_ids"] == list(receipt.retrieval_receipt_ids)
+    persisted_receipts = (store_path / "shadow-receipts.jsonl").read_text(encoding="utf-8")
+    assert raw_retrieval_ref not in persisted_receipts
+    assert "shadow_retrieval_receipt_" in persisted_receipts
+    assert receipt.to_dict()["execution_authority"] is False
+
+
 def test_deep_engine_can_be_disabled_without_silent_success() -> None:
     runtime = build_inceptadive_shadow_runtime({"MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "0"})
     context = _context("deploy it", risk_level=ShadowSeverity.HIGH, external_side_effect=True)
