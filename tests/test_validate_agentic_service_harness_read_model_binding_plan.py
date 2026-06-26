@@ -296,15 +296,17 @@ def test_readiness_map_rejects_missing_task_record_write_uao_ready_row(
     )
 
 
-def test_readiness_map_rejects_missing_receipt_store_first_pr(tmp_path: Path) -> None:
+def test_readiness_map_rejects_missing_receipt_store_append_ready_row(
+    tmp_path: Path,
+) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
         encoding="utf-8"
     )
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(receipts): add harness receipt-store append preflight`",
-            "1. `harness(tests): add executed test receipt admission preflight`",
+            "| Receipt-store append preflight PR | READY |",
+            "| Receipt-store append preflight PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -314,7 +316,30 @@ def test_readiness_map_rejects_missing_receipt_store_first_pr(tmp_path: Path) ->
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(receipts): add harness receipt-store append preflight"
+        "missing ready row: Receipt-store append preflight PR"
+        in serialized_errors
+    )
+
+
+def test_readiness_map_rejects_missing_executed_test_first_pr(tmp_path: Path) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "1. `harness(tests): add executed test receipt admission preflight`",
+            "1. `harness(diffs): add non-empty diff receipt admission preflight`",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing next PR marker: harness(tests): add executed test receipt admission preflight"
         in serialized_errors
     )
 
