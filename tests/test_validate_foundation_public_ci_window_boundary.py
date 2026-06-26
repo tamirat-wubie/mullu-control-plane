@@ -195,6 +195,20 @@ def test_public_ci_window_receipt_derives_pr_check_command_from_pull_request() -
     assert payload["head_sha"] == "a67ce0c31871c6f88e098fa16019143e7c04d059"
 
 
+def test_public_ci_window_receipt_rejects_window_id_pr_mismatch() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["pull_request"] = "https://github.com/tamirat-wubie/mullu-control-plane/pull/2230"
+    payload["window_id"] = "foundation_public_ci_window.20260626.pr2213"
+    payload["validators"][-1]["command"] = "gh pr checks 2230"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_window_id_pr_mismatch" for finding in findings)
+    assert any("window_id must end with the pull request identity" in finding.message for finding in findings)
+    assert all("2230" not in finding.message for finding in findings)
+
+
 def test_public_ci_window_receipt_rejects_mismatched_pr_check_command() -> None:
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["pull_request"] = "https://github.com/tamirat-wubie/mullu-control-plane/pull/2230"
