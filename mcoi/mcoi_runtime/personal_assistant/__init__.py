@@ -66,6 +66,12 @@ from .execution_gate import (
     build_default_personal_assistant_execution_gate,
     build_personal_assistant_execution_gate_envelope,
 )
+from .worker_replay_preflight import (
+    DEFAULT_WORKER_REPLAY_PREFLIGHT_GENERATED_AT,
+    DEFAULT_WORKER_REPLAY_PREFLIGHT_SET_ID,
+    build_default_personal_assistant_worker_replay_preflight,
+    build_personal_assistant_worker_replay_preflight_envelope,
+)
 from .intake import (
     ApprovalScope,
     ConnectorProofRef,
@@ -181,6 +187,8 @@ __all__ = (
     "DEFAULT_EXECUTION_GATE_SET_ID",
     "DEFAULT_READ_ONLY_PROJECTION_GENERATED_AT",
     "DEFAULT_READ_ONLY_PROJECTION_SET_ID",
+    "DEFAULT_WORKER_REPLAY_PREFLIGHT_GENERATED_AT",
+    "DEFAULT_WORKER_REPLAY_PREFLIGHT_SET_ID",
     "MathReasoningProjection",
     "ReadOnlyAssistantProjection",
     "RedactedCalendarEvent",
@@ -206,10 +214,12 @@ __all__ = (
     "build_default_personal_assistant_draft_projection",
     "build_default_personal_assistant_execution_gate",
     "build_default_personal_assistant_read_only_projection",
+    "build_default_personal_assistant_worker_replay_preflight",
     "build_personal_assistant_draft_projection_envelope",
     "build_personal_assistant_approval_decision_evidence_envelope",
     "build_personal_assistant_execution_gate_envelope",
     "build_personal_assistant_read_only_projection_envelope",
+    "build_personal_assistant_worker_replay_preflight_envelope",
     "draft_calendar_event",
     "draft_email_response",
     "draft_task",
