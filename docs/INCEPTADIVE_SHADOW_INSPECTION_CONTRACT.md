@@ -54,7 +54,7 @@ Console evidence route:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `request_id` | string | Optional caller id. If empty, the route derives a deterministic non-raw id. |
+| `request_id` | string | Optional caller id. Public-reference shaped ids may be echoed; empty, malformed, or secret-shaped ids are replaced by a deterministic non-raw `shadow_request_...` id. |
 | `stage` | string | `interpretation`, `planning`, `preflight`, or another accepted `ShadowStage` value. |
 | `user_input` | string | Raw request text for inspection only; never returned verbatim. |
 | `normal_intent` | string | Normal-path intent summary. |
@@ -70,8 +70,11 @@ Console evidence route:
 | `authority_receipt_refs` | array | External-effect advisory route only; response exposes only counts. |
 | `created_at` | string | Optional deterministic timestamp; falls back to registered clock. |
 
-Invalid `stage` or `risk_level` values fail closed with HTTP `400` and a bounded
-`invalid_shadow_inspect_request` error detail.
+Invalid `stage`, `risk_level`, unknown fields, malformed body shape, or unsafe
+request-id values fail closed or are redacted before response serialization.
+Validation failures return HTTP `400` with bounded error details. Unsafe
+request ids are not rejected when the rest of the request is valid; they are
+converted to deterministic non-raw `shadow_request_...` references.
 
 ## Response Body
 
@@ -93,10 +96,10 @@ finding summaries, repair flags, escalation flags, and snapshot hashes. It must
 not include raw `user_input`, raw retrieval receipt ids, raw required evidence
 refs, private memory, or any execution handle.
 
-The `receipt` object may include receipt id, request id, mode, stage, context
+The `receipt` object may include receipt id, redacted request id, mode, stage, context
 hash, result id, finding ids, retrieval receipt count, shadow verdict,
 governance verdict placeholder, created timestamp, and snapshot hash. It must
-not include raw request text or raw evidence refs.
+not include raw request text, unsafe caller request ids, or raw evidence refs.
 
 The external-effect `advisory` object may include action families, authority
 obligations, evidence obligations, missing-obligation labels, reference counts,
