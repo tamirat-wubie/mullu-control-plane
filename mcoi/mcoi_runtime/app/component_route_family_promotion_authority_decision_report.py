@@ -17,6 +17,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from mcoi_runtime.app.component_authority_fuse import (
+    ComponentAuthorityFuseError,
+    build_component_authority_fuse,
+)
 from mcoi_runtime.app.component_route_family_promotion_gate_satisfaction_evaluator import (
     ComponentRouteFamilyPromotionGateSatisfactionEvaluatorError,
     build_component_route_family_promotion_gate_satisfaction_evaluator,
@@ -88,9 +92,13 @@ def build_component_route_family_promotion_authority_decision_report(
         component_id=component_id,
     )
     _validate_gate_report(gate_report, surface_id, component_id)
+    authority_fuse_refs = _authority_fuse_refs(component_id)
 
     gate_evaluations = _gate_evaluations(gate_report)
-    authority_decisions = [_authority_decision(gate_evaluation, surface_id) for gate_evaluation in gate_evaluations]
+    authority_decisions = [
+        _authority_decision(gate_evaluation, surface_id, authority_fuse_refs)
+        for gate_evaluation in gate_evaluations
+    ]
     authority_decision_refs = [
         str(authority_decision["authority_decision_id"])
         for authority_decision in authority_decisions
@@ -124,6 +132,7 @@ def build_component_route_family_promotion_authority_decision_report(
         "all_authority_decisions_issued": True,
         "all_authority_decisions_denied": True,
         "all_authority_grants_blocked": True,
+        "authority_fuse_enforced": True,
         "all_required_followup_decisions_pending": True,
         "authority_decision_is_not_authority_grant": True,
         "authority_decision_is_not_promotion_approval": True,
@@ -153,6 +162,7 @@ def build_component_route_family_promotion_authority_decision_report(
                 "component_route_family_promotion_operator_submitted_evidence_records.governed_connector_framework.json"
             ),
             "promotion_preflight": "examples/component_route_family_promotion_preflight.governed_connector_framework.json",
+            "component_authority_fuse": "examples/component_authority_fuse.foundation.json",
             "proof_matrix": "docs/40_proof_coverage_matrix.md",
         },
         "summary": summary,
@@ -160,6 +170,8 @@ def build_component_route_family_promotion_authority_decision_report(
         "authority_decision_refs": authority_decision_refs,
         "satisfied_gate_evaluation_refs": satisfied_gate_refs,
         "accepted_record_refs": accepted_record_refs,
+        "authority_fuse_refs": list(authority_fuse_refs),
+        "authority_fuse_blocking_refs": list(authority_fuse_refs),
         "authority_grant_refs": [],
         "promotion_approval_refs": [],
         "route_binding_decision_refs": [],
@@ -177,6 +189,7 @@ def build_component_route_family_promotion_authority_decision_report(
             "component_route_family_promotion_authority_decision_report_validator",
             "component_route_family_promotion_authority_decision_report_tests",
             "component_route_family_promotion_gate_satisfaction_evaluator_validator",
+            "component_authority_fuse_validator",
         ],
         "next_action": (
             "Create separate route-binding, lifecycle, authority-upgrade, product ownership, and "
@@ -265,7 +278,11 @@ def _gate_evaluations(report: dict[str, Any]) -> list[dict[str, Any]]:
     return output
 
 
-def _authority_decision(gate_evaluation: dict[str, Any], surface_id: str) -> dict[str, Any]:
+def _authority_decision(
+    gate_evaluation: dict[str, Any],
+    surface_id: str,
+    authority_fuse_refs: tuple[str, ...],
+) -> dict[str, Any]:
     gate_id = _required_text(gate_evaluation, "gate_id", "gate evaluation")
     return {
         "authority_decision_id": f"promotion_authority_decision.{surface_id}.{gate_id}.v1",
@@ -284,6 +301,8 @@ def _authority_decision(gate_evaluation: dict[str, Any], surface_id: str) -> dic
         "record_evidence_satisfied": True,
         "action_requirement_satisfied": False,
         "blocks_promotion": True,
+        "authority_fuse_blocks_promotion": True,
+        "requires_external_authority_upgrade_evidence": True,
         "authority_granted": False,
         "route_binding_authorized": False,
         "lifecycle_transition_authorized": False,
@@ -310,6 +329,8 @@ def _authority_decision(gate_evaluation: dict[str, Any], surface_id: str) -> dic
         "accepted_record_refs": [
             _required_text(gate_evaluation, "source_operator_submitted_record_id", f"gate {gate_id}")
         ],
+        "authority_fuse_refs": list(authority_fuse_refs),
+        "authority_fuse_blocking_refs": list(authority_fuse_refs),
         "authority_grant_refs": [],
         "promotion_approval_refs": [],
         "accepted_evidence_refs": [],
@@ -367,9 +388,40 @@ def _summary(authority_decisions: list[dict[str, Any]], approval_evidence_requir
         "accepted_record_count": sum(
             len(authority_decision["accepted_record_refs"]) for authority_decision in authority_decisions
         ),
+        "authority_fuse_blocking_count": len(
+            {
+                authority_fuse_ref
+                for authority_decision in authority_decisions
+                for authority_fuse_ref in authority_decision["authority_fuse_blocking_refs"]
+            }
+        ),
         "approval_artifact_requirement_count": len(approval_evidence_required),
         "required_followup_decision_count": len(REQUIRED_FOLLOWUP_DECISIONS),
     }
+
+
+def _authority_fuse_refs(component_id: str) -> tuple[str, ...]:
+    try:
+        fuse_set = build_component_authority_fuse()
+    except ComponentAuthorityFuseError as exc:
+        raise ComponentRouteFamilyPromotionAuthorityDecisionReportError(str(exc)) from exc
+    fuse_records = fuse_set.get("fuses")
+    if not isinstance(fuse_records, list):
+        raise ComponentRouteFamilyPromotionAuthorityDecisionReportError("component authority fuse set must carry fuses")
+    refs = [
+        str(record["fuse_id"])
+        for record in fuse_records
+        if isinstance(record, dict)
+        and record.get("component_id") == component_id
+        and record.get("fuse_state") == "blocked"
+        and record.get("self_upgrade_allowed") is False
+        and isinstance(record.get("fuse_id"), str)
+    ]
+    if len(refs) != 1:
+        raise ComponentRouteFamilyPromotionAuthorityDecisionReportError(
+            "authority decision report requires exactly one blocked component authority-fuse ref"
+        )
+    return tuple(refs)
 
 
 def _required_text(payload: dict[str, Any], field_name: str, label: str) -> str:

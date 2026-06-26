@@ -337,7 +337,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     )
     assert (
         surfaces["component_route_family_promotion_missing_evidence_ledger"]["exact_test_anchor_count"]
-        == 6
+        == 7
     )
     assert (
         surfaces["component_route_family_promotion_router_inventory_delta_candidate"]["unanchored_witness_count"]

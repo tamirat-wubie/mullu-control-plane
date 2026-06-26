@@ -1309,21 +1309,26 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "proven",
             [
                 "mcoi/mcoi_runtime/app/component_route_family_promotion_missing_evidence_ledger.py",
+                "mcoi/mcoi_runtime/app/component_authority_fuse.py",
                 "schemas/component_route_family_promotion_missing_evidence_ledger.schema.json",
+                "schemas/component_authority_fuse.schema.json",
                 (
                     "examples/"
                     "component_route_family_promotion_missing_evidence_ledger.governed_connector_framework.json"
                 ),
+                "examples/component_authority_fuse.foundation.json",
                 "scripts/validate_component_route_family_promotion_missing_evidence_ledger.py",
+                "scripts/validate_component_authority_fuse.py",
                 "tests/test_validate_component_route_family_promotion_missing_evidence_ledger.py",
             ],
-            "Component Harness promotion missing-evidence ledger consumes terminal-closure denial and records six missing promotion blockers without creating witnesses, terminal certificates, authority grants, promotion approvals, execution, connector calls, or router mutation.",
+            "Component Harness promotion missing-evidence ledger consumes terminal-closure denial and binds the target component authority-fuse denial while recording six missing promotion blockers without creating witnesses, terminal certificates, authority grants, promotion approvals, execution, connector calls, or router mutation.",
             [
                 "component_route_family_promotion_missing_evidence_ledger_schema_valid",
                 "component_route_family_promotion_missing_evidence_ledger_match_runtime_projection",
                 "component_route_family_promotion_missing_evidence_ledger_reject_evidence_overclaim",
                 "component_route_family_promotion_missing_evidence_ledger_reject_missing_record",
                 "component_route_family_promotion_missing_evidence_ledger_reject_source_ref_drift",
+                "component_route_family_promotion_missing_evidence_ledger_reject_authority_fuse_drift",
                 "component_route_family_promotion_missing_evidence_ledger_reject_witness_drift",
             ],
             runtime_witness_anchor_aliases={
@@ -1341,6 +1346,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "component_route_family_promotion_missing_evidence_ledger_reject_source_ref_drift": [
                     "component_route_family_promotion_missing_evidence_ledger_reject_source_ref_drift",
+                ],
+                "component_route_family_promotion_missing_evidence_ledger_reject_authority_fuse_drift": [
+                    "component_route_family_promotion_missing_evidence_ledger_reject_authority_fuse_drift",
                 ],
                 "component_route_family_promotion_missing_evidence_ledger_reject_witness_drift": [
                     "component_route_family_promotion_missing_evidence_ledger_reject_witness_drift",
@@ -11737,87 +11745,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
             },
         ),
-        _surface(
-            "holistic_loop_reasoning_admission_binding",
-            [
-                "HolisticLoopReasoningAdmissionBinding",
-                "validate_holistic_loop_reasoning_admission_binding",
-                "holistic_loop_reasoning_admission_binding.v1",
-            ],
-            "request_proof",
-            "action_proof",
-            "audit_chain",
-            "witnessed",
-            [
-                "schemas/holistic_loop_reasoning_admission_binding.schema.json",
-                "examples/holistic_loop_reasoning_admission_binding.foundation.json",
-                "scripts/validate_holistic_loop_reasoning_admission_binding.py",
-                "tests/test_validate_holistic_loop_reasoning_admission_binding.py",
-                "docs/99_holistic_loop_reasoning_admission_binding.md",
-                "docs/reasoning/MULLU_REASONING_INTEGRITY_MESH.md",
-                "governance/reasoning_method_registry.yaml",
-                "governance/judgment_integrity_gate.yaml",
-                "governance/weakness_taxonomy.yaml",
-                "governance/reasoning_edge_case_forge.yaml",
-                "scripts/validate_reasoning_integrity_mesh.py",
-                "tests/governance/test_reasoning_integrity_mesh.py",
-                "docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md",
-                "schemas/holistic_loop_read_model.schema.json",
-                "scripts/validate_holistic_loop_read_model.py",
-                "scripts/validate_holistic_loop_extension_admission.py",
-                "scripts/validate_holistic_loop_kernel_freeze.py",
-                "scripts/validate_holistic_loop_http_surface.py",
-                "examples/sdlc/requirement_holistic_loop_reasoning_admission_binding_20260626.json",
-                "examples/sdlc/design_holistic_loop_reasoning_admission_binding_20260626.json",
-                "examples/sdlc/security_review_holistic_loop_reasoning_admission_binding_20260626.json",
-            ],
-            (
-                "Holistic loop reasoning admission binds the operator's "
-                "wholistic reasoning direction to the existing Reasoning "
-                "Integrity Mesh and holistic loop read-model while keeping "
-                "runtime reasoning, loop registration, status transition, "
-                "mutation routes, connector calls, receipt append, learning "
-                "updates, terminal closure, and success claims denied. "
-                "Runtime promotion remains AwaitingEvidence until UAO "
-                "admission, operator approval, runtime execution design, "
-                "rollback recovery, live-run receipts, and terminal closure "
-                "review exist."
-            ),
-            [
-                "holistic_loop_reasoning_admission_binding_schema_valid",
-                "holistic_loop_reasoning_admission_binding_denies_runtime_authority",
-                "holistic_loop_reasoning_admission_binding_requires_runtime_evidence",
-                "holistic_loop_reasoning_admission_binding_rejects_requirement_drift",
-                "holistic_loop_reasoning_admission_binding_rejects_digest_and_summary_drift",
-                "holistic_loop_reasoning_admission_binding_rejects_receipt_and_gap_drift",
-                "holistic_loop_reasoning_admission_binding_sdlc_artifacts_valid",
-            ],
-            runtime_witness_anchor_aliases={
-                "holistic_loop_reasoning_admission_binding_schema_valid": [
-                    "holistic_loop_reasoning_admission_binding_passes"
-                ],
-                "holistic_loop_reasoning_admission_binding_denies_runtime_authority": [
-                    "holistic_loop_reasoning_admission_binding_passes",
-                    "holistic_loop_reasoning_admission_rejects_authority_drift",
-                ],
-                "holistic_loop_reasoning_admission_binding_requires_runtime_evidence": [
-                    "holistic_loop_reasoning_admission_binding_passes",
-                    "holistic_loop_reasoning_admission_rejects_scope_and_evidence_drift",
-                ],
-                "holistic_loop_reasoning_admission_binding_rejects_requirement_drift": [
-                    "holistic_loop_reasoning_admission_rejects_requirement_drift"
-                ],
-                "holistic_loop_reasoning_admission_binding_rejects_digest_and_summary_drift": [
-                    "holistic_loop_reasoning_admission_rejects_digest_and_summary_drift"
-                ],
-                "holistic_loop_reasoning_admission_binding_rejects_receipt_and_gap_drift": [
-                    "holistic_loop_reasoning_admission_rejects_receipt_and_gap_drift"
-                ],
-                "holistic_loop_reasoning_admission_binding_sdlc_artifacts_valid": [
-                    "sdlc_requirement_design_and_security_validate_for_holistic_loop_reasoning_admission"
-                ],
-            },
-        ),
     ]
     closure_actions = [
         {
@@ -12020,11 +11947,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "register_holistic_loop_read_model_kernel",
             "surfaces": ["holistic_loop_read_model_kernel"],
-            "status": "closed",
-        },
-        {
-            "action_id": "publish_holistic_loop_reasoning_admission_binding",
-            "surfaces": ["holistic_loop_reasoning_admission_binding"],
             "status": "closed",
         },
         {

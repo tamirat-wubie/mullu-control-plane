@@ -86,7 +86,13 @@ def test_component_route_family_promotion_missing_evidence_ledger_match_runtime_
     assert example["summary"]["missing_evidence_record_count"] == 6
     assert example["summary"]["present_evidence_count"] == 0
     assert example["summary"]["unknown_proof_state_count"] == 6
+    assert example["summary"]["authority_fuse_blocking_count"] == 6
+    assert example["authority_fuse_refs"] == ["component_authority_fuse.gmail_account_binding_gate.foundation.v1"]
+    assert example["authority_fuse_blocking_refs"] == example["authority_fuse_refs"]
     assert records[0]["artifact_id"] == "selected_component_bound_router_inventory_delta"
+    assert records[0]["authority_fuse_blocks_promotion"] is True
+    assert records[0]["authority_fuse_refs"] == example["authority_fuse_refs"]
+    assert records[0]["authority_fuse_blocking_refs"] == example["authority_fuse_refs"]
     assert records[-1]["artifact_id"] == "terminal_closure_certificate"
 
 
@@ -161,6 +167,31 @@ def test_component_route_family_promotion_missing_evidence_ledger_reject_source_
     assert "missing record source_terminal_closure_decision_denied must be true" in serialized_errors
     assert "missing record required_stage must match artifact_id" in serialized_errors
     assert "missing record product_bundle_id must be personal_assistant_v0" in serialized_errors
+
+
+def test_component_route_family_promotion_missing_evidence_ledger_reject_authority_fuse_drift(
+    tmp_path: Path,
+) -> None:
+    payload = _default_payload()
+    record = _records(payload)[0]
+    payload["authority_fuse_refs"] = []
+    payload["authority_fuse_blocking_refs"] = ["component_authority_fuse.gmail_account_binding_gate.foundation.v1"]
+    payload["summary"]["authority_fuse_blocking_count"] = 0
+    record["authority_fuse_blocks_promotion"] = False
+    record["authority_fuse_refs"] = ["component_authority_fuse.drifted.v1"]
+    record["authority_fuse_blocking_refs"] = []
+
+    validation = validate_component_route_family_promotion_missing_evidence_ledger(
+        example_path=_write_payload(tmp_path, payload)
+    )
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "authority_fuse_refs must contain exactly one component authority-fuse ref" in serialized_errors
+    assert "authority_fuse_blocking_refs must match authority_fuse_refs" in serialized_errors
+    assert "missing record authority_fuse_blocks_promotion must be true" in serialized_errors
+    assert "missing record authority_fuse_refs must match ledger authority_fuse_refs" in serialized_errors
+    assert "summary.authority_fuse_blocking_count" in serialized_errors
 
 
 def test_component_route_family_promotion_missing_evidence_ledger_reject_witness_drift(
