@@ -24,6 +24,7 @@ from mcoi_runtime.app.autonomous_request import (
 )
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.operator_loop import OperatorLoop, OperatorRequest
+from mcoi_runtime.app.view_models import AutonomousRequestEpisodeSummaryView
 from mcoi_runtime.contracts.autonomy import AutonomyDecisionStatus
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.solver_outcome import SolverOutcome
@@ -155,6 +156,18 @@ def test_autonomous_request_episode_runs_local_step_without_prompt() -> None:
     assert receipt.repair_attempt_count == 0
     assert receipt.repaired_step_count == 0
     assert receipt.repair_receipt_refs == ()
+    assert receipt.workflow_descriptor_ref is not None
+    assert receipt.workflow_descriptor_ref.startswith("workflow://")
+    assert receipt.workflow_stage_count == 1
+    assert receipt.workflow_approval_stage_count == 0
+    assert receipt.workflow_external_stage_count == 0
+
+    summary = AutonomousRequestEpisodeSummaryView.from_receipt(receipt)
+    assert summary.episode_id == "episode-local"
+    assert summary.workflow_descriptor_ref == receipt.workflow_descriptor_ref
+    assert summary.workflow_stage_count == 1
+    assert summary.workflow_approval_stage_count == 0
+    assert summary.workflow_external_stage_count == 0
 
 
 def test_autonomous_request_episode_records_local_retry_repair() -> None:
@@ -602,6 +615,10 @@ def test_autonomous_request_episode_blocks_external_communication_without_approv
     assert receipt.step_receipts[0].autonomy_status == AutonomyDecisionStatus.BLOCKED_PENDING_APPROVAL.value
     assert receipt.repair_attempt_count == 0
     assert receipt.repaired_step_count == 0
+    assert receipt.workflow_descriptor_ref is not None
+    assert receipt.workflow_stage_count == 2
+    assert receipt.workflow_approval_stage_count == 1
+    assert receipt.workflow_external_stage_count == 1
 
 
 def test_autonomous_request_episode_rejects_empty_request_tuple() -> None:

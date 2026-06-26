@@ -103,6 +103,10 @@ def test_default_catalog_compiles_apply_dependency_chain_without_prompt() -> Non
     assert receipt.prompt_count == 0
     assert receipt.planned_stage_count == 3
     assert receipt.blocked_dependency_count == 0
+    assert receipt.workflow_descriptor_ref is not None
+    assert receipt.workflow_stage_count == 3
+    assert receipt.workflow_approval_stage_count == 0
+    assert receipt.workflow_external_stage_count == 0
 
     descriptor = episode.to_workflow_descriptor(
         workflow_id="workflow-default-catalog",

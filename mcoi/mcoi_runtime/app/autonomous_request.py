@@ -594,6 +594,10 @@ class AutonomousRequestEpisodeReceipt:
     planned_stage_count: int = 0
     blocked_dependency_count: int = 0
     plan_receipt_ref: str | None = None
+    workflow_descriptor_ref: str | None = None
+    workflow_stage_count: int = 0
+    workflow_approval_stage_count: int = 0
+    workflow_external_stage_count: int = 0
     automation_state: str = AutonomousRequestAutomationState.AWAITING_EVIDENCE.value
 
     def __post_init__(self) -> None:
@@ -625,6 +629,9 @@ class AutonomousRequestEpisodeReceipt:
             "repaired_step_count",
             "planned_stage_count",
             "blocked_dependency_count",
+            "workflow_stage_count",
+            "workflow_approval_stage_count",
+            "workflow_external_stage_count",
         ):
             value = getattr(self, field_name)
             if not isinstance(value, int) or value < 0:
@@ -636,6 +643,12 @@ class AutonomousRequestEpisodeReceipt:
                 self,
                 "plan_receipt_ref",
                 ensure_non_empty_text("plan_receipt_ref", self.plan_receipt_ref),
+            )
+        if self.workflow_descriptor_ref is not None:
+            object.__setattr__(
+                self,
+                "workflow_descriptor_ref",
+                ensure_non_empty_text("workflow_descriptor_ref", self.workflow_descriptor_ref),
             )
         if not isinstance(self.no_bypass, bool):
             raise RuntimeCoreInvariantError("no_bypass must be a bool")
@@ -1284,6 +1297,21 @@ def _episode_receipt(
     )
     receipt_refs = tuple(step.receipt_ref for step in step_receipts)
     plan_receipt_ref = _plan_receipt_ref(episode=episode, step_receipts=step_receipts)
+    workflow_descriptor = episode.to_workflow_descriptor(created_at=started_at)
+    workflow_descriptor_ref = _workflow_descriptor_ref(
+        episode=episode,
+        descriptor=workflow_descriptor,
+    )
+    workflow_approval_stage_count = sum(
+        1
+        for stage in workflow_descriptor.stages
+        if stage.stage_type is StageType.APPROVAL_GATE
+    )
+    workflow_external_stage_count = sum(
+        1
+        for stage in workflow_descriptor.stages
+        if stage.stage_type is StageType.COMMUNICATION
+    )
     automation_state = _automation_state(
         action_count=len(step_receipts),
         dispatched_count=dispatched_count,
@@ -1339,6 +1367,10 @@ def _episode_receipt(
         planned_stage_count=0 if episode.plan is None else len(episode.plan.steps),
         blocked_dependency_count=blocked_dependency_count,
         plan_receipt_ref=plan_receipt_ref,
+        workflow_descriptor_ref=workflow_descriptor_ref,
+        workflow_stage_count=len(workflow_descriptor.stages),
+        workflow_approval_stage_count=workflow_approval_stage_count,
+        workflow_external_stage_count=workflow_external_stage_count,
         automation_state=automation_state.value,
         solver_outcome=solver_outcome.value,
         rollback_ref=rollback_ref,
@@ -1362,6 +1394,24 @@ def _plan_receipt_ref(
         },
     )
     return f"receipt://{plan_ref}"
+
+
+def _workflow_descriptor_ref(
+    *,
+    episode: AutonomousRequestEpisode,
+    descriptor: WorkflowDescriptor,
+) -> str:
+    descriptor_ref = stable_identifier(
+        "autonomous-request-workflow-descriptor",
+        {
+            "episode_id": episode.episode_id,
+            "workflow_id": descriptor.workflow_id,
+            "stage_ids": tuple(stage.stage_id for stage in descriptor.stages),
+            "stage_types": tuple(stage.stage_type.value for stage in descriptor.stages),
+            "predecessors": tuple(stage.predecessors for stage in descriptor.stages),
+        },
+    )
+    return f"workflow://{descriptor_ref}"
 
 
 def _solver_outcome(
