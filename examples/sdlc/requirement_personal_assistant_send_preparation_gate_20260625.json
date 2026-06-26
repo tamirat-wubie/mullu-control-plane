@@ -1,0 +1,53 @@
+{
+  "requirement_id": "sdlc_req_personal_assistant_send_preparation_gate_20260625",
+  "request_id": "personal_assistant_send_preparation_gate_20260625",
+  "problem_statement": "Personal Assistant approval decision evidence can prove an operator approved a proposed send, but the next stage needs a separate no-effect preparation gate so approved decisions cannot be mistaken for draft creation, external send, connector mutation, memory write, or system-of-record authority.",
+  "success_criteria": [
+    "A schema-backed Personal Assistant send-preparation receipt validates blocked, failed, and passed states.",
+    "Passed send-preparation receipts require valid approved approval-decision evidence, deferred decision receipt semantics, requested queue precondition binding, request queue receipt identity, approval review packet identity, and redacted preparation evidence.",
+    "The producer records send preparation evidence only and keeps external send authorization, send execution, draft creation, mailbox writes, connector mutation, memory writes, and system-of-record writes false.",
+    "The validator rejects denied or unready decisions, missing preparation refs, malformed hashes, raw recipient/message fields, secret-like values, effect drift, and missing receipt files.",
+    "The protocol manifest registers the send-preparation receipt schema."
+  ],
+  "non_goals": [
+    "Do not create a Gmail draft.",
+    "Do not send external messages.",
+    "Do not call Gmail, Calendar, task, messaging, browser, memory, or payment connectors.",
+    "Do not grant live connector, external-send, memory, system-of-record, deployment, customer-readiness, or production-readiness authority.",
+    "Do not serialize raw private connector payloads, recipients, subjects, message bodies, secrets, or credentials."
+  ],
+  "constraints": [
+    "Foundation Mode remains active.",
+    "Approved decisions authorize only redacted send-preparation evidence, not external send.",
+    "Preparation evidence must remain digest/ref-only.",
+    "Send execution requires a later separate receipt and final effect preflight.",
+    "Mfidel atomicity must be preserved."
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "schemas/personal_assistant_send_preparation_receipt.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "scripts/produce_personal_assistant_send_preparation_receipt.py",
+    "scripts/validate_personal_assistant_send_preparation_receipt.py",
+    "tests/test_produce_personal_assistant_send_preparation_receipt.py",
+    "tests/test_validate_personal_assistant_send_preparation_receipt.py",
+    "examples/sdlc/requirement_personal_assistant_send_preparation_gate_20260625.json",
+    "examples/sdlc/design_personal_assistant_send_preparation_gate_20260625.json"
+  ],
+  "acceptance_tests": [
+    "python -m pytest tests/test_produce_personal_assistant_send_preparation_receipt.py tests/test_validate_personal_assistant_send_preparation_receipt.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "git diff --check --ignore-space-at-eol"
+  ],
+  "evidence_required": [
+    "schema-backed send-preparation receipt contract",
+    "producer and validator focused tests",
+    "protocol manifest registration",
+    "SDLC requirement and design artifacts"
+  ],
+  "uao_ref": "uao://local-foundation/personal-assistant-send-preparation-gate/20260625",
+  "causal_decision_trace_ref": "trace://sdlc/personal-assistant-send-preparation-gate/20260625",
+  "receipt_ref": "schemas/personal_assistant_send_preparation_receipt.schema.json"
+}
