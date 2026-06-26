@@ -124,3 +124,28 @@ def test_disabled_runtime_hook_is_still_redacted_and_non_executing() -> None:
     assert payload["private_memory_exposed"] is False
     assert "deploy it" not in str(payload)
     assert outcome.snapshot_hash == outcome.expected_snapshot_hash()
+
+
+def test_hook_redacts_secret_shaped_request_id_before_runtime_activity() -> None:
+    runtime = build_inceptadive_shadow_runtime({})
+    raw_request_id = "hook-private-token-request-001"
+
+    outcome = run_interpretation_shadow_hook(
+        runtime,
+        request_id=raw_request_id,
+        user_input="summarize release notes",
+        explicit_target="release notes",
+        scope="docs",
+        created_at=_CREATED_AT,
+    )
+    payload = outcome.to_dict()
+    recent_results, recent_receipts = runtime.recent_activity(limit=5)
+
+    assert outcome.request_id.startswith("shadow_hook_request_")
+    assert payload["request_id"] == outcome.request_id
+    assert raw_request_id not in str(payload)
+    assert raw_request_id not in str(recent_results[0].to_dict())
+    assert raw_request_id not in str(recent_receipts[0].to_dict())
+    assert recent_results[0].request_id == outcome.request_id
+    assert recent_receipts[0].request_id == outcome.request_id
+    assert outcome.execution_authority is False

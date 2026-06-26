@@ -5,8 +5,10 @@ adapters that let normal Mullu processing ask the shadow layer what may be
 ambiguous, missing, risky, or blocked.
 Governance scope: advisory hook outcomes only; hooks do not execute, approve,
 retrieve memory, mutate state, or replace the Mullu governance verdict.
-Dependencies: dataclasses, hashing, Protocol typing, and shadow shared types.
-Invariants: hook output is redacted by construction, carries no execution
+Dependencies: dataclasses, hashing, Protocol typing, shadow shared types, and
+stable identifier generation.
+Invariants: hook output is redacted by construction, secret-shaped request
+identifiers are replaced before runtime inspection, carries no execution
 authority, and records whether deeper interrogation, repair, escalation, or
 normal governance is required.
 """
@@ -29,6 +31,19 @@ from mcoi_runtime.core.inceptadive_shadow_types import (
     ShadowVerdict,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
+
+_PUBLIC_HOOK_REQUEST_PREFIX = "shadow_hook_request_"
+_SAFE_REQUEST_ID_CHARS = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:")
+_SENSITIVE_REQUEST_ID_MARKERS = (
+    "secret",
+    "token",
+    "credential",
+    "password",
+    "private",
+    "apikey",
+    "api_key",
+    "bearer",
+)
 
 
 class ShadowHookStatus(StrEnum):
@@ -177,7 +192,7 @@ def run_interpretation_shadow_hook(
     """Run the shadow hook before final user-request interpretation."""
 
     context = _context(
-        request_id=request_id,
+        request_id=_public_hook_request_id(request_id, stage=ShadowStage.INTERPRETATION, created_at=created_at),
         stage=ShadowStage.INTERPRETATION,
         user_input=user_input,
         normal_intent=normal_intent,
@@ -211,7 +226,7 @@ def run_planning_shadow_hook(
     """Run the shadow hook after a candidate plan is assembled."""
 
     context = _context(
-        request_id=request_id,
+        request_id=_public_hook_request_id(request_id, stage=ShadowStage.PLANNING, created_at=created_at),
         stage=ShadowStage.PLANNING,
         user_input=user_input,
         normal_intent=normal_intent,
@@ -246,7 +261,7 @@ def run_workflow_shadow_hook(
     """Run the shadow hook over a multi-step workflow candidate."""
 
     context = _context(
-        request_id=request_id,
+        request_id=_public_hook_request_id(request_id, stage=ShadowStage.WORKFLOW, created_at=created_at),
         stage=ShadowStage.WORKFLOW,
         user_input=user_input,
         normal_intent=normal_intent,
@@ -282,7 +297,7 @@ def run_preflight_shadow_hook(
     """Run strict shadow preflight for a candidate action."""
 
     context = _context(
-        request_id=request_id,
+        request_id=_public_hook_request_id(request_id, stage=ShadowStage.PREFLIGHT, created_at=created_at),
         stage=ShadowStage.PREFLIGHT,
         user_input=user_input or candidate_action,
         normal_intent=normal_intent,
@@ -333,6 +348,33 @@ def _context(
         retrieval_receipt_ids=tuple(str(ref).strip() for ref in retrieval_receipt_ids if str(ref).strip()),
         created_at=created_at,
     ).with_integrity()
+
+
+def _public_hook_request_id(request_id: str, *, stage: ShadowStage, created_at: str) -> str:
+    """Return a hook request id safe for direct outputs and runtime persistence."""
+
+    normalized = " ".join(str(request_id or "").strip().split())
+    if _request_id_is_public_reference(normalized):
+        return normalized
+    return _PUBLIC_HOOK_REQUEST_PREFIX + stable_identifier(
+        "inceptadive-shadow-hook-request",
+        {
+            "stage": stage.value,
+            "request_id": normalized,
+            "created_at": created_at,
+        },
+    )
+
+
+def _request_id_is_public_reference(value: str) -> bool:
+    if not value or len(value) > 128:
+        return False
+    if value.startswith(_PUBLIC_HOOK_REQUEST_PREFIX):
+        return True
+    if any(character not in _SAFE_REQUEST_ID_CHARS for character in value):
+        return False
+    lowered = value.lower()
+    return not any(marker in lowered for marker in _SENSITIVE_REQUEST_ID_MARKERS)
 
 
 def _outcome_from_result(
