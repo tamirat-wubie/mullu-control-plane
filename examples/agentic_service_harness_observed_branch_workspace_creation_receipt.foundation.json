@@ -1,0 +1,86 @@
+{
+  "receipt_id": "agentic_service_harness_observed_branch_workspace_creation_receipt",
+  "schema_version": 1,
+  "generated_at": "2026-06-26T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_authority_binding_ref": "examples/agentic_service_harness_approved_branch_workspace_creation_authority_binding.foundation.json",
+  "observation_status": "workspace_create_observed",
+  "effect_reconciliation": {
+    "expected_effect": "create_one_confined_branch_workspace_without_file_writes",
+    "observed_effect": "create_one_confined_branch_workspace_without_file_writes",
+    "reconciliation_status": "MATCH",
+    "forbidden_effects_checked": true,
+    "evidence_refs": [
+      "evidence://workspace-path-confined",
+      "evidence://branch-workspace-create-observed",
+      "evidence://authority-single-use-consumed"
+    ]
+  },
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "source_authority_binding_id": "agentic_service_harness_approved_branch_workspace_creation_authority_binding",
+    "foundation_phase": "foundation_observed_branch_workspace_creation"
+  },
+  "observed_workspace": {
+    "workspace_id": "workspace.harness-observe-branch-workspace-creation-20260626",
+    "branch_name": "codex/harness-observe-branch-workspace-creation-20260626",
+    "workspace_created": true,
+    "workspace_path_confined": true,
+    "authority_single_use_consumed": true,
+    "post_create_observation_recorded": true,
+    "cleanup_receipt_required_before_close": true
+  },
+  "forbidden_effects": {
+    "filesystem_written": false,
+    "branch_pushed": false,
+    "pull_request_opened": false,
+    "adapter_executed": false,
+    "connector_called": false,
+    "receipt_store_appended": false,
+    "mutation_route_admitted": false,
+    "secret_values_serialized": false,
+    "destructive_operation_executed": false,
+    "terminal_closure": false
+  },
+  "required_next_evidence": {
+    "before_filesystem_write": [
+      "evidence://filesystem-write-rollback-plan",
+      "evidence://non-empty-diff-admission-preflight",
+      "evidence://secret-redaction-policy"
+    ],
+    "before_adapter_execution": [
+      "approval://adapter-execution/operator-decision",
+      "evidence://worker-lease-sandbox-boundary",
+      "evidence://executed-test-receipt-admission-preflight"
+    ],
+    "before_receipt_append": [
+      "evidence://receipt-store-write-path",
+      "evidence://receipt-redaction-policy",
+      "evidence://receipt-append-rollback-plan"
+    ],
+    "before_terminal_closure": [
+      "evidence://cleanup-receipt-after-workspace-use",
+      "evidence://effect-reconciliation-before-terminal-closure",
+      "evidence://terminal-closure-certificate-candidate"
+    ]
+  },
+  "receipt_refs": {
+    "observed_workspace_receipt_schema": "schemas/agentic_service_harness_observed_branch_workspace_creation_receipt.schema.json",
+    "authority_binding_schema": "schemas/agentic_service_harness_approved_branch_workspace_creation_authority_binding.schema.json",
+    "authority_binding_fixture": "examples/agentic_service_harness_approved_branch_workspace_creation_authority_binding.foundation.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-observed-branch-workspace-creation-receipt",
+      "command": "python scripts/validate_agentic_service_harness_observed_branch_workspace_creation_receipt.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add filesystem write admission only after workspace cleanup obligation, rollback evidence, redaction evidence, and non-empty diff admission remain valid; keep adapter execution, receipt append, pull request creation, and terminal closure blocked."
+}

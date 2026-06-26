@@ -114,6 +114,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_approved_branch_works
     assert workspace_authority_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_observed_branch_workspace_creation_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    observed_workspace_entry = entries[
+        "agentic-service-harness-observed-branch-workspace-creation-receipt"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert observed_workspace_entry["path"] == (
+        "schemas/agentic_service_harness_observed_branch_workspace_creation_receipt.schema.json"
+    )
+    assert observed_workspace_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-observed-branch-workspace-creation-receipt:1"
+    )
+    assert observed_workspace_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_task_record_write_uao_admission_preflight() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

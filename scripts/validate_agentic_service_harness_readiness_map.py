@@ -30,9 +30,9 @@ Invariants:
     surface.
   - GitHub PR terminal closure remains closed as a bounded certificate/gate/
     decision/rejection/request/minting/read-model evidence chain.
-  - Approved branch workspace creation authority is bound before observed
-    workspace creation, filesystem write, adapter execution, receipt append,
-    pull-request creation, or terminal closure evidence.
+  - Approved branch workspace creation authority and observed workspace
+    creation are bound before filesystem write, adapter execution, receipt
+    append, pull-request creation, or terminal closure evidence.
   - Dashboard, mutation endpoint, external adapter, and high-risk authority
     remain denied by default.
   - The map does not contain API mutation route strings or route decorators.
@@ -222,7 +222,24 @@ REQUIRED_APPROVED_BRANCH_WORKSPACE_AUTHORITY_TERMS = (
     "secret serialization",
     "destructive operations",
     "terminal closure remain blocked",
-    "observe approved branch workspace creation",
+    "observed branch workspace creation receipt",
+)
+REQUIRED_OBSERVED_BRANCH_WORKSPACE_TERMS = (
+    "Observed branch workspace creation receipt PR",
+    "agentic_service_harness_observed_branch_workspace_creation_receipt",
+    "MATCH reconciliation",
+    "confined branch workspace create effect",
+    "filesystem writes",
+    "branch pushes",
+    "pull-request creation",
+    "adapter execution",
+    "connector calls",
+    "receipt append",
+    "mutation routes",
+    "secret serialization",
+    "destructive operations",
+    "terminal closure remain blocked",
+    "filesystem write admission",
 )
 REQUIRED_DRY_RUN_TEST_RUNNER_PLAN_TERMS = (
     "Dry-run test runner plan receipt PR",
@@ -476,6 +493,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     )
     _require_all(
         map_text,
+        REQUIRED_OBSERVED_BRANCH_WORKSPACE_TERMS,
+        "observed_branch_workspace_term",
+        errors,
+    )
+    _require_all(
+        map_text,
         REQUIRED_DRY_RUN_TEST_RUNNER_PLAN_TERMS,
         "dry_run_test_runner_plan_term",
         errors,
@@ -540,6 +563,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_task_creation_admission_ready(map_text, errors)
     _validate_approved_branch_workspace_ready(map_text, errors)
     _validate_approved_branch_workspace_authority_ready(map_text, errors)
+    _validate_observed_branch_workspace_creation_ready(map_text, errors)
     _validate_dry_run_test_runner_plan_ready(map_text, errors)
     _validate_task_record_write_uao_ready(map_text, errors)
     _validate_receipt_store_append_preflight_ready(map_text, errors)
@@ -698,6 +722,19 @@ def _validate_approved_branch_workspace_authority_ready(map_text: str, errors: l
     )
     if closure_row is None:
         errors.append("missing ready row: Approved branch workspace creation authority binding PR")
+
+
+def _validate_observed_branch_workspace_creation_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Observed branch workspace creation receipt PR \| READY \| .+MATCH reconciliation.+confined branch workspace create effect.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Observed branch workspace creation receipt PR")
 
 
 def _validate_dry_run_test_runner_plan_ready(map_text: str, errors: list[str]) -> None:
@@ -901,7 +938,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(workspace): observe approved branch workspace creation",
+        "harness(workspace): bind filesystem write admission",
     )
     positions: list[int] = []
     for marker in sequence_markers:

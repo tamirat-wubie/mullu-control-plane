@@ -1,5 +1,5 @@
 {
-  "check_count": 290,
+  "check_count": 291,
   "checks": [
     {
       "args": [
@@ -347,6 +347,19 @@
         "scripts/validate_agentic_service_harness_approved_branch_workspace_creation_authority_binding.py"
       ],
       "name": "agentic_service_harness_approved_branch_workspace_creation_authority_binding",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_observed_branch_workspace_creation_receipt.py"
+      ],
+      "name": "agentic_service_harness_observed_branch_workspace_creation_receipt",
       "passed": true,
       "return_code": 0,
       "stderr": "",

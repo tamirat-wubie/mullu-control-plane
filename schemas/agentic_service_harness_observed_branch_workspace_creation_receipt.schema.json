@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-observed-branch-workspace-creation-receipt:1",
+  "title": "Agentic Service Harness Observed Branch Workspace Creation Receipt",
+  "description": "Foundation Mode observation receipt for approved branch workspace creation. This contract records that a confined branch workspace create effect was observed and reconciled against the prior authority binding without granting filesystem writes, branch pushes, pull-request creation, adapter execution, connector calls, receipt append, mutation routes, secret serialization, destructive operations, or terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_authority_binding_ref",
+    "observation_status",
+    "effect_reconciliation",
+    "report_is_not_terminal_closure",
+    "terminal_closure",
+    "scope",
+    "observed_workspace",
+    "forbidden_effects",
+    "required_next_evidence",
+    "receipt_refs",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "const": "agentic_service_harness_observed_branch_workspace_creation_receipt"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "source_authority_binding_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_approved_branch_workspace_creation_authority_binding.foundation.json"
+    },
+    "observation_status": { "type": "string", "const": "workspace_create_observed" },
+    "effect_reconciliation": { "$ref": "#/$defs/effect_reconciliation" },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "scope": { "$ref": "#/$defs/scope" },
+    "observed_workspace": { "$ref": "#/$defs/observed_workspace" },
+    "forbidden_effects": { "$ref": "#/$defs/forbidden_effects" },
+    "required_next_evidence": { "$ref": "#/$defs/required_next_evidence" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "source_authority_binding_id",
+        "foundation_phase"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "source_authority_binding_id": {
+          "type": "string",
+          "const": "agentic_service_harness_approved_branch_workspace_creation_authority_binding"
+        },
+        "foundation_phase": {
+          "type": "string",
+          "const": "foundation_observed_branch_workspace_creation"
+        }
+      }
+    },
+    "observed_workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workspace_id",
+        "branch_name",
+        "workspace_created",
+        "workspace_path_confined",
+        "authority_single_use_consumed",
+        "post_create_observation_recorded",
+        "cleanup_receipt_required_before_close"
+      ],
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "const": "workspace.harness-observe-branch-workspace-creation-20260626"
+        },
+        "branch_name": {
+          "type": "string",
+          "const": "codex/harness-observe-branch-workspace-creation-20260626"
+        },
+        "workspace_created": { "type": "boolean", "const": true },
+        "workspace_path_confined": { "type": "boolean", "const": true },
+        "authority_single_use_consumed": { "type": "boolean", "const": true },
+        "post_create_observation_recorded": { "type": "boolean", "const": true },
+        "cleanup_receipt_required_before_close": { "type": "boolean", "const": true }
+      }
+    },
+    "effect_reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_effect",
+        "observed_effect",
+        "reconciliation_status",
+        "forbidden_effects_checked",
+        "evidence_refs"
+      ],
+      "properties": {
+        "expected_effect": {
+          "type": "string",
+          "const": "create_one_confined_branch_workspace_without_file_writes"
+        },
+        "observed_effect": {
+          "type": "string",
+          "const": "create_one_confined_branch_workspace_without_file_writes"
+        },
+        "reconciliation_status": { "type": "string", "const": "MATCH" },
+        "forbidden_effects_checked": { "type": "boolean", "const": true },
+        "evidence_refs": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "forbidden_effects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filesystem_written",
+        "branch_pushed",
+        "pull_request_opened",
+        "adapter_executed",
+        "connector_called",
+        "receipt_store_appended",
+        "mutation_route_admitted",
+        "secret_values_serialized",
+        "destructive_operation_executed",
+        "terminal_closure"
+      ],
+      "properties": {
+        "filesystem_written": { "type": "boolean", "const": false },
+        "branch_pushed": { "type": "boolean", "const": false },
+        "pull_request_opened": { "type": "boolean", "const": false },
+        "adapter_executed": { "type": "boolean", "const": false },
+        "connector_called": { "type": "boolean", "const": false },
+        "receipt_store_appended": { "type": "boolean", "const": false },
+        "mutation_route_admitted": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "destructive_operation_executed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "required_next_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before_filesystem_write",
+        "before_adapter_execution",
+        "before_receipt_append",
+        "before_terminal_closure"
+      ],
+      "properties": {
+        "before_filesystem_write": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_adapter_execution": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_receipt_append": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_terminal_closure": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observed_workspace_receipt_schema",
+        "authority_binding_schema",
+        "authority_binding_fixture"
+      ],
+      "properties": {
+        "observed_workspace_receipt_schema": { "$ref": "#/$defs/evidence_ref" },
+        "authority_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "authority_binding_fixture": { "$ref": "#/$defs/evidence_ref" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}
