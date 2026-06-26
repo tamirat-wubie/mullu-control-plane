@@ -5,8 +5,8 @@ learning candidates that can be written only through separate governance.
 Governance scope: learning-candidate generation only; this module cannot mutate
 memory, approve future actions, execute remediation, or promote truth.
 Dependencies: dataclasses, shared shadow types, and deterministic identifiers.
-Invariants: every candidate is traceable to outcome evidence and remains
-governance_pending until another governed write path accepts it.
+Invariants: every candidate is traceable to public outcome evidence refs and
+remains governance_pending until another governed write path accepts it.
 """
 
 from __future__ import annotations
@@ -17,6 +17,9 @@ from typing import Mapping, Sequence
 
 from mcoi_runtime.core.inceptadive_shadow_types import ShadowReceipt
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
+
+_PUBLIC_OUTCOME_EVIDENCE_PREFIX = "inceptadive_outcome_evidence_"
+_MISSING_OUTCOME_EVIDENCE_REF = "missing-outcome-evidence"
 
 
 class OutcomeLearningKind(StrEnum):
@@ -85,13 +88,13 @@ def build_outcome_learning_candidate(
 ) -> InceptaDiveOutcomeLearningCandidate:
     """Build one governance-pending learning candidate from outcome evidence."""
 
-    checked_evidence = tuple(str(ref).strip() for ref in evidence_refs if str(ref).strip())
+    checked_evidence = _public_outcome_evidence_refs(evidence_refs)
     receipt_ids = tuple(receipt.receipt_id for receipt in shadow_receipts if receipt.receipt_id.strip())
     if not checked_evidence:
         kind = OutcomeLearningKind.MISSING_EVIDENCE
         summary = "post-outcome comparison lacks outcome evidence"
         repair = "attach outcome evidence before memory learning"
-        checked_evidence = ("missing-outcome-evidence",)
+        checked_evidence = (_MISSING_OUTCOME_EVIDENCE_REF,)
     elif _normalized(expected_state) == _normalized(actual_state):
         kind = OutcomeLearningKind.EXPECTATION_MATCHED
         summary = "post-outcome comparison matched expected state"
@@ -140,3 +143,24 @@ def _governance_verdict_drift(receipts: Sequence[ShadowReceipt]) -> bool:
         receipt.governance_verdict not in {"not_evaluated", "", receipt.shadow_verdict.value}
         for receipt in receipts
     )
+
+
+def _public_outcome_evidence_refs(values: Sequence[str]) -> tuple[str, ...]:
+    """Return stable public refs for outcome-learning candidate serialization."""
+
+    refs: list[str] = []
+    for value in values:
+        normalized = " ".join(str(value or "").strip().split())
+        if not normalized:
+            continue
+        if normalized == _MISSING_OUTCOME_EVIDENCE_REF or normalized.startswith(_PUBLIC_OUTCOME_EVIDENCE_PREFIX):
+            refs.append(normalized)
+        else:
+            refs.append(
+                _PUBLIC_OUTCOME_EVIDENCE_PREFIX
+                + stable_identifier(
+                    "inceptadive-post-outcome-evidence",
+                    {"value": normalized},
+                )
+            )
+    return tuple(refs)
