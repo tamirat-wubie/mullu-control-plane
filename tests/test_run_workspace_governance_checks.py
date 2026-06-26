@@ -71,6 +71,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_approved_branch_workspace_creation_authority_binding",
         "agentic_service_harness_approved_branch_workspace_creation_observation_receipt",
         "agentic_service_harness_dry_run_test_runner_plan_receipt",
+        "agentic_service_harness_dry_run_test_execution_observation_receipt",
         "agentic_service_harness_task_record_write_uao_admission_preflight",
         "agentic_service_harness_receipt_store_append_preflight",
         "agentic_service_harness_executed_test_receipt_admission_preflight",
@@ -348,6 +349,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_dry_run_test_runner_plan_receipt",
+        "agentic_service_harness_dry_run_test_execution_observation_receipt",
+    )
+    assert_ordered(
+        "agentic_service_harness_dry_run_test_execution_observation_receipt",
         "agentic_service_harness_task_record_write_uao_admission_preflight",
     )
     assert_ordered(

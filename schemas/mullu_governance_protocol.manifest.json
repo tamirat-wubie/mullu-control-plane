@@ -77,6 +77,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-dry-run-test-runner-plan-receipt:1"
     },
     {
+      "path": "schemas/agentic_service_harness_dry_run_test_execution_observation_receipt.schema.json",
+      "schema_id": "agentic-service-harness-dry-run-test-execution-observation-receipt",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-dry-run-test-execution-observation-receipt:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_task_record_write_uao_admission_preflight.schema.json",
       "schema_id": "agentic-service-harness-task-record-write-uao-admission-preflight",
       "surface": "runtime",

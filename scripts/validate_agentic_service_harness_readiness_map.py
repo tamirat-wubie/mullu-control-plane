@@ -257,7 +257,26 @@ REQUIRED_DRY_RUN_TEST_RUNNER_PLAN_TERMS = (
     "receipt append",
     "secret serialization",
     "terminal closure remain blocked",
-    "task record write UAO admission preflight",
+    "dry-run test execution observation",
+)
+REQUIRED_DRY_RUN_TEST_EXECUTION_OBSERVATION_TERMS = (
+    "Dry-run test execution observation receipt PR",
+    "agentic_service_harness_dry_run_test_execution_observation_receipt",
+    "four selected dry-run commands",
+    "zero exit-code evidence",
+    "redacted output refs",
+    "output digest refs",
+    "executed-test receipt admission",
+    "receipt append",
+    "filesystem-write authority",
+    "branch pushes",
+    "pull-request creation",
+    "adapter execution",
+    "connector calls",
+    "mutation routes",
+    "secret serialization",
+    "terminal closure remain blocked",
+    "filesystem write admission",
 )
 REQUIRED_TASK_RECORD_WRITE_UAO_TERMS = (
     "Task record write UAO admission preflight PR",
@@ -507,6 +526,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     )
     _require_all(
         map_text,
+        REQUIRED_DRY_RUN_TEST_EXECUTION_OBSERVATION_TERMS,
+        "dry_run_test_execution_observation_term",
+        errors,
+    )
+    _require_all(
+        map_text,
         REQUIRED_TASK_RECORD_WRITE_UAO_TERMS,
         "task_record_write_uao_term",
         errors,
@@ -567,6 +592,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_approved_branch_workspace_authority_ready(map_text, errors)
     _validate_approved_branch_workspace_observation_ready(map_text, errors)
     _validate_dry_run_test_runner_plan_ready(map_text, errors)
+    _validate_dry_run_test_execution_observation_ready(map_text, errors)
     _validate_task_record_write_uao_ready(map_text, errors)
     _validate_receipt_store_append_preflight_ready(map_text, errors)
     _validate_executed_test_receipt_admission_ready(map_text, errors)
@@ -746,12 +772,25 @@ def _validate_dry_run_test_runner_plan_ready(map_text: str, errors: list[str]) -
         errors.append("missing ready row: Dry-run test runner plan receipt PR")
 
     test_runner_row = re.search(
-        r"^\| Test runner \| READY \| .+agentic_service_harness_dry_run_test_runner_plan_receipt.+agentic_service_harness_executed_test_receipt_admission_preflight.+terminal closure remain blocked\. \| None for plan-only command selection or admission preflight\..+ \|$",
+        r"^\| Test runner \| READY \| .+agentic_service_harness_dry_run_test_runner_plan_receipt.+agentic_service_harness_dry_run_test_execution_observation_receipt.+agentic_service_harness_executed_test_receipt_admission_preflight.+terminal closure remain blocked\. \| None for dry-run observation\..+ \|$",
         map_text,
         re.MULTILINE,
     )
     if test_runner_row is None:
         errors.append("missing ready row: Test runner dry-run plan receipt")
+
+
+def _validate_dry_run_test_execution_observation_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Dry-run test execution observation receipt PR \| READY \| .+four selected dry-run commands.+zero exit-code evidence.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Dry-run test execution observation receipt PR")
 
 
 def _validate_task_record_write_uao_ready(map_text: str, errors: list[str]) -> None:
@@ -937,7 +976,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(test): collect dry-run test execution observation",
+        "harness(workspace): bind filesystem write admission",
     )
     positions: list[int] = []
     for marker in sequence_markers:

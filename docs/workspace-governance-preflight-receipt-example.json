@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1782510652.541783,
-  "check_count": 292,
+  "check_count": 293,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -380,6 +380,19 @@
       ],
       "return_code": 0,
       "stdout": "[PASS] agentic_service_harness_dry_run_test_runner_plan_receipt\nSTATUS: passed\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "agentic_service_harness_dry_run_test_execution_observation_receipt",
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_dry_run_test_execution_observation_receipt.py"
+      ],
+      "return_code": 0,
+      "stdout": "[PASS] agentic_service_harness_dry_run_test_execution_observation_receipt\nSTATUS: passed\n",
       "stderr": "",
       "termination_reason": "completed",
       "termination_signal": null,

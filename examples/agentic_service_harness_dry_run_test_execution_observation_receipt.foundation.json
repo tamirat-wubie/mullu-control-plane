@@ -1,0 +1,166 @@
+{
+  "receipt_id": "agentic_service_harness_dry_run_test_execution_observation_receipt",
+  "schema_version": 1,
+  "generated_at": "2026-06-26T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "observation_status": "dry_run_test_execution_observed_without_receipt_append",
+  "source_refs": {
+    "dry_run_test_runner_plan_receipt": "examples/agentic_service_harness_dry_run_test_runner_plan_receipt.foundation.json",
+    "approved_branch_workspace_creation_observation_receipt": "examples/agentic_service_harness_approved_branch_workspace_creation_observation_receipt.foundation.json",
+    "executed_test_receipt_admission_preflight": "examples/agentic_service_harness_executed_test_receipt_admission_preflight.foundation.json"
+  },
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "agent_run_id": "agent-run-dry-run-test-execution-observation",
+    "branch_name": "codex/harness-dry-run-test-execution-observation-20260626",
+    "foundation_phase": "foundation_dry_run_test_execution_observation",
+    "observation_only": true,
+    "dry_run_execution_observed": true,
+    "executed_test_receipt_admitted": false,
+    "receipt_store_append_enabled": false,
+    "filesystem_write_authority_granted": false,
+    "secret_values_serialized": false
+  },
+  "execution_observation": {
+    "plan_id": "dry-run-test-runner-plan-foundation",
+    "selected_command_count": 4,
+    "observed_command_count": 4,
+    "all_exit_codes_zero": true,
+    "output_redaction_applied": true,
+    "raw_stdout_serialized": false,
+    "raw_stderr_serialized": false,
+    "coverage_claimed": false,
+    "test_result_summary_claimed": false,
+    "observed_commands": [
+      {
+        "command_id": "approved-branch-workspace-preflight-validator",
+        "command": "python scripts/validate_agentic_service_harness_approved_branch_workspace_creation_preflight.py --strict",
+        "command_class": "validator",
+        "path_scope": "repository_local",
+        "exit_code": 0,
+        "duration_ref": "evidence://dry-run-test-execution/approved-branch-workspace-preflight-validator/duration",
+        "output_digest_ref": "evidence://dry-run-test-execution/approved-branch-workspace-preflight-validator/output-digest",
+        "redacted_output_ref": "evidence://dry-run-test-execution/approved-branch-workspace-preflight-validator/redacted-output",
+        "raw_output_stored": false
+      },
+      {
+        "command_id": "dry-run-test-runner-plan-receipt-validator",
+        "command": "python scripts/validate_agentic_service_harness_dry_run_test_runner_plan_receipt.py --strict",
+        "command_class": "validator",
+        "path_scope": "repository_local",
+        "exit_code": 0,
+        "duration_ref": "evidence://dry-run-test-execution/dry-run-test-runner-plan-receipt-validator/duration",
+        "output_digest_ref": "evidence://dry-run-test-execution/dry-run-test-runner-plan-receipt-validator/output-digest",
+        "redacted_output_ref": "evidence://dry-run-test-execution/dry-run-test-runner-plan-receipt-validator/redacted-output",
+        "raw_output_stored": false
+      },
+      {
+        "command_id": "readiness-map-validator",
+        "command": "python scripts/validate_agentic_service_harness_readiness_map.py",
+        "command_class": "validator",
+        "path_scope": "repository_local",
+        "exit_code": 0,
+        "duration_ref": "evidence://dry-run-test-execution/readiness-map-validator/duration",
+        "output_digest_ref": "evidence://dry-run-test-execution/readiness-map-validator/output-digest",
+        "redacted_output_ref": "evidence://dry-run-test-execution/readiness-map-validator/redacted-output",
+        "raw_output_stored": false
+      },
+      {
+        "command_id": "dry-run-test-runner-plan-unit-tests",
+        "command": "python -m pytest tests/test_validate_agentic_service_harness_dry_run_test_runner_plan_receipt.py -q",
+        "command_class": "pytest",
+        "path_scope": "tests_only",
+        "exit_code": 0,
+        "duration_ref": "evidence://dry-run-test-execution/dry-run-test-runner-plan-unit-tests/duration",
+        "output_digest_ref": "evidence://dry-run-test-execution/dry-run-test-runner-plan-unit-tests/output-digest",
+        "redacted_output_ref": "evidence://dry-run-test-execution/dry-run-test-runner-plan-unit-tests/redacted-output",
+        "raw_output_stored": false
+      }
+    ],
+    "observation_evidence_refs": [
+      "evidence://dry-run-test-execution/all-selected-commands-observed",
+      "evidence://dry-run-test-execution/all-exit-codes-zero",
+      "evidence://dry-run-test-execution/output-redaction-applied",
+      "evidence://dry-run-test-execution/no-raw-output-serialized"
+    ]
+  },
+  "effect_boundary": {
+    "dry_run_commands_observed": true,
+    "executed_test_receipt_admitted": false,
+    "receipt_store_appended": false,
+    "filesystem_write_authority_granted": false,
+    "branch_pushed": false,
+    "pull_request_opened": false,
+    "adapter_executed": false,
+    "connector_called": false,
+    "mutation_route_admitted": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false
+  },
+  "authority_denials": {
+    "executed_test_receipt_admission_enabled": false,
+    "receipt_store_append_enabled": false,
+    "filesystem_write_enabled": false,
+    "branch_push_enabled": false,
+    "pull_request_creation_enabled": false,
+    "adapter_execution_enabled": false,
+    "connector_calls_enabled": false,
+    "runtime_state_write_enabled": false,
+    "mutation_route_enabled": false,
+    "raw_output_storage_enabled": false,
+    "coverage_claim_enabled": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "required_next_evidence": {
+    "before_filesystem_write": [
+      "evidence://filesystem-write-rollback-plan",
+      "evidence://workspace-write-authority",
+      "evidence://non-empty-diff-admission-preflight",
+      "evidence://redaction-policy-for-file-change-collection"
+    ],
+    "before_executed_test_receipt_admission": [
+      "evidence://receipt-store-append-preflight",
+      "evidence://test-output-captured-with-redaction",
+      "evidence://receipt-redaction-policy",
+      "evidence://receipt-append-rollback-plan"
+    ],
+    "before_receipt_append": [
+      "evidence://receipt-store-write-path",
+      "evidence://receipt-append-idempotency-key",
+      "evidence://receipt-store-append-operator-approval"
+    ],
+    "before_pull_request_creation": [
+      "evidence://github-pr-admission-preflight",
+      "evidence://branch-write-authority-binding",
+      "evidence://effect-reconciliation-before-pr"
+    ],
+    "before_terminal_closure": [
+      "evidence://cleanup-receipt-after-workspace-use",
+      "evidence://effect-reconciliation-before-terminal-closure",
+      "evidence://terminal-closure-certificate-candidate"
+    ]
+  },
+  "receipt_refs": {
+    "dry_run_test_execution_observation_schema": "schemas/agentic_service_harness_dry_run_test_execution_observation_receipt.schema.json",
+    "dry_run_test_execution_observation_example": "examples/agentic_service_harness_dry_run_test_execution_observation_receipt.foundation.json",
+    "dry_run_test_runner_plan_schema": "schemas/agentic_service_harness_dry_run_test_runner_plan_receipt.schema.json",
+    "approved_branch_workspace_creation_observation_schema": "schemas/agentic_service_harness_approved_branch_workspace_creation_observation_receipt.schema.json",
+    "executed_test_receipt_admission_preflight_schema": "schemas/agentic_service_harness_executed_test_receipt_admission_preflight.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-dry-run-test-execution-observation-receipt",
+      "command": "python scripts/validate_agentic_service_harness_dry_run_test_execution_observation_receipt.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Bind filesystem write admission only after rollback, workspace-write authority, redaction, non-empty diff admission, receipt-store write path, and cleanup evidence are explicit; keep adapter execution, connector calls, receipt append, pull-request creation, secret serialization, and terminal closure blocked.",
+  "receipt_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

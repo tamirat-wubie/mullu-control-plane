@@ -1,0 +1,340 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-dry-run-test-execution-observation-receipt:1",
+  "title": "Agentic Service Harness Dry Run Test Execution Observation Receipt",
+  "description": "Foundation Mode observation receipt for bounded dry-run test command execution. This contract records observed command metadata, exit-code evidence refs, and redacted output digest refs only; it does not admit executed-test receipts, append receipt stores, write files, call adapters/connectors, open pull requests, serialize secrets, or issue terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "observation_status",
+    "source_refs",
+    "scope",
+    "execution_observation",
+    "effect_boundary",
+    "authority_denials",
+    "required_next_evidence",
+    "receipt_refs",
+    "validators",
+    "next_action",
+    "receipt_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "const": "agentic_service_harness_dry_run_test_execution_observation_receipt"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "observation_status": {
+      "type": "string",
+      "const": "dry_run_test_execution_observed_without_receipt_append"
+    },
+    "source_refs": { "$ref": "#/$defs/source_refs" },
+    "scope": { "$ref": "#/$defs/scope" },
+    "execution_observation": { "$ref": "#/$defs/execution_observation" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "required_next_evidence": { "$ref": "#/$defs/required_next_evidence" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 },
+    "receipt_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure_required": { "type": "boolean", "const": true }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dry_run_test_runner_plan_receipt",
+        "approved_branch_workspace_creation_observation_receipt",
+        "executed_test_receipt_admission_preflight"
+      ],
+      "properties": {
+        "dry_run_test_runner_plan_receipt": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_dry_run_test_runner_plan_receipt.foundation.json"
+        },
+        "approved_branch_workspace_creation_observation_receipt": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_approved_branch_workspace_creation_observation_receipt.foundation.json"
+        },
+        "executed_test_receipt_admission_preflight": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_executed_test_receipt_admission_preflight.foundation.json"
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "agent_run_id",
+        "branch_name",
+        "foundation_phase",
+        "observation_only",
+        "dry_run_execution_observed",
+        "executed_test_receipt_admitted",
+        "receipt_store_append_enabled",
+        "filesystem_write_authority_granted",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "agent_run_id": { "$ref": "#/$defs/identifier" },
+        "branch_name": {
+          "type": "string",
+          "pattern": "^codex/harness-[A-Za-z0-9._-]+-20260626$"
+        },
+        "foundation_phase": {
+          "type": "string",
+          "const": "foundation_dry_run_test_execution_observation"
+        },
+        "observation_only": { "type": "boolean", "const": true },
+        "dry_run_execution_observed": { "type": "boolean", "const": true },
+        "executed_test_receipt_admitted": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "filesystem_write_authority_granted": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false }
+      }
+    },
+    "execution_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_id",
+        "selected_command_count",
+        "observed_command_count",
+        "all_exit_codes_zero",
+        "output_redaction_applied",
+        "raw_stdout_serialized",
+        "raw_stderr_serialized",
+        "coverage_claimed",
+        "test_result_summary_claimed",
+        "observed_commands",
+        "observation_evidence_refs"
+      ],
+      "properties": {
+        "plan_id": {
+          "type": "string",
+          "const": "dry-run-test-runner-plan-foundation"
+        },
+        "selected_command_count": { "type": "integer", "const": 4 },
+        "observed_command_count": { "type": "integer", "const": 4 },
+        "all_exit_codes_zero": { "type": "boolean", "const": true },
+        "output_redaction_applied": { "type": "boolean", "const": true },
+        "raw_stdout_serialized": { "type": "boolean", "const": false },
+        "raw_stderr_serialized": { "type": "boolean", "const": false },
+        "coverage_claimed": { "type": "boolean", "const": false },
+        "test_result_summary_claimed": { "type": "boolean", "const": false },
+        "observed_commands": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/observed_command" }
+        },
+        "observation_evidence_refs": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "observed_command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command_id",
+        "command",
+        "command_class",
+        "path_scope",
+        "exit_code",
+        "duration_ref",
+        "output_digest_ref",
+        "redacted_output_ref",
+        "raw_output_stored"
+      ],
+      "properties": {
+        "command_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "command_class": {
+          "type": "string",
+          "enum": ["validator", "pytest"]
+        },
+        "path_scope": {
+          "type": "string",
+          "enum": ["repository_local", "tests_only"]
+        },
+        "exit_code": { "type": "integer", "const": 0 },
+        "duration_ref": { "$ref": "#/$defs/evidence_ref" },
+        "output_digest_ref": { "$ref": "#/$defs/evidence_ref" },
+        "redacted_output_ref": { "$ref": "#/$defs/evidence_ref" },
+        "raw_output_stored": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dry_run_commands_observed",
+        "executed_test_receipt_admitted",
+        "receipt_store_appended",
+        "filesystem_write_authority_granted",
+        "branch_pushed",
+        "pull_request_opened",
+        "adapter_executed",
+        "connector_called",
+        "mutation_route_admitted",
+        "secret_values_serialized",
+        "terminal_closure"
+      ],
+      "properties": {
+        "dry_run_commands_observed": { "type": "boolean", "const": true },
+        "executed_test_receipt_admitted": { "type": "boolean", "const": false },
+        "receipt_store_appended": { "type": "boolean", "const": false },
+        "filesystem_write_authority_granted": { "type": "boolean", "const": false },
+        "branch_pushed": { "type": "boolean", "const": false },
+        "pull_request_opened": { "type": "boolean", "const": false },
+        "adapter_executed": { "type": "boolean", "const": false },
+        "connector_called": { "type": "boolean", "const": false },
+        "mutation_route_admitted": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executed_test_receipt_admission_enabled",
+        "receipt_store_append_enabled",
+        "filesystem_write_enabled",
+        "branch_push_enabled",
+        "pull_request_creation_enabled",
+        "adapter_execution_enabled",
+        "connector_calls_enabled",
+        "runtime_state_write_enabled",
+        "mutation_route_enabled",
+        "raw_output_storage_enabled",
+        "coverage_claim_enabled",
+        "secret_values_serialized",
+        "terminal_closure",
+        "default_high_risk_authority"
+      ],
+      "properties": {
+        "executed_test_receipt_admission_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "filesystem_write_enabled": { "type": "boolean", "const": false },
+        "branch_push_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "adapter_execution_enabled": { "type": "boolean", "const": false },
+        "connector_calls_enabled": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "raw_output_storage_enabled": { "type": "boolean", "const": false },
+        "coverage_claim_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "default_high_risk_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "required_next_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before_filesystem_write",
+        "before_executed_test_receipt_admission",
+        "before_receipt_append",
+        "before_pull_request_creation",
+        "before_terminal_closure"
+      ],
+      "properties": {
+        "before_filesystem_write": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_executed_test_receipt_admission": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_receipt_append": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_pull_request_creation": { "$ref": "#/$defs/evidence_ref_list" },
+        "before_terminal_closure": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dry_run_test_execution_observation_schema",
+        "dry_run_test_execution_observation_example",
+        "dry_run_test_runner_plan_schema",
+        "approved_branch_workspace_creation_observation_schema",
+        "executed_test_receipt_admission_preflight_schema"
+      ],
+      "properties": {
+        "dry_run_test_execution_observation_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_dry_run_test_execution_observation_receipt.schema.json"
+        },
+        "dry_run_test_execution_observation_example": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_dry_run_test_execution_observation_receipt.foundation.json"
+        },
+        "dry_run_test_runner_plan_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_dry_run_test_runner_plan_receipt.schema.json"
+        },
+        "approved_branch_workspace_creation_observation_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_approved_branch_workspace_creation_observation_receipt.schema.json"
+        },
+        "executed_test_receipt_admission_preflight_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_executed_test_receipt_admission_preflight.schema.json"
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}
