@@ -1,0 +1,363 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-admission-preflight:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Value Binding Admission Preflight",
+  "description": "Foundation Mode no-effect admission preflight that denies execution-worker admission when governed operator value binding is absent.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "value_binding_admission_preflight_set_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_operator_reapproval_decision_receipt_value_binding_absence_set_id",
+    "admission_preflight_count",
+    "admission_preflight_ids",
+    "source_binding_absence_ids",
+    "receipt_ids",
+    "admission_preflights",
+    "effect_boundary",
+    "private_payload_policy",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "value_binding_admission_preflight_set_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_admission_preflight_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "governed": { "const": true },
+    "source_projection": { "const": "operator_reapproval_decision_receipt_value_binding_absence" },
+    "source_operator_reapproval_decision_receipt_value_binding_absence_set_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_absence_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "admission_preflight_count": { "type": "integer", "minimum": 1 },
+    "admission_preflight_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_admission_preflight_item_[a-z0-9][a-z0-9_:-]*$"
+      }
+    },
+    "source_binding_absence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_absence_item_[a-z0-9][a-z0-9_:-]*$"
+      }
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_receipt_operator_reapproval_decision_receipt_value_binding_admission_preflight_[a-z0-9][a-z0-9_:-]*$"
+      }
+    },
+    "admission_preflights": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/admission_preflight" }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_reapproval_decision_receipt_value_binding_admission_preflight_allowed",
+        "value_binding_absence_ref_binding_allowed",
+        "admission_decision_allowed",
+        "operator_submitted_value_required",
+        "operator_identity_ref_required",
+        "operator_signature_ref_required",
+        "decision_receipt_required",
+        "operator_value_collected",
+        "explicit_operator_value_present",
+        "operator_value_bound",
+        "accepted_value_present",
+        "admission_approved",
+        "authority_granted",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed",
+        "dispatch_lease_active",
+        "live_connector_receipt_present",
+        "live_connector_execution_allowed",
+        "external_send_allowed",
+        "calendar_write_allowed",
+        "task_write_allowed",
+        "memory_write_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "deployment_mutation_allowed",
+        "nested_mind_live_activation_allowed",
+        "public_readiness_claim_allowed"
+      ],
+      "properties": {
+        "operator_reapproval_decision_receipt_value_binding_admission_preflight_allowed": { "const": true },
+        "value_binding_absence_ref_binding_allowed": { "const": true },
+        "admission_decision_allowed": { "const": true },
+        "operator_submitted_value_required": { "const": true },
+        "operator_identity_ref_required": { "const": true },
+        "operator_signature_ref_required": { "const": true },
+        "decision_receipt_required": { "const": true },
+        "operator_value_collected": { "const": false },
+        "explicit_operator_value_present": { "const": false },
+        "operator_value_bound": { "const": false },
+        "accepted_value_present": { "const": false },
+        "admission_approved": { "const": false },
+        "authority_granted": { "const": false },
+        "execution_worker_admission_allowed": { "const": false },
+        "dispatch_allowed": { "const": false },
+        "dispatch_lease_active": { "const": false },
+        "live_connector_receipt_present": { "const": false },
+        "live_connector_execution_allowed": { "const": false },
+        "external_send_allowed": { "const": false },
+        "calendar_write_allowed": { "const": false },
+        "task_write_allowed": { "const": false },
+        "memory_write_allowed": { "const": false },
+        "connector_mutation_allowed": { "const": false },
+        "system_of_record_write_allowed": { "const": false },
+        "deployment_mutation_allowed": { "const": false },
+        "nested_mind_live_activation_allowed": { "const": false },
+        "public_readiness_claim_allowed": { "const": false }
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "value_binding_absence_projection",
+        "decision_value_projection",
+        "operator_identity_ref_projection",
+        "operator_signature_projection",
+        "decision_receipt_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": { "const": false },
+        "secret_values_serialized": { "const": false },
+        "value_binding_absence_projection": { "const": "ref_only" },
+        "decision_value_projection": { "const": "absent" },
+        "operator_identity_ref_projection": { "const": "absent" },
+        "operator_signature_projection": { "const": "absent" },
+        "decision_receipt_projection": { "const": "absent" }
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "ready_for_execution_worker_admission",
+        "ready_for_live_execution",
+        "ready_for_customer_readiness_claim",
+        "authority_drift_detected",
+        "checked_controls",
+        "blocking_reasons",
+        "next_action"
+      ],
+      "properties": {
+        "assurance_id": {
+          "const": "personal_assistant_operator_reapproval_decision_receipt_value_binding_admission_preflight_no_effect_assurance"
+        },
+        "outcome": { "const": "GovernanceBlocked" },
+        "foundation_only": { "const": true },
+        "ready_for_execution_worker_admission": { "const": false },
+        "ready_for_live_execution": { "const": false },
+        "ready_for_customer_readiness_claim": { "const": false },
+        "authority_drift_detected": { "const": false },
+        "checked_controls": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "blocking_reasons": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "next_action": { "type": "string", "minLength": 1 }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "foundation_only",
+        "projection_contract",
+        "runtime_boundary",
+        "operator_value_collected",
+        "explicit_operator_value_present",
+        "operator_value_bound",
+        "accepted_value_present",
+        "admission_approved",
+        "authority_granted",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "external_send_allowed",
+        "calendar_write_allowed",
+        "task_write_allowed",
+        "system_of_record_write_allowed",
+        "deployment_mutation_allowed",
+        "nested_mind_live_activation_allowed",
+        "public_readiness_claim_allowed",
+        "memory_write_allowed"
+      ],
+      "properties": {
+        "foundation_only": { "const": true },
+        "projection_contract": { "const": "operator_reapproval_decision_receipt_value_binding_admission_preflight_evidence_only" },
+        "runtime_boundary": { "const": "admission_preflight_denies_execution_without_operator_value_binding" },
+        "operator_value_collected": { "const": false },
+        "explicit_operator_value_present": { "const": false },
+        "operator_value_bound": { "const": false },
+        "accepted_value_present": { "const": false },
+        "admission_approved": { "const": false },
+        "authority_granted": { "const": false },
+        "execution_worker_admission_allowed": { "const": false },
+        "dispatch_allowed": { "const": false },
+        "live_connector_execution_allowed": { "const": false },
+        "connector_mutation_allowed": { "const": false },
+        "external_send_allowed": { "const": false },
+        "calendar_write_allowed": { "const": false },
+        "task_write_allowed": { "const": false },
+        "system_of_record_write_allowed": { "const": false },
+        "deployment_mutation_allowed": { "const": false },
+        "nested_mind_live_activation_allowed": { "const": false },
+        "public_readiness_claim_allowed": { "const": false },
+        "memory_write_allowed": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "admission_preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "admission_preflight_id",
+        "source_binding_absence_id",
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "skill_id",
+        "risk_level",
+        "value_binding_absence_ref",
+        "admission_decision",
+        "execution_admission_block",
+        "receipt"
+      ],
+      "properties": {
+        "admission_preflight_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_admission_preflight_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "source_binding_absence_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_absence_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "approval_id": { "type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$" },
+        "request_id": { "type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$" },
+        "plan_id": { "type": "string", "pattern": "^pa_plan_[a-z0-9][a-z0-9_:-]*$" },
+        "skill_id": { "type": "string", "minLength": 1 },
+        "risk_level": { "enum": ["P3", "P4", "P5"] },
+        "value_binding_absence_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_value_binding_absence_set_id",
+            "source_binding_absence_id",
+            "source_binding_guard_id",
+            "operator_submitted_value_required",
+            "allowed_decision_values",
+            "operator_value_bound",
+            "accepted_value_present",
+            "execution_worker_admission_allowed"
+          ],
+          "properties": {
+            "source_value_binding_absence_set_id": {
+              "type": "string",
+              "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_absence_[a-z0-9][a-z0-9_:-]*$"
+            },
+            "source_binding_absence_id": {
+              "type": "string",
+              "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_absence_item_[a-z0-9][a-z0-9_:-]*$"
+            },
+            "source_binding_guard_id": {
+              "type": "string",
+              "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_guard_item_[a-z0-9][a-z0-9_:-]*$"
+            },
+            "operator_submitted_value_required": { "const": true },
+            "allowed_decision_values": {
+              "type": "array",
+              "prefixItems": [
+                { "const": "approved" },
+                { "const": "rejected" },
+                { "const": "revised" },
+                { "const": "expired" }
+              ],
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "operator_value_bound": { "const": false },
+            "accepted_value_present": { "const": false },
+            "execution_worker_admission_allowed": { "const": false }
+          }
+        },
+        "admission_decision": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "admission_state",
+            "outcome",
+            "operator_submitted_value_required",
+            "operator_value_bound",
+            "accepted_value_present",
+            "authority_granted",
+            "execution_worker_admission_allowed",
+            "dispatch_allowed",
+            "required_next_evidence",
+            "blocking_reasons"
+          ],
+          "properties": {
+            "decision": { "const": "blocked" },
+            "admission_state": { "const": "blocked_missing_governed_operator_value_binding" },
+            "outcome": { "const": "GovernanceBlocked" },
+            "operator_submitted_value_required": { "const": true },
+            "operator_value_bound": { "const": false },
+            "accepted_value_present": { "const": false },
+            "authority_granted": { "const": false },
+            "execution_worker_admission_allowed": { "const": false },
+            "dispatch_allowed": { "const": false },
+            "required_next_evidence": { "const": "governed_operator_reapproval_decision_receipt_value_binding" },
+            "blocking_reasons": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+          }
+        },
+        "execution_admission_block": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "execution_worker_admission_state",
+            "execution_worker_admission_allowed",
+            "dispatch_allowed",
+            "live_connector_execution_allowed",
+            "connector_mutation_allowed",
+            "external_send_allowed",
+            "system_of_record_write_allowed",
+            "memory_write_allowed"
+          ],
+          "properties": {
+            "execution_worker_admission_state": { "const": "blocked_missing_governed_operator_value_binding" },
+            "execution_worker_admission_allowed": { "const": false },
+            "dispatch_allowed": { "const": false },
+            "live_connector_execution_allowed": { "const": false },
+            "connector_mutation_allowed": { "const": false },
+            "external_send_allowed": { "const": false },
+            "system_of_record_write_allowed": { "const": false },
+            "memory_write_allowed": { "const": false }
+          }
+        },
+        "receipt": { "type": "object", "additionalProperties": true }
+      }
+    }
+  }
+}
