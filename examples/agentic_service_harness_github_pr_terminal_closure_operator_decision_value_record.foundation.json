@@ -1,0 +1,85 @@
+{
+  "record_id": "agentic-service-harness-github-pr-terminal-closure-operator-decision-value-record",
+  "schema_version": 1,
+  "created_at": "2026-06-26T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_request_ref": "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request.foundation.json",
+  "source_request_status": "awaiting_explicit_operator_decision_value",
+  "operator_decision_value_collected": true,
+  "explicit_operator_decision_value_present": true,
+  "decision_value": "approve_terminal_certificate",
+  "operator_id": "operator-tamirat-local",
+  "decision_text": "approve_terminal_certificate",
+  "witness_ref": "operator-decision://github-pr-terminal-closure/2026-06-26/approve-terminal-certificate",
+  "operator_decision_gate_satisfied": true,
+  "certificate_minting_decision": "approved_for_next_minting_step",
+  "terminal_closure_certificate_minted": false,
+  "terminal_closure_authorized": false,
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "read_only": true
+  },
+  "decision_controls": {
+    "source_request_validated": true,
+    "decision_value_matches_allowed_values": true,
+    "scope_matches_request": true,
+    "generic_continuation_accepted": false,
+    "credential_values_allowed": false,
+    "mutation_route_allowed": false,
+    "self_authorization_allowed": false,
+    "certificate_minted_by_record": false,
+    "terminal_authority_on_record": false
+  },
+  "authority_denials": {
+    "authority_granted": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "ready_for_review_enabled": false,
+    "pull_request_merge_enabled": false,
+    "repository_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure_certificate_minted": false,
+    "terminal_closure_authorized": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "repository_written_by_record": false,
+    "connector_called_by_record": false,
+    "mutation_route_admitted_by_record": false,
+    "receipt_store_appended_by_record": false,
+    "secret_values_serialized_by_record": false,
+    "terminal_certificate_minted_by_record": false,
+    "network_policy": "none"
+  },
+  "receipt_refs": {
+    "github_pr_terminal_closure_operator_decision_value_record_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record.schema.json",
+    "github_pr_terminal_closure_operator_decision_value_request_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request.schema.json",
+    "github_pr_terminal_closure_generic_continuation_rejection_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection.schema.json",
+    "github_pr_terminal_closure_operator_decision_contract_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.schema.json",
+    "github_pr_terminal_closure_certificate_witness_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_witness.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-terminal-closure-operator-decision-value-record",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Mint the PR terminal closure certificate in a separate governed step. This record satisfies only the explicit operator decision value gate."
+}

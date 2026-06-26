@@ -209,6 +209,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-operator-decision-value-request:1"
     },
     {
+      "path": "schemas/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-terminal-closure-operator-decision-value-record",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-operator-decision-value-record:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_witness.schema.json",
       "schema_id": "agentic-service-harness-github-pr-terminal-closure-certificate-witness",
       "surface": "runtime",

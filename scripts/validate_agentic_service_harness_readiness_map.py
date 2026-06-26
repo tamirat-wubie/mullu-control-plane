@@ -327,6 +327,8 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
     "GitHub PR terminal closure operator decision value request PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
+    "GitHub PR terminal closure operator decision value record PR",
+    "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record",
     "terminal closure status remains AwaitingEvidence",
     "certificate minting, operator approval, repository mutation, connector calls, receipt-store append, secret serialization, destructive operation, and terminal closure remain blocked",
     "operator approval is required, not collected",
@@ -334,6 +336,8 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "deny_terminal_certificate",
     "generic continuation text is rejected as terminal approval",
     "recording no operator decision value",
+    "records the explicit operator value",
+    "satisfies only the operator decision gate",
     "minting no certificate",
     "no certificate minting, repository mutation, connector call, receipt-store append, secret serialization, destructive operation, or terminal closure authority is granted",
 )
@@ -824,10 +828,17 @@ def _validate_github_pr_terminal_closure_ready(
     if decision_value_request_row is None:
         errors.append("missing ready row: GitHub PR terminal closure operator decision value request PR")
 
+    decision_value_record_row = re.search(
+        r"^\| GitHub PR terminal closure operator decision value record PR \| READY \| .+approve_terminal_certificate.+satisfies only the operator decision gate.+terminal closure authority\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if decision_value_record_row is None:
+        errors.append("missing ready row: GitHub PR terminal closure operator decision value record PR")
+
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): collect explicit approved/denied PR terminal closure decision value",
         "harness(pr): mint PR terminal closure certificate after approved decision value",
     )
     positions: list[int] = []
