@@ -13,8 +13,8 @@ because a rollback or refund tool was invoked.
 
 The layer answers: what original effect failed, what compensation is approved,
 what recovery capability ran, what actual compensation effects were observed,
-what evidence proves those effects, and whether the compensation itself
-reconciled?
+what LifeMeaningJudgment governed the recovery effect, what evidence proves
+those effects, and whether the compensation itself reconciled?
 
 ## Owned Artifacts
 
@@ -37,6 +37,7 @@ A compensation plan may be created only when:
 4. A compensation or rollback capability is declared.
 5. Approval evidence is present.
 6. Expected effects, forbidden effects, and required evidence are explicit.
+7. A `LifeMeaningJudgment` reference is present before compensation dispatch.
 
 Matched original reconciliation cannot create compensation.
 
@@ -48,6 +49,7 @@ observed through effect assurance:
 
 ```text
 CompensationPlan
+  -> LifeMeaningJudgment ref bound
   -> injected dispatch
   -> ExecutionResult.actual_effects
   -> observed effects
@@ -59,6 +61,11 @@ CompensationPlan
 The compensation is successful only when the compensation reconciliation is
 `MATCH`. Any partial, mismatched, or unknown compensation result remains
 `requires_review` and keeps the case attached.
+
+The LifeMeaningJudgment reference is carried on the `CompensationPlan`,
+`CompensationAttempt`, `CompensationOutcome`, graph evidence, and trusted
+compensation memory content. Missing judgment evidence denies compensation plan
+creation before provider dispatch can occur.
 
 ## Graph Projection
 
@@ -72,6 +79,7 @@ When an operational graph is attached, compensation assurance anchors:
 | `compensation_outcome:{outcome_id}` | verification |
 | `approval:{approval_id}` | approval |
 | `evidence:{evidence_ref}` | document |
+| `evidence:{life_meaning_judgment_ref}` | document |
 
 Edges bind approval, plan, attempt, outcome, and evidence so recovery is
 auditable as a causal chain.
@@ -83,8 +91,9 @@ auditable as a causal chain.
 3. No compensation without expected effects and forbidden effects.
 4. No successful compensation without observed actual effects.
 5. No successful compensation without compensation reconciliation `MATCH`.
-6. No compensation graph anchor without evidence references.
-7. Provider invocation alone is never recovery proof.
+6. No compensation dispatch without a `LifeMeaningJudgment` reference.
+7. No compensation graph anchor without evidence references.
+8. Provider invocation alone is never recovery proof.
 
 ## Relationship To Accepted Risk
 

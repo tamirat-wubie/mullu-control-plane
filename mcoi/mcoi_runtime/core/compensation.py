@@ -5,6 +5,7 @@ Dependencies: compensation contracts, effect assurance, execution contracts,
 operational graph.
 Invariants:
   - Compensation requires an unresolved original reconciliation.
+  - Compensation plans bind LifeMeaningJudgment before any compensation dispatch.
   - Compensation dispatch is injected; this runtime performs no provider IO.
   - Compensation succeeds only when its own effect reconciliation is MATCH.
   - Every compensation outcome carries evidence references.
@@ -88,6 +89,7 @@ class CompensationAssuranceGate:
         expected_effects: tuple[str, ...],
         forbidden_effects: tuple[str, ...],
         evidence_required: tuple[str, ...],
+        life_meaning_judgment_ref: str,
         kind: CompensationKind = CompensationKind.COMPENSATION,
         case_id: str | None = None,
     ) -> CompensationPlan:
@@ -101,6 +103,11 @@ class CompensationAssuranceGate:
         effective_case_id = case_id or original_reconciliation.case_id
         if not effective_case_id:
             raise RuntimeCoreInvariantError("compensation requires a case_id")
+        if not isinstance(life_meaning_judgment_ref, str) or not life_meaning_judgment_ref.strip():
+            raise RuntimeCoreInvariantError(
+                "compensation requires life_meaning_judgment_ref"
+            )
+        effective_life_meaning_ref = life_meaning_judgment_ref.strip()
         now = self._clock()
         plan = CompensationPlan(
             compensation_plan_id=stable_identifier(
@@ -119,11 +126,18 @@ class CompensationAssuranceGate:
             capability_id=capability_id,
             kind=kind,
             approval_id=approval_id,
+            life_meaning_judgment_ref=effective_life_meaning_ref,
             expected_effects=expected_effects,
             forbidden_effects=forbidden_effects,
-            evidence_required=evidence_required,
+            evidence_required=(
+                *evidence_required,
+                effective_life_meaning_ref,
+            ),
             created_at=now,
-            metadata={"original_status": original_reconciliation.status.value},
+            metadata={
+                "original_status": original_reconciliation.status.value,
+                "life_meaning_judgment_ref": effective_life_meaning_ref,
+            },
         )
         self._plans[plan.compensation_plan_id] = plan
         return plan
@@ -172,6 +186,7 @@ class CompensationAssuranceGate:
             case_id=plan.case_id,
         )
         evidence_refs = tuple(effect.evidence_ref for effect in observed)
+        attempt_evidence_refs = (*evidence_refs, plan.life_meaning_judgment_ref)
         finished_at = self._clock()
         attempt = CompensationAttempt(
             attempt_id=stable_identifier(
@@ -185,10 +200,14 @@ class CompensationAssuranceGate:
             compensation_plan_id=plan.compensation_plan_id,
             command_id=plan.command_id,
             execution_id=execution_result.execution_id,
+            life_meaning_judgment_ref=plan.life_meaning_judgment_ref,
             started_at=started_at,
             finished_at=finished_at,
-            evidence_refs=evidence_refs,
-            metadata={"verification_result_id": verification.verification_id},
+            evidence_refs=attempt_evidence_refs,
+            metadata={
+                "verification_result_id": verification.verification_id,
+                "life_meaning_judgment_ref": plan.life_meaning_judgment_ref,
+            },
         )
         status = (
             CompensationStatus.SUCCEEDED
@@ -210,12 +229,14 @@ class CompensationAssuranceGate:
             status=status,
             verification_result_id=verification.verification_id,
             reconciliation_id=reconciliation.reconciliation_id,
-            evidence_refs=evidence_refs,
+            life_meaning_judgment_ref=plan.life_meaning_judgment_ref,
+            evidence_refs=attempt_evidence_refs,
             decided_at=finished_at,
             case_id=None if status is CompensationStatus.SUCCEEDED else plan.case_id,
             metadata={
                 "compensation_reconciliation_status": reconciliation.status.value,
                 "approval_id": plan.approval_id,
+                "life_meaning_judgment_ref": plan.life_meaning_judgment_ref,
             },
         )
         self._attempts[attempt.attempt_id] = attempt

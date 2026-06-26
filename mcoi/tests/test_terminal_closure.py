@@ -25,6 +25,7 @@ from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
 
 
 NOW = "2026-04-24T16:00:00+00:00"
+LIFE_MEANING_REF = "life-meaning:compensation:terminal-1"
 
 
 def _clock():
@@ -115,7 +116,8 @@ def _compensation_outcome(status: CompensationStatus = CompensationStatus.SUCCEE
         status=status,
         verification_result_id="ver-comp-terminal-1",
         reconciliation_id="recon-comp-terminal-1",
-        evidence_refs=("refund:receipt-1",),
+        life_meaning_judgment_ref=LIFE_MEANING_REF,
+        evidence_refs=("refund:receipt-1", LIFE_MEANING_REF),
         decided_at="2026-04-24T16:00:05+00:00",
         case_id=None if status is CompensationStatus.SUCCEEDED else "case-terminal-1",
     )
@@ -171,7 +173,8 @@ def test_certifies_compensated_closure_with_successful_compensation():
     )
     assert certificate.disposition is TerminalClosureDisposition.COMPENSATED
     assert certificate.compensation_outcome_id == "comp-outcome-terminal-1"
-    assert certificate.evidence_refs == ("refund:receipt-1",)
+    assert certificate.evidence_refs == ("refund:receipt-1", LIFE_MEANING_REF)
+    assert LIFE_MEANING_REF in certificate.evidence_refs
     assert certificate.case_id is None
 
 

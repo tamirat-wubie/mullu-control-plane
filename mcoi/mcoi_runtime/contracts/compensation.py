@@ -7,6 +7,7 @@ Invariants:
     and case.
   - Compensation cannot be implicit; approval, capability, and evidence are
     explicit.
+  - Compensation side effects must bind a LifeMeaningJudgment reference.
   - Compensation outcome is terminal and evidence-backed.
 """
 
@@ -53,6 +54,7 @@ class CompensationPlan(ContractRecord):
     capability_id: str
     kind: CompensationKind
     approval_id: str
+    life_meaning_judgment_ref: str
     expected_effects: tuple[str, ...]
     forbidden_effects: tuple[str, ...]
     evidence_required: tuple[str, ...]
@@ -68,6 +70,7 @@ class CompensationPlan(ContractRecord):
             "case_id",
             "capability_id",
             "approval_id",
+            "life_meaning_judgment_ref",
         ):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
         if not isinstance(self.kind, CompensationKind):
@@ -90,13 +93,20 @@ class CompensationAttempt(ContractRecord):
     compensation_plan_id: str
     command_id: str
     execution_id: str
+    life_meaning_judgment_ref: str
     started_at: str
     finished_at: str
     evidence_refs: tuple[str, ...]
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        for field_name in ("attempt_id", "compensation_plan_id", "command_id", "execution_id"):
+        for field_name in (
+            "attempt_id",
+            "compensation_plan_id",
+            "command_id",
+            "execution_id",
+            "life_meaning_judgment_ref",
+        ):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
         object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
         object.__setattr__(self, "finished_at", require_datetime_text(self.finished_at, "finished_at"))
@@ -117,6 +127,7 @@ class CompensationOutcome(ContractRecord):
     status: CompensationStatus
     verification_result_id: str
     reconciliation_id: str
+    life_meaning_judgment_ref: str
     evidence_refs: tuple[str, ...]
     decided_at: str
     case_id: str | None = None
@@ -130,6 +141,7 @@ class CompensationOutcome(ContractRecord):
             "command_id",
             "verification_result_id",
             "reconciliation_id",
+            "life_meaning_judgment_ref",
         ):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
         if not isinstance(self.status, CompensationStatus):

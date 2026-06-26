@@ -27,6 +27,7 @@ from mcoi_runtime.core.memory import EpisodicMemory
 
 
 NOW = "2026-04-24T15:00:00+00:00"
+LIFE_MEANING_REF = "life-meaning:compensation:memory-1"
 
 
 def _clock():
@@ -157,12 +158,15 @@ def test_admits_successful_compensation_outcome_as_trusted_compensation_memory()
         status=CompensationStatus.SUCCEEDED,
         verification_result_id="ver-comp-memory-1",
         reconciliation_id="recon-comp-memory-1",
-        evidence_refs=("refund:receipt-1",),
+        life_meaning_judgment_ref=LIFE_MEANING_REF,
+        evidence_refs=("refund:receipt-1", LIFE_MEANING_REF),
         decided_at="2026-04-24T15:00:04+00:00",
     )
     entry = promoter.admit_compensation_outcome(outcome)
     assert entry.category == "compensation_success"
     assert entry.content["trust_class"] == "trusted_compensation"
+    assert entry.content["life_meaning_judgment_ref"] == LIFE_MEANING_REF
+    assert LIFE_MEANING_REF in entry.content["evidence_refs"]
     assert entry.source_ids == ("comp-outcome-memory-1", "ver-comp-memory-1", "recon-comp-memory-1")
     assert episodic.size == 1
 
@@ -177,7 +181,8 @@ def test_rejects_unresolved_compensation_outcome_from_trusted_memory():
         status=CompensationStatus.REQUIRES_REVIEW,
         verification_result_id="ver-comp-memory-1",
         reconciliation_id="recon-comp-memory-1",
-        evidence_refs=("refund:request-1",),
+        life_meaning_judgment_ref=LIFE_MEANING_REF,
+        evidence_refs=("refund:request-1", LIFE_MEANING_REF),
         decided_at="2026-04-24T15:00:04+00:00",
         case_id="case-comp-1",
     )
