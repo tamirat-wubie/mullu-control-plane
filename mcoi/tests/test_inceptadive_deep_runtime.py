@@ -70,6 +70,50 @@ def test_runtime_receipt_redacts_raw_retrieval_refs_before_persistence(tmp_path)
     assert receipt.to_dict()["execution_authority"] is False
 
 
+def test_runtime_redacts_direct_context_refs_before_result_and_receipt_persistence(tmp_path) -> None:
+    raw_request_id = "runtime-private-token-request-001"
+    raw_target = "operator-secret-target-001"
+    raw_scope = "tenant-private-scope-001"
+    raw_retrieval_ref = "retrieval-secret-token-002"
+    store_path = tmp_path / "shadow-store"
+    runtime = build_inceptadive_shadow_runtime(
+        {
+            "MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1",
+            "MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(store_path),
+        }
+    )
+    context = _context(
+        "deploy approved receipt",
+        request_id=raw_request_id,
+        stage=ShadowStage.PREFLIGHT,
+        candidate_action="deploy approved receipt",
+        explicit_target=raw_target,
+        scope=raw_scope,
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+        retrieval_receipt_ids=(raw_retrieval_ref,),
+    )
+    raw_context_hash = context.context_hash
+
+    result, receipt = runtime.preflight_action(context, required_evidence_refs=("approval-secret-evidence-002",))
+
+    assert result.request_id.startswith("shadow_runtime_request_")
+    assert receipt is not None
+    assert receipt.request_id == result.request_id
+    assert receipt.context_hash != raw_context_hash
+    assert receipt.retrieval_receipt_ids[0].startswith("shadow_retrieval_receipt_")
+    persisted_results = (store_path / "shadow-results.jsonl").read_text(encoding="utf-8")
+    persisted_receipts = (store_path / "shadow-receipts.jsonl").read_text(encoding="utf-8")
+    persisted_payload = persisted_results + persisted_receipts
+    assert raw_request_id not in persisted_payload
+    assert raw_target not in persisted_payload
+    assert raw_scope not in persisted_payload
+    assert raw_retrieval_ref not in persisted_payload
+    assert "shadow_retrieval_receipt_" in persisted_payload
+    assert result.to_dict()["execution_authority"] is False
+    assert receipt.to_dict()["execution_authority"] is False
+
+
 def test_runtime_preflight_redacts_raw_required_evidence_refs_before_persistence(tmp_path) -> None:
     raw_evidence_ref = "approval-secret-evidence-001"
     store_path = tmp_path / "shadow-store"
