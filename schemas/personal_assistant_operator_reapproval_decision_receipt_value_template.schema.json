@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-template:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Value Template",
+  "description": "Foundation Mode no-effect template contract that records required submitted-value fields without collecting operator authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "value_template_set_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_operator_reapproval_decision_receipt_value_absence_set_id",
+    "template_count",
+    "template_ids",
+    "source_absence_ids",
+    "receipt_ids",
+    "templates",
+    "effect_boundary",
+    "private_payload_policy",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "value_template_set_id": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_value_template_[a-z0-9][a-z0-9_:-]*$"},
+    "generated_at": {"type": "string", "minLength": 1},
+    "governed": {"const": true},
+    "source_projection": {"const": "operator_reapproval_decision_receipt_value_absence"},
+    "source_operator_reapproval_decision_receipt_value_absence_set_id": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_value_absence_[a-z0-9][a-z0-9_:-]*$"},
+    "template_count": {"type": "integer", "minimum": 1},
+    "template_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_value_template_item_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "source_absence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_value_absence_item_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^pa_receipt_[a-z0-9][a-z0-9_:-]*$"},
+      "uniqueItems": true
+    },
+    "templates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/template_item"}
+    },
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "decision_values": {
+      "type": "array",
+      "prefixItems": [
+        {"$ref": "#/$defs/decision_value_template"},
+        {"$ref": "#/$defs/decision_value_template"},
+        {"$ref": "#/$defs/decision_value_template"},
+        {"$ref": "#/$defs/decision_value_template"}
+      ],
+      "items": false,
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "template_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "template_id",
+        "source_absence_id",
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "skill_id",
+        "risk_level",
+        "value_absence_ref",
+        "decision_value_templates",
+        "template_controls",
+        "execution_admission_block",
+        "receipt"
+      ],
+      "properties": {
+        "template_id": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_value_template_item_[a-z0-9][a-z0-9_:-]*$"},
+        "source_absence_id": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_value_absence_item_[a-z0-9][a-z0-9_:-]*$"},
+        "approval_id": {"type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$"},
+        "request_id": {"type": "string", "pattern": "^pa_request_[a-z0-9][a-z0-9_:-]*$"},
+        "plan_id": {"type": "string", "pattern": "^pa_plan_[a-z0-9][a-z0-9_:-]*$"},
+        "skill_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$"},
+        "risk_level": {"enum": ["P3", "P4", "P5"]},
+        "value_absence_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_value_absence_set_id",
+            "source_absence_id",
+            "absence_reason",
+            "required_next_evidence",
+            "operator_decision_value_present",
+            "operator_identity_ref_present",
+            "operator_signature_ref_present",
+            "decision_receipt_present",
+            "execution_worker_admission_allowed"
+          ],
+          "properties": {
+            "source_value_absence_set_id": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_value_absence_[a-z0-9][a-z0-9_:-]*$"},
+            "source_absence_id": {"type": "string", "pattern": "^pa_operator_reapproval_decision_receipt_value_absence_item_[a-z0-9][a-z0-9_:-]*$"},
+            "absence_reason": {"const": "operator_reapproval_decision_receipt_value_absent"},
+            "required_next_evidence": {"const": "governed_operator_reapproval_decision_receipt_value"},
+            "operator_decision_value_present": {"const": false},
+            "operator_identity_ref_present": {"const": false},
+            "operator_signature_ref_present": {"const": false},
+            "decision_receipt_present": {"const": false},
+            "execution_worker_admission_allowed": {"const": false}
+          }
+        },
+        "decision_value_templates": {"$ref": "#/$defs/decision_values"},
+        "template_controls": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "template_only",
+            "stores_operator_value",
+            "accepts_template_as_value",
+            "credential_values_allowed",
+            "mutation_route_allowed",
+            "live_authority_on_template"
+          ],
+          "properties": {
+            "template_only": {"const": true},
+            "stores_operator_value": {"const": false},
+            "accepts_template_as_value": {"const": false},
+            "credential_values_allowed": {"const": false},
+            "mutation_route_allowed": {"const": false},
+            "live_authority_on_template": {"const": false}
+          }
+        },
+        "execution_admission_block": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "execution_worker_admission_state",
+            "execution_worker_admission_allowed",
+            "dispatch_allowed",
+            "live_connector_execution_allowed",
+            "connector_mutation_allowed",
+            "external_send_allowed",
+            "system_of_record_write_allowed",
+            "memory_write_allowed"
+          ],
+          "properties": {
+            "execution_worker_admission_state": {"const": "blocked_template_only_operator_reapproval_decision_receipt_value"},
+            "execution_worker_admission_allowed": {"const": false},
+            "dispatch_allowed": {"const": false},
+            "live_connector_execution_allowed": {"const": false},
+            "connector_mutation_allowed": {"const": false},
+            "external_send_allowed": {"const": false},
+            "system_of_record_write_allowed": {"const": false},
+            "memory_write_allowed": {"const": false}
+          }
+        },
+        "receipt": {"type": "object", "additionalProperties": true}
+      }
+    },
+    "decision_value_template": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "decision_value",
+        "approval_ref",
+        "template_only",
+        "accepted_as_operator_value",
+        "grants_execution_authority",
+        "operator_supplied_value_required",
+        "field_templates"
+      ],
+      "properties": {
+        "decision_value": {"enum": ["approved", "rejected", "revised", "expired"]},
+        "approval_ref": {"type": "string", "pattern": "^pa_approval_[a-z0-9][a-z0-9_:-]*$"},
+        "template_only": {"const": true},
+        "accepted_as_operator_value": {"const": false},
+        "grants_execution_authority": {"const": false},
+        "operator_supplied_value_required": {"const": true},
+        "field_templates": {"type": "object", "additionalProperties": {"type": "string"}}
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "operator_reapproval_decision_receipt_value_template_witness_allowed",
+        "value_absence_ref_binding_allowed",
+        "operator_submitted_value_required",
+        "operator_identity_ref_required",
+        "operator_signature_ref_required",
+        "decision_receipt_required",
+        "operator_value_collected",
+        "explicit_operator_value_present",
+        "template_accepted_as_value",
+        "authority_granted",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed",
+        "public_readiness_claim_allowed"
+      ],
+      "properties": {
+        "operator_reapproval_decision_receipt_value_template_witness_allowed": {"const": true},
+        "value_absence_ref_binding_allowed": {"const": true},
+        "operator_submitted_value_required": {"const": true},
+        "operator_identity_ref_required": {"const": true},
+        "operator_signature_ref_required": {"const": true},
+        "decision_receipt_required": {"const": true},
+        "operator_value_collected": {"const": false},
+        "explicit_operator_value_present": {"const": false},
+        "template_accepted_as_value": {"const": false},
+        "authority_granted": {"const": false},
+        "execution_worker_admission_allowed": {"const": false},
+        "dispatch_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "value_absence_projection",
+        "decision_value_template_projection",
+        "operator_identity_ref_projection",
+        "operator_signature_projection",
+        "decision_receipt_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "value_absence_projection": {"const": "ref_only"},
+        "decision_value_template_projection": {"const": "placeholder_only"},
+        "operator_identity_ref_projection": {"const": "placeholder_only"},
+        "operator_signature_projection": {"const": "placeholder_only"},
+        "decision_receipt_projection": {"const": "placeholder_only"}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "ready_for_execution_worker_admission",
+        "ready_for_live_execution",
+        "ready_for_customer_readiness_claim"
+      ],
+      "properties": {
+        "assurance_id": {"const": "personal_assistant_operator_reapproval_decision_receipt_value_template_no_effect_assurance"},
+        "outcome": {"enum": ["AwaitingEvidence", "GovernanceBlocked"]},
+        "foundation_only": {"const": true},
+        "ready_for_execution_worker_admission": {"const": false},
+        "ready_for_live_execution": {"const": false},
+        "ready_for_customer_readiness_claim": {"const": false}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "foundation_only",
+        "projection_contract",
+        "runtime_boundary",
+        "operator_value_collected",
+        "explicit_operator_value_present",
+        "template_accepted_as_value",
+        "authority_granted",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed"
+      ],
+      "properties": {
+        "foundation_only": {"const": true},
+        "projection_contract": {"const": "operator_reapproval_decision_receipt_value_template_evidence_only"},
+        "runtime_boundary": {"const": "value_template_records_required_submitted_value_shape_without_collecting_value"},
+        "operator_value_collected": {"const": false},
+        "explicit_operator_value_present": {"const": false},
+        "template_accepted_as_value": {"const": false},
+        "authority_granted": {"const": false},
+        "execution_worker_admission_allowed": {"const": false},
+        "dispatch_allowed": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "system_of_record_write_allowed": {"const": false},
+        "memory_write_allowed": {"const": false}
+      }
+    }
+  }
+}
