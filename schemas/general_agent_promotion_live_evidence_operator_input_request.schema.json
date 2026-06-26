@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:general-agent-promotion-live-evidence-operator-input-request:1",
+  "title": "General Agent Promotion Live Evidence Operator Input Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "queue_id",
+    "ready_to_execute",
+    "execution_allowed",
+    "solver_outcome",
+    "proof_state",
+    "required_inputs",
+    "blocked_actions",
+    "source_artifacts",
+    "no_secret_values_serialized",
+    "queue_is_not_execution",
+    "external_effect_performed",
+    "production_ready_claimed",
+    "next_action"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "pattern": "^general-agent-promotion-live-evidence-operator-input-request-[0-9a-f]{16}$"
+    },
+    "queue_id": {
+      "type": "string",
+      "pattern": "^general-agent-promotion-live-evidence-queue-[0-9a-f]{16}$"
+    },
+    "ready_to_execute": {
+      "type": "boolean"
+    },
+    "execution_allowed": {
+      "type": "boolean"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": [
+        "SolvedVerified",
+        "AwaitingEvidence"
+      ]
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": [
+        "Pass",
+        "Unknown"
+      ]
+    },
+    "required_inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/required_input"
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "source_artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "general_agent_promotion_live_evidence_queue"
+      ],
+      "properties": {
+        "general_agent_promotion_live_evidence_queue": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "no_secret_values_serialized": {
+      "type": "boolean",
+      "const": true
+    },
+    "queue_is_not_execution": {
+      "type": "boolean",
+      "const": true
+    },
+    "external_effect_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "production_ready_claimed": {
+      "type": "boolean",
+      "const": false
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "required_input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_id",
+        "blocker",
+        "input_kind",
+        "required_names",
+        "current_state",
+        "source_queue_item_ids",
+        "evidence_source",
+        "next_action"
+      ],
+      "properties": {
+        "input_id": {
+          "type": "string",
+          "pattern": "^general-agent-live-evidence-input-[0-9a-f]{12}$"
+        },
+        "blocker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_kind": {
+          "type": "string",
+          "enum": [
+            "environment_binding",
+            "manual_parameter",
+            "dependency_closure"
+          ]
+        },
+        "required_names": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "current_state": {
+          "type": "string",
+          "enum": [
+            "missing",
+            "requires_dependency_closure"
+          ]
+        },
+        "source_queue_item_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^live-evidence-queue-item-[0-9]{2}-[a-z0-9-]+$"
+          }
+        },
+        "evidence_source": {
+          "type": "string",
+          "const": "general_agent_promotion_live_evidence_queue"
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
