@@ -162,6 +162,12 @@ from .operator_reapproval_decision_receipt_value_binding_record_guard import (
     build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_guard,
     build_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_guard_envelope,
 )
+from .operator_reapproval_decision_receipt_value_binding_record_admission_preflight import (
+    DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_RECORD_ADMISSION_PREFLIGHT_GENERATED_AT,
+    DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_RECORD_ADMISSION_PREFLIGHT_SET_ID,
+    build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_admission_preflight,
+    build_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_admission_preflight_envelope,
+)
 from .intake import (
     ApprovalScope,
     ConnectorProofRef,
@@ -341,6 +347,7 @@ __all__ = (
     "build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_admission_preflight",
     "build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_contract",
     "build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_guard",
+    "build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_admission_preflight",
     "build_default_personal_assistant_operator_reapproval_gate",
     "build_personal_assistant_preview_plan",
     "build_default_personal_assistant_draft_projection",
@@ -363,6 +370,7 @@ __all__ = (
     "build_personal_assistant_operator_reapproval_decision_receipt_value_binding_admission_preflight_envelope",
     "build_personal_assistant_operator_reapproval_decision_receipt_value_binding_contract_envelope",
     "build_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_guard_envelope",
+    "build_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_admission_preflight_envelope",
     "build_personal_assistant_operator_reapproval_gate_envelope",
     "build_personal_assistant_execution_gate_envelope",
     "build_personal_assistant_read_only_projection_envelope",
