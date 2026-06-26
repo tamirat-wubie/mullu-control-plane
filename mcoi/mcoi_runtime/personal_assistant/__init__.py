@@ -78,6 +78,12 @@ from .replay_rollback_witness import (
     build_default_personal_assistant_replay_rollback_witness,
     build_personal_assistant_replay_rollback_witness_envelope,
 )
+from .connector_lease_witness import (
+    DEFAULT_CONNECTOR_LEASE_WITNESS_GENERATED_AT,
+    DEFAULT_CONNECTOR_LEASE_WITNESS_SET_ID,
+    build_default_personal_assistant_connector_lease_witness,
+    build_personal_assistant_connector_lease_witness_envelope,
+)
 from .intake import (
     ApprovalScope,
     ConnectorProofRef,
@@ -169,6 +175,8 @@ __all__ = (
     "DEFAULT_APPROVAL_DECISION_CREATED_AT",
     "DEFAULT_APPROVAL_DECISION_DECIDED_AT",
     "DEFAULT_APPROVAL_DECISION_SET_ID",
+    "DEFAULT_CONNECTOR_LEASE_WITNESS_GENERATED_AT",
+    "DEFAULT_CONNECTOR_LEASE_WITNESS_SET_ID",
     "PersonalAssistantApprovalQueue",
     "PersonalAssistantApprovalMatrix",
     "CalendarEventDraftInput",
@@ -218,6 +226,7 @@ __all__ = (
     "build_personal_assistant_intake_chain_read_model",
     "build_personal_assistant_console_read_model",
     "build_default_personal_assistant_approval_decision_evidence",
+    "build_default_personal_assistant_connector_lease_witness",
     "build_personal_assistant_preview_plan",
     "build_default_personal_assistant_draft_projection",
     "build_default_personal_assistant_execution_gate",
@@ -226,6 +235,7 @@ __all__ = (
     "build_default_personal_assistant_worker_replay_preflight",
     "build_personal_assistant_draft_projection_envelope",
     "build_personal_assistant_approval_decision_evidence_envelope",
+    "build_personal_assistant_connector_lease_witness_envelope",
     "build_personal_assistant_execution_gate_envelope",
     "build_personal_assistant_read_only_projection_envelope",
     "build_personal_assistant_replay_rollback_witness_envelope",

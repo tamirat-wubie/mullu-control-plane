@@ -29,7 +29,7 @@ jobs:
       - name: Build changed-file manifest
         run: |
           mkdir -p .change_assurance
-          git fetch origin "${GITHUB_BASE_REF:-main}" --depth=1
+          git fetch origin "${GITHUB_BASE_REF:-main}"
           git diff --name-status "origin/${GITHUB_BASE_REF:-main}"...HEAD > .change_assurance/pr_changed_files.txt
           cat .change_assurance/pr_changed_files.txt
 
