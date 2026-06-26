@@ -115,7 +115,7 @@
       "authority_level": "read_only_advisory",
       "proof_binding_state": "proof_bound",
       "route_binding_state": "bound",
-      "route_count": 3,
+      "route_count": 4,
       "dependency_count": 1,
       "dependent_count": 0,
       "bundle_count": 2,

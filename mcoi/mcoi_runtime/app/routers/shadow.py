@@ -13,6 +13,7 @@ carry execution_authority=false.
 from __future__ import annotations
 
 import os
+from collections.abc import Iterable
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -25,6 +26,7 @@ from mcoi_runtime.app.inceptadive_shadow_integration import (
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.inceptadive_shadow_types import (
     ShadowContext,
+    ShadowFindingKind,
     ShadowPassResult,
     ShadowReceipt,
     ShadowSeverity,
@@ -116,6 +118,71 @@ class ShadowConsoleResponse(BaseModel):
     execution_authority: bool
     raw_request_text_exposed: bool
     private_memory_exposed: bool
+
+
+class ShadowEvidenceRecentResultResponse(BaseModel):
+    """OpenAPI response contract for redacted recent shadow result evidence."""
+
+    result_id: str
+    request_id: str
+    mode: str
+    stage: str
+    verdict: str
+    finding_count: int
+    repair_required_count: int
+    escalation_required_count: int
+    block_recommended: bool
+    needs_repair: bool
+    needs_escalation: bool
+    needs_deep_pass: bool
+    created_at: str
+    snapshot_hash: str
+    execution_authority: bool
+
+
+class ShadowEvidenceRecentReceiptResponse(BaseModel):
+    """OpenAPI response contract for redacted recent shadow receipt evidence."""
+
+    receipt_id: str
+    request_id: str
+    mode: str
+    stage: str
+    shadow_verdict: str
+    governance_verdict: str
+    finding_count: int
+    retrieval_receipt_count: int
+    created_at: str
+    snapshot_hash: str
+    execution_authority: bool
+
+
+class ShadowConsoleEvidenceResponse(BaseModel):
+    """OpenAPI response contract for read-only shadow evidence summaries."""
+
+    governed: bool
+    registered: bool
+    status: str
+    created_at: str
+    recent_result_count: int
+    receipt_count: int
+    verdict_counts: dict[str, int]
+    mode_counts: dict[str, int]
+    repair_required_count: int
+    escalation_required_count: int
+    block_recommended_count: int
+    missing_authority_obligation_count: int
+    missing_evidence_obligation_count: int
+    obligation_history_available: bool
+    obligation_history_unavailable_reason: str
+    recent_results: list[ShadowEvidenceRecentResultResponse]
+    recent_receipts: list[ShadowEvidenceRecentReceiptResponse]
+    execution_authority: bool
+    connector_dispatch_authority: bool
+    memory_write_authority: bool
+    governance_verdict_authority: bool
+    raw_request_text_exposed: bool
+    private_memory_exposed: bool
+    raw_evidence_refs_exposed: bool
 
 
 @router.get("/api/v1/health/shadow", response_model=ShadowHealthResponse)
@@ -234,6 +301,45 @@ def shadow_console() -> dict[str, object]:
         "execution_authority": False,
         "raw_request_text_exposed": False,
         "private_memory_exposed": False,
+    }
+
+
+@router.get("/api/v1/console/shadow/evidence", response_model=ShadowConsoleEvidenceResponse)
+def shadow_console_evidence() -> dict[str, object]:
+    """Read-only operator evidence view for recent shadow receipts."""
+
+    _inc_metric("requests_governed")
+    runtime, registered = _shadow_runtime()
+    created_at = _created_at()
+    posture = runtime.health_posture(created_at=created_at).to_dict()
+    recent_results, recent_receipts = runtime.recent_activity(limit=runtime.config.max_findings)
+    redacted_results = [_redacted_evidence_result(result) for result in recent_results]
+    redacted_receipts = [_redacted_evidence_receipt(receipt) for receipt in recent_receipts]
+    return {
+        "governed": True,
+        "registered": registered,
+        "status": str(posture.get("status", "unknown")),
+        "created_at": created_at,
+        "recent_result_count": len(redacted_results),
+        "receipt_count": len(redacted_receipts),
+        "verdict_counts": _count_by(str(result["verdict"]) for result in redacted_results),
+        "mode_counts": _count_by(str(result["mode"]) for result in redacted_results),
+        "repair_required_count": sum(int(result["repair_required_count"]) for result in redacted_results),
+        "escalation_required_count": sum(int(result["escalation_required_count"]) for result in redacted_results),
+        "block_recommended_count": sum(1 for result in redacted_results if result["block_recommended"]),
+        "missing_authority_obligation_count": 0,
+        "missing_evidence_obligation_count": 0,
+        "obligation_history_available": False,
+        "obligation_history_unavailable_reason": "external_effect_advisory_history_not_recorded",
+        "recent_results": redacted_results,
+        "recent_receipts": redacted_receipts,
+        "execution_authority": False,
+        "connector_dispatch_authority": False,
+        "memory_write_authority": False,
+        "governance_verdict_authority": False,
+        "raw_request_text_exposed": False,
+        "private_memory_exposed": False,
+        "raw_evidence_refs_exposed": False,
     }
 
 
@@ -367,6 +473,57 @@ def _redacted_receipt(receipt: ShadowReceipt | None) -> dict[str, object] | None
         "snapshot_hash": receipt.snapshot_hash,
         "execution_authority": False,
     }
+
+
+def _redacted_evidence_result(result: ShadowPassResult) -> dict[str, object]:
+    """Return recent result evidence without finding summaries or raw refs."""
+
+    return {
+        "result_id": result.result_id,
+        "request_id": result.request_id,
+        "mode": result.mode.value,
+        "stage": result.stage.value,
+        "verdict": result.verdict.value,
+        "finding_count": len(result.findings),
+        "repair_required_count": sum(1 for finding in result.findings if finding.repair_required),
+        "escalation_required_count": sum(
+            1
+            for finding in result.findings
+            if finding.kind == ShadowFindingKind.ESCALATION_REQUIRED
+        ),
+        "block_recommended": result.block_recommended,
+        "needs_repair": result.needs_repair,
+        "needs_escalation": result.needs_escalation,
+        "needs_deep_pass": result.needs_deep_pass,
+        "created_at": result.created_at,
+        "snapshot_hash": result.snapshot_hash,
+        "execution_authority": False,
+    }
+
+
+def _redacted_evidence_receipt(receipt: ShadowReceipt) -> dict[str, object]:
+    """Return recent receipt evidence without raw retrieval receipt ids."""
+
+    return {
+        "receipt_id": receipt.receipt_id,
+        "request_id": receipt.request_id,
+        "mode": receipt.mode.value,
+        "stage": receipt.stage.value,
+        "shadow_verdict": receipt.shadow_verdict.value,
+        "governance_verdict": receipt.governance_verdict,
+        "finding_count": len(receipt.finding_ids),
+        "retrieval_receipt_count": len(receipt.retrieval_receipt_ids),
+        "created_at": receipt.created_at,
+        "snapshot_hash": receipt.snapshot_hash,
+        "execution_authority": False,
+    }
+
+
+def _count_by(values: Iterable[str]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        counts[value] = counts.get(value, 0) + 1
+    return counts
 
 
 def _shadow_error_detail(error: str, error_code: str) -> dict[str, object]:

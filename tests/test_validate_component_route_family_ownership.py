@@ -43,7 +43,7 @@ def test_component_route_family_ownership_schema_valid_and_write(tmp_path: Path)
     written_payload = json.loads(written_path.read_text(encoding="utf-8"))
 
     assert validation.route_family_count == 79
-    assert validation.declared_route_count == 450
+    assert validation.declared_route_count == 451
     assert validation.selected_component_bound_count == 13
     assert validation.promotion_blocked_count == 66
     assert validation.proof_binding_gap_count == 64

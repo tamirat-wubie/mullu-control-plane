@@ -22,9 +22,9 @@
     "authority_witness_count": 10,
     "proof_bound_count": 9,
     "awaiting_binding_count": 1,
-    "bound_route_count": 33,
+    "bound_route_count": 34,
     "route_family_classification_count": 79,
-    "classified_declared_route_count": 450,
+    "classified_declared_route_count": 451,
     "blocked_component_count": 1
   },
   "components": [
@@ -470,7 +470,7 @@
           "inceptadive_shadow_inspection_routes",
           "operator_console_read_models"
         ],
-        "route_count": 3
+        "route_count": 4
       },
       "proof_binding": {
         "state": "proof_bound",

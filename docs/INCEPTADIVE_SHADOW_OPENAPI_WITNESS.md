@@ -28,6 +28,7 @@ execution handles must not be exposed.
 | `/api/v1/shadow/inspect` | `POST` | `ShadowInspectResponse` | Redacted bounded shadow inspection. |
 | `/api/v1/shadow/external-effect/advisory` | `POST` | `ShadowExternalEffectAdvisoryResponse` | Redacted external-effect obligation advisory. |
 | `/api/v1/console/shadow` | `GET` | `ShadowConsoleResponse` | Read-only count-oriented console posture. |
+| `/api/v1/console/shadow/evidence` | `GET` | `ShadowConsoleEvidenceResponse` | Read-only recent result and receipt evidence posture. |
 
 ## Required OpenAPI Fields
 
@@ -39,6 +40,7 @@ The exported OpenAPI schema must retain these fields:
 | `ShadowInspectResponse` | `execution_authority`, `raw_request_text_exposed`, `private_memory_exposed`, `recent_activity` |
 | `ShadowExternalEffectAdvisoryResponse` | `execution_authority`, `connector_dispatch_authority`, `memory_write_authority`, `governance_verdict_authority`, `raw_request_text_exposed`, `private_memory_exposed` |
 | `ShadowConsoleResponse` | `execution_authority`, `raw_request_text_exposed`, `private_memory_exposed` |
+| `ShadowConsoleEvidenceResponse` | `execution_authority`, `connector_dispatch_authority`, `memory_write_authority`, `governance_verdict_authority`, `raw_request_text_exposed`, `private_memory_exposed`, `raw_evidence_refs_exposed`, `obligation_history_available` |
 
 ## Authority Boundary
 
@@ -54,6 +56,13 @@ The route family remains blocked from:
 4. writing memory;
 5. replacing a governance verdict;
 6. exposing raw request text, raw evidence refs, private memory, or execution handles.
+
+`GET /api/v1/console/shadow/evidence` reads only stored shadow result and
+receipt summaries. External-effect advisory requests are not yet persisted in
+the shadow receipt store, so the evidence route reports
+`obligation_history_available=false` and
+`external_effect_advisory_history_not_recorded` rather than manufacturing
+historical missing-obligation counts.
 
 ## Verification
 

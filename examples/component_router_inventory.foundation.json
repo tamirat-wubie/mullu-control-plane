@@ -133,10 +133,11 @@
       "component_id": "inceptadive_shadow",
       "expected_routes": [
         "/api/v1/console/shadow",
+        "/api/v1/console/shadow/evidence",
         "/api/v1/shadow/external-effect/advisory",
         "/api/v1/shadow/inspect"
       ],
-      "notes": "InceptaDive shadow is bound to its console posture route and bounded advisory inspection route; neither binding grants execution authority.",
+      "notes": "InceptaDive shadow is bound to its console posture and evidence routes plus bounded advisory inspection routes; no binding grants execution authority.",
       "proof_surface_ids": [
         "inceptadive_shadow_inspection_routes",
         "operator_console_read_models"
@@ -1670,7 +1671,7 @@
         "personal_assistant"
       ],
       "component_lane": "assistant_product_core",
-      "declared_route_count": 15,
+      "declared_route_count": 16,
       "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
       "sample_routes": [
         "/api/v1/console",

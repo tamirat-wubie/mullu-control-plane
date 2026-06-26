@@ -1503,9 +1503,9 @@
     "by_coverage_state": {
       "proven": 290,
       "unproven": 0,
-      "witnessed": 160
+      "witnessed": 161
     },
-    "route_count": 450,
+    "route_count": 451,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2035,6 +2035,11 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/console/shadow",
+        "surface_id": "operator_console_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/console/shadow/evidence",
         "surface_id": "operator_console_read_models"
       },
       {
@@ -6960,6 +6965,7 @@
         "/api/v1/console/providers",
         "/api/v1/console/scheduler",
         "/api/v1/console/shadow",
+        "/api/v1/console/shadow/evidence",
         "/api/v1/console/whqr/clarifications",
         "/api/v1/console/note-memory",
         "/api/v1/console/note-memory/view",
@@ -7021,6 +7027,9 @@
         "full_console_includes_spatial_map_read_model": [
           "full_console"
         ],
+        "shadow_console_evidence_route_returns_redacted_recent_evidence": [
+          "shadow_console_evidence_route_returns_redacted_recent_evidence"
+        ],
         "shadow_console_route_returns_counts_without_raw_text": [
           "shadow_console_route_returns_counts_without_raw_text"
         ]
@@ -7032,6 +7041,7 @@
         "console_checkpoints_expose_persisted_state_summary",
         "console_provider_and_scheduler_views_are_read_only",
         "shadow_console_route_returns_counts_without_raw_text",
+        "shadow_console_evidence_route_returns_redacted_recent_evidence",
         "console_note_memory_returns_read_only_lifecycle_summary",
         "console_note_memory_html_escapes_read_model",
         "console_note_memory_fails_closed_without_store_path",
@@ -15462,8 +15472,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1955,
-    "runtime_witness_count": 1955,
+    "exact_test_anchor_count": 1956,
+    "runtime_witness_count": 1956,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19087,6 +19097,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_inceptadive_shadow_routes.py::test_shadow_console_evidence_route_returns_redacted_recent_evidence"
+            ],
+            "witness": "shadow_console_evidence_route_returns_redacted_recent_evidence"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_operator_console.py::test_console_note_memory_enabled_read_model"
             ],
             "witness": "console_note_memory_returns_read_only_lifecycle_summary"
@@ -19163,8 +19179,8 @@
             "witness": "console_personal_assistant_html_view_renders_read_only_panel"
           }
         ],
-        "exact_test_anchor_count": 18,
-        "runtime_witness_count": 18,
+        "exact_test_anchor_count": 19,
+        "runtime_witness_count": 19,
         "surface_id": "operator_console_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
