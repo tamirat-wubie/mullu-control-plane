@@ -5621,6 +5621,211 @@
         "title": "SemanticSearchRequest",
         "type": "object"
       },
+      "ShadowConsoleEvidenceResponse": {
+        "description": "OpenAPI response contract for read-only shadow evidence summaries.",
+        "properties": {
+          "block_recommended_count": {
+            "title": "Block Recommended Count",
+            "type": "integer"
+          },
+          "connector_dispatch_authority": {
+            "title": "Connector Dispatch Authority",
+            "type": "boolean"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "escalation_required_count": {
+            "title": "Escalation Required Count",
+            "type": "integer"
+          },
+          "execution_authority": {
+            "title": "Execution Authority",
+            "type": "boolean"
+          },
+          "governance_verdict_authority": {
+            "title": "Governance Verdict Authority",
+            "type": "boolean"
+          },
+          "governed": {
+            "title": "Governed",
+            "type": "boolean"
+          },
+          "memory_write_authority": {
+            "title": "Memory Write Authority",
+            "type": "boolean"
+          },
+          "missing_authority_obligation_count": {
+            "title": "Missing Authority Obligation Count",
+            "type": "integer"
+          },
+          "missing_evidence_obligation_count": {
+            "title": "Missing Evidence Obligation Count",
+            "type": "integer"
+          },
+          "mode_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Mode Counts",
+            "type": "object"
+          },
+          "obligation_history_available": {
+            "title": "Obligation History Available",
+            "type": "boolean"
+          },
+          "obligation_history_unavailable_reason": {
+            "title": "Obligation History Unavailable Reason",
+            "type": "string"
+          },
+          "private_memory_exposed": {
+            "title": "Private Memory Exposed",
+            "type": "boolean"
+          },
+          "raw_evidence_refs_exposed": {
+            "title": "Raw Evidence Refs Exposed",
+            "type": "boolean"
+          },
+          "raw_request_text_exposed": {
+            "title": "Raw Request Text Exposed",
+            "type": "boolean"
+          },
+          "receipt_count": {
+            "title": "Receipt Count",
+            "type": "integer"
+          },
+          "recent_advisory_count": {
+            "title": "Recent Advisory Count",
+            "type": "integer"
+          },
+          "recent_external_effect_advisories": {
+            "items": {
+              "$ref": "#/components/schemas/ShadowEvidenceRecentAdvisoryResponse"
+            },
+            "title": "Recent External Effect Advisories",
+            "type": "array"
+          },
+          "recent_receipts": {
+            "items": {
+              "$ref": "#/components/schemas/ShadowEvidenceRecentReceiptResponse"
+            },
+            "title": "Recent Receipts",
+            "type": "array"
+          },
+          "recent_result_count": {
+            "title": "Recent Result Count",
+            "type": "integer"
+          },
+          "recent_results": {
+            "items": {
+              "$ref": "#/components/schemas/ShadowEvidenceRecentResultResponse"
+            },
+            "title": "Recent Results",
+            "type": "array"
+          },
+          "registered": {
+            "title": "Registered",
+            "type": "boolean"
+          },
+          "repair_required_count": {
+            "title": "Repair Required Count",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "verdict_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Verdict Counts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "governed",
+          "registered",
+          "status",
+          "created_at",
+          "recent_result_count",
+          "receipt_count",
+          "verdict_counts",
+          "mode_counts",
+          "repair_required_count",
+          "escalation_required_count",
+          "block_recommended_count",
+          "missing_authority_obligation_count",
+          "missing_evidence_obligation_count",
+          "recent_advisory_count",
+          "obligation_history_available",
+          "obligation_history_unavailable_reason",
+          "recent_results",
+          "recent_receipts",
+          "recent_external_effect_advisories",
+          "execution_authority",
+          "connector_dispatch_authority",
+          "memory_write_authority",
+          "governance_verdict_authority",
+          "raw_request_text_exposed",
+          "private_memory_exposed",
+          "raw_evidence_refs_exposed"
+        ],
+        "title": "ShadowConsoleEvidenceResponse",
+        "type": "object"
+      },
+      "ShadowConsoleResponse": {
+        "description": "OpenAPI response contract for read-only shadow console summaries.",
+        "properties": {
+          "execution_authority": {
+            "title": "Execution Authority",
+            "type": "boolean"
+          },
+          "governed": {
+            "title": "Governed",
+            "type": "boolean"
+          },
+          "health": {
+            "additionalProperties": true,
+            "title": "Health",
+            "type": "object"
+          },
+          "private_memory_exposed": {
+            "title": "Private Memory Exposed",
+            "type": "boolean"
+          },
+          "raw_request_text_exposed": {
+            "title": "Raw Request Text Exposed",
+            "type": "boolean"
+          },
+          "registered": {
+            "title": "Registered",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "title": "Summary",
+            "type": "object"
+          }
+        },
+        "required": [
+          "governed",
+          "registered",
+          "status",
+          "health",
+          "summary",
+          "execution_authority",
+          "raw_request_text_exposed",
+          "private_memory_exposed"
+        ],
+        "title": "ShadowConsoleResponse",
+        "type": "object"
+      },
       "ShadowEvaluationRequest": {
         "properties": {
           "policy_input": {
@@ -5631,6 +5836,346 @@
           "policy_input"
         ],
         "title": "ShadowEvaluationRequest",
+        "type": "object"
+      },
+      "ShadowEvidenceRecentAdvisoryResponse": {
+        "description": "OpenAPI response contract for redacted recent advisory obligations.",
+        "properties": {
+          "action_families": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Action Families",
+            "type": "array"
+          },
+          "advisory_id": {
+            "title": "Advisory Id",
+            "type": "string"
+          },
+          "authority_receipt_count": {
+            "title": "Authority Receipt Count",
+            "type": "integer"
+          },
+          "awaiting_evidence": {
+            "title": "Awaiting Evidence",
+            "type": "boolean"
+          },
+          "connector_dispatch_authority": {
+            "title": "Connector Dispatch Authority",
+            "type": "boolean"
+          },
+          "context_hash": {
+            "title": "Context Hash",
+            "type": "string"
+          },
+          "execution_authority": {
+            "title": "Execution Authority",
+            "type": "boolean"
+          },
+          "external_side_effect": {
+            "title": "External Side Effect",
+            "type": "boolean"
+          },
+          "governance_verdict_authority": {
+            "title": "Governance Verdict Authority",
+            "type": "boolean"
+          },
+          "memory_write_authority": {
+            "title": "Memory Write Authority",
+            "type": "boolean"
+          },
+          "missing_authority_obligation_count": {
+            "title": "Missing Authority Obligation Count",
+            "type": "integer"
+          },
+          "missing_evidence_obligation_count": {
+            "title": "Missing Evidence Obligation Count",
+            "type": "integer"
+          },
+          "recommended_outcome": {
+            "title": "Recommended Outcome",
+            "type": "string"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "required_evidence_ref_count": {
+            "title": "Required Evidence Ref Count",
+            "type": "integer"
+          },
+          "retrieval_receipt_count": {
+            "title": "Retrieval Receipt Count",
+            "type": "integer"
+          },
+          "strict_preflight_required": {
+            "title": "Strict Preflight Required",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "advisory_id",
+          "request_id",
+          "context_hash",
+          "action_families",
+          "missing_authority_obligation_count",
+          "missing_evidence_obligation_count",
+          "required_evidence_ref_count",
+          "authority_receipt_count",
+          "retrieval_receipt_count",
+          "external_side_effect",
+          "strict_preflight_required",
+          "awaiting_evidence",
+          "recommended_outcome",
+          "execution_authority",
+          "connector_dispatch_authority",
+          "memory_write_authority",
+          "governance_verdict_authority"
+        ],
+        "title": "ShadowEvidenceRecentAdvisoryResponse",
+        "type": "object"
+      },
+      "ShadowEvidenceRecentReceiptResponse": {
+        "description": "OpenAPI response contract for redacted recent shadow receipt evidence.",
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "execution_authority": {
+            "title": "Execution Authority",
+            "type": "boolean"
+          },
+          "finding_count": {
+            "title": "Finding Count",
+            "type": "integer"
+          },
+          "governance_verdict": {
+            "title": "Governance Verdict",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "receipt_id": {
+            "title": "Receipt Id",
+            "type": "string"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "retrieval_receipt_count": {
+            "title": "Retrieval Receipt Count",
+            "type": "integer"
+          },
+          "shadow_verdict": {
+            "title": "Shadow Verdict",
+            "type": "string"
+          },
+          "snapshot_hash": {
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "receipt_id",
+          "request_id",
+          "mode",
+          "stage",
+          "shadow_verdict",
+          "governance_verdict",
+          "finding_count",
+          "retrieval_receipt_count",
+          "created_at",
+          "snapshot_hash",
+          "execution_authority"
+        ],
+        "title": "ShadowEvidenceRecentReceiptResponse",
+        "type": "object"
+      },
+      "ShadowEvidenceRecentResultResponse": {
+        "description": "OpenAPI response contract for redacted recent shadow result evidence.",
+        "properties": {
+          "block_recommended": {
+            "title": "Block Recommended",
+            "type": "boolean"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "escalation_required_count": {
+            "title": "Escalation Required Count",
+            "type": "integer"
+          },
+          "execution_authority": {
+            "title": "Execution Authority",
+            "type": "boolean"
+          },
+          "finding_count": {
+            "title": "Finding Count",
+            "type": "integer"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "needs_deep_pass": {
+            "title": "Needs Deep Pass",
+            "type": "boolean"
+          },
+          "needs_escalation": {
+            "title": "Needs Escalation",
+            "type": "boolean"
+          },
+          "needs_repair": {
+            "title": "Needs Repair",
+            "type": "boolean"
+          },
+          "repair_required_count": {
+            "title": "Repair Required Count",
+            "type": "integer"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "result_id": {
+            "title": "Result Id",
+            "type": "string"
+          },
+          "snapshot_hash": {
+            "title": "Snapshot Hash",
+            "type": "string"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "verdict": {
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result_id",
+          "request_id",
+          "mode",
+          "stage",
+          "verdict",
+          "finding_count",
+          "repair_required_count",
+          "escalation_required_count",
+          "block_recommended",
+          "needs_repair",
+          "needs_escalation",
+          "needs_deep_pass",
+          "created_at",
+          "snapshot_hash",
+          "execution_authority"
+        ],
+        "title": "ShadowEvidenceRecentResultResponse",
+        "type": "object"
+      },
+      "ShadowExternalEffectAdvisoryResponse": {
+        "description": "OpenAPI response contract for non-executing external-effect advisories.",
+        "properties": {
+          "advisory": {
+            "additionalProperties": true,
+            "title": "Advisory",
+            "type": "object"
+          },
+          "connector_dispatch_authority": {
+            "title": "Connector Dispatch Authority",
+            "type": "boolean"
+          },
+          "execution_authority": {
+            "title": "Execution Authority",
+            "type": "boolean"
+          },
+          "governance_verdict_authority": {
+            "title": "Governance Verdict Authority",
+            "type": "boolean"
+          },
+          "governed": {
+            "title": "Governed",
+            "type": "boolean"
+          },
+          "memory_write_authority": {
+            "title": "Memory Write Authority",
+            "type": "boolean"
+          },
+          "private_memory_exposed": {
+            "title": "Private Memory Exposed",
+            "type": "boolean"
+          },
+          "raw_request_text_exposed": {
+            "title": "Raw Request Text Exposed",
+            "type": "boolean"
+          },
+          "registered": {
+            "title": "Registered",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "governed",
+          "registered",
+          "advisory",
+          "execution_authority",
+          "connector_dispatch_authority",
+          "memory_write_authority",
+          "governance_verdict_authority",
+          "raw_request_text_exposed",
+          "private_memory_exposed"
+        ],
+        "title": "ShadowExternalEffectAdvisoryResponse",
+        "type": "object"
+      },
+      "ShadowHealthResponse": {
+        "description": "OpenAPI response contract for the read-only shadow health posture.",
+        "properties": {
+          "execution_authority": {
+            "title": "Execution Authority",
+            "type": "boolean"
+          },
+          "governed": {
+            "title": "Governed",
+            "type": "boolean"
+          },
+          "private_memory_exposed": {
+            "title": "Private Memory Exposed",
+            "type": "boolean"
+          },
+          "raw_request_text_exposed": {
+            "title": "Raw Request Text Exposed",
+            "type": "boolean"
+          },
+          "registered": {
+            "title": "Registered",
+            "type": "boolean"
+          },
+          "shadow": {
+            "additionalProperties": true,
+            "title": "Shadow",
+            "type": "object"
+          }
+        },
+        "required": [
+          "governed",
+          "registered",
+          "shadow",
+          "execution_authority",
+          "raw_request_text_exposed",
+          "private_memory_exposed"
+        ],
+        "title": "ShadowHealthResponse",
         "type": "object"
       },
       "ShadowInspectRequest": {
@@ -5710,6 +6255,63 @@
         "title": "ShadowInspectRequest",
         "type": "object"
       },
+      "ShadowInspectResponse": {
+        "description": "OpenAPI response contract for redacted shadow inspection results.",
+        "properties": {
+          "execution_authority": {
+            "title": "Execution Authority",
+            "type": "boolean"
+          },
+          "governed": {
+            "title": "Governed",
+            "type": "boolean"
+          },
+          "private_memory_exposed": {
+            "title": "Private Memory Exposed",
+            "type": "boolean"
+          },
+          "raw_request_text_exposed": {
+            "title": "Raw Request Text Exposed",
+            "type": "boolean"
+          },
+          "receipt": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Receipt"
+          },
+          "recent_activity": {
+            "$ref": "#/components/schemas/ShadowRecentActivityResponse"
+          },
+          "registered": {
+            "title": "Registered",
+            "type": "boolean"
+          },
+          "result": {
+            "additionalProperties": true,
+            "title": "Result",
+            "type": "object"
+          }
+        },
+        "required": [
+          "governed",
+          "registered",
+          "result",
+          "receipt",
+          "recent_activity",
+          "execution_authority",
+          "raw_request_text_exposed",
+          "private_memory_exposed"
+        ],
+        "title": "ShadowInspectResponse",
+        "type": "object"
+      },
       "ShadowPolicyInputRequest": {
         "properties": {
           "blocked_knowledge_ids": {
@@ -5750,6 +6352,25 @@
           "goal_id"
         ],
         "title": "ShadowPolicyInputRequest",
+        "type": "object"
+      },
+      "ShadowRecentActivityResponse": {
+        "description": "OpenAPI response contract for redacted recent activity counts.",
+        "properties": {
+          "receipt_count": {
+            "title": "Receipt Count",
+            "type": "integer"
+          },
+          "result_count": {
+            "title": "Result Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "result_count",
+          "receipt_count"
+        ],
+        "title": "ShadowRecentActivityResponse",
         "type": "object"
       },
       "SimulateRequest": {
@@ -10823,9 +11444,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Shadow Console Api V1 Console Shadow Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ShadowConsoleResponse"
                 }
               }
             },
@@ -10833,6 +11452,25 @@
           }
         },
         "summary": "Shadow Console"
+      }
+    },
+    "/api/v1/console/shadow/evidence": {
+      "get": {
+        "description": "Read-only operator evidence view for recent shadow receipts.",
+        "operationId": "shadow_console_evidence_api_v1_console_shadow_evidence_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShadowConsoleEvidenceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Shadow Console Evidence"
       }
     },
     "/api/v1/console/spatial-map": {
@@ -13860,9 +14498,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Shadow Health Api V1 Health Shadow Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ShadowHealthResponse"
                 }
               }
             },
@@ -18870,9 +19506,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Shadow External Effect Advisory Api V1 Shadow External Effect Advisory Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ShadowExternalEffectAdvisoryResponse"
                 }
               }
             },
@@ -18911,9 +19545,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Shadow Inspect Api V1 Shadow Inspect Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ShadowInspectResponse"
                 }
               }
             },
