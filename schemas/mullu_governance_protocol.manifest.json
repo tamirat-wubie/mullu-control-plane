@@ -131,6 +131,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-non-empty-diff-receipt-admission-preflight:1"
     },
     {
+      "path": "schemas/agentic_service_harness_filesystem_write_admission_preflight.schema.json",
+      "schema_id": "agentic-service-harness-filesystem-write-admission-preflight",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-filesystem-write-admission-preflight:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_receipt_evidence_read_models.schema.json",
       "schema_id": "agentic-service-harness-receipt-evidence-read-models",
       "surface": "runtime",
