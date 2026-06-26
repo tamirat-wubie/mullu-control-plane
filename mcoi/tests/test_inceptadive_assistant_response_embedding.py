@@ -15,6 +15,8 @@ import json
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from mcoi_runtime.app import inceptadive_assistant_response_embedding as embedding_module
+from mcoi_runtime.app.inceptadive_assistant_response_embedding import build_assistant_response_shadow_advisory
 from mcoi_runtime.app.inceptadive_shadow_integration import build_inceptadive_shadow_runtime
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers.llm import router
@@ -46,13 +48,16 @@ def _sse_events(body: str) -> list[tuple[str, dict[str, object]]]:
 def test_live_chat_response_embeds_redacted_inceptadive_advisory() -> None:
     client, runtime = _client_with_shadow_runtime()
     raw_marker = "live-secret-token"
+    raw_tenant = "tenant-private-token-chat"
+    raw_model = "model-private-token-chat"
 
     response = client.post(
         "/api/v1/chat",
         json={
             "conversation_id": "inceptadive-live-chat-1",
             "message": f"Review this production token rotation plan without exposing {raw_marker}.",
-            "tenant_id": "tenant-shadow-chat",
+            "tenant_id": raw_tenant,
+            "model_name": raw_model,
         },
     )
     body = response.json()
@@ -64,6 +69,12 @@ def test_live_chat_response_embeds_redacted_inceptadive_advisory() -> None:
     assert body["content"]
     assert advisory["embedding_surface"] == "assistant_response"
     assert advisory["route"] == "/api/v1/chat"
+    assert advisory["tenant_ref"].startswith("assistant-response-tenant-")
+    assert advisory["model_ref"].startswith("assistant-response-model-")
+    assert advisory["tenant_identifier_exposed"] is False
+    assert advisory["model_identifier_exposed"] is False
+    assert "tenant_id" not in advisory
+    assert "model_name" not in advisory
     assert advisory["execution_authority"] is False
     assert advisory["connector_dispatch_authority"] is False
     assert advisory["shadow_memory_write_authority"] is False
@@ -72,23 +83,30 @@ def test_live_chat_response_embeds_redacted_inceptadive_advisory() -> None:
     assert advisory["assistant_content_exposed"] is False
     assert advisory["private_memory_exposed"] is False
     assert raw_marker not in str(advisory)
+    assert raw_tenant not in str(advisory)
+    assert raw_model not in str(advisory)
     assert body["content"] not in str(advisory)
     assert len(results) == 1
     assert len(receipts) == 1
     assert results[0].to_dict()["execution_authority"] is False
     assert receipts[0].to_dict()["execution_authority"] is False
+    assert raw_tenant not in str(results[0].to_dict())
+    assert raw_tenant not in str(receipts[0].to_dict())
 
 
 def test_streaming_chat_response_emits_redacted_inceptadive_advisory_event() -> None:
     client, runtime = _client_with_shadow_runtime()
     raw_marker = "stream-private-token"
+    raw_tenant = "tenant-private-token-stream"
+    raw_model = "model-private-token-stream"
 
     response = client.post(
         "/api/v1/chat/stream",
         json={
             "conversation_id": "inceptadive-stream-chat-1",
             "message": f"Stream this release note without exposing {raw_marker}.",
-            "tenant_id": "tenant-shadow-stream",
+            "tenant_id": raw_tenant,
+            "model_name": raw_model,
         },
     )
     events = _sse_events(response.text)
@@ -106,7 +124,12 @@ def test_streaming_chat_response_emits_redacted_inceptadive_advisory_event() -> 
     assert event_names.index("inceptadive_shadow_advisory") < event_names.index("done")
     assert advisory["embedding_surface"] == "assistant_response"
     assert advisory["route"] == "/api/v1/chat/stream"
-    assert advisory["tenant_id"] == "tenant-shadow-stream"
+    assert advisory["tenant_ref"].startswith("assistant-response-tenant-")
+    assert advisory["model_ref"].startswith("assistant-response-model-")
+    assert advisory["tenant_identifier_exposed"] is False
+    assert advisory["model_identifier_exposed"] is False
+    assert "tenant_id" not in advisory
+    assert "model_name" not in advisory
     assert advisory["execution_authority"] is False
     assert advisory["connector_dispatch_authority"] is False
     assert advisory["shadow_memory_write_authority"] is False
@@ -115,22 +138,27 @@ def test_streaming_chat_response_emits_redacted_inceptadive_advisory_event() -> 
     assert advisory["assistant_content_exposed"] is False
     assert advisory["private_memory_exposed"] is False
     assert raw_marker not in str(advisory)
+    assert raw_tenant not in str(advisory)
+    assert raw_model not in str(advisory)
     assert len(results) == 1
     assert len(receipts) == 1
     assert results[0].to_dict()["execution_authority"] is False
     assert receipts[0].to_dict()["execution_authority"] is False
+    assert raw_tenant not in str(results[0].to_dict())
+    assert raw_tenant not in str(receipts[0].to_dict())
 
 
 def test_chat_workflow_response_embeds_redacted_inceptadive_advisory() -> None:
     client, runtime = _client_with_shadow_runtime()
     raw_marker = "workflow-private-token"
+    raw_tenant = "tenant-private-token-workflow"
 
     response = client.post(
         "/api/v1/chat/workflow",
         json={
             "conversation_id": "inceptadive-workflow-chat-1",
             "message": f"Analyze this launch plan but keep {raw_marker} private.",
-            "tenant_id": "tenant-shadow-workflow",
+            "tenant_id": raw_tenant,
             "capability": "llm.completion",
         },
     )
@@ -143,6 +171,12 @@ def test_chat_workflow_response_embeds_redacted_inceptadive_advisory() -> None:
     assert body["response"]
     assert advisory["embedding_surface"] == "assistant_response"
     assert advisory["route"] == "/api/v1/chat/workflow"
+    assert advisory["tenant_ref"].startswith("assistant-response-tenant-")
+    assert advisory["model_ref"].startswith("assistant-response-model-")
+    assert advisory["tenant_identifier_exposed"] is False
+    assert advisory["model_identifier_exposed"] is False
+    assert "tenant_id" not in advisory
+    assert "model_name" not in advisory
     assert advisory["execution_authority"] is False
     assert advisory["connector_dispatch_authority"] is False
     assert advisory["shadow_memory_write_authority"] is False
@@ -151,8 +185,47 @@ def test_chat_workflow_response_embeds_redacted_inceptadive_advisory() -> None:
     assert advisory["assistant_content_exposed"] is False
     assert advisory["private_memory_exposed"] is False
     assert raw_marker not in str(advisory)
+    assert raw_tenant not in str(advisory)
     assert body["response"] not in str(advisory)
     assert len(results) == 1
     assert len(receipts) == 1
     assert results[0].to_dict()["execution_authority"] is False
     assert receipts[0].to_dict()["execution_authority"] is False
+    assert raw_tenant not in str(results[0].to_dict())
+    assert raw_tenant not in str(receipts[0].to_dict())
+
+
+def test_assistant_response_advisory_unavailable_redacts_identifier_fields(monkeypatch) -> None:
+    runtime = build_inceptadive_shadow_runtime({})
+    raw_tenant = "tenant-private-token-fallback"
+    raw_model = "model-private-token-fallback"
+
+    def fail_hook(*args: object, **kwargs: object) -> object:
+        raise RuntimeError("raw fallback exception secret")
+
+    monkeypatch.setattr(embedding_module, "run_workflow_shadow_hook", fail_hook)
+
+    advisory = build_assistant_response_shadow_advisory(
+        runtime,
+        request_id="assistant_response_shadow_fallback",
+        user_input="inspect fallback token",
+        assistant_content="fallback content",
+        route="/api/v1/chat",
+        tenant_id=raw_tenant,
+        model_name=raw_model,
+        succeeded=False,
+        created_at="2026-05-13T10:00:00+00:00",
+    )
+
+    assert advisory["status"] == "unavailable"
+    assert advisory["error_code"] == "inceptadive_assistant_response_advisory_unavailable"
+    assert advisory["tenant_ref"].startswith("assistant-response-tenant-")
+    assert advisory["model_ref"].startswith("assistant-response-model-")
+    assert advisory["tenant_identifier_exposed"] is False
+    assert advisory["model_identifier_exposed"] is False
+    assert advisory["execution_authority"] is False
+    assert "tenant_id" not in advisory
+    assert "model_name" not in advisory
+    assert raw_tenant not in str(advisory)
+    assert raw_model not in str(advisory)
+    assert "raw fallback exception secret" not in str(advisory)
