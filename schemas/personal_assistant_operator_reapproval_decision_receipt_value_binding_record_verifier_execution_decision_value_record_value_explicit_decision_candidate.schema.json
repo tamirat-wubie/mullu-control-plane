@@ -1,0 +1,493 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-candidate:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Value Binding Record Verifier Execution Decision Value Record Value Explicit Decision Candidate",
+  "description": "No-effect witness projecting explicit operator decision candidate classes without admitting a value.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "explicit_decision_candidate_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_generic_continuation_rejection_id",
+    "explicit_decision_candidate_state",
+    "decision",
+    "outcome",
+    "explicit_decision_candidate_count",
+    "explicit_decision_candidate_item_ids",
+    "receipt_ids",
+    "explicit_decision_candidates",
+    "effect_boundary",
+    "private_payload_policy",
+    "summary",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "explicit_decision_candidate_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_candidate_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "governed": {
+      "const": true
+    },
+    "source_projection": {
+      "const": "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_generic_continuation_rejection"
+    },
+    "source_generic_continuation_rejection_id": {
+      "$ref": "#/$defs/non_empty_text"
+    },
+    "explicit_decision_candidate_state": {
+      "const": "explicit_operator_decision_candidate_projected_not_admitted"
+    },
+    "decision": {
+      "const": "blocked"
+    },
+    "outcome": {
+      "const": "AwaitingEvidence"
+    },
+    "explicit_decision_candidate_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "explicit_decision_candidate_item_ids": {
+      "$ref": "#/$defs/string_array"
+    },
+    "receipt_ids": {
+      "$ref": "#/$defs/string_array"
+    },
+    "explicit_decision_candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/explicit_decision_candidate_item"
+      }
+    },
+    "effect_boundary": {
+      "$ref": "#/$defs/effect_boundary"
+    },
+    "private_payload_policy": {
+      "$ref": "#/$defs/private_payload_policy"
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "assurance": {
+      "$ref": "#/$defs/assurance"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    }
+  },
+  "$defs": {
+    "non_empty_text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/non_empty_text"
+      }
+    },
+    "explicit_decision_candidate_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "explicit_decision_candidate_item_id",
+        "source_generic_continuation_rejection_item_id",
+        "evidence_kind",
+        "requirement_kind",
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "skill_id",
+        "risk_level",
+        "submitted_evidence_ref",
+        "submitted_verifier_ref",
+        "generic_continuation_rejection_ref",
+        "explicit_decision_candidate",
+        "authority_status",
+        "receipt"
+      ],
+      "properties": {
+        "explicit_decision_candidate_item_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_candidate_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "source_generic_continuation_rejection_item_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "evidence_kind": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "requirement_kind": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "approval_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "request_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "plan_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "skill_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "risk_level": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "submitted_evidence_ref": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "submitted_verifier_ref": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "generic_continuation_rejection_ref": {
+          "$ref": "#/$defs/source_ref"
+        },
+        "explicit_decision_candidate": {
+          "$ref": "#/$defs/explicit_decision_candidate"
+        },
+        "authority_status": {
+          "$ref": "#/$defs/authority_status"
+        },
+        "receipt": {
+          "type": "object"
+        }
+      }
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "source_generic_continuation_rejection_state": {
+          "const": "generic_continuation_rejected_not_operator_value"
+        },
+        "source_outcome": {
+          "const": "SolvedVerified"
+        },
+        "source_generic_continuation_rejected": {
+          "const": true
+        },
+        "source_actual_operator_decision_value_absent": {
+          "const": true
+        },
+        "source_generic_continuation_accepted_as_value": {
+          "const": false
+        },
+        "source_operator_decision_value_present": {
+          "const": false
+        },
+        "source_operator_value_record_created": {
+          "const": false
+        },
+        "source_verifier_execution_allowed": {
+          "const": false
+        },
+        "source_authority_granted": {
+          "const": false
+        }
+      }
+    },
+    "explicit_decision_candidate": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "record_contract_ready",
+        "explicit_decision_candidate_classes_projected",
+        "candidate_kind_count",
+        "candidate_kinds",
+        "required_value_refs",
+        "candidate_class_is_value",
+        "candidate_class_grants_authority",
+        "candidate_class_grants_verifier_execution",
+        "actual_operator_decision_value_absent",
+        "explicit_decision_candidate_admitted",
+        "operator_decision_value_present",
+        "operator_value_record_created",
+        "verifier_execution_allowed",
+        "authority_granted"
+      ],
+      "properties": {
+        "record_contract_ready": {
+          "const": true
+        },
+        "explicit_decision_candidate_classes_projected": {
+          "const": true
+        },
+        "candidate_kind_count": {
+          "const": 4
+        },
+        "candidate_kinds": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/candidate_kind"
+          }
+        },
+        "required_value_refs": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/non_empty_text"
+          }
+        },
+        "requires_actual_operator_decision_value": {
+          "const": true
+        },
+        "requires_operator_identity_ref": {
+          "const": true
+        },
+        "requires_operator_signature_ref": {
+          "const": true
+        },
+        "requires_operator_reapproval_decision_receipt_ref": {
+          "const": true
+        },
+        "candidate_class_is_value": {
+          "const": false
+        },
+        "candidate_class_grants_authority": {
+          "const": false
+        },
+        "candidate_class_grants_verifier_execution": {
+          "const": false
+        },
+        "actual_operator_decision_value_absent": {
+          "const": true
+        },
+        "explicit_decision_candidate_admitted": {
+          "const": false
+        },
+        "explicit_operator_decision_value_bound": {
+          "const": false
+        },
+        "operator_decision_value_present": {
+          "const": false
+        },
+        "operator_value_record_created": {
+          "const": false
+        },
+        "verifier_execution_allowed": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        }
+      }
+    },
+    "candidate_kind": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "candidate_kind",
+        "candidate_detectable",
+        "candidate_admitted",
+        "candidate_executed",
+        "candidate_value_bound",
+        "grants_authority",
+        "grants_verifier_execution",
+        "required_value_refs"
+      ],
+      "properties": {
+        "candidate_kind": {
+          "enum": [
+            "explicit_operator_approval",
+            "explicit_operator_rejection",
+            "explicit_operator_revision_request",
+            "explicit_operator_expiry"
+          ]
+        },
+        "candidate_detectable": {
+          "const": true
+        },
+        "candidate_admitted": {
+          "const": false
+        },
+        "candidate_executed": {
+          "const": false
+        },
+        "candidate_value_bound": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        },
+        "grants_verifier_execution": {
+          "const": false
+        },
+        "required_value_refs": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/non_empty_text"
+          }
+        }
+      }
+    },
+    "authority_status": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "authority_granted": {
+          "const": false
+        },
+        "live_connector_execution_allowed": {
+          "const": false
+        },
+        "connector_mutation_allowed": {
+          "const": false
+        },
+        "memory_write_allowed": {
+          "const": false
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "explicit_decision_candidate_classes_projected": {
+          "const": true
+        },
+        "generic_continuation_rejection_preserved": {
+          "const": true
+        },
+        "actual_operator_decision_value_absent": {
+          "const": true
+        },
+        "explicit_decision_candidate_admitted": {
+          "const": false
+        },
+        "explicit_operator_decision_value_bound": {
+          "const": false
+        },
+        "operator_decision_value_present": {
+          "const": false
+        },
+        "operator_value_record_created": {
+          "const": false
+        },
+        "verifier_execution_allowed": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        },
+        "live_connector_execution_allowed": {
+          "const": false
+        },
+        "connector_mutation_allowed": {
+          "const": false
+        },
+        "memory_write_allowed": {
+          "const": false
+        },
+        "deployment_mutation_allowed": {
+          "const": false
+        },
+        "nested_mind_live_activation_allowed": {
+          "const": false
+        },
+        "public_readiness_claim_allowed": {
+          "const": false
+        }
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "raw_private_payload_serialized": {
+          "const": false
+        },
+        "secret_values_serialized": {
+          "const": false
+        },
+        "explicit_decision_candidate_projection": {
+          "const": "class_only"
+        },
+        "operator_decision_value_projection": {
+          "const": "absent"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "explicit_decision_candidate_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "explicit_decision_candidate_class_count": {
+          "type": "integer",
+          "minimum": 4
+        },
+        "explicit_decision_candidate_admission_count": {
+          "const": 0
+        },
+        "explicit_decision_candidate_execution_count": {
+          "const": 0
+        },
+        "explicit_operator_decision_value_bound_count": {
+          "const": 0
+        },
+        "operator_decision_value_present_count": {
+          "const": 0
+        },
+        "operator_value_record_creation_count": {
+          "const": 0
+        },
+        "verifier_execution_allowed_count": {
+          "const": 0
+        },
+        "authority_grant_count": {
+          "const": 0
+        }
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "outcome": {
+          "const": "AwaitingEvidence"
+        },
+        "explicit_decision_candidate_classes_projected": {
+          "const": true
+        },
+        "explicit_decision_candidate_admitted": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "runtime_boundary": {
+          "const": "explicit_operator_decision_candidate_projected_not_admitted"
+        },
+        "authority_granted": {
+          "const": false
+        }
+      }
+    }
+  }
+}
