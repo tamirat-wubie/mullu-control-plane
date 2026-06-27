@@ -76,6 +76,42 @@ def test_github_pr_terminal_closure_generic_continuation_rejection_rejects_sourc
     assert len(errors) >= 3
 
 
+def test_github_pr_terminal_closure_generic_continuation_rejection_rejects_actual_diff_decision_contract_drift() -> None:
+    payload = validator.build_mutated_generic_continuation_rejection(
+        continuation_rejection__actual_diff_decision_contract_evidence__source_decision_contract_binding_id="other_binding",
+        continuation_rejection__actual_diff_decision_contract_evidence__source_decision_contract_ref="examples/other-contract.json",
+        continuation_rejection__actual_diff_decision_contract_evidence__operator_decision_ref="approval://other",
+        continuation_rejection__actual_diff_decision_contract_evidence__actual_diff_terminal_closure_certificate_witness_ref="examples/other-certificate.json",
+        continuation_rejection__actual_diff_decision_contract_evidence__actual_diff_effect_reconciliation_witness_ref="examples/other-effect.json",
+        continuation_rejection__actual_diff_decision_contract_evidence__actual_diff_operator_response_witness_ref="examples/other-response.json",
+        continuation_rejection__actual_diff_decision_contract_evidence__actual_diff_approval_request_binding_ref="examples/other-approval.json",
+        continuation_rejection__actual_diff_decision_contract_evidence__actual_non_empty_diff_receipt_ref="witness://other",
+        continuation_rejection__actual_diff_decision_contract_evidence__changed_file_refs=["evidence://other-file"],
+        continuation_rejection__actual_diff_decision_contract_evidence__diff_refs=["evidence://other-diff"],
+        continuation_rejection__actual_diff_decision_contract_evidence__redacted_diff_bundle_ref="digest://other",
+        continuation_rejection__actual_diff_decision_contract_evidence__redacted_output_ref="witness://other-output",
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_generic_continuation_rejection_semantics(
+        payload, _source_contract(), errors, "mutated"
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "actual_diff_decision_contract_evidence.source_decision_contract_binding_id expected" in serialized_errors
+    assert "actual_diff_decision_contract_evidence.source_decision_contract_ref expected" in serialized_errors
+    assert "actual_diff_decision_contract_evidence.operator_decision_ref expected" in serialized_errors
+    assert "actual_diff_decision_contract_evidence.actual_diff_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "actual_diff_decision_contract_evidence.actual_diff_effect_reconciliation_witness_ref expected" in serialized_errors
+    assert "actual_diff_decision_contract_evidence.actual_diff_operator_response_witness_ref expected" in serialized_errors
+    assert "actual_diff_decision_contract_evidence.actual_diff_approval_request_binding_ref expected" in serialized_errors
+    assert "actual_diff_decision_contract_evidence.actual_non_empty_diff_receipt_ref expected" in serialized_errors
+    assert "actual_diff_decision_contract_evidence.changed_file_refs expected" in serialized_errors
+    assert "actual_diff_decision_contract_evidence.diff_refs expected" in serialized_errors
+    assert "actual_diff_decision_contract_evidence.redacted_diff_bundle_ref expected" in serialized_errors
+    assert "actual_diff_decision_contract_evidence.redacted_output_ref expected" in serialized_errors
+
+
 def test_github_pr_terminal_closure_generic_continuation_rejection_rejects_decision_value_drift() -> None:
     payload = validator.build_mutated_generic_continuation_rejection(
         generic_continuation_rejected=False,

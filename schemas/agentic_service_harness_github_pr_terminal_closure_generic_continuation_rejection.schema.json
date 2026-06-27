@@ -117,6 +117,7 @@
         "accepted_as_operator_approval",
         "terminal_closure_certificate_minted",
         "terminal_closure_authorized",
+        "actual_diff_decision_contract_evidence",
         "required_rejection_result"
       ],
       "properties": {
@@ -145,7 +146,130 @@
         "accepted_as_operator_approval": { "type": "boolean", "const": false },
         "terminal_closure_certificate_minted": { "type": "boolean", "const": false },
         "terminal_closure_authorized": { "type": "boolean", "const": false },
+        "actual_diff_decision_contract_evidence": {
+          "$ref": "#/$defs/actual_diff_decision_contract_evidence"
+        },
         "required_rejection_result": { "type": "string", "const": "rejected_not_explicit_operator_decision_value" }
+      }
+    },
+    "actual_diff_decision_contract_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_decision_contract_binding_id",
+        "source_decision_contract_ref",
+        "operator_decision_ref",
+        "requires_actual_diff_operator_approval_gate_evidence",
+        "source_approval_gate_binding_id",
+        "source_approval_gate_ref",
+        "actual_diff_terminal_closure_certificate_witness_ref",
+        "actual_diff_effect_reconciliation_witness_ref",
+        "actual_diff_ci_gate_before_ready_for_review_witness_ref",
+        "actual_diff_repository_effect_rollback_plan_witness_ref",
+        "actual_diff_uao_admission_witness_ref",
+        "actual_diff_branch_write_binding_ref",
+        "actual_diff_operator_response_witness_ref",
+        "actual_diff_approval_request_binding_ref",
+        "actual_non_empty_diff_receipt_ref",
+        "changed_file_refs",
+        "diff_refs",
+        "redacted_diff_bundle_ref",
+        "redacted_output_ref",
+        "effect_reconciliation_collected",
+        "binds_branch_state",
+        "binds_pull_request_state",
+        "binds_check_state",
+        "binds_merge_state",
+        "binds_branch_deletion_state"
+      ],
+      "properties": {
+        "source_decision_contract_binding_id": {
+          "type": "string",
+          "const": "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract"
+        },
+        "source_decision_contract_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.foundation.json"
+        },
+        "operator_decision_ref": {
+          "type": "string",
+          "const": "approval://github-pr-terminal-closure-certificate/operator-decision"
+        },
+        "requires_actual_diff_operator_approval_gate_evidence": { "type": "boolean", "const": true },
+        "source_approval_gate_binding_id": {
+          "type": "string",
+          "const": "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate"
+        },
+        "source_approval_gate_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.foundation.json"
+        },
+        "actual_diff_terminal_closure_certificate_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_witness.foundation.json"
+        },
+        "actual_diff_effect_reconciliation_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_effect_reconciliation_witness.foundation.json"
+        },
+        "actual_diff_ci_gate_before_ready_for_review_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.foundation.json"
+        },
+        "actual_diff_repository_effect_rollback_plan_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json"
+        },
+        "actual_diff_uao_admission_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json"
+        },
+        "actual_diff_branch_write_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json"
+        },
+        "actual_diff_operator_response_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
+        },
+        "actual_diff_approval_request_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
+        },
+        "actual_non_empty_diff_receipt_ref": {
+          "type": "string",
+          "const": "witness://actual-non-empty-diff-receipt"
+        },
+        "changed_file_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^evidence://redacted-file-change-candidate/"
+          }
+        },
+        "diff_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^evidence://redacted-diff-candidate/"
+          }
+        },
+        "redacted_diff_bundle_ref": {
+          "type": "string",
+          "const": "digest://redacted-filesystem-write-diff-bundle-candidate"
+        },
+        "redacted_output_ref": {
+          "type": "string",
+          "const": "witness://filesystem-write-output-redacted"
+        },
+        "effect_reconciliation_collected": { "type": "boolean", "const": true },
+        "binds_branch_state": { "type": "boolean", "const": true },
+        "binds_pull_request_state": { "type": "boolean", "const": true },
+        "binds_check_state": { "type": "boolean", "const": true },
+        "binds_merge_state": { "type": "boolean", "const": true },
+        "binds_branch_deletion_state": { "type": "boolean", "const": true }
       }
     },
     "remaining_witness": {
