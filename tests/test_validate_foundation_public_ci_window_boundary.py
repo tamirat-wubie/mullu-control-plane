@@ -89,6 +89,18 @@ def test_public_ci_window_witness_rejects_launch_claim() -> None:
     assert any("public_launch_claimed" in finding.message for finding in findings)
 
 
+def test_public_ci_window_witness_rejects_extra_validator_fields() -> None:
+    payload = load_json_object(DEFAULT_WITNESS_PATH, "public CI window boundary witness")
+    payload["validators"][0]["raw_log"] = "bounded local detail"
+
+    findings = validate_witness(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_validator_entry_keys_invalid" for finding in findings)
+    assert any("validator entries must contain only command and state" in finding.message for finding in findings)
+    assert all("bounded local detail" not in finding.message for finding in findings)
+
+
 def test_public_ci_window_closed_receipt_example_passes() -> None:
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
 
@@ -109,6 +121,21 @@ def test_public_ci_window_receipt_rejects_missing_closure_for_closed_window() ->
     assert findings
     assert any(finding.rule_id == "public_ci_window_receipt_closed_at_invalid" for finding in findings)
     assert any("closed receipts require closed_at" in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_extra_validator_fields() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["validators"][0]["raw_log"] = "private validator output"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(
+        finding.rule_id == "public_ci_window_receipt_validator_entry_keys_invalid"
+        for finding in findings
+    )
+    assert any("validator entries must contain only command and state" in finding.message for finding in findings)
+    assert all("private validator output" not in finding.message for finding in findings)
 
 
 def test_public_ci_window_receipt_rejects_invalid_opened_at_timestamp() -> None:
