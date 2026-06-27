@@ -1,0 +1,501 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-request:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Value Binding Record Verifier Execution Decision Value Record Value Request",
+  "description": "No-effect value-record value request that remains blocked until an explicit operator decision value exists.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_value_request_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_record_admission_gate_id",
+    "record_value_request_state",
+    "decision",
+    "outcome",
+    "record_value_request_count",
+    "record_value_request_item_ids",
+    "receipt_ids",
+    "record_value_requests",
+    "effect_boundary",
+    "private_payload_policy",
+    "summary",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "record_value_request_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_request_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "governed": { "type": "boolean", "const": true },
+    "source_projection": {
+      "type": "string",
+      "const": "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_admission_gate"
+    },
+    "source_record_admission_gate_id": { "$ref": "#/$defs/non_empty_text" },
+    "record_value_request_state": {
+      "type": "string",
+      "const": "operator_decision_value_record_value_request_blocked_awaiting_actual_operator_value"
+    },
+    "decision": { "type": "string", "const": "blocked" },
+    "outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "record_value_request_count": { "type": "integer", "minimum": 1 },
+    "record_value_request_item_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_request_item_[a-z0-9][a-z0-9_:-]*$"
+      }
+    },
+    "receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/non_empty_text" }
+    },
+    "record_value_requests": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/record_value_request_item" }
+    },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "private_payload_policy": { "$ref": "#/$defs/private_payload_policy" },
+    "summary": { "$ref": "#/$defs/summary" },
+    "assurance": { "$ref": "#/$defs/assurance" },
+    "metadata": { "$ref": "#/$defs/metadata" }
+  },
+  "$defs": {
+    "non_empty_text": { "type": "string", "minLength": 1 },
+    "string_array": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/non_empty_text" }
+    },
+    "record_value_request_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_value_request_item_id",
+        "source_record_admission_gate_item_id",
+        "evidence_kind",
+        "requirement_kind",
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "skill_id",
+        "risk_level",
+        "submitted_evidence_ref",
+        "submitted_verifier_ref",
+        "record_admission_gate_ref",
+        "record_value_request",
+        "authority_status",
+        "receipt"
+      ],
+      "properties": {
+        "record_value_request_item_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_request_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "source_record_admission_gate_item_id": { "$ref": "#/$defs/non_empty_text" },
+        "evidence_kind": { "$ref": "#/$defs/non_empty_text" },
+        "requirement_kind": { "$ref": "#/$defs/non_empty_text" },
+        "approval_id": { "$ref": "#/$defs/non_empty_text" },
+        "request_id": { "$ref": "#/$defs/non_empty_text" },
+        "plan_id": { "$ref": "#/$defs/non_empty_text" },
+        "skill_id": { "$ref": "#/$defs/non_empty_text" },
+        "risk_level": { "$ref": "#/$defs/non_empty_text" },
+        "submitted_evidence_ref": { "$ref": "#/$defs/non_empty_text" },
+        "submitted_verifier_ref": { "$ref": "#/$defs/non_empty_text" },
+        "record_admission_gate_ref": { "$ref": "#/$defs/record_admission_gate_ref" },
+        "record_value_request": { "$ref": "#/$defs/record_value_request" },
+        "authority_status": { "$ref": "#/$defs/authority_status" },
+        "receipt": { "type": "object" }
+      }
+    },
+    "record_admission_gate_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_record_admission_gate_id",
+        "source_record_admission_gate_item_id",
+        "source_record_admission_gate_state",
+        "source_outcome",
+        "source_record_contract_ready",
+        "source_record_admission_gate_created",
+        "source_operator_decision_required",
+        "source_operator_decision_value_required",
+        "source_actual_operator_decision_value_required",
+        "source_record_admission_gate_admitted",
+        "source_record_path_admitted",
+        "source_collection_gate_satisfied",
+        "source_operator_value_record_created",
+        "source_operator_decision_value_stored",
+        "source_operator_decision_value_present",
+        "source_operator_decision_value_admitted",
+        "source_verifier_execution_allowed",
+        "source_verifier_execution_started",
+        "source_authority_granted"
+      ],
+      "properties": {
+        "source_record_admission_gate_id": { "$ref": "#/$defs/non_empty_text" },
+        "source_record_admission_gate_item_id": { "$ref": "#/$defs/non_empty_text" },
+        "source_record_admission_gate_state": {
+          "type": "string",
+          "const": "operator_decision_value_record_admission_gate_blocked_awaiting_actual_operator_value"
+        },
+        "source_outcome": { "type": "string", "const": "AwaitingEvidence" },
+        "source_record_contract_ready": { "type": "boolean", "const": true },
+        "source_record_admission_gate_created": { "type": "boolean", "const": true },
+        "source_operator_decision_required": { "type": "boolean", "const": true },
+        "source_operator_decision_value_required": { "type": "boolean", "const": true },
+        "source_actual_operator_decision_value_required": { "type": "boolean", "const": true },
+        "source_record_admission_gate_admitted": { "type": "boolean", "const": false },
+        "source_record_path_admitted": { "type": "boolean", "const": false },
+        "source_collection_gate_satisfied": { "type": "boolean", "const": false },
+        "source_operator_value_record_created": { "type": "boolean", "const": false },
+        "source_operator_decision_value_stored": { "type": "boolean", "const": false },
+        "source_operator_decision_value_present": { "type": "boolean", "const": false },
+        "source_operator_decision_value_admitted": { "type": "boolean", "const": false },
+        "source_verifier_execution_allowed": { "type": "boolean", "const": false },
+        "source_verifier_execution_started": { "type": "boolean", "const": false },
+        "source_authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "record_value_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_contract_ready",
+        "record_value_request_created",
+        "operator_decision_required",
+        "operator_decision_value_required",
+        "actual_operator_decision_value_required",
+        "accepted_record_kinds",
+        "rejected_input_kinds",
+        "required_fields",
+        "requires_record_admission_gate_admitted",
+        "requires_record_path_admitted",
+        "requires_collection_gate_satisfied",
+        "requires_actual_operator_value",
+        "accepts_generic_continuation",
+        "accepts_template_packet",
+        "record_value_request_admitted",
+        "record_admission_gate_admitted",
+        "record_path_admitted",
+        "collection_gate_satisfied",
+        "operator_value_record_created",
+        "operator_value_record_admitted",
+        "operator_decision_value_stored",
+        "operator_decision_value_present",
+        "operator_decision_value_collected",
+        "operator_decision_value_submitted",
+        "operator_decision_value_admitted",
+        "operator_decision_present",
+        "operator_decision_intake_completed",
+        "operator_approval_granted",
+        "operator_approval_rejected",
+        "operator_decision_value_accepted",
+        "operator_decision_value_rejected",
+        "ready_for_verifier_execution",
+        "verifier_execution_allowed",
+        "verifier_execution_started",
+        "verifier_execution_completed",
+        "verifier_result_present",
+        "verifier_ref_validated",
+        "evidence_verified",
+        "evidence_accepted",
+        "evidence_rejected",
+        "binding_record_created",
+        "binding_record_admitted",
+        "authority_granted",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed",
+        "dispatch_lease_active",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed",
+        "deployment_mutation_allowed",
+        "nested_mind_live_activation_allowed",
+        "public_readiness_claim_allowed",
+        "blocking_reason"
+      ],
+      "properties": {
+        "record_contract_ready": { "type": "boolean", "const": true },
+        "record_value_request_created": { "type": "boolean", "const": true },
+        "operator_decision_required": { "type": "boolean", "const": true },
+        "operator_decision_value_required": { "type": "boolean", "const": true },
+        "actual_operator_decision_value_required": { "type": "boolean", "const": true },
+        "accepted_record_kinds": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "enum": [
+              "explicit_operator_approval",
+              "explicit_operator_rejection",
+              "explicit_operator_revision_request",
+              "explicit_operator_expiry"
+            ]
+          }
+        },
+        "rejected_input_kinds": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "type": "string", "enum": ["generic_continuation", "template_packet"] }
+        },
+        "required_fields": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "enum": [
+              "operator_decision_value_ref",
+              "operator_identity_ref",
+              "operator_signature_ref",
+              "operator_reapproval_decision_receipt_ref"
+            ]
+          }
+        },
+        "requires_record_admission_gate_admitted": { "type": "boolean", "const": true },
+        "requires_record_path_admitted": { "type": "boolean", "const": true },
+        "requires_collection_gate_satisfied": { "type": "boolean", "const": true },
+        "requires_actual_operator_value": { "type": "boolean", "const": true },
+        "accepts_generic_continuation": { "type": "boolean", "const": false },
+        "accepts_template_packet": { "type": "boolean", "const": false },
+        "record_value_request_admitted": { "type": "boolean", "const": false },
+        "record_admission_gate_admitted": { "type": "boolean", "const": false },
+        "record_path_admitted": { "type": "boolean", "const": false },
+        "collection_gate_satisfied": { "type": "boolean", "const": false },
+        "operator_value_record_created": { "type": "boolean", "const": false },
+        "operator_value_record_admitted": { "type": "boolean", "const": false },
+        "operator_decision_value_stored": { "type": "boolean", "const": false },
+        "operator_decision_value_present": { "type": "boolean", "const": false },
+        "operator_decision_value_collected": { "type": "boolean", "const": false },
+        "operator_decision_value_submitted": { "type": "boolean", "const": false },
+        "operator_decision_value_admitted": { "type": "boolean", "const": false },
+        "operator_decision_present": { "type": "boolean", "const": false },
+        "operator_decision_intake_completed": { "type": "boolean", "const": false },
+        "operator_approval_granted": { "type": "boolean", "const": false },
+        "operator_approval_rejected": { "type": "boolean", "const": false },
+        "operator_decision_value_accepted": { "type": "boolean", "const": false },
+        "operator_decision_value_rejected": { "type": "boolean", "const": false },
+        "ready_for_verifier_execution": { "type": "boolean", "const": false },
+        "verifier_execution_allowed": { "type": "boolean", "const": false },
+        "verifier_execution_started": { "type": "boolean", "const": false },
+        "verifier_execution_completed": { "type": "boolean", "const": false },
+        "verifier_result_present": { "type": "boolean", "const": false },
+        "verifier_ref_validated": { "type": "boolean", "const": false },
+        "evidence_verified": { "type": "boolean", "const": false },
+        "evidence_accepted": { "type": "boolean", "const": false },
+        "evidence_rejected": { "type": "boolean", "const": false },
+        "binding_record_created": { "type": "boolean", "const": false },
+        "binding_record_admitted": { "type": "boolean", "const": false },
+        "authority_granted": { "type": "boolean", "const": false },
+        "execution_worker_admission_allowed": { "type": "boolean", "const": false },
+        "dispatch_allowed": { "type": "boolean", "const": false },
+        "dispatch_lease_active": { "type": "boolean", "const": false },
+        "live_connector_execution_allowed": { "type": "boolean", "const": false },
+        "connector_mutation_allowed": { "type": "boolean", "const": false },
+        "system_of_record_write_allowed": { "type": "boolean", "const": false },
+        "memory_write_allowed": { "type": "boolean", "const": false },
+        "deployment_mutation_allowed": { "type": "boolean", "const": false },
+        "nested_mind_live_activation_allowed": { "type": "boolean", "const": false },
+        "public_readiness_claim_allowed": { "type": "boolean", "const": false },
+        "blocking_reason": {
+          "type": "string",
+          "const": "actual_operator_decision_value_absent_record_admission_gate_unadmitted"
+        }
+      }
+    },
+    "authority_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_value_bound",
+        "operator_value_record_created",
+        "operator_value_record_admitted",
+        "binding_record_created",
+        "binding_record_admitted",
+        "authority_granted",
+        "execution_worker_admission_allowed",
+        "dispatch_allowed",
+        "dispatch_lease_active",
+        "live_connector_receipt_present",
+        "live_connector_execution_allowed",
+        "connector_mutation_allowed",
+        "system_of_record_write_allowed",
+        "memory_write_allowed"
+      ],
+      "properties": {
+        "operator_value_bound": { "type": "boolean", "const": false },
+        "operator_value_record_created": { "type": "boolean", "const": false },
+        "operator_value_record_admitted": { "type": "boolean", "const": false },
+        "binding_record_created": { "type": "boolean", "const": false },
+        "binding_record_admitted": { "type": "boolean", "const": false },
+        "authority_granted": { "type": "boolean", "const": false },
+        "execution_worker_admission_allowed": { "type": "boolean", "const": false },
+        "dispatch_allowed": { "type": "boolean", "const": false },
+        "dispatch_lease_active": { "type": "boolean", "const": false },
+        "live_connector_receipt_present": { "type": "boolean", "const": false },
+        "live_connector_execution_allowed": { "type": "boolean", "const": false },
+        "connector_mutation_allowed": { "type": "boolean", "const": false },
+        "system_of_record_write_allowed": { "type": "boolean", "const": false },
+        "memory_write_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": { "type": ["boolean", "string"] },
+      "required": [
+        "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_request_allowed",
+        "decision_value_record_admission_gate_ref_binding_allowed",
+        "operator_decision_value_record_value_request_projection_allowed",
+        "record_admission_gates_present",
+        "operator_decision_required",
+        "operator_decision_value_required",
+        "actual_operator_decision_value_required",
+        "record_contract_ready",
+        "verifier_ref_only",
+        "record_value_request_admitted",
+        "record_admission_gate_admitted",
+        "record_path_admitted",
+        "collection_gate_satisfied",
+        "operator_value_record_created",
+        "operator_value_record_admitted",
+        "operator_decision_value_stored",
+        "operator_decision_value_present",
+        "verifier_execution_allowed",
+        "authority_granted"
+      ],
+      "properties": {
+        "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_request_allowed": { "type": "boolean", "const": true },
+        "decision_value_record_admission_gate_ref_binding_allowed": { "type": "boolean", "const": true },
+        "operator_decision_value_record_value_request_projection_allowed": { "type": "boolean", "const": true },
+        "record_admission_gates_present": { "type": "boolean", "const": true },
+        "operator_decision_required": { "type": "boolean", "const": true },
+        "operator_decision_value_required": { "type": "boolean", "const": true },
+        "actual_operator_decision_value_required": { "type": "boolean", "const": true },
+        "record_contract_ready": { "type": "boolean", "const": true },
+        "verifier_ref_only": { "type": "boolean", "const": true },
+        "record_value_request_admitted": { "type": "boolean", "const": false },
+        "record_admission_gate_admitted": { "type": "boolean", "const": false },
+        "record_path_admitted": { "type": "boolean", "const": false },
+        "collection_gate_satisfied": { "type": "boolean", "const": false },
+        "operator_value_record_created": { "type": "boolean", "const": false },
+        "operator_value_record_admitted": { "type": "boolean", "const": false },
+        "operator_decision_value_stored": { "type": "boolean", "const": false },
+        "operator_decision_value_present": { "type": "boolean", "const": false },
+        "verifier_execution_allowed": { "type": "boolean", "const": false },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_private_payload_serialized",
+        "secret_values_serialized",
+        "record_admission_gate_projection",
+        "operator_decision_value_projection",
+        "operator_value_record_projection",
+        "verifier_execution_payload_projection",
+        "verification_evidence_projection"
+      ],
+      "properties": {
+        "raw_private_payload_serialized": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "record_admission_gate_projection": { "type": "string", "const": "ref_only" },
+        "operator_decision_value_projection": { "type": "string", "const": "absent" },
+        "operator_value_record_projection": { "type": "string", "const": "absent" },
+        "verifier_execution_payload_projection": { "type": "string", "const": "absent" },
+        "verification_evidence_projection": { "type": "string", "const": "absent" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "assurance_id",
+        "outcome",
+        "foundation_only",
+        "record_value_request_only",
+        "record_contract_ready",
+        "record_value_request_admitted",
+        "record_admission_gate_admitted",
+        "record_path_admitted",
+        "collection_gate_satisfied",
+        "operator_value_record_created",
+        "operator_value_record_admitted",
+        "verifier_execution_allowed",
+        "authority_granted",
+        "blocking_reasons",
+        "next_action"
+      ],
+      "properties": {
+        "assurance_id": { "$ref": "#/$defs/non_empty_text" },
+        "outcome": { "type": "string", "const": "AwaitingEvidence" },
+        "foundation_only": { "type": "boolean", "const": true },
+        "record_value_request_only": { "type": "boolean", "const": true },
+        "record_contract_ready": { "type": "boolean", "const": true },
+        "record_value_request_admitted": { "type": "boolean", "const": false },
+        "record_admission_gate_admitted": { "type": "boolean", "const": false },
+        "record_path_admitted": { "type": "boolean", "const": false },
+        "collection_gate_satisfied": { "type": "boolean", "const": false },
+        "operator_value_record_created": { "type": "boolean", "const": false },
+        "operator_value_record_admitted": { "type": "boolean", "const": false },
+        "verifier_execution_allowed": { "type": "boolean", "const": false },
+        "authority_granted": { "type": "boolean", "const": false },
+        "blocking_reasons": { "$ref": "#/$defs/string_array" },
+        "next_action": { "$ref": "#/$defs/non_empty_text" }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": { "type": ["boolean", "string"] },
+      "required": [
+        "foundation_only",
+        "projection_contract",
+        "runtime_boundary",
+        "record_value_request_only",
+        "record_value_request_admitted",
+        "record_admission_gate_admitted",
+        "record_path_admitted",
+        "collection_gate_satisfied",
+        "operator_value_record_created",
+        "operator_value_record_admitted",
+        "verifier_execution_allowed",
+        "authority_granted"
+      ],
+      "properties": {
+        "foundation_only": { "type": "boolean", "const": true },
+        "projection_contract": {
+          "type": "string",
+          "const": "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_request"
+        },
+        "runtime_boundary": {
+          "type": "string",
+          "const": "operator_decision_value_record_value_request_blocked_awaiting_actual_operator_value"
+        },
+        "record_value_request_only": { "type": "boolean", "const": true },
+        "record_value_request_admitted": { "type": "boolean", "const": false },
+        "record_admission_gate_admitted": { "type": "boolean", "const": false },
+        "record_path_admitted": { "type": "boolean", "const": false },
+        "collection_gate_satisfied": { "type": "boolean", "const": false },
+        "operator_value_record_created": { "type": "boolean", "const": false },
+        "operator_value_record_admitted": { "type": "boolean", "const": false },
+        "verifier_execution_allowed": { "type": "boolean", "const": false },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}
