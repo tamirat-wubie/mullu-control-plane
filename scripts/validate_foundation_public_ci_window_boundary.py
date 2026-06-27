@@ -355,6 +355,18 @@ def _window_id_binds_pull_request(window_id: Any, pull_request_number: str) -> b
     return isinstance(window_id, str) and window_id.endswith(f".pr{pull_request_number}")
 
 
+def _window_id_date_token(window_id: Any) -> str | None:
+    if not isinstance(window_id, str):
+        return None
+    parts = window_id.split(".")
+    if len(parts) != 3 or parts[0] != "foundation_public_ci_window":
+        return None
+    date_token = parts[1]
+    if len(date_token) != 8 or not date_token.isdigit():
+        return None
+    return date_token
+
+
 def _is_hex_sha(value: Any) -> bool:
     return isinstance(value, str) and len(value) == 40 and all(char in "0123456789abcdef" for char in value)
 
@@ -483,6 +495,15 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
                 "opened_at must be an ISO-8601 UTC timestamp ending in Z",
             )
         )
+    else:
+        window_id_date = _window_id_date_token(payload.get("window_id"))
+        if window_id_date != parsed_opened_at.strftime("%Y%m%d"):
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_window_id_date_mismatch",
+                    "window_id date must match opened_at UTC date",
+                )
+            )
 
     closed_at = payload.get("closed_at")
     if status == "closed" and not _is_non_empty_string(closed_at):

@@ -216,6 +216,30 @@ def test_public_ci_window_receipt_rejects_closed_at_before_opened_at() -> None:
     assert all("2026-06-26T10:51:56Z" not in finding.message for finding in findings)
 
 
+def test_public_ci_window_receipt_rejects_window_id_date_mismatch() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["window_id"] = "foundation_public_ci_window.20260625.pr2213"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_window_id_date_mismatch" for finding in findings)
+    assert any("window_id date must match opened_at UTC date" in finding.message for finding in findings)
+    assert all("20260625" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_malformed_window_id_date_token() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["window_id"] = "foundation_public_ci_window.pr2213"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_window_id_date_mismatch" for finding in findings)
+    assert any("window_id date must match opened_at UTC date" in finding.message for finding in findings)
+    assert all("foundation_public_ci_window.pr2213" not in finding.message for finding in findings)
+
+
 def test_public_ci_window_receipt_rejects_secret_shaped_text() -> None:
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["exposure_decision"] = "accidentally included client_secret value"
