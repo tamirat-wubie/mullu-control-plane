@@ -1,0 +1,122 @@
+{
+  "receipt_id": "agentic_service_harness_actual_non_empty_diff_receipt_binding",
+  "schema_version": 1,
+  "generated_at": "2026-06-27T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "receipt_status": "actual_non_empty_diff_refs_bound_without_receipt_append",
+  "source_redacted_filesystem_write_execution_receipt_ref": "examples/agentic_service_harness_redacted_filesystem_write_execution_receipt.foundation.json",
+  "source_non_empty_diff_file_summary_receipt_ref": "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json",
+  "scope": {
+    "project_id": "project.foundation",
+    "task_id": "task.branchwrite",
+    "run_id": "run.branchwrite",
+    "sandbox_id": "sandbox.branchwrite",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "mode": "branch_write",
+    "foundation_phase": "foundation_actual_non_empty_diff_receipt_binding",
+    "receipt_only": true
+  },
+  "source_receipts": {
+    "redacted_filesystem_write_execution_receipt_verified": true,
+    "non_empty_diff_file_summary_receipt_verified": true,
+    "source_non_empty_file_summary_emitted": false,
+    "redacted_execution_changed_file_count": 1,
+    "redacted_execution_changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "redacted_execution_diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
+    "redacted_execution_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "redacted_execution_output_ref": "witness://filesystem-write-output-redacted"
+  },
+  "actual_non_empty_diff_binding": {
+    "binding_kind": "redacted_actual_non_empty_diff_receipt_binding",
+    "actual_non_empty_diff_receipt_ref": "witness://actual-non-empty-diff-receipt",
+    "changed_file_count": 1,
+    "changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
+    "redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "redacted_output_ref": "witness://filesystem-write-output-redacted",
+    "raw_diff_body_serialized": false,
+    "raw_file_content_serialized": false,
+    "absolute_paths_allowed": false,
+    "parent_traversal_allowed": false,
+    "secret_paths_allowed": false,
+    "production_paths_allowed": false,
+    "receipt_append_ref": "blocked://receipt-store-append/not-enabled"
+  },
+  "admission_gates": {
+    "actual_non_empty_diff_refs_bound": true,
+    "non_empty_file_summary_emitted": false,
+    "actual_filesystem_write_receipt_emitted": false,
+    "receipt_store_appended": false,
+    "terminal_certificate_verified": false,
+    "required_before_binding_refs": [
+      "examples/agentic_service_harness_redacted_filesystem_write_execution_receipt.foundation.json",
+      "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json",
+      "witness://actual-non-empty-diff-receipt",
+      "witness://filesystem-write-output-redacted",
+      "digest://redacted-filesystem-write-diff-bundle-candidate",
+      "evidence://redaction-policy-for-file-change-collection",
+      "evidence://receipt-store-write-path-for-diff-collection",
+      "evidence://receipt-store-write-path-for-filesystem-write",
+      "evidence://terminal-closure-certificate-required"
+    ],
+    "blocked_reason_refs": [
+      "blocked://non-empty-file-summary/not-emitted",
+      "blocked://actual-filesystem-write-receipt/not-emitted",
+      "blocked://receipt-store-append/not-enabled",
+      "blocked://terminal-certificate/not-verified",
+      "blocked://raw-diff-body/not-allowed",
+      "blocked://raw-file-content/not-allowed",
+      "blocked://secret-values/not-allowed",
+      "blocked://mutation-route/not-enabled",
+      "blocked://pull-request/not-opened"
+    ],
+    "next_required_evidence_refs": [
+      "witness://github-pr-admission-preflight",
+      "evidence://receipt-store-write-path-for-diff-collection",
+      "evidence://terminal-closure-certificate-required"
+    ]
+  },
+  "effect_boundary": {
+    "branch_created": false,
+    "workspace_written": false,
+    "files_written": false,
+    "commands_executed": false,
+    "tests_executed": false,
+    "pull_request_opened": false,
+    "runtime_state_written": false,
+    "receipt_store_appended": false,
+    "connector_calls_observed": false,
+    "external_effects_observed": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false,
+    "success_claim_allowed": false
+  },
+  "receipt_refs": {
+    "actual_non_empty_diff_receipt_binding_schema": "schemas/agentic_service_harness_actual_non_empty_diff_receipt_binding.schema.json",
+    "actual_non_empty_diff_receipt_binding_example": "examples/agentic_service_harness_actual_non_empty_diff_receipt_binding.foundation.json",
+    "redacted_filesystem_write_execution_receipt_example": "examples/agentic_service_harness_redacted_filesystem_write_execution_receipt.foundation.json",
+    "non_empty_diff_file_summary_receipt_example": "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json",
+    "actual_non_empty_diff_receipt_ref": "witness://actual-non-empty-diff-receipt",
+    "receipt_store_append_ref": "blocked://receipt-store-append/not-enabled",
+    "terminal_certificate_required_ref": "evidence://terminal-closure-certificate-required"
+  },
+  "validators": [
+    {
+      "validator_id": "validator.agentic-service-harness-actual-non-empty-diff-receipt-binding",
+      "command": "python scripts/validate_agentic_service_harness_actual_non_empty_diff_receipt_binding.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Bind GitHub PR admission to actual non-empty diff receipt binding; keep PR creation, branch writes, raw diff bodies, raw file content, receipt-store append, connector calls, mutation routes, secrets, and terminal closure blocked until terminal certificate evidence exists.",
+  "receipt_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}
