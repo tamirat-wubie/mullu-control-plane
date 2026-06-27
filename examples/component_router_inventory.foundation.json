@@ -2438,14 +2438,14 @@
         "agentic_service_harness"
       ],
       "component_lane": "runtime_core",
-      "declared_route_count": 11,
+      "declared_route_count": 12,
       "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
       "sample_routes": [
         "/api/v1/cognitive/shadow/observations",
         "/api/v1/execute",
         "/api/v1/ledger",
         "/api/v1/pipeline/execute",
-        "/api/v1/pipeline/history"
+        "/api/v1/workflow/local-developer/read-model"
       ],
       "surface_id": "workflow_execution_lifecycle"
     }
