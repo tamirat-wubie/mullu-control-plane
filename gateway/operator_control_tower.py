@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, replace
 from enum import StrEnum
+from html import escape
 from typing import Any, Mapping
 
 from gateway.command_spine import canonical_hash
@@ -252,6 +253,127 @@ class OperatorControlTowerBuilder:
 def operator_control_tower_snapshot_to_json_dict(snapshot: OperatorControlTowerSnapshot) -> dict[str, Any]:
     """Return the public JSON-contract representation of the tower snapshot."""
     return snapshot.to_json_dict()
+
+
+def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str:
+    """Render the read-only operator control tower dashboard."""
+    payload = snapshot.to_json_dict()
+    capability_panel = next(
+        (
+            panel
+            for panel in payload.get("panels", ())
+            if isinstance(panel, Mapping) and panel.get("panel") == OperatorPanelKind.CAPABILITY_HEALTH.value
+        ),
+        {},
+    )
+    capability_metadata = capability_panel.get("metadata", {}) if isinstance(capability_panel, Mapping) else {}
+    if not isinstance(capability_metadata, Mapping):
+        capability_metadata = {}
+    workflow = capability_metadata.get("developer_workflow_v1", {})
+    if not isinstance(workflow, Mapping):
+        workflow = {}
+    workflow_summary = capability_metadata.get("developer_workflow_summary", {})
+    if not isinstance(workflow_summary, Mapping):
+        workflow_summary = {}
+    panel_rows = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(panel.get('panel', '')))}</td>"
+        f"<td>{escape(str(panel.get('health', '')))}</td>"
+        f"<td>{int(panel.get('item_count', 0) or 0)}</td>"
+        f"<td>{int(panel.get('blocked_count', 0) or 0)}</td>"
+        f"<td>{int(panel.get('review_count', 0) or 0)}</td>"
+        f"<td>{escape(str(panel.get('source_surface', '')))}</td>"
+        "</tr>"
+        for panel in payload.get("panels", ())
+        if isinstance(panel, Mapping)
+    )
+    signal_rows = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(signal.get('panel', '')))}</td>"
+        f"<td>{escape(str(signal.get('severity', '')))}</td>"
+        f"<td>{escape(str(signal.get('reason', '')))}</td>"
+        "</tr>"
+        for signal in payload.get("signals", ())
+        if isinstance(signal, Mapping)
+    )
+    if not signal_rows:
+        signal_rows = '<tr><td colspan="3">No operator signals</td></tr>'
+    task = str(workflow_summary.get("task") or "Mullu Developer Workflow v1")
+    status = str(workflow.get("status") or workflow_summary.get("status") or "")
+    reason = str(workflow_summary.get("reason") or "")
+    next_unlock = str(workflow.get("next_unlock") or workflow_summary.get("next_unlock") or "")
+    risk = str(workflow_summary.get("risk") or "")
+    action_needed = str(workflow_summary.get("action_needed") or "")
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullu Operator Control Tower</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 24px; color: #17202a; background: #f7f8fa; }}
+    main {{ max-width: 1240px; margin: 0 auto; }}
+    header, section {{ margin-bottom: 22px; }}
+    nav {{ display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0 18px; }}
+    a {{ color: #0969da; }}
+    .metrics {{ display: flex; flex-wrap: wrap; gap: 10px; }}
+    .metric {{ border: 1px solid #d8dee4; border-radius: 6px; padding: 8px 10px; background: #fff; }}
+    .task {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }}
+    .field {{ border: 1px solid #d8dee4; border-radius: 6px; padding: 10px; background: #fff; }}
+    .field strong {{ display: block; font-size: 12px; color: #57606a; margin-bottom: 4px; }}
+    table {{ border-collapse: collapse; width: 100%; background: #fff; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; vertical-align: top; font-size: 13px; }}
+    th {{ background: #eef1f4; }}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Mullu Operator Control Tower</h1>
+    <nav>
+      <a href="/operator/control-tower/read-model">json read model</a>
+      <a href="/operator/capabilities">capability console</a>
+      <a href="/operator/capabilities/friction-control/read-model?domain=software_dev">friction control</a>
+      <a href="/operator/current-task">current task</a>
+      <a href="/operator/plan-review">plan review</a>
+      <a href="/operator/approvals">approvals</a>
+      <a href="/operator/receipts">receipts</a>
+    </nav>
+    <div class="metrics">
+      <span class="metric">Health: {escape(str(payload.get("overall_health", "")))}</span>
+      <span class="metric">Panels: {int(payload.get("panel_count", 0) or 0)}</span>
+      <span class="metric">Missing: {int(payload.get("missing_panel_count", 0) or 0)}</span>
+      <span class="metric">Degraded: {int(payload.get("degraded_panel_count", 0) or 0)}</span>
+      <span class="metric">Critical: {int(payload.get("critical_signal_count", 0) or 0)}</span>
+    </div>
+  </header>
+  <section>
+    <h2>Developer Workflow</h2>
+    <div class="task">
+      <span class="field"><strong>Task</strong>{escape(task)}</span>
+      <span class="field"><strong>Status</strong>{escape(status)}</span>
+      <span class="field"><strong>Reason</strong>{escape(reason)}</span>
+      <span class="field"><strong>Next unlock</strong>{escape(next_unlock)}</span>
+      <span class="field"><strong>Risk</strong>{escape(risk)}</span>
+      <span class="field"><strong>Action needed</strong>{escape(action_needed)}</span>
+    </div>
+  </section>
+  <section>
+    <h2>Panels</h2>
+    <table>
+      <thead><tr><th>Panel</th><th>Health</th><th>Items</th><th>Blocked</th><th>Review</th><th>Source</th></tr></thead>
+      <tbody>{panel_rows}</tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Signals</h2>
+    <table>
+      <thead><tr><th>Panel</th><th>Severity</th><th>Reason</th></tr></thead>
+      <tbody>{signal_rows}</tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>"""
 
 
 def _panel_from_read_model(

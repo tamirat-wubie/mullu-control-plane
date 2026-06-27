@@ -222,6 +222,15 @@ The operator console projects this workflow from the capability registry through
 effect-bearing stages are lab-mode admissible through sandbox, receipt, rollback,
 and no-network constraints.
 
+The operator control tower exposes the same workflow summary through
+`/operator/control-tower/read-model` and `/operator/control-tower`. The dashboard
+surface intentionally shows the compact operator fields: task, status, reason,
+next unlock, risk, and action needed. The populated panel is
+`capability_health`, with `approvals`, `proof_explorer`, and `workflow_monitor`
+also attached from existing read-only approval history, receipt viewer, current
+task, and plan review projections. Unrelated panels remain explicit missing read
+models until their own governed projections are attached.
+
 Real-world effects remain outside this workflow. Opening an external pull
 request, pushing a branch, merging, deployment, customer communication, or
 production data mutation must enter a stronger workflow with approval, witness,

@@ -151,6 +151,12 @@ from gateway.operator_capability_console import (
     build_operator_capability_read_model,
     render_operator_capability_console,
 )
+from gateway.operator_control_tower import (
+    OperatorControlTowerBuilder,
+    OperatorPanelKind,
+    operator_control_tower_snapshot_to_json_dict,
+    render_operator_control_tower,
+)
 from gateway.operator_goal_intake import (
     DEFAULT_GOAL_INTAKE_CHANNEL,
     DEFAULT_GOAL_INTAKE_SENDER_ID,
@@ -160,6 +166,10 @@ from gateway.operator_goal_intake import (
     render_goal_intake_html,
 )
 from gateway.operator_receipt_viewer import (
+    APPROVAL_HISTORY_SCHEMA_REF,
+    CURRENT_TASK_SCHEMA_REF,
+    PLAN_REVIEW_SCHEMA_REF,
+    RECEIPT_VIEWER_SCHEMA_REF,
     build_current_task_read_model,
     build_operator_budget_report_read_model,
     build_operator_approval_history_read_model,
@@ -1368,6 +1378,182 @@ def _validated_whqr_replay_binding(source: Any) -> dict[str, str]:
         "canonical_hash": canonical_hash,
         "semantics_hash": semantics_hash,
         "version": version,
+    }
+
+
+def _capability_friction_control_panel_read_model(friction_control: Mapping[str, Any]) -> dict[str, Any]:
+    """Project friction control into the generic operator control tower panel shape.
+
+    Input contract: capability_friction_control read model.
+    Output contract: read-only panel model with bounded summary metadata.
+    Error contract: malformed fields degrade to empty values; no execution
+    handles or raw capability internals are exposed.
+    """
+    summary = friction_control.get("summary", {})
+    workflow = friction_control.get("developer_workflow_v1", {})
+    if not isinstance(summary, Mapping):
+        summary = {}
+    if not isinstance(workflow, Mapping):
+        workflow = {}
+    source_refs = friction_control.get("source_refs", {})
+    if not isinstance(source_refs, Mapping):
+        source_refs = {}
+    capabilities = friction_control.get("capabilities", ())
+    capability_cards = [item for item in capabilities if isinstance(item, Mapping)] if isinstance(capabilities, list) else []
+    workflow_status = str(workflow.get("status") or "awaiting_evidence")
+    missing_capabilities = workflow.get("missing_capability_ids", ())
+    if not isinstance(missing_capabilities, list):
+        missing_capabilities = []
+    if workflow_status == "preflight_ready":
+        reason = "local lab workflow can prepare sandbox diff and receipt; pull request or external write remains approval-bound"
+        action_needed = "review diff receipt before approving pull request candidate"
+    elif missing_capabilities:
+        reason = "developer workflow is missing registered capability records"
+        action_needed = "register missing software_dev capability records"
+    else:
+        reason = "developer workflow needs lab-readiness evidence"
+        action_needed = "supply sandbox, rollback, and dry-run receipt evidence"
+    return {
+        "source_surface": "capability_friction_control",
+        "item_count": int(summary.get("capability_count", len(capability_cards)) or 0),
+        "freshness_seconds": 0,
+        "signal_count": 0,
+        "blocked_count": sum(1 for item in capability_cards if int(item.get("blocked_action_count", 0) or 0) > 0),
+        "review_count": int(summary.get("approval_required_count", 0) or 0),
+        "evidence_refs": (
+            str(friction_control.get("read_model_id") or "capability_friction_control.foundation.v1"),
+            str(workflow.get("workflow_id") or "mullu_developer_workflow.v1"),
+        ),
+        "raw_tool_surface_exposed": False,
+        "metadata": {
+            "capability_surface": str(source_refs.get("capability_surface", "")),
+            "default_boundary": "lab",
+            "fast_mode_lab_ready_count": int(summary.get("fast_mode_lab_ready_count", 0) or 0),
+            "real_world_write_status": str(summary.get("real_world_write_status", "")),
+            "developer_workflow_v1": {
+                "workflow_id": str(workflow.get("workflow_id", "")),
+                "status": workflow_status,
+                "lab_mode_allowed": workflow.get("lab_mode_allowed") is True,
+                "real_world_effects_allowed": workflow.get("real_world_effects_allowed") is True,
+                "approval_boundary": str(workflow.get("approval_boundary", "")),
+                "next_unlock": str(workflow.get("next_unlock", "")),
+            },
+            "developer_workflow_summary": {
+                "task": "Mullu Developer Workflow v1",
+                "status": workflow_status,
+                "reason": reason,
+                "next_unlock": str(workflow.get("next_unlock", "")),
+                "risk": "low, local lab only",
+                "action_needed": action_needed,
+            },
+        },
+    }
+
+
+def _approval_history_panel_read_model(approval_history: Mapping[str, Any]) -> dict[str, Any]:
+    """Project approval history into a read-only control tower panel."""
+    status_counts = approval_history.get("status_counts", {})
+    if not isinstance(status_counts, Mapping):
+        status_counts = {}
+    pending_count = int(status_counts.get("pending", 0) or 0)
+    denied_count = int(status_counts.get("denied", 0) or 0)
+    expired_count = int(status_counts.get("expired", 0) or 0)
+    return {
+        "source_surface": "operator_approval_history",
+        "item_count": int(approval_history.get("total", approval_history.get("count", 0)) or 0),
+        "freshness_seconds": 0,
+        "signal_count": 0,
+        "blocked_count": denied_count + expired_count,
+        "review_count": pending_count,
+        "evidence_refs": (str(approval_history.get("schema_ref") or APPROVAL_HISTORY_SCHEMA_REF),),
+        "raw_tool_surface_exposed": False,
+        "metadata": {
+            "pending_count": pending_count,
+            "approved_count": int(status_counts.get("approved", 0) or 0),
+            "denied_count": denied_count,
+            "expired_count": expired_count,
+            "approval_history_href": "/operator/approvals",
+            "approval_history_read_model_href": "/operator/approvals/read-model",
+        },
+    }
+
+
+def _receipt_viewer_panel_read_model(receipt_viewer: Mapping[str, Any]) -> dict[str, Any]:
+    """Project receipt groups into a proof-explorer control tower panel."""
+    groups = receipt_viewer.get("receipt_groups", ())
+    receipt_groups = [item for item in groups if isinstance(item, Mapping)] if isinstance(groups, list) else []
+    blocked_count = sum(1 for item in receipt_groups if item.get("task_status") == "blocked")
+    review_count = sum(
+        1
+        for item in receipt_groups
+        if item.get("task_status") in {"waiting_for_approval", "requires_review"}
+    )
+    return {
+        "source_surface": "operator_receipt_viewer",
+        "item_count": int(receipt_viewer.get("total_receipts", receipt_viewer.get("count", 0)) or 0),
+        "freshness_seconds": 0,
+        "signal_count": 0,
+        "blocked_count": blocked_count,
+        "review_count": review_count,
+        "evidence_refs": (str(receipt_viewer.get("schema_ref") or RECEIPT_VIEWER_SCHEMA_REF),),
+        "raw_tool_surface_exposed": False,
+        "metadata": {
+            "receipt_group_count": int(receipt_viewer.get("count", 0) or 0),
+            "total_receipts": int(receipt_viewer.get("total_receipts", 0) or 0),
+            "receipt_viewer_href": "/operator/receipts",
+            "receipt_viewer_read_model_href": "/operator/receipts/read-model",
+        },
+    }
+
+
+def _workflow_monitor_panel_read_model(
+    *,
+    current_task: Mapping[str, Any],
+    plan_review: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Project current task and plan review state into a workflow monitor panel."""
+    task_status_counts = current_task.get("status_counts", {})
+    plan_status_counts = plan_review.get("status_counts", {})
+    if not isinstance(task_status_counts, Mapping):
+        task_status_counts = {}
+    if not isinstance(plan_status_counts, Mapping):
+        plan_status_counts = {}
+    blocked_count = (
+        int(task_status_counts.get("blocked", 0) or 0)
+        + int(plan_status_counts.get("blocked", 0) or 0)
+        + int(plan_status_counts.get("denied", 0) or 0)
+        + int(plan_status_counts.get("failed", 0) or 0)
+        + int(plan_status_counts.get("recovery_rejected", 0) or 0)
+    )
+    review_count = (
+        int(task_status_counts.get("waiting_for_approval", 0) or 0)
+        + int(task_status_counts.get("requires_review", 0) or 0)
+        + int(plan_status_counts.get("preview_ready", 0) or 0)
+        + int(plan_status_counts.get("recovery_pending", 0) or 0)
+    )
+    current_task_id = str(current_task.get("current_task_id", ""))
+    evidence_refs = (
+        str(current_task.get("schema_ref") or CURRENT_TASK_SCHEMA_REF),
+        str(plan_review.get("schema_ref") or PLAN_REVIEW_SCHEMA_REF),
+    )
+    return {
+        "source_surface": "operator_workflow_monitor",
+        "item_count": int(current_task.get("total", 0) or 0) + int(plan_review.get("total", 0) or 0),
+        "freshness_seconds": 0,
+        "signal_count": 0,
+        "blocked_count": blocked_count,
+        "review_count": review_count,
+        "evidence_refs": evidence_refs,
+        "raw_tool_surface_exposed": False,
+        "metadata": {
+            "current_task_id": current_task_id,
+            "current_task_count": int(current_task.get("count", 0) or 0),
+            "plan_review_count": int(plan_review.get("count", 0) or 0),
+            "task_status_counts": dict(task_status_counts),
+            "plan_status_counts": dict(plan_status_counts),
+            "current_task_href": "/operator/current-task",
+            "plan_review_href": "/operator/plan-review",
+        },
     }
 
 
@@ -6738,6 +6924,91 @@ def create_gateway_app(
             domain=domain,
             risk_level=risk_level,
         )
+
+    def _operator_control_tower_snapshot(
+        *,
+        tenant_id: str,
+        domain: str,
+        risk_level: str,
+    ):
+        friction_control = build_capability_friction_control_read_model(
+            capability_admission_gate=capability_admission_gate,
+            domain=domain,
+            risk_level=risk_level,
+        )
+        approval_history = build_operator_approval_history_read_model(
+            command_ledger,
+            tenant_id=tenant_id,
+            limit=50,
+        )
+        receipt_viewer = build_operator_receipt_viewer_read_model(
+            command_ledger,
+            tenant_id=tenant_id,
+            limit=50,
+        )
+        current_task = build_current_task_read_model(
+            command_ledger,
+            tenant_id=tenant_id,
+            limit=50,
+        )
+        plan_review = build_operator_plan_review_read_model(
+            plan_ledger,
+            preview_store=goal_intake_preview_store,
+            tenant_budget_reporter=tenant_budget_reporter,
+            tenant_id=tenant_id,
+            limit=50,
+        )
+        builder = OperatorControlTowerBuilder()
+        builder.attach_panel(
+            OperatorPanelKind.CAPABILITY_HEALTH,
+            _capability_friction_control_panel_read_model(friction_control),
+        )
+        builder.attach_panel(
+            OperatorPanelKind.APPROVALS,
+            _approval_history_panel_read_model(approval_history),
+        )
+        builder.attach_panel(
+            OperatorPanelKind.PROOF_EXPLORER,
+            _receipt_viewer_panel_read_model(receipt_viewer),
+        )
+        builder.attach_panel(
+            OperatorPanelKind.WORKFLOW_MONITOR,
+            _workflow_monitor_panel_read_model(
+                current_task=current_task,
+                plan_review=plan_review,
+            ),
+        )
+        return builder.build(tenant_id=tenant_id, generated_at=_clock())
+
+    @app.get("/operator/control-tower/read-model")
+    def operator_control_tower_read_model(
+        request: Request,
+        tenant_id: str = "operator",
+        domain: str = "software_dev",
+        risk_level: str = "",
+    ):
+        _require_authority_operator(request)
+        snapshot = _operator_control_tower_snapshot(
+            tenant_id=tenant_id,
+            domain=domain,
+            risk_level=risk_level,
+        )
+        return operator_control_tower_snapshot_to_json_dict(snapshot)
+
+    @app.get("/operator/control-tower", response_class=HTMLResponse)
+    def operator_control_tower_console(
+        request: Request,
+        tenant_id: str = "operator",
+        domain: str = "software_dev",
+        risk_level: str = "",
+    ):
+        _require_authority_operator(request)
+        snapshot = _operator_control_tower_snapshot(
+            tenant_id=tenant_id,
+            domain=domain,
+            risk_level=risk_level,
+        )
+        return HTMLResponse(render_operator_control_tower(snapshot))
 
     @app.get("/operator/code-intelligence/read-model")
     def operator_code_intelligence_read_model(

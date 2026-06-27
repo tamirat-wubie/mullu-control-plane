@@ -311,6 +311,7 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
   </section>
   <nav>
     <a href="{portfolio_href}">Capability improvement portfolio</a>
+    <a href="/operator/control-tower">Operator control tower</a>
     <span class="metric">Schema: {portfolio_schema}</span>
     <span class="metric">Activation blocked: {escape(str(portfolio.get("activation_blocked", True)).lower())}</span>
   </nav>

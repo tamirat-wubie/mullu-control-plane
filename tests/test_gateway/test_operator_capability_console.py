@@ -206,3 +206,69 @@ def test_operator_console_shows_developer_workflow_panel_for_software_dev() -> N
     assert "Workflow: preflight_ready" in response.text
     assert "Approval: before_pull_request_or_external_write" in response.text
     assert "/operator/capabilities/friction-control/read-model?domain=software_dev" in response.text
+    assert "/operator/control-tower" in response.text
+
+
+def test_operator_control_tower_projects_friction_control_capability_panel() -> None:
+    gate = build_software_dev_capability_admission_gate(clock=_clock)
+    app = create_gateway_app(
+        platform=StubPlatform(),
+        capability_admission_gate_override=gate,
+    )
+    client = TestClient(app)
+
+    response = client.get("/operator/control-tower/read-model?domain=software_dev")
+
+    assert response.status_code == 200
+    payload = response.json()
+    panels = {item["panel"]: item for item in payload["panels"]}
+    capability_panel = panels["capability_health"]
+    approval_panel = panels["approvals"]
+    proof_panel = panels["proof_explorer"]
+    workflow_panel = panels["workflow_monitor"]
+    workflow = capability_panel["metadata"]["developer_workflow_v1"]
+    summary = capability_panel["metadata"]["developer_workflow_summary"]
+    assert payload["raw_tool_surface_exposed"] is False
+    assert payload["overall_health"] == "missing"
+    assert payload["missing_panel_count"] == payload["panel_count"] - 4
+    assert capability_panel["source_surface"] == "capability_friction_control"
+    assert capability_panel["item_count"] == 6
+    assert capability_panel["blocked_count"] >= 1
+    assert capability_panel["review_count"] >= 1
+    assert approval_panel["source_surface"] == "operator_approval_history"
+    assert approval_panel["metadata"]["approval_history_href"] == "/operator/approvals"
+    assert proof_panel["source_surface"] == "operator_receipt_viewer"
+    assert proof_panel["metadata"]["receipt_viewer_href"] == "/operator/receipts"
+    assert workflow_panel["source_surface"] == "operator_workflow_monitor"
+    assert workflow_panel["metadata"]["current_task_href"] == "/operator/current-task"
+    assert workflow_panel["metadata"]["plan_review_href"] == "/operator/plan-review"
+    assert workflow["workflow_id"] == "mullu_developer_workflow.v1"
+    assert workflow["status"] == "preflight_ready"
+    assert workflow["real_world_effects_allowed"] is False
+    assert summary["task"] == "Mullu Developer Workflow v1"
+    assert summary["risk"] == "low, local lab only"
+    assert "raw_tool_surface" not in capability_panel["metadata"]
+
+
+def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
+    gate = build_software_dev_capability_admission_gate(clock=_clock)
+    app = create_gateway_app(
+        platform=StubPlatform(),
+        capability_admission_gate_override=gate,
+    )
+    client = TestClient(app)
+
+    response = client.get("/operator/control-tower?domain=software_dev")
+
+    assert response.status_code == 200
+    assert "Mullu Operator Control Tower" in response.text
+    assert "Developer Workflow" in response.text
+    assert "Mullu Developer Workflow v1" in response.text
+    assert "preflight_ready" in response.text
+    assert "low, local lab only" in response.text
+    assert "review diff receipt before approving pull request candidate" in response.text
+    assert "/operator/capabilities/friction-control/read-model?domain=software_dev" in response.text
+    assert "/operator/current-task" in response.text
+    assert "/operator/plan-review" in response.text
+    assert "/operator/approvals" in response.text
+    assert "/operator/receipts" in response.text

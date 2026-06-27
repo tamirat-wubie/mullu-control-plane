@@ -248,6 +248,8 @@ Canonical artifacts:
 | `scripts/validate_capability_friction_control.py` | Runtime and schema validator. |
 | `tests/test_validate_capability_friction_control.py` | Contract and rejection coverage. |
 | `/operator/capabilities/friction-control/read-model` | Read-only gateway route for the live operator projection. |
+| `/operator/control-tower/read-model` | Read-only operator control tower snapshot with capability friction, approval, receipt, and workflow panels attached. |
+| `/operator/control-tower` | Browser dashboard showing Developer Workflow v1 task, status, reason, next unlock, risk, action needed, panel health, and drilldown links. |
 
 Validation:
 
