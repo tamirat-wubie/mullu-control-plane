@@ -108,6 +108,49 @@ def test_github_pr_terminal_closure_operator_decision_value_request_rejects_bad_
     assert "decision values must match required order" in serialized_errors
 
 
+def test_github_pr_terminal_closure_operator_decision_value_request_rejects_actual_diff_generic_rejection_drift(
+    tmp_path: Path,
+) -> None:
+    payload = build_mutated_operator_decision_value_request(
+        actual_diff_generic_rejection_evidence__source_rejection_binding_id="other_rejection",
+        actual_diff_generic_rejection_evidence__source_rejection_witness_ref="examples/other-rejection.json",
+        actual_diff_generic_rejection_evidence__source_decision_contract_binding_id="other_contract",
+        actual_diff_generic_rejection_evidence__source_decision_contract_ref="examples/other-contract.json",
+        actual_diff_generic_rejection_evidence__rejection_id="other-rejection",
+        actual_diff_generic_rejection_evidence__operator_decision_ref="approval://other",
+        actual_diff_generic_rejection_evidence__actual_diff_terminal_closure_certificate_witness_ref="examples/other-certificate.json",
+        actual_diff_generic_rejection_evidence__actual_diff_operator_response_witness_ref="examples/other-response.json",
+        actual_diff_generic_rejection_evidence__actual_diff_approval_request_binding_ref="examples/other-approval.json",
+        actual_diff_generic_rejection_evidence__actual_non_empty_diff_receipt_ref="witness://other",
+        actual_diff_generic_rejection_evidence__changed_file_refs=["evidence://other-file"],
+        actual_diff_generic_rejection_evidence__diff_refs=["evidence://other-diff"],
+        actual_diff_generic_rejection_evidence__redacted_diff_bundle_ref="digest://other",
+        actual_diff_generic_rejection_evidence__redacted_output_ref="witness://other-output",
+    )
+    path = _write_payload(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request(
+        example_paths=(path,)
+    )
+    serialized_errors = "\n".join(validation.errors)
+
+    assert validation.ok is False
+    assert "actual_diff_generic_rejection_evidence.source_rejection_binding_id expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.source_rejection_witness_ref expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.source_decision_contract_binding_id expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.source_decision_contract_ref expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.rejection_id expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.operator_decision_ref expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.actual_diff_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.actual_diff_operator_response_witness_ref expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.actual_diff_approval_request_binding_ref expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.actual_non_empty_diff_receipt_ref expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.changed_file_refs expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.diff_refs expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.redacted_diff_bundle_ref expected" in serialized_errors
+    assert "actual_diff_generic_rejection_evidence.redacted_output_ref expected" in serialized_errors
+
+
 def test_github_pr_terminal_closure_operator_decision_value_request_rejects_mutation_route(
     tmp_path: Path,
 ) -> None:
