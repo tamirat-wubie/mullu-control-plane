@@ -655,7 +655,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(workspace): add concrete filesystem-write non-empty diff evidence candidate`",
+            "1. `harness(write): bind actual filesystem-write receipt admission to concrete candidate`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -666,7 +666,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(workspace): add concrete filesystem-write non-empty diff evidence candidate"
+        "missing next PR marker: harness(write): bind actual filesystem-write receipt admission to concrete candidate"
         in serialized_errors
     )
 

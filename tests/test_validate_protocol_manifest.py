@@ -216,6 +216,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_filesystem_write_admi
     assert write_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_concrete_filesystem_write_evidence_candidate() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    candidate_entry = entries[
+        "agentic-service-harness-concrete-filesystem-write-evidence-candidate"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert candidate_entry["path"] == (
+        "schemas/agentic_service_harness_concrete_filesystem_write_evidence_candidate.schema.json"
+    )
+    assert candidate_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-concrete-filesystem-write-evidence-candidate:1"
+    )
+    assert candidate_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_non_empty_diff_file_summary_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
