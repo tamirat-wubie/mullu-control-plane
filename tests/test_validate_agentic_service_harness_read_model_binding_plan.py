@@ -655,7 +655,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind GitHub PR admission to actual non-empty diff receipt binding`",
+            "1. `harness(pr): bind operator approval request to PR actual non-empty diff admission binding`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -666,7 +666,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind GitHub PR admission to actual non-empty diff receipt binding"
+        "missing next PR marker: harness(pr): bind operator approval request to PR actual non-empty diff admission binding"
         in serialized_errors
     )
 

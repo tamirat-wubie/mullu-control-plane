@@ -185,6 +185,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-admission-preflight:1"
     },
     {
+      "path": "schemas/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-actual-non-empty-diff-admission-binding",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-actual-non-empty-diff-admission-binding:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json",
       "schema_id": "agentic-service-harness-github-pr-branch-write-authority-binding",
       "surface": "runtime",
