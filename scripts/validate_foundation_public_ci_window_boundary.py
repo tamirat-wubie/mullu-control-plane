@@ -112,6 +112,25 @@ ALLOWED_VISIBILITY_AFTER_BY_STATUS = {
     "closed": {"private", "private_or_bounded_public"},
     "bounded_public_awaiting_evidence": {"bounded_public", "private_or_bounded_public"},
 }
+REQUIRED_RECEIPT_TEXT_FRAGMENTS = {
+    "reason": (
+        "Foundation Mode",
+        "budget",
+        "GitHub Actions",
+    ),
+    "exposure_decision": (
+        "GitHub Actions",
+        "No public launch",
+        "customer access",
+        "production deployment",
+        "raw secret exposure",
+    ),
+    "closure_decision": (
+        "Public CI evidence",
+        "checks",
+        "public-readiness state",
+    ),
+}
 SECRET_SHAPED_FRAGMENTS = (
     "-----begin",
     "private key",
@@ -174,6 +193,13 @@ class Finding:
 
 def _normalise(content: str) -> str:
     return " ".join(content.casefold().split())
+
+
+def _contains_all_fragments(value: Any, fragments: tuple[str, ...]) -> bool:
+    if not isinstance(value, str):
+        return False
+    normalised_value = _normalise(value)
+    return all(_normalise(fragment) in normalised_value for fragment in fragments)
 
 
 def validate_document_text(content: str) -> list[Finding]:
@@ -426,6 +452,14 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
     for key in required_text_fields:
         if not _is_non_empty_string(payload.get(key)):
             findings.append(Finding("public_ci_window_receipt_required_string_invalid", f"{key} must be non-empty"))
+    for key, fragments in REQUIRED_RECEIPT_TEXT_FRAGMENTS.items():
+        if not _contains_all_fragments(payload.get(key), fragments):
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_text_contract_invalid",
+                    f"{key} must preserve public CI window boundary wording",
+                )
+            )
     if not _is_hex_sha(payload.get("head_sha")):
         findings.append(Finding("public_ci_window_receipt_head_sha_invalid", "head_sha must be a 40-character lowercase hex SHA"))
     pull_request_number = _pull_request_number(payload.get("pull_request"))

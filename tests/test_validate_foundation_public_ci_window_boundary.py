@@ -167,6 +167,30 @@ def test_public_ci_window_receipt_rejects_invalid_bounded_visibility_after_label
     assert all("private" not in finding.message for finding in findings)
 
 
+def test_public_ci_window_receipt_rejects_reason_without_budget_actions_boundary() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["reason"] = "Temporary visibility was useful for general repository review."
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_text_contract_invalid" for finding in findings)
+    assert any("reason must preserve public CI window boundary wording" in finding.message for finding in findings)
+    assert all("general repository review" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_exposure_decision_without_deployment_boundary() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["exposure_decision"] = "The public window was used for GitHub Actions and PR verification."
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_text_contract_invalid" for finding in findings)
+    assert any("exposure_decision must preserve public CI window boundary wording" in finding.message for finding in findings)
+    assert all("PR verification" not in finding.message for finding in findings)
+
+
 def test_public_ci_window_receipt_rejects_invalid_opened_at_timestamp() -> None:
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["opened_at"] = "2026-06-26 10:51:56"
