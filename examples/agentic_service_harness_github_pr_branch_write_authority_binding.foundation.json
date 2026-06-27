@@ -26,6 +26,18 @@
     "authority_request_id": "authority-binding.github-pr-branch-write",
     "source_approval_request_id": "approval-request.github-pr-admission",
     "source_response_record_ref": "evidence://operator-pr-approval-response-record",
+    "requires_actual_diff_operator_response_witness": true,
+    "actual_diff_operator_response_witness_ref": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json",
+    "actual_diff_approval_request_binding_ref": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
+    "actual_non_empty_diff_receipt_ref": "witness://actual-non-empty-diff-receipt",
+    "changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
+    "redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "redacted_output_ref": "witness://filesystem-write-output-redacted",
     "required_authority_kind": "branch_write_authority",
     "required_evidence_ref": "evidence://branch-write-authority-binding",
     "response_witness_required": true,
@@ -92,6 +104,9 @@
   "receipt_refs": {
     "github_pr_branch_write_authority_binding_schema": "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json",
     "github_pr_operator_response_witness_schema": "schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json",
+    "github_pr_operator_response_witness_example": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json",
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json",
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
     "github_pr_operator_approval_request_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json",
     "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
     "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json"
@@ -103,5 +118,5 @@
       "required_for_closure": true
     }
   ],
-  "next_action": "Collect branch-write authority evidence only through UAO after operator response evidence is explicit; do not create branches or pull requests from this binding."
+  "next_action": "Bind UAO PR admission to the actual-diff branch-write authority witness after explicit branch-write authority evidence exists; do not create branches or pull requests from this binding."
 }

@@ -5,6 +5,7 @@ uncollected, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: scripts.validate_agentic_service_harness_github_pr_branch_write_authority_binding.
 Invariants:
+  - Branch-write authority binding must consume actual-diff operator response evidence.
   - Missing branch-write authority never grants branch or PR effects.
   - Remaining witnesses block PR admission.
   - Mutation routes and secret-like payloads fail closed.
@@ -25,12 +26,14 @@ def test_github_pr_branch_write_authority_binding_passes() -> None:
     assert validation.errors == ()
     assert validation.example_count == 1
     assert validation.source_response_witness_ref == validator.EXPECTED_SOURCE_RESPONSE_WITNESS_REF
+    assert validation.actual_diff_operator_response_witness_ref == validator.EXPECTED_SOURCE_RESPONSE_WITNESS_REF
 
 
 def test_github_pr_branch_write_authority_binding_rejects_collected_authority() -> None:
     payload = validator.build_mutated_branch_write_authority_binding(
         authority_binding_collected=True,
         authority_granted=True,
+        branch_write_binding__requires_actual_diff_operator_response_witness=False,
         branch_write_binding__response_witness_satisfied=True,
         branch_write_binding__branch_write_authority_collected=True,
         branch_write_binding__pr_creation_authorized_after_binding=True,
@@ -43,6 +46,7 @@ def test_github_pr_branch_write_authority_binding_rejects_collected_authority() 
 
     assert "authority_binding_collected must be false" in serialized_errors
     assert "authority_granted must be false" in serialized_errors
+    assert "branch_write_binding.requires_actual_diff_operator_response_witness must be true" in serialized_errors
     assert "branch_write_binding.response_witness_satisfied must be false" in serialized_errors
     assert "branch_write_binding.branch_write_authority_collected must be false" in serialized_errors
     assert "branch_write_binding.pr_creation_authorized_after_binding must be false" in serialized_errors
@@ -71,6 +75,28 @@ def test_github_pr_branch_write_authority_binding_rejects_effect_authority() -> 
     assert "effect_boundary.pull_request_opened must be false" in serialized_errors
     assert "effect_boundary.repository_written must be false" in serialized_errors
     assert "effect_boundary.connector_called must be false" in serialized_errors
+
+
+def test_github_pr_branch_write_authority_binding_rejects_actual_diff_response_drift() -> None:
+    payload = validator.build_mutated_branch_write_authority_binding(
+        branch_write_binding__actual_diff_approval_request_binding_ref="examples/drifted-approval-binding.json",
+        branch_write_binding__actual_non_empty_diff_receipt_ref="witness://drifted-actual-diff-receipt",
+        branch_write_binding__changed_file_refs=["evidence://drifted-file"],
+        branch_write_binding__diff_refs=["evidence://drifted-diff"],
+        branch_write_binding__redacted_diff_bundle_ref="digest://drifted-bundle",
+        branch_write_binding__redacted_output_ref="witness://drifted-output",
+    )
+
+    errors: list[str] = []
+    validator._validate_branch_write_authority_binding_semantics(payload, _source_response_witness(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "branch_write_binding.actual_diff_approval_request_binding_ref" in serialized_errors
+    assert "branch_write_binding.actual_non_empty_diff_receipt_ref" in serialized_errors
+    assert "branch_write_binding.changed_file_refs" in serialized_errors
+    assert "branch_write_binding.diff_refs" in serialized_errors
+    assert "branch_write_binding.redacted_diff_bundle_ref" in serialized_errors
+    assert "branch_write_binding.redacted_output_ref" in serialized_errors
 
 
 def test_github_pr_branch_write_authority_binding_rejects_witness_drift() -> None:
@@ -122,6 +148,7 @@ def test_github_pr_branch_write_authority_binding_cli_writes_report(tmp_path: Pa
     assert file_payload["ok"] is True
     assert stdout_payload["errors"] == []
     assert file_payload["source_response_witness_ref"] == validator.EXPECTED_SOURCE_RESPONSE_WITNESS_REF
+    assert file_payload["actual_diff_operator_response_witness_ref"] == validator.EXPECTED_SOURCE_RESPONSE_WITNESS_REF
 
 
 def _source_response_witness() -> dict[str, object]:

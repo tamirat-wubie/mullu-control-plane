@@ -2,14 +2,14 @@
 """Validate Agentic Service Harness GitHub PR branch-write authority binding.
 
 Purpose: prove the GitHub pull-request branch-write authority binding request
-is explicit, read-only, and non-authorizing.
+is actual-diff-response-bound, read-only, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json,
 examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json,
 scripts.validate_agentic_service_harness_github_pr_operator_response_witness, and
 scripts.validate_schemas.
 Invariants:
-  - The binding request binds to the GitHub PR operator response witness.
+  - The binding request binds to the actual-diff GitHub PR operator response witness.
   - Branch-write authority remains AwaitingEvidence and uncollected.
   - Binding request alone grants no branch, PR, repository, connector, network,
     mutation-route, receipt-store, secret, destructive, or terminal authority.
@@ -32,6 +32,10 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_agentic_service_harness_github_pr_operator_response_witness import (  # noqa: E402
+    EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+    EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+    EXPECTED_REDACTED_OUTPUT_REF,
+    EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
     DEFAULT_EXAMPLES as DEFAULT_SOURCE_RESPONSE_WITNESS_EXAMPLES,
     DEFAULT_SCHEMA as DEFAULT_SOURCE_RESPONSE_WITNESS_SCHEMA,
     validate_agentic_service_harness_github_pr_operator_response_witness,
@@ -66,6 +70,15 @@ REQUIRED_RECEIPT_REFS = {
     ),
     "github_pr_operator_response_witness_schema": (
         "schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json"
+    ),
+    "github_pr_operator_response_witness_example": (
+        "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
+    ),
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json"
+    ),
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": (
+        "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
     ),
     "github_pr_operator_approval_request_schema": (
         "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json"
@@ -102,6 +115,7 @@ REQUIRED_TRUE_FLAGS = (
     "planning_only",
     "read_only",
     "report_is_not_terminal_closure",
+    "requires_actual_diff_operator_response_witness",
     "response_witness_required",
     "branch_write_authority_required",
     "blocks_pr_admission",
@@ -142,6 +156,7 @@ class GitHubPrBranchWriteAuthorityBindingValidation:
     example_paths: tuple[str, ...]
     example_count: int
     source_response_witness_ref: str
+    actual_diff_operator_response_witness_ref: str
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -198,6 +213,7 @@ def validate_agentic_service_harness_github_pr_branch_write_authority_binding(
         example_paths=tuple(_path_label(path) for path in example_paths),
         example_count=len(examples),
         source_response_witness_ref=EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        actual_diff_operator_response_witness_ref=EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
     )
 
 
@@ -234,6 +250,48 @@ def _validate_branch_write_authority_binding_semantics(
     )
     _require_equal(
         payload,
+        ("branch_write_binding", "requires_actual_diff_operator_response_witness"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("branch_write_binding", "actual_diff_operator_response_witness_ref"),
+        EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("branch_write_binding", "actual_diff_approval_request_binding_ref"),
+        EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("branch_write_binding", "actual_non_empty_diff_receipt_ref"),
+        EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("branch_write_binding", "redacted_diff_bundle_ref"),
+        EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("branch_write_binding", "redacted_output_ref"),
+        EXPECTED_REDACTED_OUTPUT_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
         ("branch_write_binding", "required_authority_kind"),
         "branch_write_authority",
         errors,
@@ -255,6 +313,49 @@ def _validate_branch_write_authority_binding_semantics(
     )
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
     if source_response_witness:
+        source_operator_response = _mapping(_get_nested(source_response_witness, ("operator_response",)))
+        _require_equal(
+            payload,
+            ("branch_write_binding", "actual_diff_approval_request_binding_ref"),
+            source_operator_response.get("actual_diff_approval_request_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("branch_write_binding", "actual_non_empty_diff_receipt_ref"),
+            source_operator_response.get("actual_non_empty_diff_receipt_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("branch_write_binding", "changed_file_refs"),
+            source_operator_response.get("changed_file_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("branch_write_binding", "diff_refs"),
+            source_operator_response.get("diff_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("branch_write_binding", "redacted_diff_bundle_ref"),
+            source_operator_response.get("redacted_diff_bundle_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("branch_write_binding", "redacted_output_ref"),
+            source_operator_response.get("redacted_output_ref"),
+            errors,
+            label,
+        )
         _require_equal(
             payload,
             ("scope", "repository_slug"),
@@ -330,6 +431,10 @@ def _get_nested(payload: Mapping[str, Any], path: tuple[str, ...]) -> Any:
             return None
         current = current.get(part)
     return current
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
 
 
 def _walk_leaves(value: Any, path: tuple[str, ...] = ()) -> list[tuple[tuple[str, ...], Any]]:
