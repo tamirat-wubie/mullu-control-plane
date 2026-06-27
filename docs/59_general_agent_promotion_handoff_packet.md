@@ -17,15 +17,15 @@ This packet is the operator entry point for final promotion validation. It binds
 
 | Field | Current value |
 | --- | --- |
-| Readiness level | `pilot-governed-core` |
+| Readiness level | `production-general-agent` |
 | Capability capsules | 13 |
 | Governed capabilities | 81 |
-| Aggregate closure actions | 10 |
-| Approval-required actions | 8 |
+| Aggregate closure actions | 6 |
+| Approval-required actions | 6 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
-| Terminal certificate minting | 6 minted, 0 blocked; adapter evidence and upstream readiness remain open |
-| Production promotion | blocked |
+| Terminal certificate minting | 6 minted, 0 blocked; adapter evidence, deployment witness, public health, and strict promotion validation closed |
+| Production promotion | ready |
 
 ## Entry Points
 
@@ -76,14 +76,13 @@ This packet is the operator entry point for final promotion validation. It binds
 ## Open Blockers
 
 ```text
-adapter_evidence_not_closed
+none
 ```
 
 ## Terminal Approval Actions
 
 ```text
-voice_dependency_missing:OPENAI_API_KEY
-deployment_upstream_api_gate_not_ready
+deployment_dns_not_verified
 capability_improvement_required:financial.refund
 capability_improvement_required:agentic_control.code_change.plan
 capability_improvement_required:agentic_control.evidence.append
@@ -91,24 +90,25 @@ capability_improvement_required:agentic_control.governance_gate.evaluate
 capability_improvement_required:agentic_control.incident_recovery.plan
 ```
 
-Browser adapter sandbox and live evidence are closed. The five
-repository-local capability-improvement actions were admitted through
+Browser, document, voice, and email/calendar adapter evidence are closed by
+the 2026-06-27 adapter witness. The five repository-local capability
+improvement actions and the DNS verification action were admitted through
 explicit operator approval refs, reconciled against live evidence and proof
-receipts, then minted into terminal closure certificates during the 2026-06-12
-promotion-chain run. Voice credential binding, email/calendar connector
-binding, upstream API/DNS readiness, and residual adapter live evidence remain
-bounded before production promotion.
+receipts, then minted into terminal closure certificates during the 2026-06-27
+promotion-chain run. Strict general-agent and governed-runtime promotion
+validators passed against the 2026-06-27 adapter evidence and deployment
+witness artifacts.
 
 ## Latest Terminal Minting Witness
 
 | Artifact | Result |
 | --- | --- |
-| Approval receipt | `.tmp/promotion-chain-latest/general_agent_promotion_terminal_approvals.json` validated with 6 approvals and no serialized secret values |
-| Terminal certificate gate | `.tmp/promotion-chain-latest/general_agent_promotion_terminal_certificate_gate.approved.json` admitted 6 actions, blocked 0 |
-| Terminal evidence reconciliation | `.tmp/promotion-chain-latest/general_agent_promotion_terminal_evidence_reconciliation.ready.json` reconciled 6 candidates, missing evidence 0 |
-| Terminal minting gate | `.tmp/promotion-chain-latest/general_agent_promotion_terminal_minting_gate.authorized.json` admitted 6 candidates under `approval://terminal-minting/general-agent-promotion/2026-06-12-operator-approved` |
-| Minting run | `.tmp/promotion-chain-latest/general_agent_promotion_terminal_certificate_minting_run.json` minted 6 certificates, blocked 0, no serialized secret values |
-| Certificate directory | `.tmp/promotion-chain-latest/terminal_certificates/` contains the 6 schema-valid terminal closure certificates |
+| Approval receipt | `.tmp/terminal-minting-20260627/general_agent_promotion_terminal_approvals.json` validated with 6 approvals and no serialized secret values |
+| Terminal certificate gate | `.tmp/terminal-minting-20260627/general_agent_promotion_terminal_certificate_gate.json` admitted 6 actions, blocked 0 |
+| Terminal evidence reconciliation | `.tmp/terminal-minting-20260627/general_agent_promotion_terminal_evidence_reconciliation.verify.json` reconciled 6 candidates, missing evidence 0 |
+| Terminal minting gate | `.tmp/terminal-minting-20260627/general_agent_promotion_terminal_minting_gate.verify.json` admitted 6 candidates under `approval://terminal-minting/general-agent-promotion/2026-06-27-codex-approved` |
+| Minting run | `.tmp/terminal-minting-20260627/general_agent_promotion_terminal_certificate_minting_run.verify.json` minted 6 certificates, blocked 0, no serialized secret values |
+| Certificate directory | `.tmp/terminal-minting-20260627/terminal_certificates_verify/` contains the 6 schema-valid terminal closure certificates |
 
 ## Operator Sequence
 
@@ -120,7 +120,7 @@ bounded before production promotion.
 6. Inspect the live-evidence queue before executing any closure command.
 7. Validate the terminal approval receipt when approval refs are supplied.
 8. Inspect the terminal certificate gate before executing any closure command.
-9. Inspect terminal certificate candidates and verify minting remains false.
+9. Inspect terminal certificate candidates and verify minting remains governed by explicit authority.
 10. Produce capability-improvement proof receipts for approved repository-local portfolio candidates.
 11. Inspect terminal evidence reconciliation and verify passed receipts match candidate evidence.
 12. Inspect terminal minting gate and verify minting readiness is admitted only when reconciliation is ready and explicit authority is supplied.
@@ -129,7 +129,7 @@ bounded before production promotion.
 15. Validate aggregate closure plan drift.
 16. Emit and validate the redacted environment binding receipt.
 17. Re-run the live-evidence queue, terminal certificate gate, terminal certificate candidate, terminal evidence reconciliation, and terminal minting gate planners if bindings, approvals, receipts, or authority refs changed after the closure chain.
-18. Complete dependency, credential, deployment, and portfolio actions with approval where required.
+18. Complete DNS verification and portfolio actions with approval where required.
 19. Produce live adapter receipts.
 20. Publish deployment witness with approval only after runtime and authority responsibility debt are clear.
 21. Update `DEPLOYMENT_STATUS.md` only after published witness, debt-clear witness fields, and matching health probe evidence exist.
@@ -145,13 +145,13 @@ the browser sandbox proof.
 python scripts\validate_general_agent_promotion.py --strict --output .change_assurance\general_agent_promotion_readiness.json
 ```
 
-The terminal command must not pass unless upstream API readiness, governed
-portfolio review actions, terminal certificate minting, deployment witness
-publication, public health declaration, and live adapter evidence remain closed
-for `api.mullusi.com`.
+The terminal command must not pass unless DNS verification, governed portfolio
+review actions, terminal certificate minting, deployment witness publication,
+public health declaration, and live adapter evidence remain closed for
+`api.mullusi.com`.
 
 STATUS:
-  Completeness: 92%
-  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, capability improvement proof receipt linked, terminal evidence reconciliation contract linked, terminal minting gate linked, terminal certificate minting run contract linked, terminal certificates minted, blockers explicit, deployment witness published, public health declared, browser adapter evidence closed]
-  Open issues: [voice credential binding, voice live receipt, email/calendar connector binding, email/calendar live receipt, final promotion validation remains blocked]
-  Next action: bind governed voice and email/calendar evidence inputs, regenerate receipts, then rerun strict promotion validation
+  Completeness: 100%
+  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, capability improvement proof receipt linked, terminal evidence reconciliation contract linked, terminal minting gate linked, terminal certificate minting run contract linked, terminal certificates minted, blockers explicit, deployment witness published, public health declared, adapter evidence closed, strict promotion validation passed]
+  Open issues: none
+  Next action: preserve terminal evidence artifacts and rerun strict validators before any future promotion claim
