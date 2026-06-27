@@ -3246,6 +3246,45 @@
       "passed": true
     },
     {
+      "name": "capability_debt_report",
+      "args": [
+        "python",
+        "scripts/validate_capability_debt_report.py"
+      ],
+      "return_code": 0,
+      "stdout": "CAPABILITY DEBT REPORT VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "capability_passports",
+      "args": [
+        "python",
+        "scripts/validate_capability_passports.py"
+      ],
+      "return_code": 0,
+      "stdout": "CAPABILITY PASSPORTS VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "capability_passport_dashboard",
+      "args": [
+        "python",
+        "scripts/validate_capability_passport_dashboard.py"
+      ],
+      "return_code": 0,
+      "stdout": "CAPABILITY PASSPORT DASHBOARD VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
       "name": "capability_friction_control",
       "args": [
         "python",

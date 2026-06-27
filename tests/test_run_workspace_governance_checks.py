@@ -213,6 +213,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "tenant_scope_coverage",
         "persistence_tenant_guard_coverage",
         "mcp_capability_manifest",
+        "capability_debt_report",
+        "capability_passports",
+        "capability_passport_dashboard",
         "capability_friction_control",
         "mcp_operator_checklist",
         "public_naming_readiness",
@@ -864,6 +867,15 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "--manifest",
         "examples/mcp_capability_manifest.json",
         "--json",
+    )
+    assert args_by_name["capability_debt_report"][1:] == (
+        "scripts/validate_capability_debt_report.py",
+    )
+    assert args_by_name["capability_passports"][1:] == (
+        "scripts/validate_capability_passports.py",
+    )
+    assert args_by_name["capability_passport_dashboard"][1:] == (
+        "scripts/validate_capability_passport_dashboard.py",
     )
     assert args_by_name["capability_friction_control"][1:] == (
         "scripts/validate_capability_friction_control.py",

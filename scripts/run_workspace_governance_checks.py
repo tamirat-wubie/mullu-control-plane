@@ -1396,6 +1396,18 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "capability_debt_report",
+            (python_executable, "scripts/validate_capability_debt_report.py"),
+        ),
+        CheckCommand(
+            "capability_passports",
+            (python_executable, "scripts/validate_capability_passports.py"),
+        ),
+        CheckCommand(
+            "capability_passport_dashboard",
+            (python_executable, "scripts/validate_capability_passport_dashboard.py"),
+        ),
+        CheckCommand(
             "capability_friction_control",
             (python_executable, "scripts/validate_capability_friction_control.py"),
         ),
