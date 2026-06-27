@@ -59,6 +59,7 @@ def test_autonomous_demo_renders_json_continuation_summary(capsys: pytest.Captur
 
     assert exit_code == 0
     assert body["operation"] == "autonomous-demo"
+    assert body["receipt_schema_version"] == "mcoi.autonomous_demo.receipt.v1"
     assert body["automation_state"] == "settled_without_prompt"
     assert body["workflow_stage_count"] == 3
     assert body["workflow_approval_stage_count"] == 0
@@ -95,6 +96,7 @@ def test_autonomous_demo_writes_json_receipt_path(
     assert exit_code == 0
     assert "Autonomous Request Episode Summary" in output
     assert body["operation"] == "autonomous-demo"
+    assert body["receipt_schema_version"] == "mcoi.autonomous_demo.receipt.v1"
     assert body["automation_state"] == "settled_without_prompt"
     assert body["prompt_count"] == 0
     assert body["receipt_path"] == str(receipt_path)
@@ -130,6 +132,7 @@ def test_autonomous_demo_quiet_writes_receipt_without_stdout(
     assert captured.out == ""
     assert captured.err == ""
     assert body["operation"] == "autonomous-demo"
+    assert body["receipt_schema_version"] == "mcoi.autonomous_demo.receipt.v1"
     assert body["automation_state"] == "settled_without_prompt"
     assert body["prompt_count"] == 0
     assert body["receipt_path"] == str(receipt_path)
@@ -160,6 +163,7 @@ def test_autonomous_demo_receipt_dir_derives_filename_and_creates_directory(
     assert captured.out == ""
     assert captured.err == ""
     assert receipt_path.exists()
+    assert body["receipt_schema_version"] == "mcoi.autonomous_demo.receipt.v1"
     assert body["episode_id"] == "episode/demo:local"
     assert body["receipt_directory_path"] == str(receipt_dir)
     assert body["receipt_path"] == str(receipt_path)
@@ -194,10 +198,12 @@ def test_autonomous_demo_receipt_dir_writes_latest_receipt(
     assert exit_code == 0
     assert captured.out == ""
     assert captured.err == ""
+    assert receipt_body["receipt_schema_version"] == "mcoi.autonomous_demo.receipt.v1"
     assert receipt_body["receipt_directory_path"] == str(receipt_dir)
     assert receipt_body["receipt_path"] == str(receipt_path)
     assert receipt_body["latest_receipt_path"] == str(latest_path)
     assert latest_body["receipt_directory_path"] == str(receipt_dir)
+    assert latest_body["receipt_schema_version"] == "mcoi.autonomous_demo.receipt.v1"
     assert latest_body["receipt_path"] == str(receipt_path)
     assert latest_body["latest_receipt_path"] == str(latest_path)
     assert latest_body["automation_state"] == "settled_without_prompt"
