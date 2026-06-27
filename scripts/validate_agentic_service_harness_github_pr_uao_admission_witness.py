@@ -2,14 +2,14 @@
 """Validate Agentic Service Harness GitHub PR UAO admission witness.
 
 Purpose: prove the GitHub pull-request UAO PR admission witness request
-is explicit, read-only, and non-authorizing.
+is actual-diff-branch-write-bound, read-only, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: schemas/agentic_service_harness_github_pr_uao_admission_witness.schema.json,
 examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json,
 scripts.validate_agentic_service_harness_github_pr_branch_write_authority_binding, and
 scripts.validate_schemas.
 Invariants:
-  - The binding request binds to the GitHub PR branch-write authority binding.
+  - The binding request binds to the actual-diff GitHub PR branch-write authority binding.
   - UAO PR admission authority remains AwaitingEvidence and uncollected.
   - Binding request alone grants no branch, PR, repository, connector, network,
     mutation-route, receipt-store, secret, destructive, or terminal authority.
@@ -32,6 +32,11 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_agentic_service_harness_github_pr_branch_write_authority_binding import (  # noqa: E402
+    EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+    EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+    EXPECTED_REDACTED_OUTPUT_REF,
+    EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+    EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
     DEFAULT_EXAMPLES as DEFAULT_SOURCE_BRANCH_WRITE_BINDING_EXAMPLES,
     DEFAULT_SCHEMA as DEFAULT_SOURCE_BRANCH_WRITE_BINDING_SCHEMA,
     validate_agentic_service_harness_github_pr_branch_write_authority_binding,
@@ -65,6 +70,21 @@ REQUIRED_RECEIPT_REFS = {
     ),
     "github_pr_branch_write_authority_binding_schema": (
         "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json"
+    ),
+    "github_pr_branch_write_authority_binding_example": (
+        "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json"
+    ),
+    "github_pr_operator_response_witness_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json"
+    ),
+    "github_pr_operator_response_witness_example": (
+        "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
+    ),
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json"
+    ),
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": (
+        "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
     ),
     "github_pr_operator_approval_request_schema": (
         "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json"
@@ -101,6 +121,7 @@ REQUIRED_TRUE_FLAGS = (
     "planning_only",
     "read_only",
     "report_is_not_terminal_closure",
+    "requires_actual_diff_branch_write_binding",
     "response_witness_required",
     "uao_pr_admission_required",
     "blocks_pr_admission",
@@ -141,6 +162,7 @@ class GitHubPrBranchWriteAuthorityBindingValidation:
     example_paths: tuple[str, ...]
     example_count: int
     source_branch_write_binding_ref: str
+    actual_diff_branch_write_binding_ref: str
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -197,6 +219,7 @@ def validate_agentic_service_harness_github_pr_uao_admission_witness(
         example_paths=tuple(_path_label(path) for path in example_paths),
         example_count=len(examples),
         source_branch_write_binding_ref=EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        actual_diff_branch_write_binding_ref=EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
     )
 
 
@@ -233,6 +256,55 @@ def _validate_uao_admission_witness_semantics(
     )
     _require_equal(
         payload,
+        ("uao_admission", "requires_actual_diff_branch_write_binding"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("uao_admission", "actual_diff_branch_write_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("uao_admission", "actual_diff_operator_response_witness_ref"),
+        EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("uao_admission", "actual_diff_approval_request_binding_ref"),
+        EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("uao_admission", "actual_non_empty_diff_receipt_ref"),
+        EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("uao_admission", "redacted_diff_bundle_ref"),
+        EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("uao_admission", "redacted_output_ref"),
+        EXPECTED_REDACTED_OUTPUT_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
         ("uao_admission", "required_authority_kind"),
         "uao_pr_admission",
         errors,
@@ -254,6 +326,56 @@ def _validate_uao_admission_witness_semantics(
     )
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
     if source_branch_write_binding:
+        source_branch_write = _mapping(_get_nested(source_branch_write_binding, ("branch_write_binding",)))
+        _require_equal(
+            payload,
+            ("uao_admission", "actual_diff_operator_response_witness_ref"),
+            source_branch_write.get("actual_diff_operator_response_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("uao_admission", "actual_diff_approval_request_binding_ref"),
+            source_branch_write.get("actual_diff_approval_request_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("uao_admission", "actual_non_empty_diff_receipt_ref"),
+            source_branch_write.get("actual_non_empty_diff_receipt_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("uao_admission", "changed_file_refs"),
+            source_branch_write.get("changed_file_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("uao_admission", "diff_refs"),
+            source_branch_write.get("diff_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("uao_admission", "redacted_diff_bundle_ref"),
+            source_branch_write.get("redacted_diff_bundle_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("uao_admission", "redacted_output_ref"),
+            source_branch_write.get("redacted_output_ref"),
+            errors,
+            label,
+        )
         _require_equal(
             payload,
             ("scope", "repository_slug"),
@@ -329,6 +451,10 @@ def _get_nested(payload: Mapping[str, Any], path: tuple[str, ...]) -> Any:
             return None
         current = current.get(part)
     return current
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
 
 
 def _walk_leaves(value: Any, path: tuple[str, ...] = ()) -> list[tuple[tuple[str, ...], Any]]:
