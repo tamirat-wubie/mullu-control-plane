@@ -1396,6 +1396,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "capability_friction_control",
+            (python_executable, "scripts/validate_capability_friction_control.py"),
+        ),
+        CheckCommand(
             "mcp_operator_checklist",
             (
                 python_executable,

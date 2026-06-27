@@ -213,6 +213,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "tenant_scope_coverage",
         "persistence_tenant_guard_coverage",
         "mcp_capability_manifest",
+        "capability_friction_control",
         "mcp_operator_checklist",
         "public_naming_readiness",
         "public_demo_surfaces",
@@ -863,6 +864,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "--manifest",
         "examples/mcp_capability_manifest.json",
         "--json",
+    )
+    assert args_by_name["capability_friction_control"][1:] == (
+        "scripts/validate_capability_friction_control.py",
     )
     assert args_by_name["mcp_operator_checklist"][1:] == (
         "scripts/validate_mcp_operator_checklist.py",

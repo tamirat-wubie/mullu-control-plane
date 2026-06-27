@@ -170,6 +170,93 @@ ladder profile, but any entry that declares one must match the canonical ladder
 exactly. This keeps future capability packs from silently substituting weaker
 gates for effect-bearing actions.
 
+## Friction Control Projection
+
+The operator console now derives a `capability_friction_control` read model from
+governed capability records. This projection does not grant execution authority.
+It converts many fine-grained gates into four operator-facing questions:
+
+| Question | Read-model source |
+| --- | --- |
+| What is unlocked? | `unlock_level`, `friction_status`, and mode admission fields. |
+| What is blocked? | `blocked_actions` projected from forbidden effects, approval, and production evidence. |
+| Why is it blocked? | `required_before_unlock` and `next_unlock`. |
+| What boundary applies? | `operating_boundary`, `lab_mode_allowed`, and `real_world_mode_allowed`. |
+
+Canonical unlock levels are:
+
+```text
+L0 read-only
+L1 plan-only
+L2 prepare-only
+L3 write-to-sandbox
+L4 run tests
+L5 create PR
+L6 merge with approval
+L7 live connector read
+L8 live connector write
+L9 production/customer mode
+```
+
+Friction modes are read-model policy summaries:
+
+| Mode | Meaning |
+| --- | --- |
+| `strict` | Approval before effect-bearing action and production evidence before real-world writes. |
+| `balanced` | Read and prepare are automatic; risky local changes require approval. |
+| `fast` | Local lab actions are automatic only when sandbox, receipt, rollback, and no-network constraints hold. |
+
+The lab boundary is the default for Foundation Mode. Lab mode may write local
+sandbox files, run tests, create demos, and prepare review packets. Real-world
+mode remains blocked until the relevant capability carries production witness
+evidence and any approval policy is satisfied.
+
+Safe automatic zones:
+
+```text
+write_docs
+write_tests
+write_examples
+write_local_demo_files
+update_readme
+generate_schemas
+generate_validators
+```
+
+Dangerous zones:
+
+```text
+delete_files
+touch_secrets
+send_email
+move_money
+deploy
+merge_to_main
+write_production_data
+```
+
+Rollback is part of the friction contract: every world-mutating local capability
+must expose receipt and rollback or compensation requirements before it can be
+treated as fast-mode lab-ready.
+
+Canonical artifacts:
+
+| Artifact | Role |
+| --- | --- |
+| `schemas/capability_friction_control.schema.json` | Strict operator read-model contract. |
+| `examples/capability_friction_control.foundation.json` | Foundation Mode software-development projection. |
+| `scripts/validate_capability_friction_control.py` | Runtime and schema validator. |
+| `tests/test_validate_capability_friction_control.py` | Contract and rejection coverage. |
+| `/operator/capabilities/friction-control/read-model` | Read-only gateway route for the live operator projection. |
+
+Validation:
+
+```powershell
+python scripts/validate_capability_friction_control.py
+python -m pytest tests/test_validate_capability_friction_control.py -q
+python scripts/validate_schemas.py
+```
+
 ## Capability Forge
 
 The capability forge emits candidate packages and certification handoffs, never registry mutations. A candidate handoff binds the package id, package hash, sandbox receipt, live receipt, worker deployment, recovery evidence, and optional autonomy-control reference into a `CapabilityCertificationEvidenceBundle` that the maturity synthesizer can consume. Effect-bearing handoffs fail closed until live-write and recovery evidence references are present.

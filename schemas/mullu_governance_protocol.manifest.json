@@ -485,6 +485,48 @@
       "urn": "urn:mullusi:schema:capability-evidence-endpoint:1"
     },
     {
+      "path": "schemas/capability_debt_report.schema.json",
+      "schema_id": "capability-debt-report",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:capability-debt-report:1"
+    },
+    {
+      "path": "schemas/capability_friction_control.schema.json",
+      "schema_id": "capability-friction-control",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:capability-friction-control:1"
+    },
+    {
+      "path": "schemas/capability_passport_dashboard.schema.json",
+      "schema_id": "capability-passport-dashboard",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:capability-passport-dashboard:1"
+    },
+    {
+      "path": "schemas/capability_passports.schema.json",
+      "schema_id": "capability-passports",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:capability-passports:1"
+    },
+    {
+      "path": "schemas/evidence_passports.schema.json",
+      "schema_id": "evidence-passports",
+      "surface": "evidence",
+      "urn": "urn:mullusi:schema:evidence-passports:1"
+    },
+    {
+      "path": "schemas/gate_template_registry.schema.json",
+      "schema_id": "gate-template-registry",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:gate-template-registry:1"
+    },
+    {
+      "path": "schemas/sandbox_to_live_promotion.schema.json",
+      "schema_id": "sandbox-to-live-promotion",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:sandbox-to-live-promotion:1"
+    },
+    {
       "path": "schemas/capability_improvement_portfolio.schema.json",
       "schema_id": "capability-improvement-portfolio",
       "surface": "capability",

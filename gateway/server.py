@@ -147,6 +147,7 @@ from gateway.mcp_capability_fabric import MCPAuthorityRecords, build_mcp_gateway
 from gateway.observability import GatewayObservabilityRecorder
 from gateway.mcp_operator_read_model import build_mcp_operator_read_model
 from gateway.operator_capability_console import (
+    build_capability_friction_control_read_model,
     build_operator_capability_read_model,
     render_operator_capability_console,
 )
@@ -6723,6 +6724,19 @@ def create_gateway_app(
             include_improvement_portfolio=include_improvement_portfolio,
             improvement_generated_at=_clock(),
             improvement_candidate_limit=improvement_candidate_limit,
+        )
+
+    @app.get("/operator/capabilities/friction-control/read-model")
+    def operator_capability_friction_control_read_model(
+        request: Request,
+        domain: str = "",
+        risk_level: str = "",
+    ):
+        _require_authority_operator(request)
+        return build_capability_friction_control_read_model(
+            capability_admission_gate=capability_admission_gate,
+            domain=domain,
+            risk_level=risk_level,
         )
 
     @app.get("/operator/code-intelligence/read-model")

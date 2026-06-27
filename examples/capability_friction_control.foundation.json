@@ -1,0 +1,374 @@
+{
+  "capabilities": [
+    {
+      "balanced_mode_admission": "allowed",
+      "blocked_action_count": 4,
+      "blocked_actions": [
+        "production_deployment_started",
+        "pull_request_opened",
+        "real_world_production_execution",
+        "workspace_patch_applied"
+      ],
+      "capability_id": "software_dev.app_task_graph.plan",
+      "domain": "software_dev",
+      "fast_mode_admission": "allowed_read_only",
+      "friction_status": "unlocked",
+      "lab_mode_allowed": true,
+      "maturity_level": "C3",
+      "next_unlock": "dry_run_receipt",
+      "operating_boundary": "lab",
+      "real_world_mode_allowed": false,
+      "required_before_unlock": [
+        "dry_run_receipt",
+        "production_witness"
+      ],
+      "risk_level": "low",
+      "rollback_default": true,
+      "strict_mode_admission": "allowed",
+      "unlock_label": "plan-only",
+      "unlock_level": "L1"
+    },
+    {
+      "balanced_mode_admission": "approval_required",
+      "blocked_action_count": 5,
+      "blocked_actions": [
+        "network_enabled_by_default",
+        "path_outside_workspace_written",
+        "production_deployment_started",
+        "real_world_production_execution",
+        "unapproved_execution"
+      ],
+      "capability_id": "software_dev.change.run",
+      "domain": "software_dev",
+      "fast_mode_admission": "allowed_lab",
+      "friction_status": "approval_required",
+      "lab_mode_allowed": true,
+      "maturity_level": "C4",
+      "next_unlock": "approval",
+      "operating_boundary": "lab",
+      "real_world_mode_allowed": false,
+      "required_before_unlock": [
+        "approval",
+        "rollback",
+        "dry_run_receipt",
+        "workspace_boundary",
+        "production_witness"
+      ],
+      "risk_level": "high",
+      "rollback_default": true,
+      "strict_mode_admission": "approval_required",
+      "unlock_label": "run tests",
+      "unlock_level": "L4"
+    },
+    {
+      "balanced_mode_admission": "allowed",
+      "blocked_action_count": 4,
+      "blocked_actions": [
+        "command_executed",
+        "raw_repository_dumped",
+        "real_world_production_execution",
+        "workspace_file_written"
+      ],
+      "capability_id": "software_dev.context_bundle.build",
+      "domain": "software_dev",
+      "fast_mode_admission": "allowed_read_only",
+      "friction_status": "unlocked",
+      "lab_mode_allowed": true,
+      "maturity_level": "C3",
+      "next_unlock": "dry_run_receipt",
+      "operating_boundary": "lab",
+      "real_world_mode_allowed": false,
+      "required_before_unlock": [
+        "dry_run_receipt",
+        "production_witness"
+      ],
+      "risk_level": "low",
+      "rollback_default": true,
+      "strict_mode_admission": "allowed",
+      "unlock_label": "prepare-only",
+      "unlock_level": "L2"
+    },
+    {
+      "balanced_mode_admission": "allowed",
+      "blocked_action_count": 4,
+      "blocked_actions": [
+        "network_egress_used",
+        "quality_gate_executed",
+        "real_world_production_execution",
+        "workspace_file_written"
+      ],
+      "capability_id": "software_dev.gate_plan.select",
+      "domain": "software_dev",
+      "fast_mode_admission": "allowed_read_only",
+      "friction_status": "unlocked",
+      "lab_mode_allowed": true,
+      "maturity_level": "C3",
+      "next_unlock": "dry_run_receipt",
+      "operating_boundary": "lab",
+      "real_world_mode_allowed": false,
+      "required_before_unlock": [
+        "dry_run_receipt",
+        "production_witness"
+      ],
+      "risk_level": "low",
+      "rollback_default": true,
+      "strict_mode_admission": "allowed",
+      "unlock_label": "plan-only",
+      "unlock_level": "L1"
+    },
+    {
+      "balanced_mode_admission": "approval_required",
+      "blocked_action_count": 5,
+      "blocked_actions": [
+        "git_push_executed",
+        "production_deployment_started",
+        "pull_request_opened_without_approval",
+        "real_world_production_execution",
+        "unapproved_execution"
+      ],
+      "capability_id": "software_dev.pr_candidate.prepare",
+      "domain": "software_dev",
+      "fast_mode_admission": "allowed_lab",
+      "friction_status": "approval_required",
+      "lab_mode_allowed": true,
+      "maturity_level": "C4",
+      "next_unlock": "approval",
+      "operating_boundary": "lab",
+      "real_world_mode_allowed": false,
+      "required_before_unlock": [
+        "approval",
+        "rollback",
+        "dry_run_receipt",
+        "workspace_boundary",
+        "production_witness"
+      ],
+      "risk_level": "high",
+      "rollback_default": true,
+      "strict_mode_admission": "approval_required",
+      "unlock_label": "create PR",
+      "unlock_level": "L5"
+    },
+    {
+      "balanced_mode_admission": "allowed",
+      "blocked_action_count": 4,
+      "blocked_actions": [
+        "command_executed",
+        "network_egress_used",
+        "real_world_production_execution",
+        "workspace_file_written"
+      ],
+      "capability_id": "software_dev.repo_map.read",
+      "domain": "software_dev",
+      "fast_mode_admission": "allowed_read_only",
+      "friction_status": "unlocked",
+      "lab_mode_allowed": true,
+      "maturity_level": "C3",
+      "next_unlock": "dry_run_receipt",
+      "operating_boundary": "lab",
+      "real_world_mode_allowed": false,
+      "required_before_unlock": [
+        "dry_run_receipt",
+        "production_witness"
+      ],
+      "risk_level": "low",
+      "rollback_default": true,
+      "strict_mode_admission": "allowed",
+      "unlock_label": "read-only",
+      "unlock_level": "L0"
+    }
+  ],
+  "dangerous_zones": [
+    "delete_files",
+    "touch_secrets",
+    "send_email",
+    "move_money",
+    "deploy",
+    "merge_to_main",
+    "write_production_data"
+  ],
+  "developer_workflow_v1": {
+    "approval_boundary": "before_pull_request_or_external_write",
+    "lab_mode_allowed": true,
+    "missing_capability_ids": [],
+    "next_unlock": "operator_approval_for_pr_candidate",
+    "real_world_effects_allowed": false,
+    "stages": [
+      {
+        "available": true,
+        "capability_id": "operator.user_request",
+        "stage_id": "request_intake",
+        "stage_type": "observation",
+        "verification_required": true
+      },
+      {
+        "available": true,
+        "capability_id": "software_dev.repo_map.read",
+        "stage_id": "repo_map",
+        "stage_type": "skill_execution",
+        "verification_required": true
+      },
+      {
+        "available": true,
+        "capability_id": "software_dev.context_bundle.build",
+        "stage_id": "context_bundle",
+        "stage_type": "skill_execution",
+        "verification_required": true
+      },
+      {
+        "available": true,
+        "capability_id": "software_dev.gate_plan.select",
+        "stage_id": "gate_plan",
+        "stage_type": "skill_execution",
+        "verification_required": true
+      },
+      {
+        "available": true,
+        "capability_id": "software_dev.change.run",
+        "stage_id": "sandbox_change",
+        "stage_type": "skill_execution",
+        "verification_required": true
+      },
+      {
+        "available": true,
+        "capability_id": "software_change_receipt",
+        "stage_id": "receipt_review",
+        "stage_type": "observation",
+        "verification_required": true
+      },
+      {
+        "available": true,
+        "capability_id": "developer_reviewer",
+        "stage_id": "operator_approval",
+        "stage_type": "approval_gate",
+        "verification_required": true
+      },
+      {
+        "available": true,
+        "capability_id": "software_dev.pr_candidate.prepare",
+        "stage_id": "pr_candidate",
+        "stage_type": "skill_execution",
+        "verification_required": true
+      }
+    ],
+    "status": "preflight_ready",
+    "terminal_closure": "diff_receipt_reviewed_then_pr_candidate_prepared",
+    "workflow_id": "mullu_developer_workflow.v1"
+  },
+  "friction_modes": [
+    {
+      "mode": "strict",
+      "rule": "approval before effect-bearing action and production evidence before real-world writes"
+    },
+    {
+      "mode": "balanced",
+      "rule": "read and prepare are automatic; risky local changes require approval"
+    },
+    {
+      "mode": "fast",
+      "rule": "local lab actions are automatic only when sandbox, receipt, rollback, and no-network constraints hold"
+    }
+  ],
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "next_action": "Use this read model as the operator-facing surface for local Developer Workflow v1.",
+  "read_model_id": "capability_friction_control.foundation.v1",
+  "read_model_is_not_execution_authority": true,
+  "safe_automatic_zones": [
+    "write_docs",
+    "write_tests",
+    "write_examples",
+    "write_local_demo_files",
+    "update_readme",
+    "generate_schemas",
+    "generate_validators"
+  ],
+  "schema_version": 1,
+  "source_refs": {
+    "capability_surface": "governed_capability_records",
+    "domain_filter": "software_dev",
+    "risk_level_filter": ""
+  },
+  "summary": {
+    "approval_required_count": 2,
+    "capability_count": 6,
+    "fast_mode_lab_ready_count": 2,
+    "lab_mode_allowed_count": 6,
+    "operating_boundary_counts": {
+      "lab": 6
+    },
+    "real_world_mode_allowed_count": 0,
+    "real_world_write_status": "blocked_until_production_witness",
+    "sandbox_required_count": 2,
+    "unlock_level_counts": {
+      "L0": 1,
+      "L1": 2,
+      "L2": 1,
+      "L4": 1,
+      "L5": 1
+    }
+  },
+  "unlock_levels": [
+    {
+      "label": "read-only",
+      "level": "L0",
+      "maximum_effect": "inspect repository or external state"
+    },
+    {
+      "label": "plan-only",
+      "level": "L1",
+      "maximum_effect": "emit plans without mutation"
+    },
+    {
+      "label": "prepare-only",
+      "level": "L2",
+      "maximum_effect": "prepare bounded artifacts without durable effects"
+    },
+    {
+      "label": "write-to-sandbox",
+      "level": "L3",
+      "maximum_effect": "write local sandbox files with receipt"
+    },
+    {
+      "label": "run tests",
+      "level": "L4",
+      "maximum_effect": "execute local quality gates"
+    },
+    {
+      "label": "create PR",
+      "level": "L5",
+      "maximum_effect": "prepare or open pull request with approval"
+    },
+    {
+      "label": "merge with approval",
+      "level": "L6",
+      "maximum_effect": "merge reviewed changes"
+    },
+    {
+      "label": "live connector read",
+      "level": "L7",
+      "maximum_effect": "read credentialed connector state"
+    },
+    {
+      "label": "live connector write",
+      "level": "L8",
+      "maximum_effect": "write credentialed connector state"
+    },
+    {
+      "label": "production/customer mode",
+      "level": "L9",
+      "maximum_effect": "affect production or customer state"
+    }
+  ],
+  "validators": [
+    {
+      "command": "python scripts/validate_capability_friction_control.py",
+      "required_for_closure": true,
+      "validator_id": "capability_friction_control_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_capability_friction_control.py -q",
+      "required_for_closure": true,
+      "validator_id": "capability_friction_control_tests"
+    }
+  ]
+}

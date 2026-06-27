@@ -178,3 +178,51 @@ governance_packet_ref -> upstream_governance_packet_ref
 `mcoi_runtime.core.governor_chain.validate_governor_chain_descriptor` fails
 closed when a governor is missing, blocked, writable, reordered, or detached from
 the expected predecessor/binding topology.
+
+## Mullu Developer Workflow v1
+
+`mullu_developer_workflow.v1` is the first complete local lab workflow over the
+software-development capability pack. It turns a user request into a bounded
+change candidate without touching production, customers, money, email, or live
+connector writes.
+
+```text
+user request
+  -> repository map
+  -> context bundle
+  -> gate plan
+  -> sandbox change
+  -> diff and receipt review
+  -> operator approval
+  -> PR candidate preparation
+```
+
+The workflow composes existing capabilities only:
+
+| Stage | Type | Capability |
+| --- | --- | --- |
+| `request_intake` | `observation` | `operator.user_request` |
+| `repo_map` | `skill_execution` | `software_dev.repo_map.read` |
+| `context_bundle` | `skill_execution` | `software_dev.context_bundle.build` |
+| `gate_plan` | `skill_execution` | `software_dev.gate_plan.select` |
+| `sandbox_change` | `skill_execution` | `software_dev.change.run` |
+| `receipt_review` | `observation` | `software_change_receipt` |
+| `operator_approval` | `approval_gate` | `developer_reviewer` |
+| `pr_candidate` | `skill_execution` | `software_dev.pr_candidate.prepare` |
+
+Terminal closure is:
+
+```text
+diff_receipt_reviewed_then_pr_candidate_prepared
+```
+
+The operator console projects this workflow from the capability registry through
+`friction_control.developer_workflow_v1`. The projection is read-only. It reports
+`preflight_ready` only when all required capabilities are registered and the
+effect-bearing stages are lab-mode admissible through sandbox, receipt, rollback,
+and no-network constraints.
+
+Real-world effects remain outside this workflow. Opening an external pull
+request, pushing a branch, merging, deployment, customer communication, or
+production data mutation must enter a stronger workflow with approval, witness,
+monitoring, and rollback evidence.

@@ -1,0 +1,457 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:capability-friction-control:1",
+  "title": "Mullu Capability Friction Control Read Model",
+  "description": "Operator-facing read model that converts governed capability gates into unlock levels, friction modes, lab boundaries, and next evidence steps without granting execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "read_model_id",
+    "mode",
+    "read_model_is_not_execution_authority",
+    "live_execution_enabled",
+    "source_refs",
+    "summary",
+    "unlock_levels",
+    "friction_modes",
+    "safe_automatic_zones",
+    "dangerous_zones",
+    "capabilities",
+    "developer_workflow_v1",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "read_model_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "const": "foundation"
+    },
+    "read_model_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_surface",
+        "domain_filter",
+        "risk_level_filter"
+      ],
+      "properties": {
+        "capability_surface": {
+          "type": "string",
+          "const": "governed_capability_records"
+        },
+        "domain_filter": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "risk_level_filter": {
+          "type": "string",
+          "maxLength": 80
+        }
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "unlock_levels": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "$ref": "#/$defs/unlock_level_record"
+      }
+    },
+    "friction_modes": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/friction_mode_record"
+      }
+    },
+    "safe_automatic_zones": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/zone_name"
+      }
+    },
+    "dangerous_zones": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/zone_name"
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/capability_card"
+      }
+    },
+    "developer_workflow_v1": {
+      "$ref": "#/$defs/developer_workflow"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 360
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 220,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "zone_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "unlock_level": {
+      "type": "string",
+      "enum": ["L0", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9"]
+    },
+    "maturity_level": {
+      "type": "string",
+      "enum": ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
+    },
+    "friction_status": {
+      "type": "string",
+      "enum": ["unlocked", "approval_required", "blocked", "evidence_missing"]
+    },
+    "mode_admission": {
+      "type": "string",
+      "enum": ["allowed", "allowed_lab", "allowed_read_only", "approval_required"]
+    },
+    "operating_boundary": {
+      "type": "string",
+      "enum": ["lab", "real_world"]
+    },
+    "unlock_requirement": {
+      "type": "string",
+      "enum": ["approval", "rollback", "dry_run_receipt", "workspace_boundary", "production_witness"]
+    },
+    "string_count_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_count",
+        "unlock_level_counts",
+        "operating_boundary_counts",
+        "approval_required_count",
+        "sandbox_required_count",
+        "fast_mode_lab_ready_count",
+        "lab_mode_allowed_count",
+        "real_world_mode_allowed_count",
+        "real_world_write_status"
+      ],
+      "properties": {
+        "capability_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unlock_level_counts": {
+          "$ref": "#/$defs/string_count_map"
+        },
+        "operating_boundary_counts": {
+          "$ref": "#/$defs/string_count_map"
+        },
+        "approval_required_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sandbox_required_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fast_mode_lab_ready_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lab_mode_allowed_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "real_world_mode_allowed_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "real_world_write_status": {
+          "type": "string",
+          "const": "blocked_until_production_witness"
+        }
+      }
+    },
+    "unlock_level_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "label", "maximum_effect"],
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/unlock_level"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "maximum_effect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        }
+      }
+    },
+    "friction_mode_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "rule"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["strict", "balanced", "fast"]
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 220
+        }
+      }
+    },
+    "capability_card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "domain",
+        "risk_level",
+        "maturity_level",
+        "unlock_level",
+        "unlock_label",
+        "operating_boundary",
+        "friction_status",
+        "fast_mode_admission",
+        "balanced_mode_admission",
+        "strict_mode_admission",
+        "lab_mode_allowed",
+        "real_world_mode_allowed",
+        "blocked_actions",
+        "blocked_action_count",
+        "required_before_unlock",
+        "next_unlock",
+        "rollback_default"
+      ],
+      "properties": {
+        "capability_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "domain": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "risk_level": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "maturity_level": {
+          "$ref": "#/$defs/maturity_level"
+        },
+        "unlock_level": {
+          "$ref": "#/$defs/unlock_level"
+        },
+        "unlock_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "operating_boundary": {
+          "$ref": "#/$defs/operating_boundary"
+        },
+        "friction_status": {
+          "$ref": "#/$defs/friction_status"
+        },
+        "fast_mode_admission": {
+          "$ref": "#/$defs/mode_admission"
+        },
+        "balanced_mode_admission": {
+          "$ref": "#/$defs/mode_admission"
+        },
+        "strict_mode_admission": {
+          "$ref": "#/$defs/mode_admission"
+        },
+        "lab_mode_allowed": {
+          "type": "boolean"
+        },
+        "real_world_mode_allowed": {
+          "type": "boolean"
+        },
+        "blocked_actions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "blocked_action_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "required_before_unlock": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/unlock_requirement"
+          }
+        },
+        "next_unlock": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "rollback_default": {
+          "type": "boolean"
+        }
+      }
+    },
+    "developer_workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workflow_id",
+        "status",
+        "terminal_closure",
+        "lab_mode_allowed",
+        "real_world_effects_allowed",
+        "approval_boundary",
+        "stages",
+        "missing_capability_ids",
+        "next_unlock"
+      ],
+      "properties": {
+        "workflow_id": {
+          "type": "string",
+          "const": "mullu_developer_workflow.v1"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["preflight_ready", "awaiting_evidence"]
+        },
+        "terminal_closure": {
+          "type": "string",
+          "const": "diff_receipt_reviewed_then_pr_candidate_prepared"
+        },
+        "lab_mode_allowed": {
+          "type": "boolean"
+        },
+        "real_world_effects_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "approval_boundary": {
+          "type": "string",
+          "const": "before_pull_request_or_external_write"
+        },
+        "stages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/workflow_stage"
+          }
+        },
+        "missing_capability_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "next_unlock": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        }
+      }
+    },
+    "workflow_stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "stage_type", "capability_id", "available", "verification_required"],
+      "properties": {
+        "stage_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "stage_type": {
+          "type": "string",
+          "enum": ["skill_execution", "approval_gate", "observation", "communication", "wait_for_event"]
+        },
+        "capability_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "verification_required": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

@@ -21,7 +21,10 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from gateway.capability_fabric import build_default_capability_admission_gate  # noqa: E402
+from gateway.capability_fabric import (  # noqa: E402
+    build_default_capability_admission_gate,
+    build_software_dev_capability_admission_gate,
+)
 from gateway.operator_capability_console import build_operator_capability_read_model  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
 
@@ -71,6 +74,11 @@ def test_operator_capability_read_model_projects_governed_records_only() -> None
     assert all("input_schema_ref" not in item for item in read_model["capabilities"])
     assert all(item["maturity_level"] == "C3" for item in read_model["capabilities"])
     assert all(item["maturity_label"] == "Implemented" for item in read_model["capabilities"])
+    assert read_model["friction_control"]["execution_authority_granted"] is False
+    assert read_model["friction_control"]["default_boundary"] == "lab"
+    assert read_model["friction_control"]["real_world_write_status"] == "blocked_until_production_witness"
+    assert "L0" in read_model["unlock_level_counts"]
+    assert set(read_model["operating_boundary_counts"]) == {"lab"}
 
 
 def test_operator_capability_endpoint_reports_default_fabric() -> None:
@@ -121,3 +129,80 @@ def test_operator_console_links_capability_improvement_portfolio() -> None:
     assert "Capability improvement portfolio" in response.text
     assert "/runtime/self/capability-improvement-portfolio" in response.text
     assert "Activation blocked: true" in response.text
+    assert "Friction Control" in response.text
+    assert "Fast lab ready" in response.text
+    assert "friction read model" in response.text
+
+
+def test_operator_capability_read_model_projects_friction_controls_for_software_dev() -> None:
+    gate = build_software_dev_capability_admission_gate(clock=_clock)
+
+    read_model = build_operator_capability_read_model(
+        capability_admission_gate=gate,
+        domain="software_dev",
+    )
+    capabilities = {item["capability_id"]: item for item in read_model["capabilities"]}
+    workflow = read_model["friction_control"]["developer_workflow_v1"]
+
+    assert read_model["capability_count"] == 6
+    assert read_model["unlock_level_counts"]["L4"] == 1
+    assert read_model["unlock_level_counts"]["L5"] == 1
+    assert read_model["friction_control"]["fast_mode_lab_ready_count"] == 2
+    assert workflow["workflow_id"] == "mullu_developer_workflow.v1"
+    assert workflow["status"] == "preflight_ready"
+    assert workflow["lab_mode_allowed"] is True
+    assert workflow["real_world_effects_allowed"] is False
+    assert workflow["approval_boundary"] == "before_pull_request_or_external_write"
+    assert workflow["missing_capability_ids"] == []
+    assert capabilities["software_dev.change.run"]["unlock_level"] == "L4"
+    assert capabilities["software_dev.change.run"]["fast_mode_admission"] == "allowed_lab"
+    assert capabilities["software_dev.change.run"]["friction_status"] == "approval_required"
+    assert capabilities["software_dev.change.run"]["rollback_default"] is True
+    assert capabilities["software_dev.pr_candidate.prepare"]["unlock_level"] == "L5"
+    assert capabilities["software_dev.pr_candidate.prepare"]["next_unlock"] == "approval"
+    assert "production_deployment_started" in capabilities["software_dev.change.run"]["blocked_actions"]
+    assert "unapproved_execution" in capabilities["software_dev.pr_candidate.prepare"]["blocked_actions"]
+
+
+def test_operator_friction_control_endpoint_projects_developer_workflow() -> None:
+    gate = build_software_dev_capability_admission_gate(clock=_clock)
+    app = create_gateway_app(
+        platform=StubPlatform(),
+        capability_admission_gate_override=gate,
+    )
+    client = TestClient(app)
+
+    response = client.get("/operator/capabilities/friction-control/read-model?domain=software_dev")
+
+    assert response.status_code == 200
+    payload = response.json()
+    workflow = payload["developer_workflow_v1"]
+    assert payload["read_model_is_not_execution_authority"] is True
+    assert payload["live_execution_enabled"] is False
+    assert payload["source_refs"]["capability_surface"] == "governed_capability_records"
+    assert payload["source_refs"]["domain_filter"] == "software_dev"
+    assert payload["summary"]["capability_count"] == 6
+    assert payload["summary"]["fast_mode_lab_ready_count"] == 2
+    assert payload["summary"]["real_world_mode_allowed_count"] == 0
+    assert workflow["workflow_id"] == "mullu_developer_workflow.v1"
+    assert workflow["status"] == "preflight_ready"
+    assert workflow["real_world_effects_allowed"] is False
+    assert all("extensions" not in item for item in payload["capabilities"])
+    assert all("allowed_tools" not in item for item in payload["capabilities"])
+
+
+def test_operator_console_shows_developer_workflow_panel_for_software_dev() -> None:
+    gate = build_software_dev_capability_admission_gate(clock=_clock)
+    app = create_gateway_app(
+        platform=StubPlatform(),
+        capability_admission_gate_override=gate,
+    )
+    client = TestClient(app)
+
+    response = client.get("/operator/capabilities?domain=software_dev")
+
+    assert response.status_code == 200
+    assert "Friction Control" in response.text
+    assert "Workflow: preflight_ready" in response.text
+    assert "Approval: before_pull_request_or_external_write" in response.text
+    assert "/operator/capabilities/friction-control/read-model?domain=software_dev" in response.text

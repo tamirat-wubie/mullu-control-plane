@@ -311,6 +311,7 @@
             "tenant_scope_coverage",
             "persistence_tenant_guard_coverage",
             "mcp_capability_manifest",
+            "capability_friction_control",
             "mcp_operator_checklist",
             "public_naming_readiness",
             "public_demo_surfaces",
