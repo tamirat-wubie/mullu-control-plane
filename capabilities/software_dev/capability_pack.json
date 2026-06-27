@@ -44,7 +44,13 @@
         "display_name": "Read repository map",
         "risk_tier": "low",
         "target_maturity": "C3",
-        "fixture_only": true
+        "fixture_only": true,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 0,
+          "level_id": "L0",
+          "gate_template_ids": ["evidence_intake_gate"]
+        }
       },
       "extensions": {
         "governed_record": {
@@ -106,7 +112,13 @@
         "display_name": "Build bounded code context",
         "risk_tier": "low",
         "target_maturity": "C3",
-        "fixture_only": true
+        "fixture_only": true,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 2,
+          "level_id": "L2",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate"]
+        }
       },
       "extensions": {
         "governed_record": {
@@ -168,7 +180,13 @@
         "display_name": "Select software quality gates",
         "risk_tier": "low",
         "target_maturity": "C3",
-        "fixture_only": true
+        "fixture_only": true,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 2,
+          "level_id": "L2",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate"]
+        }
       },
       "extensions": {
         "governed_record": {
@@ -230,7 +248,13 @@
         "display_name": "Run governed software change",
         "risk_tier": "high",
         "target_maturity": "C3",
-        "fixture_only": true
+        "fixture_only": true,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 4,
+          "level_id": "L4",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate", "rollback_gate"]
+        }
       },
       "extensions": {
         "governed_record": {
@@ -305,7 +329,13 @@
         "display_name": "Plan app builder task graph",
         "risk_tier": "low",
         "target_maturity": "C3",
-        "fixture_only": true
+        "fixture_only": true,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 2,
+          "level_id": "L2",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate"]
+        }
       },
       "extensions": {
         "governed_record": {
@@ -367,7 +397,19 @@
         "display_name": "Prepare PR candidate review packet",
         "risk_tier": "high",
         "target_maturity": "C3",
-        "fixture_only": true
+        "fixture_only": true,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 5,
+          "level_id": "L5",
+          "gate_template_ids": [
+            "evidence_intake_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "operator_review_gate"
+          ]
+        }
       },
       "extensions": {
         "governed_record": {

@@ -23,6 +23,10 @@ from gateway.capability_fabric import (
     load_software_dev_capability_entries,
     load_software_dev_domain_capsule,
 )
+from mcoi_runtime.core.capability_unlock_ladder import (
+    UNLOCK_LADDER_ID,
+    default_capability_unlock_ladder,
+)
 from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistryEntry, DomainCapsule
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
@@ -212,6 +216,42 @@ def test_software_dev_named_loader_projects_manifest_registry_when_configured() 
     assert manifests["software_dev.repo_map.read"]["effect_bearing"] is False
 
 
+def test_software_dev_pack_declares_reusable_unlock_ladder_profiles() -> None:
+    entries = _load_json(SOFTWARE_DEV_CAPABILITY_PACK_PATH)["capabilities"]
+    expected_levels = _expected_unlock_levels()
+    ladder_by_level = {level.level: level for level in default_capability_unlock_ladder()}
+
+    assert len(entries) == 6
+    assert set(expected_levels) == {entry["capability_id"] for entry in entries}
+    for entry in entries:
+        capability_id = entry["capability_id"]
+        profile = entry["metadata"]["unlock_ladder"]
+        ladder_level = ladder_by_level[expected_levels[capability_id]]
+
+        assert profile["ladder_id"] == UNLOCK_LADDER_ID
+        assert profile["level"] == expected_levels[capability_id]
+        assert profile["level_id"] == ladder_level.level_id
+        assert tuple(profile["gate_template_ids"]) == ladder_level.required_gate_ids
+
+
+def test_software_dev_manifests_declare_same_unlock_profiles_as_pack() -> None:
+    pack_profiles = {
+        entry["capability_id"]: entry["metadata"]["unlock_ladder"]
+        for entry in _load_json(SOFTWARE_DEV_CAPABILITY_PACK_PATH)["capabilities"]
+    }
+    manifest_paths = tuple(sorted((ROOT / "capabilities" / "software_dev" / "manifests").glob("*.json")))
+
+    assert len(manifest_paths) == 6
+    assert set(pack_profiles) == set(_expected_unlock_levels())
+    for manifest_path in manifest_paths:
+        manifest = _load_json(manifest_path)
+        capability_id = manifest["capability_id"]
+
+        assert manifest["metadata"]["unlock_ladder"] == pack_profiles[capability_id]
+        assert manifest["metadata"]["unlock_ladder"]["ladder_id"] == UNLOCK_LADDER_ID
+        assert manifest["metadata"]["unlock_ladder"]["level_id"].startswith("L")
+
+
 def test_software_dev_capsule_references_exact_pack_capabilities() -> None:
     capsule = DomainCapsule.from_mapping(_load_json(SOFTWARE_DEV_CAPSULE_PATH))
     capabilities = _software_dev_entries()
@@ -293,6 +333,17 @@ def _software_dev_entries() -> tuple[CapabilityRegistryEntry, ...]:
         CapabilityRegistryEntry.from_mapping(item)
         for item in _load_json(SOFTWARE_DEV_CAPABILITY_PACK_PATH)["capabilities"]
     )
+
+
+def _expected_unlock_levels() -> dict[str, int]:
+    return {
+        "software_dev.repo_map.read": 0,
+        "software_dev.context_bundle.build": 2,
+        "software_dev.gate_plan.select": 2,
+        "software_dev.change.run": 4,
+        "software_dev.app_task_graph.plan": 2,
+        "software_dev.pr_candidate.prepare": 5,
+    }
 
 
 def _software_dev_output_schemas_by_id() -> dict[str, dict]:

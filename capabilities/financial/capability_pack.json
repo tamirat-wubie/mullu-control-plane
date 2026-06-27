@@ -43,7 +43,13 @@
       "metadata": {
         "display_name": "Check balance",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -97,7 +103,13 @@
       "metadata": {
         "display_name": "Read transaction history",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -151,7 +163,13 @@
       "metadata": {
         "display_name": "Generate spending insights",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -205,7 +223,19 @@
       "metadata": {
         "display_name": "Send governed payment",
         "risk_tier": "high"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 8,
+          "level_id": "L8",
+          "gate_template_ids": [
+            "connector_lease_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -274,7 +304,19 @@
       "metadata": {
         "display_name": "Refund governed payment",
         "risk_tier": "high"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 8,
+          "level_id": "L8",
+          "gate_template_ids": [
+            "connector_lease_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,

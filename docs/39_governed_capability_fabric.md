@@ -102,6 +102,53 @@ Checked-in default packs include two concrete C6 witnesses. `connector.github.re
 
 Certification pipelines can avoid hand-authored maturity flags by emitting `extensions.capability_certification_evidence` with concrete certification, sandbox, live-read, optional live-write, worker, recovery, and autonomy-control references. The maturity synthesizer converts that bundle into the canonical `capability_maturity_evidence` extension shape, validates the capability identity, and can run in strict mode when a caller requires production readiness before writing the generated extension.
 
+## Capability Unlock Ladder
+
+The C0-C7 maturity model remains the evidence-derived readiness contract. The
+Level 0-9 unlock ladder is a reusable operator profile over that maturity model:
+it says which gates must be present before a class of work may run. It does not
+promote a capability and it does not create execution authority.
+
+Canonical implementation:
+
+```text
+mcoi/mcoi_runtime/core/capability_unlock_ladder.py
+```
+
+Reusable gate templates:
+
+| Gate template | Purpose |
+| --- | --- |
+| `evidence_intake_gate` | Collects bounded evidence before action selection. |
+| `approval_gate` | Records explicit operator decision before a hard boundary. |
+| `verifier_gate` | Checks observed state against the expected proof surface. |
+| `workspace_write_gate` | Confines file writes to the controlled workspace or branch. |
+| `connector_lease_gate` | Confines credentialed connector access to a scoped lease. |
+| `execution_receipt_gate` | Requires command-bound execution receipts. |
+| `rollback_gate` | Requires rollback, compensation, or recovery evidence. |
+| `operator_review_gate` | Preserves human review before escalation or PR evidence. |
+
+Unlock levels:
+
+| Level | Name | Required boundary |
+| ---: | --- | --- |
+| 0 | Read-only | Evidence intake only; no durable or external effects. |
+| 1 | Local demo | Local dry run plus verifier and receipt. |
+| 2 | File preparation | Diffs, docs, schemas, tests, and review packets only. |
+| 3 | File writing | Workspace write, receipt, rollback, and operator review. |
+| 4 | Test execution | Bounded tests with verifier, receipt, and rollback. |
+| 5 | PR creation | PR evidence preparation; opening requires approval. |
+| 6 | Human approval | Approval or rejection is recorded as the effect. |
+| 7 | Live connector probe | Scoped read-only credentialed connector lease and live witness. |
+| 8 | Approved live action | Approved live write with receipt and recovery. |
+| 9 | Customer-ready product | Customer exposure requires production witnesses, support, monitoring, and rollback. |
+
+The focused contract test is:
+
+```powershell
+python -m pytest mcoi/tests/test_capability_unlock_ladder.py -q
+```
+
 ## Capability Forge
 
 The capability forge emits candidate packages and certification handoffs, never registry mutations. A candidate handoff binds the package id, package hash, sandbox receipt, live receipt, worker deployment, recovery evidence, and optional autonomy-control reference into a `CapabilityCertificationEvidenceBundle` that the maturity synthesizer can consume. Effect-bearing handoffs fail closed until live-write and recovery evidence references are present.
