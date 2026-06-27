@@ -496,6 +496,31 @@ def test_readiness_map_rejects_missing_github_pr_terminal_closure_ready_row(
     )
 
 
+def test_readiness_map_rejects_missing_github_pr_terminal_candidate_binding_row(
+    tmp_path: Path,
+) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "| GitHub PR terminal closure certificate candidate actual-diff witness binding PR | READY |",
+            "| GitHub PR terminal closure certificate candidate actual-diff witness binding PR | PARTIAL |",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing ready row: GitHub PR terminal closure certificate candidate actual-diff witness binding PR"
+        in serialized_errors
+    )
+
+
 def test_readiness_map_rejects_missing_github_pr_terminal_decision_value_request_row(
     tmp_path: Path,
 ) -> None:
@@ -680,7 +705,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind terminal closure candidate to actual-diff witness`",
+            "1. `harness(pr): bind terminal closure operator approval gate to actual-diff candidate`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -691,7 +716,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind terminal closure candidate to actual-diff witness"
+        "missing next PR marker: harness(pr): bind terminal closure operator approval gate to actual-diff candidate"
         in serialized_errors
     )
 
