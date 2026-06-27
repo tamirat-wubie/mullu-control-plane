@@ -6,6 +6,8 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: scripts.validate_agentic_service_harness_actual_diff_collection_receipt.
 Invariants:
   - The receipt binds to actual diff collection admission preflight.
+  - The receipt binds to filesystem-write admission preflight without granting
+    write execution.
   - Non-empty diffs, raw diff bodies, receipt-store append, mutation routes,
     secret-like payloads, and closure fail closed.
 """
@@ -42,7 +44,13 @@ def test_actual_diff_collection_receipt_rejects_authority_drift() -> None:
     )
 
     errors: list[str] = []
-    validator._validate_receipt_semantics(payload, _admission_preflight(), errors, "mutated")
+    validator._validate_receipt_semantics(
+        payload,
+        _admission_preflight(),
+        _filesystem_write_admission_preflight(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "scope.actual_diff_collection_receipt_allowed must be false" in serialized_errors
@@ -66,7 +74,13 @@ def test_actual_diff_collection_receipt_rejects_non_empty_diff_payload() -> None
     )
 
     errors: list[str] = []
-    validator._validate_receipt_semantics(payload, _admission_preflight(), errors, "mutated")
+    validator._validate_receipt_semantics(
+        payload,
+        _admission_preflight(),
+        _filesystem_write_admission_preflight(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "diff_collection_receipt.changed_file_count must be 0 while authority is absent" in serialized_errors
@@ -89,10 +103,17 @@ def test_actual_diff_collection_receipt_rejects_missing_refs_and_path_drift() ->
     )
 
     errors: list[str] = []
-    validator._validate_receipt_semantics(payload, _admission_preflight(), errors, "mutated")
+    validator._validate_receipt_semantics(
+        payload,
+        _admission_preflight(),
+        _filesystem_write_admission_preflight(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "admission_gates.required_before_diff_receipt_refs missing required ref" in serialized_errors
+    assert "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json" in serialized_errors
     assert "admission_gates.blocked_reason_refs missing required ref" in serialized_errors
     assert "diff_collection_receipt.receipt_append_ref must remain blocked" in serialized_errors
     assert "path_policy.path_allowlist must match admission preflight" in serialized_errors
@@ -108,7 +129,13 @@ def test_actual_diff_collection_receipt_rejects_secret_and_route_drift() -> None
     payload["receipt_refs"]["serialized_token_value"] = "github_pat_forbiddencredential"
 
     errors: list[str] = []
-    validator._validate_receipt_semantics(payload, _admission_preflight(), errors, "mutated")
+    validator._validate_receipt_semantics(
+        payload,
+        _admission_preflight(),
+        _filesystem_write_admission_preflight(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "mutation route string" in serialized_errors
@@ -131,5 +158,46 @@ def test_actual_diff_collection_receipt_cli_writes_report(tmp_path: Path, capsys
     assert file_payload["admission_preflight_ref"] == validator.EXPECTED_ADMISSION_PREFLIGHT_REF
 
 
+def test_actual_diff_collection_receipt_rejects_filesystem_write_source_drift() -> None:
+    payload = validator.build_mutated_receipt(
+        source_filesystem_write_admission_preflight_ref="examples/wrong-filesystem-write.json",
+        admission_gates__filesystem_write_admission_preflight_verified=False,
+        receipt_refs__filesystem_write_admission_preflight_example="examples/wrong-filesystem-write.json",
+    )
+    filesystem_source = _filesystem_write_admission_preflight()
+    filesystem_source["admission_status"] = "Admitted"
+    filesystem_source["admission_gates"]["filesystem_write_admitted"] = True
+    filesystem_source["admission_gates"]["uao_filesystem_write_admission_verified"] = True
+    filesystem_source["authority_denials"]["filesystem_write_admitted"] = True
+    filesystem_source["authority_denials"]["terminal_closure"] = True
+    filesystem_source["filesystem_write_contract"]["raw_diff_body_serialized"] = True
+    filesystem_source["filesystem_write_contract"]["raw_file_content_serialized"] = True
+
+    errors: list[str] = []
+    validator._validate_receipt_semantics(
+        payload,
+        _admission_preflight(),
+        filesystem_source,
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "source_filesystem_write_admission_preflight_ref must be" in serialized_errors
+    assert "admission_gates.filesystem_write_admission_preflight_verified must be true" in serialized_errors
+    assert "receipt_refs.filesystem_write_admission_preflight_example must be" in serialized_errors
+    assert "filesystem write admission preflight admission_status must remain AwaitingEvidence" in serialized_errors
+    assert "source filesystem write admission preflight must not admit filesystem writes" in serialized_errors
+    assert "source filesystem write UAO admission must remain unverified" in serialized_errors
+    assert "source filesystem write authority denial must remain false" in serialized_errors
+    assert "source filesystem write terminal closure denial must remain false" in serialized_errors
+    assert "source filesystem write preflight must not serialize raw diffs" in serialized_errors
+    assert "source filesystem write preflight must not serialize raw file content" in serialized_errors
+
+
 def _admission_preflight() -> dict[str, object]:
     return json.loads(validator.DEFAULT_ADMISSION_PREFLIGHT_EXAMPLES[0].read_text(encoding="utf-8"))
+
+
+def _filesystem_write_admission_preflight() -> dict[str, object]:
+    return json.loads(validator.DEFAULT_FILESYSTEM_WRITE_ADMISSION_EXAMPLES[0].read_text(encoding="utf-8"))

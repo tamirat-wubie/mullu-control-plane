@@ -3,6 +3,7 @@
     "actual_diff_collection_admission_preflight_verified": true,
     "actual_diff_collection_receipt_emission_allowed": false,
     "blocked_reason_refs": [
+      "blocked://filesystem-write-admission/not-granted",
       "blocked://branch-write-authority/not-collected",
       "blocked://workspace-write-authority/not-granted",
       "blocked://operator-approval/not-collected",
@@ -13,11 +14,13 @@
     ],
     "branch_write_authority_collected": false,
     "cleanup_receipt_emitted": false,
+    "filesystem_write_admission_preflight_verified": true,
     "operator_approval_collected": false,
     "receipt_store_write_path_verified": false,
     "redaction_evidence_collected": false,
     "required_before_diff_receipt_refs": [
       "examples/agentic_service_harness_actual_diff_collection_admission_preflight.foundation.json",
+      "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json",
       "examples/agentic_service_harness_actual_file_change_summary_receipt.foundation.json",
       "evidence://branch-write-authority-binding",
       "evidence://operator-approval-for-branch-write",
@@ -76,6 +79,8 @@
     "actual_diff_collection_receipt_schema": "schemas/agentic_service_harness_actual_diff_collection_receipt.schema.json",
     "actual_file_change_summary_receipt_example": "examples/agentic_service_harness_actual_file_change_summary_receipt.foundation.json",
     "cleanup_receipt_ref": "receipt://sandbox-cleanup-branchwrite",
+    "filesystem_write_admission_preflight_example": "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json",
+    "filesystem_write_admission_preflight_schema": "schemas/agentic_service_harness_filesystem_write_admission_preflight.schema.json",
     "receipt_store_write_path_ref": "evidence://receipt-store-write-path-for-diff-collection",
     "redaction_evidence_ref": "evidence://redaction-policy-for-file-change-collection",
     "uao_diff_collection_admission_ref": "evidence://uao-actual-diff-collection-admission"
@@ -104,6 +109,7 @@
   },
   "solver_outcome": "AwaitingEvidence",
   "source_actual_diff_collection_admission_preflight_ref": "examples/agentic_service_harness_actual_diff_collection_admission_preflight.foundation.json",
+  "source_filesystem_write_admission_preflight_ref": "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json",
   "terminal_closure_required": true,
   "validators": [
     {

@@ -8,9 +8,12 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: schemas/agentic_service_harness_actual_diff_collection_receipt.schema.json,
 examples/agentic_service_harness_actual_diff_collection_receipt.foundation.json,
 scripts.validate_agentic_service_harness_actual_diff_collection_admission_preflight,
+scripts.validate_agentic_service_harness_filesystem_write_admission_preflight,
 and scripts.validate_schemas.
 Invariants:
   - The receipt binds to the actual diff collection admission preflight.
+  - The receipt binds to filesystem-write admission preflight evidence without
+    granting filesystem-write execution.
   - Changed-file refs and diff refs remain empty while authority gates are false.
   - Raw diffs, raw file content, receipt-store append, external effects, and
     terminal closure remain denied.
@@ -37,6 +40,11 @@ from scripts.validate_agentic_service_harness_actual_diff_collection_admission_p
     DEFAULT_SCHEMA as DEFAULT_ADMISSION_PREFLIGHT_SCHEMA,
     validate_agentic_service_harness_actual_diff_collection_admission_preflight,
 )
+from scripts.validate_agentic_service_harness_filesystem_write_admission_preflight import (  # noqa: E402
+    DEFAULT_EXAMPLES as DEFAULT_FILESYSTEM_WRITE_ADMISSION_EXAMPLES,
+    DEFAULT_SCHEMA as DEFAULT_FILESYSTEM_WRITE_ADMISSION_SCHEMA,
+    validate_agentic_service_harness_filesystem_write_admission_preflight,
+)
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -53,6 +61,9 @@ EXPECTED_RECEIPT_ID = "agentic_service_harness_actual_diff_collection_receipt"
 EXPECTED_ADMISSION_PREFLIGHT_REF = (
     "examples/agentic_service_harness_actual_diff_collection_admission_preflight.foundation.json"
 )
+EXPECTED_FILESYSTEM_WRITE_ADMISSION_PREFLIGHT_REF = (
+    "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json"
+)
 EXPECTED_ACTUAL_SUMMARY_REF = (
     "examples/agentic_service_harness_actual_file_change_summary_receipt.foundation.json"
 )
@@ -64,6 +75,7 @@ EXPECTED_UAO_DIFF_COLLECTION_ADMISSION_REF = "evidence://uao-actual-diff-collect
 EXPECTED_RECEIPT_STORE_WRITE_PATH_REF = "evidence://receipt-store-write-path-for-diff-collection"
 REQUIRED_BEFORE_DIFF_RECEIPT_REFS = (
     EXPECTED_ADMISSION_PREFLIGHT_REF,
+    EXPECTED_FILESYSTEM_WRITE_ADMISSION_PREFLIGHT_REF,
     EXPECTED_ACTUAL_SUMMARY_REF,
     "evidence://branch-write-authority-binding",
     "evidence://operator-approval-for-branch-write",
@@ -74,6 +86,7 @@ REQUIRED_BEFORE_DIFF_RECEIPT_REFS = (
     EXPECTED_RECEIPT_STORE_WRITE_PATH_REF,
 )
 REQUIRED_BLOCKED_REASON_REFS = (
+    "blocked://filesystem-write-admission/not-granted",
     "blocked://branch-write-authority/not-collected",
     "blocked://workspace-write-authority/not-granted",
     "blocked://operator-approval/not-collected",
@@ -88,6 +101,10 @@ REQUIRED_RECEIPT_REFS = {
         "schemas/agentic_service_harness_actual_diff_collection_admission_preflight.schema.json"
     ),
     "actual_diff_collection_admission_preflight_example": EXPECTED_ADMISSION_PREFLIGHT_REF,
+    "filesystem_write_admission_preflight_schema": (
+        "schemas/agentic_service_harness_filesystem_write_admission_preflight.schema.json"
+    ),
+    "filesystem_write_admission_preflight_example": EXPECTED_FILESYSTEM_WRITE_ADMISSION_PREFLIGHT_REF,
     "actual_file_change_summary_receipt_example": EXPECTED_ACTUAL_SUMMARY_REF,
     "cleanup_receipt_ref": EXPECTED_CLEANUP_RECEIPT_REF,
     "redaction_evidence_ref": EXPECTED_REDACTION_EVIDENCE_REF,
@@ -131,6 +148,7 @@ REQUIRED_FALSE_FLAGS = (
 REQUIRED_TRUE_FLAGS = (
     "receipt_only",
     "actual_diff_collection_admission_preflight_verified",
+    "filesystem_write_admission_preflight_verified",
     "path_allowlist_bound_to_admission_preflight",
     "secret_redaction_required",
     "diff_redaction_required",
@@ -187,6 +205,8 @@ def validate_agentic_service_harness_actual_diff_collection_receipt(
     example_paths: Sequence[Path] = DEFAULT_EXAMPLES,
     admission_preflight_schema_path: Path = DEFAULT_ADMISSION_PREFLIGHT_SCHEMA,
     admission_preflight_example_paths: Sequence[Path] = DEFAULT_ADMISSION_PREFLIGHT_EXAMPLES,
+    filesystem_write_admission_schema_path: Path = DEFAULT_FILESYSTEM_WRITE_ADMISSION_SCHEMA,
+    filesystem_write_admission_example_paths: Sequence[Path] = DEFAULT_FILESYSTEM_WRITE_ADMISSION_EXAMPLES,
 ) -> ActualDiffCollectionReceiptValidation:
     """Validate actual diff collection receipt examples."""
     errors: list[str] = []
@@ -197,9 +217,23 @@ def validate_agentic_service_harness_actual_diff_collection_receipt(
     )
     if not admission_validation.ok:
         errors.extend(f"actual diff collection admission preflight: {error}" for error in admission_validation.errors)
+    filesystem_write_admission_validation = validate_agentic_service_harness_filesystem_write_admission_preflight(
+        schema_path=filesystem_write_admission_schema_path,
+        example_paths=filesystem_write_admission_example_paths,
+    )
+    if not filesystem_write_admission_validation.ok:
+        errors.extend(
+            f"filesystem write admission preflight: {error}"
+            for error in filesystem_write_admission_validation.errors
+        )
     admission_preflight = _load_json_object(
         admission_preflight_example_paths[0],
         "actual diff collection admission preflight source",
+        errors,
+    )
+    filesystem_write_admission_preflight = _load_json_object(
+        filesystem_write_admission_example_paths[0],
+        "filesystem write admission preflight source",
         errors,
     )
     examples: list[dict[str, Any]] = []
@@ -217,7 +251,13 @@ def validate_agentic_service_harness_actual_diff_collection_receipt(
                 f"{_path_label(example_path)}: {error}"
                 for error in _validate_schema_instance(schema, example)
             )
-        _validate_receipt_semantics(example, admission_preflight, errors, _path_label(example_path))
+        _validate_receipt_semantics(
+            example,
+            admission_preflight,
+            filesystem_write_admission_preflight,
+            errors,
+            _path_label(example_path),
+        )
     return ActualDiffCollectionReceiptValidation(
         ok=not errors,
         errors=tuple(errors),
@@ -260,15 +300,23 @@ def build_mutated_receipt(**updates: Any) -> dict[str, Any]:
 def _validate_receipt_semantics(
     receipt: Mapping[str, Any],
     admission_preflight: Mapping[str, Any],
+    filesystem_write_admission_preflight: Mapping[str, Any],
     errors: list[str],
     label: str,
 ) -> None:
     _check_value(receipt, ("receipt_id",), EXPECTED_RECEIPT_ID, errors, label)
     _check_value(receipt, ("source_actual_diff_collection_admission_preflight_ref",), EXPECTED_ADMISSION_PREFLIGHT_REF, errors, label)
+    _check_value(
+        receipt,
+        ("source_filesystem_write_admission_preflight_ref",),
+        EXPECTED_FILESYSTEM_WRITE_ADMISSION_PREFLIGHT_REF,
+        errors,
+        label,
+    )
     _check_value(receipt, ("solver_outcome",), "AwaitingEvidence", errors, label)
     _check_value(receipt, ("receipt_status",), "blocked_until_admission_authority_redaction_uao_and_receipt_store", errors, label)
     _validate_scope(receipt, admission_preflight, errors, label)
-    _validate_admission_gates(receipt, admission_preflight, errors, label)
+    _validate_admission_gates(receipt, admission_preflight, filesystem_write_admission_preflight, errors, label)
     _validate_diff_collection_receipt(receipt, errors, label)
     _validate_path_and_redaction(receipt, admission_preflight, errors, label)
     _validate_receipt_refs(receipt, errors, label)
@@ -295,6 +343,7 @@ def _validate_scope(
 def _validate_admission_gates(
     receipt: Mapping[str, Any],
     admission_preflight: Mapping[str, Any],
+    filesystem_write_admission_preflight: Mapping[str, Any],
     errors: list[str],
     label: str,
 ) -> None:
@@ -302,6 +351,25 @@ def _validate_admission_gates(
     admission_gates = _mapping(admission_preflight.get("admission_gates"))
     if admission_gates.get("actual_diff_collection_allowed") is not False:
         errors.append(f"{label}: source admission preflight must not allow actual diff collection")
+    filesystem_gates = _mapping(filesystem_write_admission_preflight.get("admission_gates"))
+    filesystem_denials = _mapping(filesystem_write_admission_preflight.get("authority_denials"))
+    filesystem_contract = _mapping(filesystem_write_admission_preflight.get("filesystem_write_contract"))
+    if filesystem_write_admission_preflight.get("solver_outcome") != "SolvedVerified":
+        errors.append(f"{label}: filesystem write admission preflight validation must be SolvedVerified")
+    if filesystem_write_admission_preflight.get("admission_status") != "AwaitingEvidence":
+        errors.append(f"{label}: filesystem write admission preflight admission_status must remain AwaitingEvidence")
+    if filesystem_gates.get("filesystem_write_admitted") is not False:
+        errors.append(f"{label}: source filesystem write admission preflight must not admit filesystem writes")
+    if filesystem_gates.get("uao_filesystem_write_admission_verified") is not False:
+        errors.append(f"{label}: source filesystem write UAO admission must remain unverified")
+    if filesystem_denials.get("filesystem_write_admitted") is not False:
+        errors.append(f"{label}: source filesystem write authority denial must remain false")
+    if filesystem_denials.get("terminal_closure") is not False:
+        errors.append(f"{label}: source filesystem write terminal closure denial must remain false")
+    if filesystem_contract.get("raw_diff_body_serialized") is not False:
+        errors.append(f"{label}: source filesystem write preflight must not serialize raw diffs")
+    if filesystem_contract.get("raw_file_content_serialized") is not False:
+        errors.append(f"{label}: source filesystem write preflight must not serialize raw file content")
     _require_all_refs(
         gates.get("required_before_diff_receipt_refs", ()),
         REQUIRED_BEFORE_DIFF_RECEIPT_REFS,

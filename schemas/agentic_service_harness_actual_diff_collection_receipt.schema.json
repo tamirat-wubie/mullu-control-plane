@@ -12,6 +12,7 @@
     "solver_outcome",
     "receipt_status",
     "source_actual_diff_collection_admission_preflight_ref",
+    "source_filesystem_write_admission_preflight_ref",
     "scope",
     "admission_gates",
     "diff_collection_receipt",
@@ -39,6 +40,10 @@
     "source_actual_diff_collection_admission_preflight_ref": {
       "type": "string",
       "const": "examples/agentic_service_harness_actual_diff_collection_admission_preflight.foundation.json"
+    },
+    "source_filesystem_write_admission_preflight_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json"
     },
     "scope": { "$ref": "#/$defs/scope" },
     "admission_gates": { "$ref": "#/$defs/admission_gates" },
@@ -111,6 +116,7 @@
       "additionalProperties": false,
       "required": [
         "actual_diff_collection_admission_preflight_verified",
+        "filesystem_write_admission_preflight_verified",
         "branch_write_authority_collected",
         "workspace_write_authority_granted",
         "operator_approval_collected",
@@ -124,6 +130,7 @@
       ],
       "properties": {
         "actual_diff_collection_admission_preflight_verified": { "type": "boolean", "const": true },
+        "filesystem_write_admission_preflight_verified": { "type": "boolean", "const": true },
         "branch_write_authority_collected": { "type": "boolean", "const": false },
         "workspace_write_authority_granted": { "type": "boolean", "const": false },
         "operator_approval_collected": { "type": "boolean", "const": false },
@@ -256,6 +263,8 @@
         "actual_diff_collection_receipt_schema",
         "actual_diff_collection_admission_preflight_schema",
         "actual_diff_collection_admission_preflight_example",
+        "filesystem_write_admission_preflight_schema",
+        "filesystem_write_admission_preflight_example",
         "actual_file_change_summary_receipt_example",
         "cleanup_receipt_ref",
         "redaction_evidence_ref",
@@ -274,6 +283,14 @@
         "actual_diff_collection_admission_preflight_example": {
           "type": "string",
           "const": "examples/agentic_service_harness_actual_diff_collection_admission_preflight.foundation.json"
+        },
+        "filesystem_write_admission_preflight_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_filesystem_write_admission_preflight.schema.json"
+        },
+        "filesystem_write_admission_preflight_example": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json"
         },
         "actual_file_change_summary_receipt_example": {
           "type": "string",
