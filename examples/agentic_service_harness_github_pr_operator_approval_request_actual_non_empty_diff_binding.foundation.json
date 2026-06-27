@@ -1,0 +1,189 @@
+{
+  "binding_id": "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding",
+  "schema_version": 1,
+  "generated_at": "2026-06-27T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_operator_approval_request_ref": "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json",
+  "source_actual_non_empty_diff_admission_binding_ref": "examples/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json",
+  "witness_kind": "github_pr_operator_approval_request_actual_non_empty_diff_binding",
+  "binding_status": "operator_approval_request_bound_to_actual_non_empty_diff_without_authority",
+  "planning_only": true,
+  "read_only": true,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "read_only": true,
+    "approval_request_only": true
+  },
+  "approval_request_diff_binding": {
+    "source_operator_approval_request_id": "agentic_service_harness_github_pr_operator_approval_request",
+    "source_actual_non_empty_diff_admission_binding_id": "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding",
+    "approval_request_id": "approval-request.github-pr-admission",
+    "requested_evidence_ref": "approval://operator-github-pr-admission-required",
+    "actual_non_empty_diff_admission_ref": "examples/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json",
+    "actual_non_empty_diff_receipt_ref": "witness://actual-non-empty-diff-receipt",
+    "changed_file_count": 1,
+    "changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
+    "redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "redacted_output_ref": "witness://filesystem-write-output-redacted",
+    "approval_request_bound": true,
+    "operator_response_collected": false,
+    "operator_approval_granted": false,
+    "operator_approval_rejected": false,
+    "pr_admitted": false,
+    "pull_request_creation_authorized": false,
+    "raw_diff_body_allowed": false,
+    "raw_file_content_allowed": false,
+    "receipt_store_append_allowed": false,
+    "terminal_certificate_verified": false,
+    "required_before_pr_refs": [
+      "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json",
+      "examples/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json",
+      "approval://operator-github-pr-admission-required",
+      "witness://actual-non-empty-diff-receipt",
+      "evidence://redacted-file-change-candidate/schema-addition",
+      "evidence://redacted-diff-candidate/schema-addition",
+      "digest://redacted-filesystem-write-diff-bundle-candidate",
+      "witness://filesystem-write-output-redacted",
+      "evidence://operator-approval-for-pr-admission",
+      "evidence://branch-write-authority-binding",
+      "evidence://uao-pr-admission",
+      "evidence://repository-effect-rollback-plan",
+      "evidence://ci-gate-before-ready-for-review",
+      "evidence://effect-reconciliation-before-terminal-closure",
+      "witness://github-pr-terminal-closure-certificate"
+    ],
+    "blocked_reason_refs": [
+      "blocked://operator-response/not-collected",
+      "blocked://operator-approval/not-granted",
+      "blocked://branch-write-authority/not-bound",
+      "blocked://uao-pr-admission/not-present",
+      "blocked://repository-effect-rollback-plan/not-present",
+      "blocked://ci-gate-before-ready-for-review/not-present",
+      "blocked://effect-reconciliation/not-present",
+      "blocked://terminal-certificate/not-verified",
+      "blocked://pr-creation/not-admitted",
+      "blocked://raw-diff-body/not-allowed",
+      "blocked://raw-file-content/not-allowed",
+      "blocked://receipt-store-append/not-enabled"
+    ]
+  },
+  "remaining_witnesses": [
+    {
+      "witness_kind": "operator_response_record",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://operator-approval-for-pr-admission",
+      "blocks_pr_admission": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "operator_approval_decision",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "approval://operator-github-pr-admission-required",
+      "blocks_pr_admission": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "branch_write_authority",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://branch-write-authority-binding",
+      "blocks_pr_admission": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "uao_pr_admission",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://uao-pr-admission",
+      "blocks_pr_admission": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "repository_effect_rollback_plan",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://repository-effect-rollback-plan",
+      "blocks_pr_admission": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "ci_gate_before_ready_for_review",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://ci-gate-before-ready-for-review",
+      "blocks_pr_admission": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "effect_reconciliation",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://effect-reconciliation-before-terminal-closure",
+      "blocks_pr_admission": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "terminal_certificate",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "witness://github-pr-terminal-closure-certificate",
+      "blocks_pr_admission": true,
+      "authority_granted": false
+    }
+  ],
+  "authority_denials": {
+    "operator_response_collected": false,
+    "operator_approval_granted": false,
+    "operator_approval_rejected": false,
+    "pr_admitted": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "repository_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false
+  },
+  "effect_boundary": {
+    "operator_response_recorded": false,
+    "branch_created": false,
+    "pull_request_opened": false,
+    "repository_written": false,
+    "connector_called": false,
+    "mutation_route_admitted": false,
+    "receipt_store_appended": false,
+    "raw_diff_body_serialized": false,
+    "raw_file_content_serialized": false,
+    "secret_values_serialized": false,
+    "network_policy": "none"
+  },
+  "receipt_refs": {
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json",
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
+    "github_pr_operator_approval_request_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json",
+    "github_pr_operator_approval_request_example": "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json",
+    "github_pr_actual_non_empty_diff_admission_binding_schema": "schemas/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.schema.json",
+    "github_pr_actual_non_empty_diff_admission_binding_example": "examples/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json",
+    "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+    "actual_non_empty_diff_receipt_binding_schema": "schemas/agentic_service_harness_actual_non_empty_diff_receipt_binding.schema.json",
+    "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-operator-approval-request-actual-non-empty-diff-binding",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Bind operator response witness to GitHub PR operator approval request actual non-empty diff binding; keep PR creation, branch writes, repository writes, connector calls, mutation routes, raw diff bodies, raw file content, receipt-store append, secrets, and terminal closure blocked until terminal certificate evidence exists."
+}

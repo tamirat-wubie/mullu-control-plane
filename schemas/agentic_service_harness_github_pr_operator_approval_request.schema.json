@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-approval-request:1",
   "title": "Agentic Service Harness GitHub PR Operator Approval Request",
-  "description": "Foundation Mode operator approval request for future GitHub pull-request admission. This schema records the approval question only and does not collect approval, grant authority, create branches, open pull requests, write repositories, call connectors, admit mutation routes, append receipt stores, deploy, mutate DNS, serialize secrets, perform destructive operations, or provide terminal closure.",
+  "description": "Foundation Mode operator approval request for future GitHub pull-request admission after actual non-empty diff admission binding. This schema records the approval question only and does not collect approval, grant authority, create branches, open pull requests, write repositories, call connectors, admit mutation routes, append receipt stores, deploy, mutate DNS, serialize secrets, perform destructive operations, or provide terminal closure.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -10,7 +10,7 @@
     "schema_version",
     "generated_at",
     "solver_outcome",
-    "source_preflight_ref",
+    "source_actual_non_empty_diff_admission_binding_ref",
     "witness_kind",
     "requested_evidence_ref",
     "approval_status",
@@ -46,9 +46,9 @@
       "type": "string",
       "const": "AwaitingEvidence"
     },
-    "source_preflight_ref": {
+    "source_actual_non_empty_diff_admission_binding_ref": {
       "type": "string",
-      "const": "examples/agentic_service_harness_github_pr_admission_preflight.foundation.json"
+      "const": "examples/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json"
     },
     "witness_kind": {
       "type": "string",
@@ -181,6 +181,12 @@
         "default_response_kind",
         "response_record_required",
         "response_record_collected",
+        "requires_actual_non_empty_diff_binding",
+        "actual_non_empty_diff_receipt_ref",
+        "redacted_diff_bundle_ref",
+        "redacted_output_ref",
+        "changed_file_refs",
+        "diff_refs",
         "approval_effect",
         "pr_creation_authorized_after_response"
       ],
@@ -225,6 +231,23 @@
         "response_record_collected": {
           "type": "boolean",
           "const": false
+        },
+        "requires_actual_non_empty_diff_binding": {
+          "type": "boolean",
+          "const": true
+        },
+        "actual_non_empty_diff_receipt_ref": { "$ref": "#/$defs/evidence_ref" },
+        "redacted_diff_bundle_ref": { "$ref": "#/$defs/evidence_ref" },
+        "redacted_output_ref": { "$ref": "#/$defs/evidence_ref" },
+        "changed_file_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/evidence_ref" }
+        },
+        "diff_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/evidence_ref" }
         },
         "approval_effect": {
           "type": "string",
@@ -333,12 +356,16 @@
       "additionalProperties": false,
       "required": [
         "github_pr_operator_approval_request_schema",
+        "github_pr_actual_non_empty_diff_admission_binding_schema",
+        "github_pr_actual_non_empty_diff_admission_binding_example",
         "github_pr_admission_preflight_schema",
         "github_task_receipt_emitter_dry_run_schema",
         "github_repo_task_service_schema"
       ],
       "properties": {
         "github_pr_operator_approval_request_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_actual_non_empty_diff_admission_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_actual_non_empty_diff_admission_binding_example": { "$ref": "#/$defs/evidence_ref" },
         "github_pr_admission_preflight_schema": { "$ref": "#/$defs/evidence_ref" },
         "github_task_receipt_emitter_dry_run_schema": { "$ref": "#/$defs/evidence_ref" },
         "github_repo_task_service_schema": { "$ref": "#/$defs/evidence_ref" }

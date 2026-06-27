@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-approval-request-actual-non-empty-diff-binding:1",
+  "title": "Agentic Service Harness GitHub PR Operator Approval Request Actual Non-Empty Diff Binding",
+  "description": "Foundation Mode witness binding that connects the GitHub pull-request operator approval request to the actual non-empty diff admission binding. This schema records only the approval-request question and redacted actual-diff admission evidence refs. It does not collect approval, grant authority, create branches, open pull requests, write repositories, call connectors, admit mutation routes, append receipt stores, serialize raw diff bodies or file content, serialize secrets, perform destructive operations, or provide terminal closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_operator_approval_request_ref",
+    "source_actual_non_empty_diff_admission_binding_ref",
+    "witness_kind",
+    "binding_status",
+    "planning_only",
+    "read_only",
+    "report_is_not_terminal_closure",
+    "terminal_closure",
+    "scope",
+    "approval_request_diff_binding",
+    "remaining_witnesses",
+    "authority_denials",
+    "effect_boundary",
+    "receipt_refs",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "const": "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "source_operator_approval_request_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json"
+    },
+    "source_actual_non_empty_diff_admission_binding_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json"
+    },
+    "witness_kind": {
+      "type": "string",
+      "const": "github_pr_operator_approval_request_actual_non_empty_diff_binding"
+    },
+    "binding_status": {
+      "type": "string",
+      "const": "operator_approval_request_bound_to_actual_non_empty_diff_without_authority"
+    },
+    "planning_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "scope": { "$ref": "#/$defs/scope" },
+    "approval_request_diff_binding": { "$ref": "#/$defs/approval_request_diff_binding" },
+    "remaining_witnesses": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/remaining_witness" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "task_service_id",
+        "read_only",
+        "approval_request_only"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "task_service_id": {
+          "type": "string",
+          "const": "github-repo-task-service-read-only-foundation"
+        },
+        "read_only": { "type": "boolean", "const": true },
+        "approval_request_only": { "type": "boolean", "const": true }
+      }
+    },
+    "approval_request_diff_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_operator_approval_request_id",
+        "source_actual_non_empty_diff_admission_binding_id",
+        "approval_request_id",
+        "requested_evidence_ref",
+        "actual_non_empty_diff_admission_ref",
+        "actual_non_empty_diff_receipt_ref",
+        "changed_file_count",
+        "changed_file_refs",
+        "diff_refs",
+        "redacted_diff_bundle_ref",
+        "redacted_output_ref",
+        "approval_request_bound",
+        "operator_response_collected",
+        "operator_approval_granted",
+        "operator_approval_rejected",
+        "pr_admitted",
+        "pull_request_creation_authorized",
+        "raw_diff_body_allowed",
+        "raw_file_content_allowed",
+        "receipt_store_append_allowed",
+        "terminal_certificate_verified",
+        "required_before_pr_refs",
+        "blocked_reason_refs"
+      ],
+      "properties": {
+        "source_operator_approval_request_id": {
+          "type": "string",
+          "const": "agentic_service_harness_github_pr_operator_approval_request"
+        },
+        "source_actual_non_empty_diff_admission_binding_id": {
+          "type": "string",
+          "const": "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding"
+        },
+        "approval_request_id": {
+          "type": "string",
+          "const": "approval-request.github-pr-admission"
+        },
+        "requested_evidence_ref": {
+          "type": "string",
+          "const": "approval://operator-github-pr-admission-required"
+        },
+        "actual_non_empty_diff_admission_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json"
+        },
+        "actual_non_empty_diff_receipt_ref": {
+          "type": "string",
+          "const": "witness://actual-non-empty-diff-receipt"
+        },
+        "changed_file_count": { "type": "integer", "minimum": 1 },
+        "changed_file_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "diff_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "redacted_diff_bundle_ref": {
+          "type": "string",
+          "const": "digest://redacted-filesystem-write-diff-bundle-candidate"
+        },
+        "redacted_output_ref": {
+          "type": "string",
+          "const": "witness://filesystem-write-output-redacted"
+        },
+        "approval_request_bound": { "type": "boolean", "const": true },
+        "operator_response_collected": { "type": "boolean", "const": false },
+        "operator_approval_granted": { "type": "boolean", "const": false },
+        "operator_approval_rejected": { "type": "boolean", "const": false },
+        "pr_admitted": { "type": "boolean", "const": false },
+        "pull_request_creation_authorized": { "type": "boolean", "const": false },
+        "raw_diff_body_allowed": { "type": "boolean", "const": false },
+        "raw_file_content_allowed": { "type": "boolean", "const": false },
+        "receipt_store_append_allowed": { "type": "boolean", "const": false },
+        "terminal_certificate_verified": { "type": "boolean", "const": false },
+        "required_before_pr_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "remaining_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness_kind",
+        "status",
+        "evidence_ref",
+        "blocks_pr_admission",
+        "authority_granted"
+      ],
+      "properties": {
+        "witness_kind": {
+          "type": "string",
+          "enum": [
+            "operator_response_record",
+            "operator_approval_decision",
+            "branch_write_authority",
+            "uao_pr_admission",
+            "repository_effect_rollback_plan",
+            "ci_gate_before_ready_for_review",
+            "effect_reconciliation",
+            "terminal_certificate"
+          ]
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+        "blocks_pr_admission": { "type": "boolean", "const": true },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_response_collected",
+        "operator_approval_granted",
+        "operator_approval_rejected",
+        "pr_admitted",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "repository_write_enabled",
+        "connector_calls_enabled",
+        "mutation_route_enabled",
+        "receipt_store_append_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "terminal_closure"
+      ],
+      "properties": {
+        "operator_response_collected": { "type": "boolean", "const": false },
+        "operator_approval_granted": { "type": "boolean", "const": false },
+        "operator_approval_rejected": { "type": "boolean", "const": false },
+        "pr_admitted": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "connector_calls_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operator_response_recorded",
+        "branch_created",
+        "pull_request_opened",
+        "repository_written",
+        "connector_called",
+        "mutation_route_admitted",
+        "receipt_store_appended",
+        "raw_diff_body_serialized",
+        "raw_file_content_serialized",
+        "secret_values_serialized",
+        "network_policy"
+      ],
+      "properties": {
+        "operator_response_recorded": { "type": "boolean", "const": false },
+        "branch_created": { "type": "boolean", "const": false },
+        "pull_request_opened": { "type": "boolean", "const": false },
+        "repository_written": { "type": "boolean", "const": false },
+        "connector_called": { "type": "boolean", "const": false },
+        "mutation_route_admitted": { "type": "boolean", "const": false },
+        "receipt_store_appended": { "type": "boolean", "const": false },
+        "raw_diff_body_serialized": { "type": "boolean", "const": false },
+        "raw_file_content_serialized": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "network_policy": { "type": "string", "const": "none" }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema",
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_example",
+        "github_pr_operator_approval_request_schema",
+        "github_pr_operator_approval_request_example",
+        "github_pr_actual_non_empty_diff_admission_binding_schema",
+        "github_pr_actual_non_empty_diff_admission_binding_example",
+        "github_pr_admission_preflight_schema",
+        "actual_non_empty_diff_receipt_binding_schema",
+        "github_repo_task_service_schema"
+      ],
+      "properties": {
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_operator_approval_request_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_operator_approval_request_example": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_actual_non_empty_diff_admission_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_actual_non_empty_diff_admission_binding_example": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_admission_preflight_schema": { "$ref": "#/$defs/evidence_ref" },
+        "actual_non_empty_diff_receipt_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_repo_task_service_schema": { "$ref": "#/$defs/evidence_ref" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}
