@@ -142,10 +142,18 @@ jobs:
     if: always()
     steps:
       - name: Confirm bounded Python gates passed
+        shell: bash
+        env:
+          PYTHON_TESTS_RESULT: ${{ needs['python-tests'].result }}
+          PYTHON_COMPATIBILITY_RESULT: ${{ needs['python-compatibility'].result }}
+          PYTHON_SOAK_TESTS_RESULT: ${{ needs['python-soak-tests'].result }}
         run: |
-          test "${{ needs.python-tests.result }}" = "success"
-          test "${{ needs.python-compatibility.result }}" = "success"
-          test "${{ needs.python-soak-tests.result }}" = "success"
+          echo "python-tests=${PYTHON_TESTS_RESULT}"
+          echo "python-compatibility=${PYTHON_COMPATIBILITY_RESULT}"
+          echo "python-soak-tests=${PYTHON_SOAK_TESTS_RESULT}"
+          [[ "${PYTHON_TESTS_RESULT}" == "success" ]]
+          [[ "${PYTHON_COMPATIBILITY_RESULT}" == "success" ]]
+          [[ "${PYTHON_SOAK_TESTS_RESULT}" == "success" ]]
 
   typescript-sdk:
     name: TypeScript SDK Verification
