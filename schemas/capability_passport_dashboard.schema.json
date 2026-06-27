@@ -1,0 +1,441 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:capability-passport-dashboard:1",
+  "title": "Mullu Capability Passport Dashboard",
+  "description": "Operator-facing read model derived from capability passports and gate templates. The dashboard is visibility only and cannot grant execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dashboard_id",
+    "mode",
+    "dashboard_is_not_execution_authority",
+    "live_execution_enabled",
+    "source_refs",
+    "summary",
+    "operator_view",
+    "governance_health",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "dashboard_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "const": "foundation"
+    },
+    "dashboard_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "passport_set_id",
+        "gate_registry_id"
+      ],
+      "properties": {
+        "passport_set_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "gate_registry_id": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "operator_view": {
+      "$ref": "#/$defs/operator_view"
+    },
+    "governance_health": {
+      "$ref": "#/$defs/governance_health"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 480
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 220,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ready",
+        "Prepare-only",
+        "Needs approval",
+        "Blocked",
+        "Evidence missing",
+        "Live action disabled"
+      ]
+    },
+    "status_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Ready",
+        "Prepare-only",
+        "Needs approval",
+        "Blocked",
+        "Evidence missing",
+        "Live action disabled"
+      ],
+      "properties": {
+        "Ready": { "type": "integer", "minimum": 0 },
+        "Prepare-only": { "type": "integer", "minimum": 0 },
+        "Needs approval": { "type": "integer", "minimum": 0 },
+        "Blocked": { "type": "integer", "minimum": 0 },
+        "Evidence missing": { "type": "integer", "minimum": 0 },
+        "Live action disabled": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_count",
+        "family_count",
+        "status_counts",
+        "ready_count",
+        "attention_required_count",
+        "live_action_disabled"
+      ],
+      "properties": {
+        "capability_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "family_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status_counts": {
+          "$ref": "#/$defs/status_counts"
+        },
+        "ready_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "attention_required_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "live_action_disabled": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "operator_view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status_tiles",
+        "status_lanes",
+        "family_rows"
+      ],
+      "properties": {
+        "status_tiles": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/status_tile"
+          }
+        },
+        "status_lanes": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/status_lane"
+          }
+        },
+        "family_rows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/family_row"
+          }
+        }
+      }
+    },
+    "status_tile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "count",
+        "meaning",
+        "severity_rank"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/status"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "meaning": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "severity_rank": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        }
+      }
+    },
+    "status_lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "count",
+        "capabilities"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/status"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/operator_capability_card"
+          }
+        }
+      }
+    },
+    "operator_capability_card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "capability_name",
+        "family",
+        "status",
+        "current_unlock_level",
+        "allowed_actions",
+        "blocked_action_count",
+        "required_receipt_count",
+        "rollback_status",
+        "next_unlock_step"
+      ],
+      "properties": {
+        "capability_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "capability_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 180
+        },
+        "family": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "current_unlock_level": {
+          "type": "string",
+          "enum": [
+            "C0",
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C7"
+          ]
+        },
+        "allowed_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "blocked_action_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "required_receipt_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rollback_status": {
+          "type": "string",
+          "enum": [
+            "not_required",
+            "ready",
+            "compensation_only",
+            "review_only",
+            "missing"
+          ]
+        },
+        "next_unlock_step": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320
+        }
+      }
+    },
+    "family_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family",
+        "capability_count",
+        "status_counts",
+        "dominant_status",
+        "highest_unlock_level",
+        "next_action"
+      ],
+      "properties": {
+        "family": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "capability_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status_counts": {
+          "$ref": "#/$defs/status_counts"
+        },
+        "dominant_status": {
+          "$ref": "#/$defs/status"
+        },
+        "highest_unlock_level": {
+          "type": "string",
+          "enum": [
+            "C0",
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C7"
+          ]
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320
+        }
+      }
+    },
+    "governance_health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_gate_template_count",
+        "resolved_gate_template_count",
+        "unresolved_gate_count",
+        "unresolved_gate_ids",
+        "passport_count",
+        "gate_registry_template_count",
+        "operator_view_hides_internal_gate_ids",
+        "operator_view_hides_schema_refs"
+      ],
+      "properties": {
+        "required_gate_template_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "resolved_gate_template_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unresolved_gate_count": {
+          "type": "integer",
+          "const": 0
+        },
+        "unresolved_gate_ids": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "passport_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "gate_registry_template_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "operator_view_hides_internal_gate_ids": {
+          "type": "boolean",
+          "const": true
+        },
+        "operator_view_hides_schema_refs": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

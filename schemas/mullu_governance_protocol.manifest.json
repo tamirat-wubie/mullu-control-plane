@@ -467,6 +467,12 @@
       "urn": "urn:mullusi:schema:capability-candidate:1"
     },
     {
+      "path": "schemas/capability_debt_report.schema.json",
+      "schema_id": "capability-debt-report",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:capability-debt-report:1"
+    },
+    {
       "path": "schemas/capability_descriptor.schema.json",
       "schema_id": "capability-descriptor",
       "surface": "capability",
@@ -495,6 +501,18 @@
       "schema_id": "capability-maturity",
       "surface": "capability",
       "urn": "urn:mullusi:schema:capability-maturity:1"
+    },
+    {
+      "path": "schemas/capability_passport_dashboard.schema.json",
+      "schema_id": "capability-passport-dashboard",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:capability-passport-dashboard:1"
+    },
+    {
+      "path": "schemas/capability_passports.schema.json",
+      "schema_id": "capability-passports",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:capability-passports:1"
     },
     {
       "path": "schemas/capability_plan_preview.schema.json",
@@ -1019,6 +1037,12 @@
       "urn": "urn:mullusi:schema:evidence-classification-manifest:1"
     },
     {
+      "path": "schemas/evidence_passports.schema.json",
+      "schema_id": "evidence-passports",
+      "surface": "evidence",
+      "urn": "urn:mullusi:schema:evidence-passports:1"
+    },
+    {
       "path": "schemas/execution_result.schema.json",
       "schema_id": "execution-result",
       "surface": "execution",
@@ -1107,6 +1131,12 @@
       "schema_id": "finding-receipt",
       "surface": "governance",
       "urn": "urn:mullusi:schema:finding-receipt:1"
+    },
+    {
+      "path": "schemas/gate_template_registry.schema.json",
+      "schema_id": "gate-template-registry",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:gate-template-registry:1"
     },
     {
       "path": "schemas/gateway_dns_resolution_receipt.schema.json",
@@ -2445,6 +2475,12 @@
       "schema_id": "runtime-witness",
       "surface": "runtime",
       "urn": "urn:mullusi:schema:runtime-witness:1"
+    },
+    {
+      "path": "schemas/sandbox_to_live_promotion.schema.json",
+      "schema_id": "sandbox-to-live-promotion",
+      "surface": "promotion",
+      "urn": "urn:mullusi:schema:sandbox-to-live-promotion:1"
     },
     {
       "path": "schemas/sccml_trace_adapter_witness.schema.json",

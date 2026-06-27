@@ -1,0 +1,1983 @@
+{
+  "dashboard_id": "capability_passport_dashboard.foundation.v1",
+  "dashboard_is_not_execution_authority": true,
+  "governance_health": {
+    "gate_registry_template_count": 12,
+    "operator_view_hides_internal_gate_ids": true,
+    "operator_view_hides_schema_refs": true,
+    "passport_count": 101,
+    "required_gate_template_count": 12,
+    "resolved_gate_template_count": 12,
+    "unresolved_gate_count": 0,
+    "unresolved_gate_ids": []
+  },
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "next_action": "Use this read model as the operator-facing surface before adding evidence passports, sandbox-to-live promotion views, and debt reports.",
+  "operator_view": {
+    "family_rows": [
+      {
+        "capability_count": 17,
+        "dominant_status": "Live action disabled",
+        "family": "agentic_control",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 17,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 6,
+        "dominant_status": "Live action disabled",
+        "family": "browser",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 6,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 11,
+        "dominant_status": "Live action disabled",
+        "family": "communication",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 11,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 4,
+        "dominant_status": "Live action disabled",
+        "family": "computer",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 4,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 7,
+        "dominant_status": "Live action disabled",
+        "family": "connector",
+        "highest_unlock_level": "C6",
+        "next_action": "bind bounded autonomy controls",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 6,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 1
+        }
+      },
+      {
+        "capability_count": 3,
+        "dominant_status": "Live action disabled",
+        "family": "creative",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 3,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 2,
+        "dominant_status": "Live action disabled",
+        "family": "deployment",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 2,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 7,
+        "dominant_status": "Live action disabled",
+        "family": "document",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 7,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 3,
+        "dominant_status": "Live action disabled",
+        "family": "enterprise",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 3,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 5,
+        "dominant_status": "Live action disabled",
+        "family": "financial",
+        "highest_unlock_level": "C6",
+        "next_action": "bind bounded autonomy controls",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 4,
+          "Needs approval": 1,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 5,
+        "dominant_status": "Live action disabled",
+        "family": "messaging",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 5,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 12,
+        "dominant_status": "Live action disabled",
+        "family": "personal_assistant",
+        "highest_unlock_level": "C2",
+        "next_action": "add certified mock or local evaluation evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 12,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 5,
+        "dominant_status": "Live action disabled",
+        "family": "phone",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 5,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 2,
+        "dominant_status": "Live action disabled",
+        "family": "physical",
+        "highest_unlock_level": "C4",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 2,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 6,
+        "dominant_status": "Live action disabled",
+        "family": "software_dev",
+        "highest_unlock_level": "C4",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 6,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 6,
+        "dominant_status": "Live action disabled",
+        "family": "voice",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 6,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      }
+    ],
+    "status_lanes": [
+      {
+        "capabilities": [
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 6,
+            "capability_id": "connector.github.read",
+            "capability_name": "Read GitHub resource",
+            "current_unlock_level": "C6",
+            "family": "connector",
+            "next_unlock_step": "bind bounded autonomy controls",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Ready"
+          }
+        ],
+        "count": 1,
+        "label": "Ready"
+      },
+      {
+        "capabilities": [],
+        "count": 0,
+        "label": "Prepare-only"
+      },
+      {
+        "capabilities": [
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "financial.send_payment",
+            "capability_name": "Send governed payment",
+            "current_unlock_level": "C6",
+            "family": "financial",
+            "next_unlock_step": "bind bounded autonomy controls",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Needs approval"
+          }
+        ],
+        "count": 1,
+        "label": "Needs approval"
+      },
+      {
+        "capabilities": [],
+        "count": 0,
+        "label": "Blocked"
+      },
+      {
+        "capabilities": [],
+        "count": 0,
+        "label": "Evidence missing"
+      },
+      {
+        "capabilities": [
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.code_change.plan",
+            "capability_name": "Plan code change",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "agentic_control.evidence.append",
+            "capability_name": "Append evidence ledger",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.governance_gate.evaluate",
+            "capability_name": "Evaluate governance gate",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.incident_recovery.plan",
+            "capability_name": "Plan incident recovery",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.interrogation.plan",
+            "capability_name": "Plan evidence interrogation",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.math_algorithm.analyze",
+            "capability_name": "Analyze math and algorithm",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.memory_admission.plan",
+            "capability_name": "Plan memory admission",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "agentic_control.mission.define",
+            "capability_name": "Define bounded mission",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.priority.rank",
+            "capability_name": "Rank autonomous work",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.product_management.plan",
+            "capability_name": "Plan product management",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.release_handoff.plan",
+            "capability_name": "Plan release handoff",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.resource_budget.bound",
+            "capability_name": "Bound resource budget",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.security_threat_model.build",
+            "capability_name": "Build threat model",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.self_audit.refine",
+            "capability_name": "Refine weakness and gaps",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.swarm.coordinate",
+            "capability_name": "Coordinate agent swarm",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.telemetry_triage.plan",
+            "capability_name": "Plan telemetry triage",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "agentic_control.verification.plan",
+            "capability_name": "Plan verification gates",
+            "current_unlock_level": "C3",
+            "family": "agentic_control",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "browser.click",
+            "capability_name": "Click browser element",
+            "current_unlock_level": "C3",
+            "family": "browser",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "browser.extract_text",
+            "capability_name": "Extract browser text",
+            "current_unlock_level": "C3",
+            "family": "browser",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 4,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "browser.open",
+            "capability_name": "Open browser page",
+            "current_unlock_level": "C3",
+            "family": "browser",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 4,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "browser.screenshot",
+            "capability_name": "Capture browser screenshot",
+            "current_unlock_level": "C3",
+            "family": "browser",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 3,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "browser.submit",
+            "capability_name": "Submit browser form",
+            "current_unlock_level": "C3",
+            "family": "browser",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "browser.type",
+            "capability_name": "Type into browser element",
+            "current_unlock_level": "C3",
+            "family": "browser",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "calendar.conflict_check",
+            "capability_name": "Check calendar conflicts",
+            "current_unlock_level": "C3",
+            "family": "communication",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "calendar.invite",
+            "capability_name": "Send calendar invite with approval",
+            "current_unlock_level": "C3",
+            "family": "communication",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "calendar.read",
+            "capability_name": "Read calendar event",
+            "current_unlock_level": "C3",
+            "family": "communication",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "calendar.reschedule",
+            "capability_name": "Reschedule calendar event with approval",
+            "current_unlock_level": "C3",
+            "family": "communication",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "calendar.schedule",
+            "capability_name": "Schedule calendar event with approval",
+            "current_unlock_level": "C3",
+            "family": "communication",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "computer.code.patch",
+            "capability_name": "Patch workspace code",
+            "current_unlock_level": "C3",
+            "family": "computer",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 4,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "computer.command.run",
+            "capability_name": "Run sandboxed command",
+            "current_unlock_level": "C3",
+            "family": "computer",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 4,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "computer.filesystem.observe",
+            "capability_name": "Observe workspace files",
+            "current_unlock_level": "C3",
+            "family": "computer",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 4,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "computer.workspace_file.preflight",
+            "capability_name": "Preflight workspace file operation",
+            "current_unlock_level": "C3",
+            "family": "computer",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "connector.github.write.with_approval",
+            "capability_name": "Write GitHub resource with approval",
+            "current_unlock_level": "C3",
+            "family": "connector",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "connector.google_drive.read",
+            "capability_name": "Read Google Drive resource",
+            "current_unlock_level": "C3",
+            "family": "connector",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "connector.google_drive.write.with_approval",
+            "capability_name": "Write Google Drive resource with approval",
+            "current_unlock_level": "C3",
+            "family": "connector",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "connector.postgres.query",
+            "capability_name": "Run read-only Postgres query",
+            "current_unlock_level": "C3",
+            "family": "connector",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "connector.postgres.write.with_approval",
+            "capability_name": "Write Postgres rows with approval",
+            "current_unlock_level": "C3",
+            "family": "connector",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "creative.data_analyze",
+            "capability_name": "Analyze data",
+            "current_unlock_level": "C3",
+            "family": "creative",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 4,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "creative.document_generate",
+            "capability_name": "Generate document",
+            "current_unlock_level": "C3",
+            "family": "creative",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 4,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "creative.translate",
+            "capability_name": "Translate text",
+            "current_unlock_level": "C3",
+            "family": "creative",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 4,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "deployment.witness.collect",
+            "capability_name": "Collect signed deployment witness",
+            "current_unlock_level": "C3",
+            "family": "deployment",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "deployment.witness.publish.with_approval",
+            "capability_name": "Publish deployment witness claim",
+            "current_unlock_level": "C3",
+            "family": "deployment",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "document.extract_tables",
+            "capability_name": "Extract document tables",
+            "current_unlock_level": "C3",
+            "family": "document",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "document.extract_text",
+            "capability_name": "Extract document text",
+            "current_unlock_level": "C3",
+            "family": "document",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "document.generate_docx",
+            "capability_name": "Generate DOCX artifact",
+            "current_unlock_level": "C3",
+            "family": "document",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 4,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "document.generate_pdf",
+            "capability_name": "Generate PDF artifact",
+            "current_unlock_level": "C3",
+            "family": "document",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 4,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "document.summarize",
+            "capability_name": "Summarize document",
+            "current_unlock_level": "C3",
+            "family": "document",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "email.classify",
+            "capability_name": "Classify email content",
+            "current_unlock_level": "C3",
+            "family": "communication",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_draft",
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "email.draft",
+            "capability_name": "Create email draft",
+            "current_unlock_level": "C3",
+            "family": "communication",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "email.read",
+            "capability_name": "Read email message",
+            "current_unlock_level": "C3",
+            "family": "communication",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "email.reply_suggest",
+            "capability_name": "Suggest email reply",
+            "current_unlock_level": "C3",
+            "family": "communication",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "email.search",
+            "capability_name": "Search email messages",
+            "current_unlock_level": "C3",
+            "family": "communication",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "email.send.with_approval",
+            "capability_name": "Send email with approval",
+            "current_unlock_level": "C3",
+            "family": "communication",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "enterprise.knowledge_search",
+            "capability_name": "Search knowledge",
+            "current_unlock_level": "C3",
+            "family": "enterprise",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 3,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "enterprise.notification_send",
+            "capability_name": "Send notification",
+            "current_unlock_level": "C3",
+            "family": "enterprise",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 3,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "enterprise.task_schedule",
+            "capability_name": "Schedule task",
+            "current_unlock_level": "C3",
+            "family": "enterprise",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 3,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "financial.balance_check",
+            "capability_name": "Check balance",
+            "current_unlock_level": "C3",
+            "family": "financial",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 3,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "financial.refund",
+            "capability_name": "Refund governed payment",
+            "current_unlock_level": "C3",
+            "family": "financial",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "financial.spending_insights",
+            "capability_name": "Generate spending insights",
+            "current_unlock_level": "C3",
+            "family": "financial",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 3,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "financial.transaction_history",
+            "capability_name": "Read transaction history",
+            "current_unlock_level": "C3",
+            "family": "financial",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 3,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 12,
+            "capability_id": "github.open_pull_request",
+            "capability_name": "Open GitHub pull request with approval",
+            "current_unlock_level": "C3",
+            "family": "connector",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 7,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_draft",
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "messaging.chat.draft",
+            "capability_name": "Draft chat message",
+            "current_unlock_level": "C3",
+            "family": "messaging",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "messaging.chat.send.with_approval",
+            "capability_name": "Send chat message with approval",
+            "current_unlock_level": "C3",
+            "family": "messaging",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_draft",
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "messaging.sms.draft",
+            "capability_name": "Draft SMS message",
+            "current_unlock_level": "C3",
+            "family": "messaging",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "messaging.sms.send.with_approval",
+            "capability_name": "Send SMS with approval",
+            "current_unlock_level": "C3",
+            "family": "messaging",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "messaging.thread.read",
+            "capability_name": "Read chat thread",
+            "current_unlock_level": "C3",
+            "family": "messaging",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "personal_assistant.approval.classify",
+            "capability_name": "Classify personal-assistant approval requirement",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "personal_assistant.clarification.request",
+            "capability_name": "Prepare personal-assistant clarification requests",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 16,
+            "capability_id": "personal_assistant.github_codex.review",
+            "capability_name": "Review GitHub/Codex change evidence",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "personal_assistant.intent.interpret",
+            "capability_name": "Interpret personal-assistant intent",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 15,
+            "capability_id": "personal_assistant.math.reasoning_plan",
+            "capability_name": "Project planning-only math reasoning",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "personal_assistant.memory_observation.prepare",
+            "capability_name": "Prepare personal-assistant memory observation",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 10,
+            "capability_id": "personal_assistant.memory_observation.review",
+            "capability_name": "Review personal-assistant memory observation",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 7,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 22,
+            "capability_id": "personal_assistant.planning.schedule_preview",
+            "capability_name": "Project schedule planning preview",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 7,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "personal_assistant.receipt.project",
+            "capability_name": "Project personal-assistant receipt",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 14,
+            "capability_id": "personal_assistant.research.source_compare",
+            "capability_name": "Compare public research source evidence",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "personal_assistant.skill_plan.build",
+            "capability_name": "Build personal-assistant skill plan",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 13,
+            "capability_id": "personal_assistant.teamops_shared_inbox.plan",
+            "capability_name": "Plan TeamOps shared-inbox handoff",
+            "current_unlock_level": "C2",
+            "family": "personal_assistant",
+            "next_unlock_step": "add certified mock or local evaluation evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "phone.call.place.with_approval",
+            "capability_name": "Place outbound phone call with approval",
+            "current_unlock_level": "C3",
+            "family": "phone",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "phone.call.receive",
+            "capability_name": "Record inbound phone call",
+            "current_unlock_level": "C3",
+            "family": "phone",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "phone.call.terminate",
+            "capability_name": "Terminate active phone call",
+            "current_unlock_level": "C3",
+            "family": "phone",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "review_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "phone.call.transcript_record",
+            "capability_name": "Record phone call transcript",
+            "current_unlock_level": "C3",
+            "family": "phone",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "phone.call.transfer.with_approval",
+            "capability_name": "Transfer phone call with approval",
+            "current_unlock_level": "C3",
+            "family": "phone",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 7,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "physical.sandbox_replay",
+            "capability_name": "Physical sandbox replay",
+            "current_unlock_level": "C3",
+            "family": "physical",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "physical.unlock_door",
+            "capability_name": "Unlock physical door",
+            "current_unlock_level": "C4",
+            "family": "physical",
+            "next_unlock_step": "add live write receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "software_dev.app_task_graph.plan",
+            "capability_name": "Plan app builder task graph",
+            "current_unlock_level": "C3",
+            "family": "software_dev",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "software_dev.change.run",
+            "capability_name": "Run governed software change",
+            "current_unlock_level": "C4",
+            "family": "software_dev",
+            "next_unlock_step": "add live read receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "software_dev.context_bundle.build",
+            "capability_name": "Build bounded code context",
+            "current_unlock_level": "C3",
+            "family": "software_dev",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "software_dev.gate_plan.select",
+            "capability_name": "Select software quality gates",
+            "current_unlock_level": "C3",
+            "family": "software_dev",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "prepare_for_approval",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 9,
+            "capability_id": "software_dev.pr_candidate.prepare",
+            "capability_name": "Prepare PR candidate review packet",
+            "current_unlock_level": "C4",
+            "family": "software_dev",
+            "next_unlock_step": "add live read receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "ready",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "software_dev.repo_map.read",
+            "capability_name": "Read repository map",
+            "current_unlock_level": "C3",
+            "family": "software_dev",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "spreadsheet.analyze",
+            "capability_name": "Analyze spreadsheet",
+            "current_unlock_level": "C3",
+            "family": "document",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "execute_with_governance",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "spreadsheet.generate",
+            "capability_name": "Generate spreadsheet artifact",
+            "current_unlock_level": "C3",
+            "family": "document",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 4,
+            "rollback_status": "compensation_only",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "voice.action_items_extract",
+            "capability_name": "Extract action items from meeting transcript",
+            "current_unlock_level": "C3",
+            "family": "voice",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "voice.intent_classification",
+            "capability_name": "Classify voice transcript intent",
+            "current_unlock_level": "C3",
+            "family": "voice",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "voice.intent_confirm",
+            "capability_name": "Confirm classified voice intent",
+            "current_unlock_level": "C3",
+            "family": "voice",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "voice.meeting_summarize",
+            "capability_name": "Summarize meeting transcript",
+            "current_unlock_level": "C3",
+            "family": "voice",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "voice.speech_to_text",
+            "capability_name": "Create transcript from voice input",
+            "current_unlock_level": "C3",
+            "family": "voice",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 8,
+            "capability_id": "voice.text_to_speech",
+            "capability_name": "Create voice synthesis reference",
+            "current_unlock_level": "C3",
+            "family": "voice",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 5,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          }
+        ],
+        "count": 99,
+        "label": "Live action disabled"
+      }
+    ],
+    "status_tiles": [
+      {
+        "count": 1,
+        "label": "Ready",
+        "meaning": "Capability has enough governed evidence for its current allowed action surface.",
+        "severity_rank": 0
+      },
+      {
+        "count": 0,
+        "label": "Prepare-only",
+        "meaning": "Capability can prepare work but must not execute live effects.",
+        "severity_rank": 1
+      },
+      {
+        "count": 1,
+        "label": "Needs approval",
+        "meaning": "Capability requires operator or policy approval before execution.",
+        "severity_rank": 2
+      },
+      {
+        "count": 0,
+        "label": "Blocked",
+        "meaning": "Capability is suspended, retired, or missing a hard governance requirement.",
+        "severity_rank": 3
+      },
+      {
+        "count": 0,
+        "label": "Evidence missing",
+        "meaning": "Capability needs evidence intake or verification before promotion.",
+        "severity_rank": 4
+      },
+      {
+        "count": 99,
+        "label": "Live action disabled",
+        "meaning": "Capability can be inspected or prepared, but live action remains disabled.",
+        "severity_rank": 5
+      }
+    ]
+  },
+  "schema_version": 1,
+  "source_refs": {
+    "gate_registry_id": "gate_template_registry.foundation.v1",
+    "passport_set_id": "capability_passports.foundation.v1"
+  },
+  "summary": {
+    "attention_required_count": 100,
+    "capability_count": 101,
+    "family_count": 16,
+    "live_action_disabled": true,
+    "ready_count": 1,
+    "status_counts": {
+      "Blocked": 0,
+      "Evidence missing": 0,
+      "Live action disabled": 99,
+      "Needs approval": 1,
+      "Prepare-only": 0,
+      "Ready": 1
+    }
+  },
+  "validators": [
+    {
+      "command": "python scripts/validate_capability_passport_dashboard.py",
+      "required_for_closure": true,
+      "validator_id": "capability_passport_dashboard_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_capability_passport_dashboard.py -q",
+      "required_for_closure": true,
+      "validator_id": "capability_passport_dashboard_tests"
+    }
+  ]
+}
