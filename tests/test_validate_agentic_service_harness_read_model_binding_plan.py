@@ -655,7 +655,7 @@ def test_readiness_map_rejects_missing_non_empty_diff_file_summary_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(workspace): add non-empty diff/file summary receipt after filesystem-write evidence`",
+            "1. `harness(pr): bind GitHub PR admission to non-empty diff/file summary receipt`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -666,7 +666,7 @@ def test_readiness_map_rejects_missing_non_empty_diff_file_summary_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(workspace): add non-empty diff/file summary receipt after filesystem-write evidence"
+        "missing next PR marker: harness(pr): bind GitHub PR admission to non-empty diff/file summary receipt"
         in serialized_errors
     )
 
