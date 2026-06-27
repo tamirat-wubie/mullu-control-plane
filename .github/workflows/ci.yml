@@ -441,7 +441,7 @@ jobs:
     # Keep this context stable: ruleset `main-protection` can require it directly.
     name: SDLC Governance Gate
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
