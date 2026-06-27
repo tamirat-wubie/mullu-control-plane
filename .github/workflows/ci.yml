@@ -592,6 +592,9 @@ jobs:
       - name: Test Agentic Service Harness non-empty diff receipt admission preflight
         run: python -m pytest tests/test_validate_agentic_service_harness_non_empty_diff_receipt_admission_preflight.py -q
 
+      - name: Test Agentic Service Harness non-empty diff file summary receipt
+        run: python -m pytest tests/test_validate_agentic_service_harness_non_empty_diff_file_summary_receipt.py -q
+
       - name: Test Agentic Service Harness filesystem write admission preflight
         run: python -m pytest tests/test_validate_agentic_service_harness_filesystem_write_admission_preflight.py -q
 
