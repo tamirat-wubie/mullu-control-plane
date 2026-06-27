@@ -249,6 +249,7 @@ def test_assistant_response_advisory_redacts_secret_shaped_route_identifier() ->
     results, receipts = runtime.recent_activity(limit=5)
 
     assert advisory["route"].startswith("assistant-response-route-")
+    assert not str(advisory["route"]).startswith("assistant-response-route-assistant-response-route-")
     assert advisory["route_identifier_exposed"] is False
     assert raw_route not in str(advisory)
     assert advisory["execution_authority"] is False
@@ -260,3 +261,35 @@ def test_assistant_response_advisory_redacts_secret_shaped_route_identifier() ->
     assert len(receipts) == 1
     assert raw_route not in str(results[0].to_dict())
     assert raw_route not in str(receipts[0].to_dict())
+
+
+def test_assistant_response_advisory_preserves_safe_public_route_identifier() -> None:
+    runtime = build_inceptadive_shadow_runtime({"MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE": "1"})
+    public_route = "/api/v1/chat:workflow.preview"
+
+    advisory = build_assistant_response_shadow_advisory(
+        runtime,
+        request_id="assistant_response_shadow_public_route",
+        user_input="inspect public route metadata",
+        assistant_content="bounded response",
+        route=public_route,
+        tenant_id="tenant-public-route",
+        model_name="model-public-route",
+        succeeded=True,
+        created_at="2026-05-13T10:00:00+00:00",
+    )
+    results, receipts = runtime.recent_activity(limit=5)
+
+    assert advisory["route"] == public_route
+    assert advisory["route_identifier_exposed"] is True
+    assert advisory["execution_authority"] is False
+    assert advisory["connector_dispatch_authority"] is False
+    assert advisory["shadow_memory_write_authority"] is False
+    assert advisory["raw_request_text_exposed"] is False
+    assert advisory["assistant_content_exposed"] is False
+    assert len(results) == 1
+    assert len(receipts) == 1
+    assert results[0].to_dict()["execution_authority"] is False
+    assert receipts[0].to_dict()["execution_authority"] is False
+    assert public_route not in str(results[0].to_dict())
+    assert public_route not in str(receipts[0].to_dict())
