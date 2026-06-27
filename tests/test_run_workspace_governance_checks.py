@@ -218,6 +218,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "capability_passports",
         "capability_passport_dashboard",
         "capability_friction_control",
+        "operator_plan_receipt_bundle_read_model",
+        "worker_receipt_ledger_read_model",
         "mcp_operator_checklist",
         "public_naming_readiness",
         "public_demo_surfaces",
@@ -884,6 +886,12 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["capability_friction_control"][1:] == (
         "scripts/validate_capability_friction_control.py",
+    )
+    assert args_by_name["operator_plan_receipt_bundle_read_model"][1:] == (
+        "scripts/validate_operator_plan_receipt_bundle_read_model.py",
+    )
+    assert args_by_name["worker_receipt_ledger_read_model"][1:] == (
+        "scripts/validate_worker_receipt_ledger_read_model.py",
     )
     assert args_by_name["mcp_operator_checklist"][1:] == (
         "scripts/validate_mcp_operator_checklist.py",

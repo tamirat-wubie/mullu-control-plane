@@ -316,6 +316,8 @@
             "capability_passports",
             "capability_passport_dashboard",
             "capability_friction_control",
+            "operator_plan_receipt_bundle_read_model",
+            "worker_receipt_ledger_read_model",
             "mcp_operator_checklist",
             "public_naming_readiness",
             "public_demo_surfaces",
