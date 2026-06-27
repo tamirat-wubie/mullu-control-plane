@@ -25,6 +25,10 @@ def test_github_pr_terminal_closure_certificate_witness_passes() -> None:
     assert validation.errors == ()
     assert validation.example_count == 1
     assert validation.source_effect_reconciliation_witness_ref == validator.EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF
+    assert (
+        validation.actual_diff_effect_reconciliation_witness_ref
+        == validator.EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF
+    )
 
 
 def test_github_pr_terminal_closure_certificate_witness_rejects_collected_authority() -> None:
@@ -32,6 +36,7 @@ def test_github_pr_terminal_closure_certificate_witness_rejects_collected_author
         terminal_closure_certificate_collected=True,
         authority_granted=True,
         terminal_closure_certificate__effect_reconciliation_collected=True,
+        terminal_closure_certificate__requires_actual_diff_effect_reconciliation_witness=False,
         terminal_closure_certificate__terminal_closure_certificate_collected=True,
         terminal_closure_certificate__terminal_closure_authorized=True,
         authority_denials__authority_granted=True,
@@ -46,6 +51,10 @@ def test_github_pr_terminal_closure_certificate_witness_rejects_collected_author
     assert "terminal_closure_certificate_collected must be false" in serialized_errors
     assert "authority_granted must be false" in serialized_errors
     assert "terminal_closure_certificate.effect_reconciliation_collected must be false" in serialized_errors
+    assert (
+        "terminal_closure_certificate.requires_actual_diff_effect_reconciliation_witness must be true"
+        in serialized_errors
+    )
     assert "terminal_closure_certificate.terminal_closure_certificate_collected must be false" in serialized_errors
     assert "terminal_closure_certificate.terminal_closure_authorized must be false" in serialized_errors
     assert "authority_denials.authority_granted must be false" in serialized_errors
@@ -100,6 +109,42 @@ def test_github_pr_terminal_closure_certificate_witness_rejects_remaining_witnes
     assert payload["remaining_witnesses"][0]["witness_kind"] == "terminal_closure_certificate"
 
 
+def test_github_pr_terminal_closure_certificate_witness_rejects_actual_diff_effect_reconciliation_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_witness(
+        terminal_closure_certificate__actual_diff_effect_reconciliation_witness_ref="examples/drift.json",
+        terminal_closure_certificate__actual_diff_ci_gate_before_ready_for_review_witness_ref="examples/drift.json",
+        terminal_closure_certificate__actual_diff_repository_effect_rollback_plan_witness_ref="examples/drift.json",
+        terminal_closure_certificate__actual_diff_uao_admission_witness_ref="examples/drift.json",
+        terminal_closure_certificate__actual_diff_branch_write_binding_ref="examples/drift.json",
+        terminal_closure_certificate__actual_diff_operator_response_witness_ref="examples/drift.json",
+        terminal_closure_certificate__actual_diff_approval_request_binding_ref="examples/drift.json",
+        terminal_closure_certificate__actual_non_empty_diff_receipt_ref="witness://drift",
+        terminal_closure_certificate__changed_file_refs=["evidence://drift-file"],
+        terminal_closure_certificate__diff_refs=["evidence://drift-diff"],
+        terminal_closure_certificate__redacted_diff_bundle_ref="digest://drift-bundle",
+        terminal_closure_certificate__redacted_output_ref="witness://drift-output",
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_witness_semantics(
+        payload, _source_effect_reconciliation_witness(), errors, "mutated"
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "terminal_closure_certificate.actual_diff_effect_reconciliation_witness_ref" in serialized_errors
+    assert "terminal_closure_certificate.actual_diff_ci_gate_before_ready_for_review_witness_ref" in serialized_errors
+    assert "terminal_closure_certificate.actual_diff_repository_effect_rollback_plan_witness_ref" in serialized_errors
+    assert "terminal_closure_certificate.actual_diff_uao_admission_witness_ref" in serialized_errors
+    assert "terminal_closure_certificate.actual_diff_branch_write_binding_ref" in serialized_errors
+    assert "terminal_closure_certificate.actual_diff_operator_response_witness_ref" in serialized_errors
+    assert "terminal_closure_certificate.actual_diff_approval_request_binding_ref" in serialized_errors
+    assert "terminal_closure_certificate.actual_non_empty_diff_receipt_ref" in serialized_errors
+    assert "terminal_closure_certificate.changed_file_refs" in serialized_errors
+    assert "terminal_closure_certificate.diff_refs" in serialized_errors
+    assert "terminal_closure_certificate.redacted_diff_bundle_ref" in serialized_errors
+    assert "terminal_closure_certificate.redacted_output_ref" in serialized_errors
+
+
 def test_github_pr_terminal_closure_certificate_witness_rejects_mutation_route_and_secret_like_payload() -> None:
     payload = validator.build_mutated_terminal_closure_certificate_witness(
         requested_evidence_ref="POST /api/github/terminal-closure authority",
@@ -131,6 +176,10 @@ def test_github_pr_terminal_closure_certificate_witness_cli_writes_report(tmp_pa
     assert stdout_payload["errors"] == []
     assert (
         file_payload["source_effect_reconciliation_witness_ref"]
+        == validator.EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF
+    )
+    assert (
+        file_payload["actual_diff_effect_reconciliation_witness_ref"]
         == validator.EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF
     )
 
