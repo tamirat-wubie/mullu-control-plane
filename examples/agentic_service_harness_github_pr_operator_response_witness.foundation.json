@@ -4,6 +4,7 @@
   "generated_at": "2026-06-18T00:00:00Z",
   "solver_outcome": "AwaitingEvidence",
   "source_approval_request_ref": "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json",
+  "source_actual_diff_approval_request_binding_ref": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
   "witness_kind": "operator_response_witness",
   "requested_evidence_ref": "evidence://operator-pr-approval-response-record",
   "response_status": "AwaitingEvidence",
@@ -37,6 +38,17 @@
     "response_record_ref": "evidence://operator-pr-approval-response-record",
     "response_record_required": true,
     "response_record_collected": false,
+    "requires_actual_non_empty_diff_approval_request_binding": true,
+    "actual_diff_approval_request_binding_ref": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
+    "actual_non_empty_diff_receipt_ref": "witness://actual-non-empty-diff-receipt",
+    "changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
+    "redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "redacted_output_ref": "witness://filesystem-write-output-redacted",
     "approval_effect": "satisfies_operator_pr_approval_witness_only",
     "pr_creation_authorized_after_response": false
   },
@@ -104,6 +116,8 @@
   "receipt_refs": {
     "github_pr_operator_response_witness_schema": "schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json",
     "github_pr_operator_approval_request_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json",
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json",
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
     "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
     "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json"
   },
@@ -114,5 +128,5 @@
       "required_for_closure": true
     }
   ],
-  "next_action": "Bind branch-write authority evidence only after an explicit operator PR response witness exists; do not create pull requests from this witness."
+  "next_action": "Bind branch-write authority evidence to the actual-diff operator response witness only after an explicit operator PR response record exists; do not create pull requests from this witness."
 }
