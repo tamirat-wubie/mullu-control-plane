@@ -71,6 +71,14 @@ Canonical implementation:
 mcoi/mcoi_runtime/core/capability_unlock_ladder.py
 ```
 
+Reusable closure helpers:
+
+```text
+mullu_local_developer_workflow_v1_descriptor()
+validate_local_developer_workflow_descriptor()
+build_local_developer_workflow_read_model()
+```
+
 Stage order:
 
 ```text
