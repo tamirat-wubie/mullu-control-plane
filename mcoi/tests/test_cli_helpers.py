@@ -70,6 +70,8 @@ def test_autonomous_demo_renders_json_continuation_summary(capsys: pytest.Captur
         "stage-local.plan",
         "stage-local.apply",
     ]
+    assert len(body["step_receipt_refs"]) == 3
+    assert all(ref.startswith("receipt://") for ref in body["step_receipt_refs"])
     assert body["prompt_count"] == 0
     assert "receipt_path" not in body
     assert body["workflow_descriptor_ref"].startswith("workflow://")
@@ -112,6 +114,8 @@ def test_autonomous_demo_writes_json_receipt_path(
         "stage-local.plan",
         "stage-local.apply",
     ]
+    assert len(body["step_receipt_refs"]) == 3
+    assert all(ref.startswith("receipt://") for ref in body["step_receipt_refs"])
     assert body["workflow_descriptor_ref"].startswith("workflow://")
     assert body["rollback_ref"].endswith("/local-effects")
 
@@ -154,6 +158,8 @@ def test_autonomous_demo_quiet_writes_receipt_without_stdout(
         "stage-local.plan",
         "stage-local.apply",
     ]
+    assert len(body["step_receipt_refs"]) == 3
+    assert all(ref.startswith("receipt://") for ref in body["step_receipt_refs"])
 
 
 def test_autonomous_demo_receipt_dir_derives_filename_and_creates_directory(
@@ -191,6 +197,8 @@ def test_autonomous_demo_receipt_dir_derives_filename_and_creates_directory(
         "stage-local.plan",
         "stage-local.apply",
     ]
+    assert len(body["step_receipt_refs"]) == 3
+    assert all(ref.startswith("receipt://") for ref in body["step_receipt_refs"])
     assert body["automation_state"] == "settled_without_prompt"
 
 
@@ -232,6 +240,8 @@ def test_autonomous_demo_receipt_dir_writes_latest_receipt(
         "stage-local.plan",
         "stage-local.apply",
     ]
+    assert len(receipt_body["step_receipt_refs"]) == 3
+    assert all(ref.startswith("receipt://") for ref in receipt_body["step_receipt_refs"])
     assert latest_body["receipt_directory_path"] == str(receipt_dir)
     assert latest_body["receipt_schema_version"] == "mcoi.autonomous_demo.receipt.v1"
     assert latest_body["capability_ids"] == ["local.apply"]
@@ -242,6 +252,7 @@ def test_autonomous_demo_receipt_dir_writes_latest_receipt(
         "stage-local.plan",
         "stage-local.apply",
     ]
+    assert latest_body["step_receipt_refs"] == receipt_body["step_receipt_refs"]
     assert latest_body["automation_state"] == "settled_without_prompt"
 
 

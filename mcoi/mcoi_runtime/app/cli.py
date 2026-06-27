@@ -422,6 +422,7 @@ def _autonomous_demo_summary_envelope(view: AutonomousRequestEpisodeSummaryView)
         "workflow_external_stage_count": view.workflow_external_stage_count,
         "plan_receipt_ref": view.plan_receipt_ref,
         "execution_stage_ids": list(view.execution_stage_ids),
+        "step_receipt_refs": list(view.step_receipt_refs),
         "rollback_ref": view.rollback_ref,
     }
 

@@ -464,6 +464,7 @@ class AutonomousRequestEpisodeSummaryView:
     plan_receipt_ref: str | None
     rollback_ref: str
     execution_stage_ids: tuple[str, ...] = ()
+    step_receipt_refs: tuple[str, ...] = ()
 
     @staticmethod
     def from_receipt(
@@ -485,6 +486,7 @@ class AutonomousRequestEpisodeSummaryView:
             execution_stage_ids=tuple(
                 step.plan_stage_id for step in receipt.step_receipts if step.plan_stage_id is not None
             ),
+            step_receipt_refs=receipt.receipt_refs,
             rollback_ref=receipt.rollback_ref,
         )
 
