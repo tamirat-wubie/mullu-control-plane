@@ -607,8 +607,19 @@ REQUIRED_GITHUB_PR_EFFECT_RECONCILIATION_TERMS = (
     "granting no repository mutation, secret, destructive, or terminal closure authority",
 )
 REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
-    "GitHub PR terminal closure certificate witness PR",
+    "GitHub PR terminal closure certificate actual-diff effect reconciliation binding PR",
     "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
+    "actual-diff effect reconciliation witness",
+    "actual-diff CI gate before ready-for-review witness",
+    "actual-diff repository-effect rollback witness",
+    "actual-diff UAO admission witness",
+    "actual-diff branch-write authority binding",
+    "actual-diff operator response witness",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
     "GitHub PR terminal closure certificate candidate PR",
     "agentic_service_harness_github_pr_terminal_closure_certificate_candidate",
     "GitHub PR terminal closure operator approval gate PR",
@@ -1392,12 +1403,14 @@ def _validate_github_pr_terminal_closure_ready(
     errors: list[str],
 ) -> None:
     witness_row = re.search(
-        r"^\| GitHub PR terminal closure certificate witness PR \| READY \| .+terminal closure status remains AwaitingEvidence.+terminal authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure certificate actual-diff effect reconciliation binding PR \| READY \| .+actual-diff effect reconciliation witness.+terminal closure status remains AwaitingEvidence.+terminal authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if witness_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure certificate witness PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure certificate actual-diff effect reconciliation binding PR"
+        )
 
     candidate_row = re.search(
         r"^\| GitHub PR terminal closure certificate candidate PR \| READY \| .+certificate minting.+terminal closure remain blocked\. \|$",
@@ -1466,7 +1479,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure witness to actual-diff effect reconciliation",
+        "harness(pr): bind terminal closure candidate to actual-diff witness",
     )
     positions: list[int] = []
     for marker in sequence_markers:

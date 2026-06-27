@@ -117,6 +117,19 @@
         "source_effect_reconciliation_evidence_ref",
         "required_witness_kind",
         "required_evidence_ref",
+        "requires_actual_diff_effect_reconciliation_witness",
+        "actual_diff_effect_reconciliation_witness_ref",
+        "actual_diff_ci_gate_before_ready_for_review_witness_ref",
+        "actual_diff_repository_effect_rollback_plan_witness_ref",
+        "actual_diff_uao_admission_witness_ref",
+        "actual_diff_branch_write_binding_ref",
+        "actual_diff_operator_response_witness_ref",
+        "actual_diff_approval_request_binding_ref",
+        "actual_non_empty_diff_receipt_ref",
+        "changed_file_refs",
+        "diff_refs",
+        "redacted_diff_bundle_ref",
+        "redacted_output_ref",
         "effect_reconciliation_required",
         "effect_reconciliation_collected",
         "terminal_closure_certificate_required",
@@ -147,6 +160,59 @@
           "const": "terminal_closure_certificate"
         },
         "required_evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+        "requires_actual_diff_effect_reconciliation_witness": { "type": "boolean", "const": true },
+        "actual_diff_effect_reconciliation_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_effect_reconciliation_witness.foundation.json"
+        },
+        "actual_diff_ci_gate_before_ready_for_review_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.foundation.json"
+        },
+        "actual_diff_repository_effect_rollback_plan_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json"
+        },
+        "actual_diff_uao_admission_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json"
+        },
+        "actual_diff_branch_write_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json"
+        },
+        "actual_diff_operator_response_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
+        },
+        "actual_diff_approval_request_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
+        },
+        "actual_non_empty_diff_receipt_ref": {
+          "type": "string",
+          "const": "witness://actual-non-empty-diff-receipt"
+        },
+        "changed_file_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/evidence_ref" }
+        },
+        "diff_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/evidence_ref" }
+        },
+        "redacted_diff_bundle_ref": {
+          "type": "string",
+          "const": "digest://redacted-filesystem-write-diff-bundle-candidate"
+        },
+        "redacted_output_ref": {
+          "type": "string",
+          "const": "witness://filesystem-write-output-redacted"
+        },
         "effect_reconciliation_required": { "type": "boolean", "const": true },
         "effect_reconciliation_collected": { "type": "boolean", "const": false },
         "terminal_closure_certificate_required": { "type": "boolean", "const": true },
@@ -235,22 +301,42 @@
       "required": [
         "github_pr_terminal_closure_certificate_witness_schema",
         "github_pr_effect_reconciliation_witness_schema",
+        "github_pr_effect_reconciliation_witness_example",
         "github_pr_ci_gate_before_ready_for_review_witness_schema",
+        "github_pr_ci_gate_before_ready_for_review_witness_example",
         "github_pr_repository_effect_rollback_plan_witness_schema",
+        "github_pr_repository_effect_rollback_plan_witness_example",
         "github_pr_uao_admission_witness_schema",
+        "github_pr_uao_admission_witness_example",
         "github_pr_branch_write_authority_binding_schema",
+        "github_pr_branch_write_authority_binding_example",
+        "github_pr_operator_response_witness_schema",
+        "github_pr_operator_response_witness_example",
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema",
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_example",
         "github_pr_operator_approval_request_schema",
+        "github_pr_actual_non_empty_diff_admission_binding_schema",
         "github_pr_admission_preflight_schema",
         "github_repo_task_service_schema"
       ],
       "properties": {
         "github_pr_terminal_closure_certificate_witness_schema": { "$ref": "#/$defs/evidence_ref" },
         "github_pr_effect_reconciliation_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_effect_reconciliation_witness_example": { "$ref": "#/$defs/evidence_ref" },
         "github_pr_ci_gate_before_ready_for_review_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_ci_gate_before_ready_for_review_witness_example": { "$ref": "#/$defs/evidence_ref" },
         "github_pr_repository_effect_rollback_plan_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_repository_effect_rollback_plan_witness_example": { "$ref": "#/$defs/evidence_ref" },
         "github_pr_uao_admission_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_uao_admission_witness_example": { "$ref": "#/$defs/evidence_ref" },
         "github_pr_branch_write_authority_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_branch_write_authority_binding_example": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_operator_response_witness_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_operator_response_witness_example": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": { "$ref": "#/$defs/evidence_ref" },
         "github_pr_operator_approval_request_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_actual_non_empty_diff_admission_binding_schema": { "$ref": "#/$defs/evidence_ref" },
         "github_pr_admission_preflight_schema": { "$ref": "#/$defs/evidence_ref" },
         "github_repo_task_service_schema": { "$ref": "#/$defs/evidence_ref" }
       }
