@@ -624,7 +624,7 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "agentic_service_harness_github_pr_terminal_closure_certificate_candidate",
     "actual-diff terminal closure certificate witness",
     "actual-diff approval request binding",
-    "GitHub PR terminal closure operator approval gate PR",
+    "GitHub PR terminal closure operator approval gate actual-diff candidate binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate",
     "GitHub PR terminal closure operator decision contract PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
@@ -639,7 +639,7 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "terminal closure status remains AwaitingEvidence",
     "Candidate status remains AwaitingEvidence/operator-approval-bound",
     "certificate minting, repository mutation, connector calls, receipt-store append, secret serialization, destructive operation, and terminal closure remain blocked",
-    "operator approval is required, not collected",
+    "Operator approval remains required and uncollected",
     "approve_terminal_certificate",
     "deny_terminal_certificate",
     "generic continuation text is rejected as terminal approval",
@@ -1426,12 +1426,12 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     approval_gate_row = re.search(
-        r"^\| GitHub PR terminal closure operator approval gate PR \| READY \| .+operator approval is required.+authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure operator approval gate actual-diff candidate binding PR \| READY \| .+actual-diff terminal closure certificate witness.+Operator approval remains required and uncollected.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
     if approval_gate_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure operator approval gate PR")
+        errors.append("missing ready row: GitHub PR terminal closure operator approval gate actual-diff candidate binding PR")
 
     decision_contract_row = re.search(
         r"^\| GitHub PR terminal closure operator decision contract PR \| READY \| .+approve_terminal_certificate.+terminal closure authority is granted\. \|$",
@@ -1484,7 +1484,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure operator approval gate to actual-diff candidate",
+        "harness(pr): bind terminal closure operator decision contract to actual-diff approval gate",
     )
     positions: list[int] = []
     for marker in sequence_markers:

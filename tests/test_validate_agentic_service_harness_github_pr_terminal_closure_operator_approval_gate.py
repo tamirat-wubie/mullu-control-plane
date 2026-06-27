@@ -67,6 +67,44 @@ def test_github_pr_terminal_closure_operator_approval_gate_rejects_candidate_bin
     assert "approval_gate.candidate_ready must be true" in serialized_errors
 
 
+def test_github_pr_terminal_closure_operator_approval_gate_rejects_actual_diff_candidate_evidence_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_operator_approval_gate(
+        approval_gate__actual_diff_candidate_evidence__actual_diff_terminal_closure_certificate_witness_ref=(
+            "examples/other-terminal-witness.json"
+        ),
+        approval_gate__actual_diff_candidate_evidence__actual_diff_effect_reconciliation_witness_ref=(
+            "examples/other-effect-witness.json"
+        ),
+        approval_gate__actual_diff_candidate_evidence__actual_diff_operator_response_witness_ref=(
+            "examples/other-response.json"
+        ),
+        approval_gate__actual_diff_candidate_evidence__actual_diff_approval_request_binding_ref=(
+            "examples/other-approval.json"
+        ),
+        approval_gate__actual_diff_candidate_evidence__actual_non_empty_diff_receipt_ref=(
+            "witness://other-diff-receipt"
+        ),
+        approval_gate__actual_diff_candidate_evidence__changed_file_refs=["evidence://redacted-file-change-candidate/other"],
+        approval_gate__actual_diff_candidate_evidence__diff_refs=["evidence://redacted-diff-candidate/other"],
+        approval_gate__actual_diff_candidate_evidence__redacted_diff_bundle_ref="digest://other-bundle",
+        approval_gate__actual_diff_candidate_evidence__redacted_output_ref="witness://other-output",
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_operator_approval_gate_semantics(payload, _source_candidate(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "approval_gate.actual_diff_candidate_evidence.actual_diff_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "approval_gate.actual_diff_candidate_evidence.actual_diff_effect_reconciliation_witness_ref expected" in serialized_errors
+    assert "approval_gate.actual_diff_candidate_evidence.actual_diff_operator_response_witness_ref expected" in serialized_errors
+    assert "approval_gate.actual_diff_candidate_evidence.actual_diff_approval_request_binding_ref expected" in serialized_errors
+    assert "approval_gate.actual_diff_candidate_evidence.actual_non_empty_diff_receipt_ref expected" in serialized_errors
+    assert "approval_gate.actual_diff_candidate_evidence.changed_file_refs expected" in serialized_errors
+    assert "approval_gate.actual_diff_candidate_evidence.diff_refs expected" in serialized_errors
+    assert "approval_gate.actual_diff_candidate_evidence.redacted_diff_bundle_ref expected" in serialized_errors
+    assert "approval_gate.actual_diff_candidate_evidence.redacted_output_ref expected" in serialized_errors
+
+
 def test_github_pr_terminal_closure_operator_approval_gate_rejects_mutation_authority() -> None:
     payload = validator.build_mutated_terminal_closure_operator_approval_gate(
         authority_granted=True,
