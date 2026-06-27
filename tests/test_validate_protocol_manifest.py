@@ -318,6 +318,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_github_pr_actual_non_
     assert binding_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_github_pr_creation_execution_admission() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    admission_entry = entries[
+        "agentic-service-harness-github-pr-creation-execution-admission"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert admission_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_creation_execution_admission.schema.json"
+    )
+    assert admission_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-creation-execution-admission:1"
+    )
+    assert admission_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
