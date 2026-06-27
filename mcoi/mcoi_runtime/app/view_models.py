@@ -463,6 +463,7 @@ class AutonomousRequestEpisodeSummaryView:
     workflow_external_stage_count: int
     plan_receipt_ref: str | None
     rollback_ref: str
+    execution_stage_ids: tuple[str, ...] = ()
 
     @staticmethod
     def from_receipt(
@@ -481,6 +482,9 @@ class AutonomousRequestEpisodeSummaryView:
             workflow_approval_stage_count=receipt.workflow_approval_stage_count,
             workflow_external_stage_count=receipt.workflow_external_stage_count,
             plan_receipt_ref=receipt.plan_receipt_ref,
+            execution_stage_ids=tuple(
+                step.plan_stage_id for step in receipt.step_receipts if step.plan_stage_id is not None
+            ),
             rollback_ref=receipt.rollback_ref,
         )
 
