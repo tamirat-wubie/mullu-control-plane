@@ -275,6 +275,20 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     workflow_summary = capability_metadata.get("developer_workflow_summary", {})
     if not isinstance(workflow_summary, Mapping):
         workflow_summary = {}
+    workflow_panel = next(
+        (
+            panel
+            for panel in payload.get("panels", ())
+            if isinstance(panel, Mapping) and panel.get("panel") == OperatorPanelKind.WORKFLOW_MONITOR.value
+        ),
+        {},
+    )
+    workflow_panel_metadata = workflow_panel.get("metadata", {}) if isinstance(workflow_panel, Mapping) else {}
+    if not isinstance(workflow_panel_metadata, Mapping):
+        workflow_panel_metadata = {}
+    workflow_run_summary = workflow_panel_metadata.get("developer_workflow_run", {})
+    if not isinstance(workflow_run_summary, Mapping):
+        workflow_run_summary = {}
     panel_rows = "\n".join(
         "<tr>"
         f"<td>{escape(str(panel.get('panel', '')))}</td>"
@@ -304,6 +318,14 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     next_unlock = str(workflow.get("next_unlock") or workflow_summary.get("next_unlock") or "")
     risk = str(workflow_summary.get("risk") or "")
     action_needed = str(workflow_summary.get("action_needed") or "")
+    workflow_run_status = str(workflow_run_summary.get("status") or "")
+    workflow_current_task = str(workflow_run_summary.get("current_task_id") or "")
+    workflow_task_count = int(workflow_run_summary.get("task_count", 0) or 0)
+    workflow_run_href = str(workflow_panel_metadata.get("developer_workflow_href") or "/operator/developer-workflow")
+    workflow_run_read_model_href = str(
+        workflow_panel_metadata.get("developer_workflow_read_model_href")
+        or "/operator/developer-workflow/read-model"
+    )
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -333,6 +355,7 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
       <a href="/operator/control-tower/read-model">json read model</a>
       <a href="/operator/capabilities">capability console</a>
       <a href="/operator/capabilities/friction-control/read-model?domain=software_dev">friction control</a>
+      <a href="{escape(workflow_run_href)}">developer workflow</a>
       <a href="/operator/current-task">current task</a>
       <a href="/operator/plan-review">plan review</a>
       <a href="/operator/approvals">approvals</a>
@@ -355,6 +378,10 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
       <span class="field"><strong>Next unlock</strong>{escape(next_unlock)}</span>
       <span class="field"><strong>Risk</strong>{escape(risk)}</span>
       <span class="field"><strong>Action needed</strong>{escape(action_needed)}</span>
+      <span class="field"><strong>Run status</strong>{escape(workflow_run_status)}</span>
+      <span class="field"><strong>Current stage</strong>{escape(workflow_current_task)}</span>
+      <span class="field"><strong>Stages</strong>{workflow_task_count}</span>
+      <span class="field"><strong>Run receipt</strong><a href="{escape(workflow_run_read_model_href)}">workflow JSON</a></span>
     </div>
   </section>
   <section>

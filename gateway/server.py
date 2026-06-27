@@ -147,8 +147,12 @@ from gateway.mcp_capability_fabric import MCPAuthorityRecords, build_mcp_gateway
 from gateway.observability import GatewayObservabilityRecorder
 from gateway.mcp_operator_read_model import build_mcp_operator_read_model
 from gateway.operator_capability_console import (
+    DEVELOPER_WORKFLOW_RUN_HREF,
+    DEVELOPER_WORKFLOW_RUN_READ_MODEL_HREF,
     build_capability_friction_control_read_model,
+    build_developer_workflow_v1_run_read_model,
     build_operator_capability_read_model,
+    render_developer_workflow_v1_run_html,
     render_operator_capability_console,
 )
 from gateway.operator_control_tower import (
@@ -1510,6 +1514,7 @@ def _workflow_monitor_panel_read_model(
     *,
     current_task: Mapping[str, Any],
     plan_review: Mapping[str, Any],
+    developer_workflow_run: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Project current task and plan review state into a workflow monitor panel."""
     task_status_counts = current_task.get("status_counts", {})
@@ -1532,9 +1537,11 @@ def _workflow_monitor_panel_read_model(
         + int(plan_status_counts.get("recovery_pending", 0) or 0)
     )
     current_task_id = str(current_task.get("current_task_id", ""))
+    developer_workflow_summary = _developer_workflow_run_summary(developer_workflow_run)
     evidence_refs = (
         str(current_task.get("schema_ref") or CURRENT_TASK_SCHEMA_REF),
         str(plan_review.get("schema_ref") or PLAN_REVIEW_SCHEMA_REF),
+        str(developer_workflow_run.get("workflow_run_id") or "developer_workflow_v1_foundation_run"),
     )
     return {
         "source_surface": "operator_workflow_monitor",
@@ -1553,7 +1560,34 @@ def _workflow_monitor_panel_read_model(
             "plan_status_counts": dict(plan_status_counts),
             "current_task_href": "/operator/current-task",
             "plan_review_href": "/operator/plan-review",
+            "developer_workflow_run": developer_workflow_summary,
+            "developer_workflow_href": DEVELOPER_WORKFLOW_RUN_HREF,
+            "developer_workflow_read_model_href": DEVELOPER_WORKFLOW_RUN_READ_MODEL_HREF,
         },
+    }
+
+
+def _developer_workflow_run_summary(developer_workflow_run: Mapping[str, Any]) -> dict[str, Any]:
+    task_runs = developer_workflow_run.get("task_runs", ())
+    status_counts: dict[str, int] = {}
+    current_task_id = ""
+    if isinstance(task_runs, list):
+        for task_run in task_runs:
+            if not isinstance(task_run, Mapping):
+                continue
+            status = str(task_run.get("status") or "")
+            if status:
+                status_counts[status] = status_counts.get(status, 0) + 1
+            if not current_task_id and status not in {"committed", "compensated"}:
+                current_task_id = str(task_run.get("task_id") or "")
+    return {
+        "workflow_run_id": str(developer_workflow_run.get("workflow_run_id") or ""),
+        "workflow_id": str(developer_workflow_run.get("workflow_id") or ""),
+        "status": str(developer_workflow_run.get("status") or ""),
+        "current_task_id": current_task_id,
+        "task_count": len(task_runs) if isinstance(task_runs, list) else 0,
+        "status_counts": dict(sorted(status_counts.items())),
+        "run_hash": str(developer_workflow_run.get("run_hash") or ""),
     }
 
 
@@ -1562,6 +1596,7 @@ def create_gateway_app(
     *,
     capability_admission_gate_override: Any | None = None,
     command_ledger_override: Any | None = None,
+    software_receipt_store_override: Any | None = None,
     tenant_budget_reporter: Any | None = None,
     mcp_capability_entries: tuple[Any, ...] = (),
     mcp_executor: Any | None = None,
@@ -1617,6 +1652,14 @@ def create_gateway_app(
     authority_operator_audit_events: list[dict[str, Any]] = []
     capability_capsule_admission_receipts: list[dict[str, Any]] = []
     physical_capability_promotion_receipt_store = build_physical_capability_promotion_receipt_store_from_env()
+    software_receipt_store = software_receipt_store_override
+    if software_receipt_store is None:
+        try:
+            from mcoi_runtime.app.software_receipt_integration import select_software_receipt_store
+
+            software_receipt_store = select_software_receipt_store(os.environ).store
+        except Exception:
+            software_receipt_store = None
     platform_decision_log = getattr(platform, "_decision_log", None)
     reflex_deployment_witness_log_backed = platform_decision_log is not None
     reflex_deployment_witness_log = platform_decision_log or GovernanceDecisionLog(clock=_clock)
@@ -6925,6 +6968,43 @@ def create_gateway_app(
             risk_level=risk_level,
         )
 
+    @app.get("/operator/developer-workflow/read-model")
+    def operator_developer_workflow_read_model(
+        request: Request,
+        tenant_id: str = "operator",
+        actor_id: str = "codex-local-operator",
+        domain: str = "software_dev",
+        risk_level: str = "",
+    ):
+        _require_authority_operator(request)
+        return build_developer_workflow_v1_run_read_model(
+            capability_admission_gate=capability_admission_gate,
+            software_receipt_store=software_receipt_store,
+            tenant_id=tenant_id,
+            actor_id=actor_id,
+            domain=domain,
+            risk_level=risk_level,
+        )
+
+    @app.get("/operator/developer-workflow", response_class=HTMLResponse)
+    def operator_developer_workflow_console(
+        request: Request,
+        tenant_id: str = "operator",
+        actor_id: str = "codex-local-operator",
+        domain: str = "software_dev",
+        risk_level: str = "",
+    ):
+        _require_authority_operator(request)
+        read_model = build_developer_workflow_v1_run_read_model(
+            capability_admission_gate=capability_admission_gate,
+            software_receipt_store=software_receipt_store,
+            tenant_id=tenant_id,
+            actor_id=actor_id,
+            domain=domain,
+            risk_level=risk_level,
+        )
+        return HTMLResponse(render_developer_workflow_v1_run_html(read_model))
+
     def _operator_control_tower_snapshot(
         *,
         tenant_id: str,
@@ -6933,6 +7013,13 @@ def create_gateway_app(
     ):
         friction_control = build_capability_friction_control_read_model(
             capability_admission_gate=capability_admission_gate,
+            domain=domain,
+            risk_level=risk_level,
+        )
+        developer_workflow_run = build_developer_workflow_v1_run_read_model(
+            capability_admission_gate=capability_admission_gate,
+            software_receipt_store=software_receipt_store,
+            tenant_id=tenant_id,
             domain=domain,
             risk_level=risk_level,
         )
@@ -6976,6 +7063,7 @@ def create_gateway_app(
             _workflow_monitor_panel_read_model(
                 current_task=current_task,
                 plan_review=plan_review,
+                developer_workflow_run=developer_workflow_run,
             ),
         )
         return builder.build(tenant_id=tenant_id, generated_at=_clock())

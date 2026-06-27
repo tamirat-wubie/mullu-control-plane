@@ -230,6 +230,20 @@
       },
       {
         "available": true,
+        "capability_id": "software_dev.change.run",
+        "stage_id": "test_run",
+        "stage_type": "skill_execution",
+        "verification_required": true
+      },
+      {
+        "available": true,
+        "capability_id": "software_change_diff",
+        "stage_id": "diff_review",
+        "stage_type": "observation",
+        "verification_required": true
+      },
+      {
+        "available": true,
         "capability_id": "software_change_receipt",
         "stage_id": "receipt_review",
         "stage_type": "observation",

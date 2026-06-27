@@ -139,6 +139,139 @@ def build_capability_friction_control_read_model(
     }
 
 
+def build_developer_workflow_v1_run_read_model(
+    *,
+    capability_admission_gate: Any | None = None,
+    software_receipt_store: Any | None = None,
+    tenant_id: str = "operator",
+    actor_id: str = "codex-local-operator",
+    domain: str = "software_dev",
+    risk_level: str = "",
+) -> dict[str, Any]:
+    """Build the Developer Workflow v1 workflow-run projection.
+
+    Input contract: optional governed capability admission gate and bounded
+    operator filters.
+    Output contract: JSON object conforming to workflow_run.schema.json.
+    Error contract: absent capabilities remain observable as created task runs;
+    this function never grants execution authority or claims external effects.
+    """
+    friction_control = build_capability_friction_control_read_model(
+        capability_admission_gate=capability_admission_gate,
+        domain=domain,
+        risk_level=risk_level,
+    )
+    workflow = friction_control.get("developer_workflow_v1", {})
+    if not isinstance(workflow, dict):
+        workflow = {}
+    task_specs = _developer_workflow_task_specs(workflow)
+    receipt_binding = _software_receipt_binding(software_receipt_store)
+    workflow_run_id = "workflow-run-mullu-developer-workflow-v1-foundation"
+    run = WorkflowOrchestrator().start_run(
+        workflow_id="mullu_developer_workflow.v1",
+        tenant_id=tenant_id,
+        actor_id=actor_id,
+        goal="plan, prepare local sandbox change, verify, show diff receipt, request approval, and prepare PR candidate",
+        tasks=task_specs,
+        workflow_run_id=workflow_run_id,
+        metadata={
+            "schema_ref": DEVELOPER_WORKFLOW_RUN_SCHEMA_REF,
+            "projection_surface": "developer_workflow_v1_foundation_run",
+            "projection_only": True,
+            "read_model_is_not_execution_authority": True,
+            "execution_allowed": False,
+            "write_allowed": False,
+            "real_world_effects_allowed": False,
+            "lab_mode_allowed": workflow.get("lab_mode_allowed") is True,
+            "developer_workflow_status": str(workflow.get("status") or "awaiting_evidence"),
+            "developer_workflow_next_unlock": str(workflow.get("next_unlock") or ""),
+            "software_receipt_binding": receipt_binding,
+            "source_read_model_id": str(friction_control.get("read_model_id") or ""),
+            "source_refs": dict(friction_control.get("source_refs") or {}),
+        },
+    )
+    for task_id, evidence_refs in _committable_foundation_stages(workflow, receipt_binding):
+        run = WorkflowOrchestrator().commit_task(
+            run,
+            task_id=task_id,
+            evidence_refs=evidence_refs,
+        )
+    return workflow_run_to_json_dict(run)
+
+
+def render_developer_workflow_v1_run_html(read_model: dict[str, Any]) -> str:
+    """Render the Developer Workflow v1 workflow-run drilldown."""
+    metadata = read_model.get("metadata", {})
+    if not isinstance(metadata, dict):
+        metadata = {}
+    receipt_binding = metadata.get("software_receipt_binding", {})
+    if not isinstance(receipt_binding, dict):
+        receipt_binding = {}
+    task_by_id = {
+        str(task.get("task_id", "")): task
+        for task in read_model.get("tasks", ())
+        if isinstance(task, dict)
+    }
+    task_rows = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(task_run.get('task_id', '')))}</td>"
+        f"<td>{escape(str(task_by_id.get(str(task_run.get('task_id', '')), {}).get('task_type', '')))}</td>"
+        f"<td>{escape(str(task_run.get('status', '')))}</td>"
+        f"<td>{int(task_run.get('attempts', 0) or 0)}</td>"
+        f"<td>{escape(str(task_by_id.get(str(task_run.get('task_id', '')), {}).get('action', '')))}</td>"
+        "</tr>"
+        for task_run in read_model.get("task_runs", ())
+        if isinstance(task_run, dict)
+    )
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullu Developer Workflow v1</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 24px; color: #17202a; background: #f7f8fa; }}
+    main {{ max-width: 1120px; margin: 0 auto; }}
+    nav {{ display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }}
+    a {{ color: #0969da; }}
+    .metrics {{ display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 18px; }}
+    .metric {{ border: 1px solid #d8dee4; border-radius: 6px; padding: 8px 10px; background: #fff; }}
+    table {{ border-collapse: collapse; width: 100%; background: #fff; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; vertical-align: top; font-size: 13px; }}
+    th {{ background: #eef1f4; }}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Mullu Developer Workflow v1</h1>
+    <nav>
+      <a href="{DEVELOPER_WORKFLOW_RUN_READ_MODEL_HREF}">json read model</a>
+      <a href="/operator/control-tower">control tower</a>
+      <a href="/operator/capabilities/friction-control/read-model?domain=software_dev">friction control</a>
+    </nav>
+    <div class="metrics">
+      <span class="metric">Run: {escape(str(read_model.get("workflow_run_id", "")))}</span>
+      <span class="metric">Status: {escape(str(read_model.get("status", "")))}</span>
+      <span class="metric">Projection only: {escape(str(metadata.get("projection_only", True)).lower())}</span>
+      <span class="metric">Execution allowed: {escape(str(metadata.get("execution_allowed", False)).lower())}</span>
+      <span class="metric">Next unlock: {escape(str(metadata.get("developer_workflow_next_unlock", "")))}</span>
+      <span class="metric">Receipt binding: {escape(str(receipt_binding.get("binding_status", "")))}</span>
+      <span class="metric">Total receipts: {int(receipt_binding.get("total_receipts", 0) or 0)}</span>
+      <span class="metric">Latest stage: {escape(str(receipt_binding.get("latest_stage", "")))}</span>
+    </div>
+  </header>
+  <section>
+    <h2>Stages</h2>
+    <table>
+      <thead><tr><th>Stage</th><th>Type</th><th>Status</th><th>Attempts</th><th>Action</th></tr></thead>
+      <tbody>{task_rows}</tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>"""
+
+
 def build_operator_capability_read_model(
     *,
     capability_admission_gate: Any | None = None,
@@ -571,6 +704,8 @@ def _developer_workflow_v1(capabilities: list[dict[str, Any]]) -> dict[str, Any]
         _workflow_stage("context_bundle", "skill_execution", "software_dev.context_bundle.build", "software_dev.context_bundle.build" in by_id),
         _workflow_stage("gate_plan", "skill_execution", "software_dev.gate_plan.select", "software_dev.gate_plan.select" in by_id),
         _workflow_stage("sandbox_change", "skill_execution", "software_dev.change.run", "software_dev.change.run" in by_id),
+        _workflow_stage("test_run", "skill_execution", "software_dev.change.run", "software_dev.change.run" in by_id),
+        _workflow_stage("diff_review", "observation", "software_change_diff", "software_dev.change.run" in by_id),
         _workflow_stage("receipt_review", "observation", "software_change_receipt", "software_dev.change.run" in by_id),
         _workflow_stage("operator_approval", "approval_gate", "developer_reviewer", "software_dev.pr_candidate.prepare" in by_id),
         _workflow_stage("pr_candidate", "skill_execution", "software_dev.pr_candidate.prepare", "software_dev.pr_candidate.prepare" in by_id),
@@ -625,6 +760,141 @@ def _workflow_stage(stage_id: str, stage_type: str, capability_id: str, availabl
         "capability_id": capability_id,
         "available": available,
         "verification_required": True,
+    }
+
+
+def _developer_workflow_task_specs(workflow: dict[str, Any]) -> tuple[WorkflowTaskSpec, ...]:
+    stage_specs = []
+    previous_stage_id = ""
+    for stage in workflow.get("stages", ()):
+        if not isinstance(stage, dict):
+            continue
+        stage_id = str(stage.get("stage_id") or "")
+        if not stage_id:
+            continue
+        task_type = _workflow_task_type_for_stage(stage_id=stage_id, stage_type=str(stage.get("stage_type") or ""))
+        stage_specs.append(WorkflowTaskSpec(
+            task_id=stage_id,
+            task_type=task_type,
+            action=_workflow_action_for_stage(stage),
+            depends_on=(previous_stage_id,) if previous_stage_id else (),
+            approval_required=stage_id == "operator_approval",
+            verification_required=task_type == WorkflowTaskType.VERIFY_EFFECT,
+            retry_limit=1,
+            evidence_required=(),
+            metadata={
+                "stage_type": str(stage.get("stage_type") or ""),
+                "capability_id": str(stage.get("capability_id") or ""),
+                "capability_available": stage.get("available") is True,
+                "read_model_is_not_execution_authority": True,
+            },
+        ))
+        previous_stage_id = stage_id
+    return tuple(stage_specs)
+
+
+def _workflow_task_type_for_stage(*, stage_id: str, stage_type: str) -> WorkflowTaskType:
+    if stage_id == "operator_approval":
+        return WorkflowTaskType.APPROVAL_TASK
+    if stage_id in {"diff_review", "receipt_review", "test_run"}:
+        return WorkflowTaskType.VERIFY_EFFECT
+    if stage_type == "observation":
+        return WorkflowTaskType.HUMAN_REVIEW_TASK
+    return WorkflowTaskType.TASK
+
+
+def _workflow_action_for_stage(stage: dict[str, Any]) -> str:
+    stage_id = str(stage.get("stage_id") or "")
+    capability_id = str(stage.get("capability_id") or "")
+    if stage_id == "operator_approval":
+        return "request_operator_approval"
+    if stage_id == "diff_review":
+        return "show_diff"
+    if stage_id == "receipt_review":
+        return "show_receipt"
+    if stage_id == "test_run":
+        return "run_tests"
+    return capability_id or stage_id
+
+
+def _committable_foundation_stage_ids(workflow: dict[str, Any]) -> tuple[str, ...]:
+    committed: list[str] = []
+    for stage in workflow.get("stages", ()):
+        if not isinstance(stage, dict):
+            continue
+        stage_id = str(stage.get("stage_id") or "")
+        if stage_id in {"request_intake", "repo_map", "context_bundle", "gate_plan"} and stage.get("available") is True:
+            committed.append(stage_id)
+    return tuple(committed)
+
+
+def _committable_foundation_stages(
+    workflow: dict[str, Any],
+    receipt_binding: dict[str, Any],
+) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    committed: list[tuple[str, tuple[str, ...]]] = []
+    for stage_id in _committable_foundation_stage_ids(workflow):
+        committed.append((stage_id, (f"capability_friction_control:{stage_id}",)))
+    stage_evidence = receipt_binding.get("stage_evidence", {}) if isinstance(receipt_binding, dict) else {}
+    if _stage_receipts_available(stage_evidence, "patch_applied"):
+        committed.append(("sandbox_change", tuple(stage_evidence["patch_applied"])))
+    if _stage_receipts_available(stage_evidence, "gate_evaluated"):
+        evidence_refs = tuple(stage_evidence["gate_evaluated"])
+        committed.append(("test_run", evidence_refs))
+        committed.append(("diff_review", evidence_refs))
+    if _stage_receipts_available(stage_evidence, "terminal_closed"):
+        committed.append(("receipt_review", tuple(stage_evidence["terminal_closed"])))
+    return tuple(committed)
+
+
+def _stage_receipts_available(stage_evidence: Any, stage: str) -> bool:
+    if not isinstance(stage_evidence, dict):
+        return False
+    refs = stage_evidence.get(stage, ())
+    return isinstance(refs, (list, tuple)) and bool(refs)
+
+
+def _software_receipt_binding(software_receipt_store: Any | None) -> dict[str, Any]:
+    if software_receipt_store is None:
+        return _empty_software_receipt_binding("store_unavailable")
+    try:
+        summary = software_receipt_store.summary()
+        receipts = software_receipt_store.list_receipts(limit=50)
+    except Exception:
+        return _empty_software_receipt_binding("store_read_failed")
+    stage_evidence: dict[str, list[str]] = {}
+    for receipt in receipts:
+        stage = str(getattr(getattr(receipt, "stage", ""), "value", getattr(receipt, "stage", "")))
+        receipt_id = str(getattr(receipt, "receipt_id", ""))
+        if stage and receipt_id:
+            stage_evidence.setdefault(stage, []).append(f"software-change-receipt:{receipt_id}")
+    return {
+        "enabled": True,
+        "binding_status": "bound",
+        "total_receipts": int(summary.get("total_receipts", 0)),
+        "request_count": int(summary.get("request_count", 0)),
+        "terminal_request_count": int(summary.get("terminal_request_count", 0)),
+        "open_request_count": int(summary.get("open_request_count", 0)),
+        "latest_receipt_id": str(summary.get("latest_receipt_id") or ""),
+        "latest_request_id": str(summary.get("latest_request_id") or ""),
+        "latest_stage": str(summary.get("latest_stage") or ""),
+        "requires_operator_review": summary.get("requires_operator_review") is True,
+        "stage_evidence": stage_evidence,
+    }
+
+
+def _empty_software_receipt_binding(status: str) -> dict[str, Any]:
+    return {
+        "enabled": False,
+        "binding_status": status,
+        "total_receipts": 0,
+        "request_count": 0,
+        "terminal_request_count": 0,
+        "open_request_count": 0,
+        "latest_receipt_id": "",
+        "latest_request_id": "",
+        "latest_stage": "",
+        "stage_evidence": {},
     }
 
 

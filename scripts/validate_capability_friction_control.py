@@ -275,6 +275,8 @@ def _validate_developer_workflow(read_model: Mapping[str, Any], errors: list[str
         "context_bundle",
         "gate_plan",
         "sandbox_change",
+        "test_run",
+        "diff_review",
         "receipt_review",
         "operator_approval",
         "pr_candidate",

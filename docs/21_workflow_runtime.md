@@ -206,6 +206,8 @@ The workflow composes existing capabilities only:
 | `context_bundle` | `skill_execution` | `software_dev.context_bundle.build` |
 | `gate_plan` | `skill_execution` | `software_dev.gate_plan.select` |
 | `sandbox_change` | `skill_execution` | `software_dev.change.run` |
+| `test_run` | `skill_execution` | `software_dev.change.run` |
+| `diff_review` | `observation` | `software_change_diff` |
 | `receipt_review` | `observation` | `software_change_receipt` |
 | `operator_approval` | `approval_gate` | `developer_reviewer` |
 | `pr_candidate` | `skill_execution` | `software_dev.pr_candidate.prepare` |
@@ -225,11 +227,21 @@ and no-network constraints.
 The operator control tower exposes the same workflow summary through
 `/operator/control-tower/read-model` and `/operator/control-tower`. The dashboard
 surface intentionally shows the compact operator fields: task, status, reason,
-next unlock, risk, and action needed. The populated panel is
-`capability_health`, with `approvals`, `proof_explorer`, and `workflow_monitor`
-also attached from existing read-only approval history, receipt viewer, current
-task, and plan review projections. Unrelated panels remain explicit missing read
+next unlock, risk, action needed, run status, current stage, and workflow-run
+receipt link. The populated panel is `capability_health`, with `approvals`,
+`proof_explorer`, and `workflow_monitor` also attached from existing read-only
+approval history, receipt viewer, current task, plan review, and Developer
+Workflow v1 run projections. Unrelated panels remain explicit missing read
 models until their own governed projections are attached.
+
+The stage-level receipt is exposed through
+`/operator/developer-workflow/read-model` and rendered at
+`/operator/developer-workflow`. The JSON route conforms to
+`schemas/workflow_run.schema.json` and carries
+`metadata.projection_only = true`, `metadata.execution_allowed = false`, and
+`metadata.real_world_effects_allowed = false`. It is a workflow-run witness for
+the local lab control surface, not authority to write files, push branches,
+open external pull requests, or call connectors.
 
 Real-world effects remain outside this workflow. Opening an external pull
 request, pushing a branch, merging, deployment, customer communication, or

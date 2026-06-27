@@ -248,8 +248,16 @@ Canonical artifacts:
 | `scripts/validate_capability_friction_control.py` | Runtime and schema validator. |
 | `tests/test_validate_capability_friction_control.py` | Contract and rejection coverage. |
 | `/operator/capabilities/friction-control/read-model` | Read-only gateway route for the live operator projection. |
+| `/operator/developer-workflow/read-model` | Read-only `workflow_run` projection for Developer Workflow v1 stage state. |
+| `/operator/developer-workflow` | Browser drilldown for the Developer Workflow v1 run receipt. |
 | `/operator/control-tower/read-model` | Read-only operator control tower snapshot with capability friction, approval, receipt, and workflow panels attached. |
-| `/operator/control-tower` | Browser dashboard showing Developer Workflow v1 task, status, reason, next unlock, risk, action needed, panel health, and drilldown links. |
+| `/operator/control-tower` | Browser dashboard showing Developer Workflow v1 task, status, reason, next unlock, risk, action needed, current stage, panel health, and drilldown links. |
+
+The Developer Workflow v1 route conforms to
+`schemas/workflow_run.schema.json`. Its receipt is projection-only and keeps
+`execution_allowed`, `write_allowed`, and `real_world_effects_allowed` false
+until an actual governed execution path supplies approval, sandbox-write,
+diff, test, rollback, and PR-candidate evidence.
 
 Validation:
 
