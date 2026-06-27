@@ -14,6 +14,7 @@ Invariants:
 from __future__ import annotations
 
 import os
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -29,6 +30,11 @@ from gateway.capability_fabric import (
     load_software_dev_domain_capsule,
 )
 from mcoi_runtime.core.capability_unlock_ladder import (
+    GATE_APPROVAL,
+    GATE_CONNECTOR_LEASE,
+    GATE_EXECUTION_RECEIPT,
+    GATE_ROLLBACK,
+    GATE_VERIFIER,
     UNLOCK_LADDER_ID,
     default_capability_unlock_ladder,
 )
@@ -318,6 +324,68 @@ def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:
     assert agentic_decision.domain == "agentic_control"
     assert rejected_decision.status.value == "rejected"
     assert rejected_decision.capability_id == ""
+
+
+def test_default_capability_admission_gate_projects_unlock_obligations() -> None:
+    gate = build_default_capability_admission_gate(clock=_clock)
+
+    payment_decision = gate.admit(command_id="command-payment", intent_name="financial.send_payment")
+    document_decision = gate.admit(command_id="command-doc", intent_name="document.extract_text")
+
+    assert payment_decision.status.value == "accepted"
+    assert payment_decision.unlock_ladder_id == UNLOCK_LADDER_ID
+    assert payment_decision.unlock_level == 8
+    assert payment_decision.unlock_level_id == "L8"
+    assert payment_decision.gate_template_ids == (
+        GATE_CONNECTOR_LEASE,
+        GATE_APPROVAL,
+        GATE_VERIFIER,
+        GATE_EXECUTION_RECEIPT,
+        GATE_ROLLBACK,
+    )
+    assert payment_decision.requires_operator_approval is True
+    assert payment_decision.requires_receipt is True
+    assert payment_decision.requires_rollback is True
+    assert payment_decision.requires_live_witness is True
+    assert document_decision.status.value == "accepted"
+    assert document_decision.unlock_level == 0
+    assert document_decision.gate_template_ids == ("evidence_intake_gate",)
+    assert document_decision.requires_receipt is False
+
+
+def test_capability_admission_rejects_malformed_unlock_profile() -> None:
+    capabilities = tuple(
+        replace(
+            entry,
+            metadata={
+                **entry.metadata,
+                "unlock_ladder": {
+                    "ladder_id": UNLOCK_LADDER_ID,
+                    "level": 8,
+                    "level_id": "L8",
+                    "gate_template_ids": ("evidence_intake_gate",),
+                },
+            },
+        )
+        if entry.capability_id == "financial.send_payment"
+        else entry
+        for entry in load_default_capability_entries()
+    )
+    gate = build_capability_admission_gate(
+        capsules=load_default_domain_capsules(),
+        capabilities=capabilities,
+        require_certified=True,
+        clock=_clock,
+    )
+
+    decision = gate.admit(command_id="command-payment", intent_name="financial.send_payment")
+
+    assert decision.status.value == "rejected"
+    assert decision.capability_id == "financial.send_payment"
+    assert decision.evidence_required == ()
+    assert decision.gate_template_ids == ()
+    assert decision.reason == "capability unlock profile invalid"
+    assert decision.rejection_codes == ("unlock_ladder_gate_template_ids_mismatch",)
 
 
 def test_default_runtime_handlers_are_backed_by_capability_contracts() -> None:

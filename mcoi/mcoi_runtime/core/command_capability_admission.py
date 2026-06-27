@@ -18,6 +18,10 @@ from mcoi_runtime.contracts.governed_capability_fabric import (
     CommandCapabilityAdmissionStatus,
 )
 
+from .capability_unlock_ladder import (
+    capability_unlock_admission_profile,
+    capability_unlock_profile_errors,
+)
 from .governed_capability_registry import GovernedCapabilityRegistry
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text
 
@@ -54,7 +58,23 @@ class CommandCapabilityAdmissionGate:
                 evidence_required=(),
                 reason="no installed capability for typed intent",
                 decided_at=now,
+                rejection_codes=("capability_not_installed",),
             )
+        profile_errors = capability_unlock_profile_errors(capability)
+        if profile_errors:
+            return CommandCapabilityAdmissionDecision(
+                command_id=command_id,
+                intent_name=intent_name,
+                status=CommandCapabilityAdmissionStatus.REJECTED,
+                capability_id=capability.capability_id,
+                domain=capability.domain,
+                owner_team=capability.obligation_model.owner_team,
+                evidence_required=(),
+                reason="capability unlock profile invalid",
+                decided_at=now,
+                rejection_codes=profile_errors,
+            )
+        unlock_profile = capability_unlock_admission_profile(capability)
         return CommandCapabilityAdmissionDecision(
             command_id=command_id,
             intent_name=intent_name,
@@ -65,6 +85,14 @@ class CommandCapabilityAdmissionGate:
             evidence_required=capability.evidence_model.required_evidence,
             reason="typed intent resolved to installed governed capability",
             decided_at=now,
+            unlock_ladder_id=unlock_profile.ladder_id if unlock_profile else "",
+            unlock_level_id=unlock_profile.level_id if unlock_profile else "",
+            unlock_level=unlock_profile.level if unlock_profile else None,
+            gate_template_ids=unlock_profile.gate_template_ids if unlock_profile else (),
+            requires_operator_approval=unlock_profile.requires_operator_approval if unlock_profile else False,
+            requires_receipt=unlock_profile.requires_receipt if unlock_profile else False,
+            requires_rollback=unlock_profile.requires_rollback if unlock_profile else False,
+            requires_live_witness=unlock_profile.requires_live_witness if unlock_profile else False,
         )
 
     def capability_for_intent(self, intent_name: str) -> CapabilityRegistryEntry:

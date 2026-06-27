@@ -19,8 +19,12 @@ from mcoi_runtime.core.capability_unlock_ladder import (
     GATE_EXECUTION_RECEIPT,
     GATE_OPERATOR_REVIEW,
     GATE_ROLLBACK,
+    GATE_VERIFIER,
     GATE_WORKSPACE_WRITE,
     LOCAL_DEVELOPER_WORKFLOW_ID,
+    UNLOCK_LADDER_ID,
+    capability_unlock_admission_profile,
+    capability_unlock_profile_errors,
     default_capability_unlock_ladder,
     default_gate_template_ids,
     mullu_local_developer_workflow_v1_descriptor,
@@ -114,6 +118,57 @@ def test_local_developer_workflow_bindings_match_declared_skill_outputs() -> Non
     assert approval_binding.target_stage_id == "prepare_pr_evidence"
     assert approval_binding.source_output_key == "approval_decision_ref"
     assert GATE_OPERATOR_REVIEW in default_gate_template_ids()
+
+
+def test_unlock_admission_profile_resolves_default_capability_metadata() -> None:
+    from gateway.capability_fabric import load_default_capability_entries
+
+    entries = {entry.capability_id: entry for entry in load_default_capability_entries()}
+    payment_profile = capability_unlock_admission_profile(entries["financial.send_payment"])
+    document_profile = capability_unlock_admission_profile(entries["document.extract_text"])
+
+    assert payment_profile is not None
+    assert payment_profile.ladder_id == UNLOCK_LADDER_ID
+    assert payment_profile.level == 8
+    assert payment_profile.level_id == "L8"
+    assert payment_profile.gate_template_ids == (
+        GATE_CONNECTOR_LEASE,
+        GATE_APPROVAL,
+        GATE_VERIFIER,
+        GATE_EXECUTION_RECEIPT,
+        GATE_ROLLBACK,
+    )
+    assert payment_profile.requires_operator_approval is True
+    assert payment_profile.requires_live_witness is True
+    assert document_profile is not None
+    assert document_profile.level == 0
+    assert document_profile.requires_receipt is False
+
+
+def test_unlock_profile_errors_detect_gate_mismatch() -> None:
+    from dataclasses import replace
+
+    from gateway.capability_fabric import load_default_capability_entries
+
+    payment_entry = next(
+        entry for entry in load_default_capability_entries() if entry.capability_id == "financial.send_payment"
+    )
+    malformed_entry = replace(
+        payment_entry,
+        metadata={
+            **payment_entry.metadata,
+            "unlock_ladder": {
+                "ladder_id": UNLOCK_LADDER_ID,
+                "level": 8,
+                "level_id": "L8",
+                "gate_template_ids": ("evidence_intake_gate",),
+            },
+        },
+    )
+
+    assert capability_unlock_profile_errors(malformed_entry) == (
+        "unlock_ladder_gate_template_ids_mismatch",
+    )
 
 
 def _default_skill_output_keys_by_skill_id() -> dict[str, set[str]]:

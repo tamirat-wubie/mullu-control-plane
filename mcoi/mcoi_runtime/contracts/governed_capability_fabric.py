@@ -550,6 +550,15 @@ class CommandCapabilityAdmissionDecision(ContractRecord):
     evidence_required: tuple[str, ...]
     reason: str
     decided_at: str
+    rejection_codes: tuple[str, ...] = ()
+    unlock_ladder_id: str = ""
+    unlock_level_id: str = ""
+    unlock_level: int | None = None
+    gate_template_ids: tuple[str, ...] = ()
+    requires_operator_approval: bool = False
+    requires_receipt: bool = False
+    requires_rollback: bool = False
+    requires_live_witness: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "command_id", require_non_empty_text(self.command_id, "command_id"))
@@ -573,6 +582,26 @@ class CommandCapabilityAdmissionDecision(ContractRecord):
             require_non_empty_text(evidence, f"evidence_required[{index}]")
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
         object.__setattr__(self, "decided_at", require_datetime_text(self.decided_at, "decided_at"))
+        object.__setattr__(self, "rejection_codes", freeze_value(list(self.rejection_codes)))
+        for index, rejection_code in enumerate(self.rejection_codes):
+            require_non_empty_text(rejection_code, f"rejection_codes[{index}]")
+        if self.unlock_ladder_id:
+            object.__setattr__(self, "unlock_ladder_id", require_non_empty_text(self.unlock_ladder_id, "unlock_ladder_id"))
+        if self.unlock_level_id:
+            object.__setattr__(self, "unlock_level_id", require_non_empty_text(self.unlock_level_id, "unlock_level_id"))
+        if self.unlock_level is not None:
+            object.__setattr__(self, "unlock_level", require_non_negative_int(self.unlock_level, "unlock_level"))
+        object.__setattr__(self, "gate_template_ids", freeze_value(list(self.gate_template_ids)))
+        for index, gate_template_id in enumerate(self.gate_template_ids):
+            require_non_empty_text(gate_template_id, f"gate_template_ids[{index}]")
+        for field_name in (
+            "requires_operator_approval",
+            "requires_receipt",
+            "requires_rollback",
+            "requires_live_witness",
+        ):
+            if not isinstance(getattr(self, field_name), bool):
+                raise ValueError(f"{field_name} must be a boolean")
 
 
 def _infer_read_only(entry: CapabilityRegistryEntry) -> bool:
