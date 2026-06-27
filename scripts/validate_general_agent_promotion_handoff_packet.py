@@ -637,22 +637,19 @@ def _adapter_evidence_path_for_packet(
 ) -> Path | None:
     if explicit_path is not None:
         return explicit_path
-    if (
-        packet.get("status") == "ready_for_final_validation"
-        or packet.get("production_promotion") == "ready"
-    ) and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists():
-        return DEFAULT_CLOSED_ADAPTER_EVIDENCE
     open_blockers = packet.get("open_blockers", [])
     observed_open_blockers = (
         {str(blocker) for blocker in open_blockers}
         if isinstance(open_blockers, list)
         else set()
     )
+    if ADAPTER_PROMOTION_BLOCKERS.intersection(observed_open_blockers):
+        return None
     if (
-        ADAPTER_PROMOTION_BLOCKERS.intersection(observed_open_blockers)
-        and _adapter_evidence_is_open(DEFAULT_ADAPTER_EVIDENCE)
-    ):
-        return DEFAULT_ADAPTER_EVIDENCE
+        packet.get("status") == "ready_for_final_validation"
+        or packet.get("production_promotion") == "ready"
+    ) and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists():
+        return DEFAULT_CLOSED_ADAPTER_EVIDENCE
     if (
         packet.get("readiness_level") == "pilot-governed-core"
         and isinstance(open_blockers, list)

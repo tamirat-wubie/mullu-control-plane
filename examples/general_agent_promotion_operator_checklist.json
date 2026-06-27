@@ -48,7 +48,7 @@
     {
       "command": "python scripts\\plan_capability_adapter_closure.py --output .change_assurance\\capability_adapter_closure_plan.json && python scripts\\plan_deployment_publication_closure.py --output .change_assurance\\deployment_publication_closure_plan.json",
       "required_evidence": [
-        "capability_adapter_closure_plan.json action_count=3",
+        "capability_adapter_closure_plan.json action_count=4",
         "deployment_publication_closure_plan.json action_count=1",
         "adapter closure actions present",
         "upstream deployment closure action approval_required=true"
