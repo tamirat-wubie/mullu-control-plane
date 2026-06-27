@@ -1085,7 +1085,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind GitHub PR admission to non-empty diff file summary receipt",
+        "harness(write): add concrete filesystem write receipt with redacted diff evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:

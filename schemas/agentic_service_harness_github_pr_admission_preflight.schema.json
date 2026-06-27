@@ -11,6 +11,7 @@
     "generated_at",
     "solver_outcome",
     "source_receipt_emitter_ref",
+    "source_non_empty_diff_file_summary_receipt_ref",
     "scope",
     "preflight_contract",
     "approval_admission_gate",
@@ -42,6 +43,10 @@
     "source_receipt_emitter_ref": {
       "type": "string",
       "const": "examples/agentic_service_harness_github_task_receipt_emitter_dry_run.foundation.json"
+    },
+    "source_non_empty_diff_file_summary_receipt_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json"
     },
     "scope": {
       "$ref": "#/$defs/scope"
@@ -413,6 +418,8 @@
       "required": [
         "github_pr_admission_preflight_schema",
         "github_task_receipt_emitter_dry_run_schema",
+        "non_empty_diff_file_summary_receipt_schema",
+        "non_empty_diff_file_summary_receipt_example",
         "github_repo_task_service_schema",
         "agentic_service_harness_schema",
         "agentic_service_harness_read_models_schema"
@@ -420,6 +427,8 @@
       "properties": {
         "github_pr_admission_preflight_schema": { "$ref": "#/$defs/evidence_ref" },
         "github_task_receipt_emitter_dry_run_schema": { "$ref": "#/$defs/evidence_ref" },
+        "non_empty_diff_file_summary_receipt_schema": { "$ref": "#/$defs/evidence_ref" },
+        "non_empty_diff_file_summary_receipt_example": { "$ref": "#/$defs/evidence_ref" },
         "github_repo_task_service_schema": { "$ref": "#/$defs/evidence_ref" },
         "agentic_service_harness_schema": { "$ref": "#/$defs/evidence_ref" },
         "agentic_service_harness_read_models_schema": { "$ref": "#/$defs/evidence_ref" }

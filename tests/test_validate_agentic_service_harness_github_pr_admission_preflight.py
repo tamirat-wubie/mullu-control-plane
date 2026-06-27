@@ -42,7 +42,13 @@ def test_github_pr_admission_preflight_rejects_authority_drift() -> None:
     )
 
     errors: list[str] = []
-    validator._validate_preflight_semantics(payload, _source_receipt(), errors, "mutated")
+    validator._validate_preflight_semantics(
+        payload,
+        _source_receipt(),
+        _file_summary_receipt(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "scope.operator_approval_present must be false" in serialized_errors
@@ -67,7 +73,13 @@ def test_github_pr_admission_preflight_rejects_gate_drift() -> None:
     )
 
     errors: list[str] = []
-    validator._validate_preflight_semantics(payload, _source_receipt(), errors, "mutated")
+    validator._validate_preflight_semantics(
+        payload,
+        _source_receipt(),
+        _file_summary_receipt(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "approval_admission_gate.decision" in serialized_errors
@@ -94,7 +106,13 @@ def test_github_pr_admission_preflight_rejects_missing_required_refs() -> None:
     )
 
     errors: list[str] = []
-    validator._validate_preflight_semantics(payload, _source_receipt(), errors, "mutated")
+    validator._validate_preflight_semantics(
+        payload,
+        _source_receipt(),
+        _file_summary_receipt(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "preflight_contract.allowed_action_classes missing required ref" in serialized_errors
@@ -107,12 +125,50 @@ def test_github_pr_admission_preflight_rejects_missing_required_refs() -> None:
     assert "approval_admission_gate.blocked_reason_refs missing required ref" in serialized_errors
 
 
+def test_github_pr_admission_preflight_requires_non_empty_file_summary_binding() -> None:
+    payload = validator.build_mutated_preflight(
+        preflight_contract__required_source_refs=[
+            "examples/agentic_service_harness_github_task_receipt_emitter_dry_run.foundation.json",
+            "examples/agentic_service_harness_github_repo_task_service.foundation.json",
+            "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+        ],
+        approval_admission_gate__required_before_pr_refs=[
+            "evidence://operator-approval-for-pr-admission",
+            "evidence://branch-write-authority-binding",
+            "evidence://repository-effect-rollback-plan",
+            "evidence://uao-pr-admission",
+            "evidence://ci-gate-before-ready-for-review",
+            "evidence://effect-reconciliation-before-terminal-closure",
+        ],
+    )
+    del payload["receipt_refs"]["non_empty_diff_file_summary_receipt_schema"]
+
+    errors: list[str] = []
+    validator._validate_preflight_semantics(
+        payload,
+        _source_receipt(),
+        _file_summary_receipt(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert validator.EXPECTED_FILE_SUMMARY_RECEIPT_REF in serialized_errors
+    assert "receipt_refs.non_empty_diff_file_summary_receipt_schema" in serialized_errors
+
+
 def test_github_pr_admission_preflight_rejects_mutation_route_and_secret_like_payload() -> None:
     payload = validator.build_mutated_preflight(next_action="POST /api/github/prs should never be admitted")
     payload["simulated_pr_admission"]["serialized_token_value"] = "github_pat_forbiddencredential"
 
     errors: list[str] = []
-    validator._validate_preflight_semantics(payload, _source_receipt(), errors, "mutated")
+    validator._validate_preflight_semantics(
+        payload,
+        _source_receipt(),
+        _file_summary_receipt(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "mutation route string" in serialized_errors
@@ -135,5 +191,23 @@ def test_github_pr_admission_preflight_cli_writes_report(tmp_path: Path, capsys)
     assert file_payload["source_receipt_ref"] == validator.EXPECTED_SOURCE_RECEIPT_REF
 
 
+def test_github_pr_admission_preflight_rejects_missing_file_summary_source(tmp_path: Path) -> None:
+    missing_example = tmp_path / "missing-file-summary-receipt.json"
+
+    validation = validator.validate_agentic_service_harness_github_pr_admission_preflight(
+        file_summary_receipt_example_paths=(missing_example,)
+    )
+
+    serialized_errors = "\n".join(validation.errors)
+
+    assert validation.ok is False
+    assert "non-empty diff file summary receipt" in serialized_errors
+    assert "missing-file-summary-receipt.json" in serialized_errors
+
+
 def _source_receipt() -> dict[str, object]:
     return json.loads(validator.DEFAULT_SOURCE_RECEIPT_EXAMPLES[0].read_text(encoding="utf-8"))
+
+
+def _file_summary_receipt() -> dict[str, object]:
+    return json.loads(validator.DEFAULT_FILE_SUMMARY_RECEIPT_EXAMPLES[0].read_text(encoding="utf-8"))
