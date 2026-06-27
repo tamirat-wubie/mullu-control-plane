@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-redacted-filesystem-write-execution-receipt:1",
+  "title": "Agentic Service Harness Redacted Filesystem Write Execution Receipt",
+  "description": "Foundation Mode redacted evidence receipt for a future actual filesystem-write execution. The receipt binds prior admission and concrete candidate evidence refs while keeping runtime writes, receipt append, PR creation, connector calls, mutation routes, raw output, secrets, and terminal closure blocked.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "receipt_status",
+    "source_actual_filesystem_write_receipt_admission_ref",
+    "source_concrete_filesystem_write_evidence_candidate_ref",
+    "scope",
+    "source_admission",
+    "redacted_execution_evidence",
+    "admission_gates",
+    "effect_boundary",
+    "receipt_refs",
+    "validators",
+    "next_action",
+    "receipt_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "const": "agentic_service_harness_redacted_filesystem_write_execution_receipt"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "receipt_status": {
+      "type": "string",
+      "const": "redacted_execution_evidence_collected_without_runtime_write_authority"
+    },
+    "source_actual_filesystem_write_receipt_admission_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_actual_filesystem_write_receipt_admission.foundation.json"
+    },
+    "source_concrete_filesystem_write_evidence_candidate_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_concrete_filesystem_write_evidence_candidate.foundation.json"
+    },
+    "scope": { "$ref": "#/$defs/scope" },
+    "source_admission": { "$ref": "#/$defs/source_admission" },
+    "redacted_execution_evidence": { "$ref": "#/$defs/redacted_execution_evidence" },
+    "admission_gates": { "$ref": "#/$defs/admission_gates" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 },
+    "receipt_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure_required": { "type": "boolean", "const": true }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "task_id",
+        "run_id",
+        "sandbox_id",
+        "repository_connection_id",
+        "repository_slug",
+        "mode",
+        "foundation_phase",
+        "receipt_only",
+        "redacted_execution_evidence_collected"
+      ],
+      "properties": {
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "task_id": { "$ref": "#/$defs/identifier" },
+        "run_id": { "$ref": "#/$defs/identifier" },
+        "sandbox_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": {
+          "type": "string",
+          "const": "tamirat-wubie/mullu-control-plane"
+        },
+        "mode": { "type": "string", "const": "branch_write" },
+        "foundation_phase": {
+          "type": "string",
+          "const": "foundation_redacted_filesystem_write_execution_receipt"
+        },
+        "receipt_only": { "type": "boolean", "const": true },
+        "redacted_execution_evidence_collected": { "type": "boolean", "const": true }
+      }
+    },
+    "source_admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actual_filesystem_write_receipt_admission_verified",
+        "concrete_candidate_verified",
+        "source_receipt_admission_allowed",
+        "source_filesystem_write_executed",
+        "source_receipt_store_appended",
+        "candidate_changed_file_count",
+        "changed_file_refs",
+        "diff_refs",
+        "redacted_diff_bundle_ref"
+      ],
+      "properties": {
+        "actual_filesystem_write_receipt_admission_verified": { "type": "boolean", "const": true },
+        "concrete_candidate_verified": { "type": "boolean", "const": true },
+        "source_receipt_admission_allowed": { "type": "boolean", "const": false },
+        "source_filesystem_write_executed": { "type": "boolean", "const": false },
+        "source_receipt_store_appended": { "type": "boolean", "const": false },
+        "candidate_changed_file_count": { "type": "integer", "minimum": 1 },
+        "changed_file_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "diff_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "redacted_diff_bundle_ref": {
+          "type": "string",
+          "const": "digest://redacted-filesystem-write-diff-bundle-candidate"
+        }
+      }
+    },
+    "redacted_execution_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_kind",
+        "actual_execution_ref",
+        "redacted_output_ref",
+        "changed_file_count",
+        "changed_file_refs",
+        "diff_refs",
+        "redacted_diff_bundle_ref",
+        "raw_command_output_serialized",
+        "raw_diff_body_serialized",
+        "raw_file_content_serialized",
+        "absolute_paths_allowed",
+        "parent_traversal_allowed",
+        "secret_paths_allowed",
+        "production_paths_allowed"
+      ],
+      "properties": {
+        "evidence_kind": {
+          "type": "string",
+          "const": "redacted_actual_filesystem_write_execution_evidence"
+        },
+        "actual_execution_ref": {
+          "type": "string",
+          "const": "witness://actual-filesystem-write-execution"
+        },
+        "redacted_output_ref": {
+          "type": "string",
+          "const": "witness://filesystem-write-output-redacted"
+        },
+        "changed_file_count": { "type": "integer", "minimum": 1 },
+        "changed_file_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "diff_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "redacted_diff_bundle_ref": {
+          "type": "string",
+          "const": "digest://redacted-filesystem-write-diff-bundle-candidate"
+        },
+        "raw_command_output_serialized": { "type": "boolean", "const": false },
+        "raw_diff_body_serialized": { "type": "boolean", "const": false },
+        "raw_file_content_serialized": { "type": "boolean", "const": false },
+        "absolute_paths_allowed": { "type": "boolean", "const": false },
+        "parent_traversal_allowed": { "type": "boolean", "const": false },
+        "secret_paths_allowed": { "type": "boolean", "const": false },
+        "production_paths_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "admission_gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "redacted_execution_evidence_collected",
+        "filesystem_write_executed",
+        "filesystem_write_receipt_emitted",
+        "receipt_store_appended",
+        "terminal_certificate_verified",
+        "required_before_execution_receipt_refs",
+        "blocked_reason_refs",
+        "next_required_evidence_refs"
+      ],
+      "properties": {
+        "redacted_execution_evidence_collected": { "type": "boolean", "const": true },
+        "filesystem_write_executed": { "type": "boolean", "const": false },
+        "filesystem_write_receipt_emitted": { "type": "boolean", "const": false },
+        "receipt_store_appended": { "type": "boolean", "const": false },
+        "terminal_certificate_verified": { "type": "boolean", "const": false },
+        "required_before_execution_receipt_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "next_required_evidence_refs": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch_created",
+        "workspace_written",
+        "files_written",
+        "filesystem_write_executed",
+        "filesystem_write_receipt_emitted",
+        "commands_executed",
+        "tests_executed",
+        "pull_request_opened",
+        "runtime_state_written",
+        "receipt_store_appended",
+        "connector_calls_observed",
+        "external_effects_observed",
+        "secret_values_serialized",
+        "terminal_closure",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "branch_created": { "type": "boolean", "const": false },
+        "workspace_written": { "type": "boolean", "const": false },
+        "files_written": { "type": "boolean", "const": false },
+        "filesystem_write_executed": { "type": "boolean", "const": false },
+        "filesystem_write_receipt_emitted": { "type": "boolean", "const": false },
+        "commands_executed": { "type": "boolean", "const": false },
+        "tests_executed": { "type": "boolean", "const": false },
+        "pull_request_opened": { "type": "boolean", "const": false },
+        "runtime_state_written": { "type": "boolean", "const": false },
+        "receipt_store_appended": { "type": "boolean", "const": false },
+        "connector_calls_observed": { "type": "boolean", "const": false },
+        "external_effects_observed": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "redacted_filesystem_write_execution_receipt_schema",
+        "redacted_filesystem_write_execution_receipt_example",
+        "actual_filesystem_write_receipt_admission_example",
+        "concrete_filesystem_write_evidence_candidate_example",
+        "redacted_output_ref",
+        "redacted_diff_bundle_ref",
+        "receipt_store_write_path_ref",
+        "terminal_certificate_required_ref"
+      ],
+      "properties": {
+        "redacted_filesystem_write_execution_receipt_schema": {
+          "type": "string",
+          "const": "schemas/agentic_service_harness_redacted_filesystem_write_execution_receipt.schema.json"
+        },
+        "redacted_filesystem_write_execution_receipt_example": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_redacted_filesystem_write_execution_receipt.foundation.json"
+        },
+        "actual_filesystem_write_receipt_admission_example": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_actual_filesystem_write_receipt_admission.foundation.json"
+        },
+        "concrete_filesystem_write_evidence_candidate_example": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_concrete_filesystem_write_evidence_candidate.foundation.json"
+        },
+        "redacted_output_ref": {
+          "type": "string",
+          "const": "witness://filesystem-write-output-redacted"
+        },
+        "redacted_diff_bundle_ref": {
+          "type": "string",
+          "const": "digest://redacted-filesystem-write-diff-bundle-candidate"
+        },
+        "receipt_store_write_path_ref": {
+          "type": "string",
+          "const": "evidence://receipt-store-write-path-for-filesystem-write"
+        },
+        "terminal_certificate_required_ref": {
+          "type": "string",
+          "const": "evidence://terminal-closure-certificate-required"
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

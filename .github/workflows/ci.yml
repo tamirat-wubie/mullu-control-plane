@@ -607,6 +607,9 @@ jobs:
       - name: Test Agentic Service Harness actual filesystem write receipt admission
         run: python -m pytest tests/test_validate_agentic_service_harness_actual_filesystem_write_receipt_admission.py -q
 
+      - name: Test Agentic Service Harness redacted filesystem write execution receipt
+        run: python -m pytest tests/test_validate_agentic_service_harness_redacted_filesystem_write_execution_receipt.py -q
+
       - name: Test Agentic Service Harness non-empty diff file summary receipt
         run: python -m pytest tests/test_validate_agentic_service_harness_non_empty_diff_file_summary_receipt.py -q
 
