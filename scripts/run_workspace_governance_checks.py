@@ -345,6 +345,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "agentic_service_harness_redacted_filesystem_write_execution_receipt",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_redacted_filesystem_write_execution_receipt.py",
+            ),
+        ),
+        CheckCommand(
             "agentic_service_harness_non_empty_diff_file_summary_receipt",
             (
                 python_executable,
