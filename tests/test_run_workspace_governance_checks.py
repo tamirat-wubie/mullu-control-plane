@@ -55,6 +55,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_read_model_projections",
         "agentic_service_harness_read_model_integrity",
         "agentic_service_harness_read_model_persistence",
+        "agentic_service_harness_read_model_binding_plan",
         "agentic_service_harness_github_repo_task_service",
         "agentic_service_harness_github_repo_task_intake",
         "agentic_service_harness_dashboard_data_contract",
@@ -298,6 +299,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("agentic_service_harness_read_model_integrity", "agentic_service_harness_read_model_persistence")
     assert_ordered(
         "agentic_service_harness_read_model_persistence",
+        "agentic_service_harness_read_model_binding_plan",
+    )
+    assert_ordered(
+        "agentic_service_harness_read_model_binding_plan",
         "agentic_service_harness_github_repo_task_service",
     )
     assert_ordered(

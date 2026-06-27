@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1782510652.541783,
-  "check_count": 295,
+  "check_count": 299,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -172,6 +172,19 @@
       ],
       "return_code": 0,
       "stdout": "[PASS] agentic_service_harness_read_model_persistence\nSTATUS: passed\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "agentic_service_harness_read_model_binding_plan",
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_read_model_binding_plan.py"
+      ],
+      "return_code": 0,
+      "stdout": "AGENTIC SERVICE HARNESS READ MODEL BINDING PLAN VALID\n",
       "stderr": "",
       "termination_reason": "completed",
       "termination_signal": null,

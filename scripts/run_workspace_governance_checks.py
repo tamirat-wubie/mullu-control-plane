@@ -179,6 +179,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_agentic_service_harness_read_model_persistence.py"),
         ),
         CheckCommand(
+            "agentic_service_harness_read_model_binding_plan",
+            (python_executable, "scripts/validate_agentic_service_harness_read_model_binding_plan.py"),
+        ),
+        CheckCommand(
             "agentic_service_harness_github_repo_task_service",
             (python_executable, "scripts/validate_agentic_service_harness_github_repo_task_service.py"),
         ),
