@@ -112,6 +112,7 @@
             "agentic_service_harness_github_pr_admission_preflight",
             "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding",
             "agentic_service_harness_github_pr_operator_approval_request",
+            "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding",
             "agentic_service_harness_github_pr_operator_response_witness",
             "agentic_service_harness_github_pr_branch_write_authority_binding",
             "agentic_service_harness_github_pr_uao_admission_witness",

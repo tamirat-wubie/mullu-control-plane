@@ -6,10 +6,13 @@ uncollected, read-only, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json,
 examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json,
-scripts.validate_agentic_service_harness_github_pr_admission_preflight, and
-scripts.validate_schemas.
+schemas/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.schema.json,
+examples/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json,
+and scripts.validate_schemas.
 Invariants:
-  - The request binds to the GitHub PR admission preflight.
+  - The request binds to the GitHub PR actual non-empty diff admission binding.
+  - The request consumes redacted non-empty diff evidence before asking for
+    operator approval.
   - Approval remains AwaitingEvidence and uncollected.
   - Approval request alone grants no branch, PR, repository, connector, network,
     mutation-route, receipt-store, secret, destructive, or terminal authority.
@@ -31,11 +34,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.validate_agentic_service_harness_github_pr_admission_preflight import (  # noqa: E402
-    DEFAULT_EXAMPLES as DEFAULT_SOURCE_PREFLIGHT_EXAMPLES,
-    DEFAULT_SCHEMA as DEFAULT_SOURCE_PREFLIGHT_SCHEMA,
-    validate_agentic_service_harness_github_pr_admission_preflight,
-)
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -46,7 +44,23 @@ DEFAULT_EXAMPLES = (
 DEFAULT_OUTPUT = (
     REPO_ROOT / ".change_assurance" / "agentic_service_harness_github_pr_operator_approval_request_validation.json"
 )
-EXPECTED_SOURCE_PREFLIGHT_REF = "examples/agentic_service_harness_github_pr_admission_preflight.foundation.json"
+DEFAULT_SOURCE_DIFF_ADMISSION_BINDING_SCHEMA = (
+    REPO_ROOT
+    / "schemas"
+    / "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.schema.json"
+)
+DEFAULT_SOURCE_DIFF_ADMISSION_BINDING_EXAMPLES = (
+    REPO_ROOT
+    / "examples"
+    / "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json",
+)
+EXPECTED_SOURCE_DIFF_ADMISSION_BINDING_REF = (
+    "examples/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json"
+)
+EXPECTED_SOURCE_DIFF_ADMISSION_BINDING_ID = "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding"
+EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF = "witness://actual-non-empty-diff-receipt"
+EXPECTED_REDACTED_DIFF_BUNDLE_REF = "digest://redacted-filesystem-write-diff-bundle-candidate"
+EXPECTED_REDACTED_OUTPUT_REF = "witness://filesystem-write-output-redacted"
 EXPECTED_REQUEST_ID = "agentic_service_harness_github_pr_operator_approval_request"
 EXPECTED_APPROVAL_REQUEST_ID = "approval-request.github-pr-admission"
 EXPECTED_REQUESTED_EVIDENCE_REF = "approval://operator-github-pr-admission-required"
@@ -66,6 +80,10 @@ REQUIRED_RECEIPT_REFS = {
     "github_pr_operator_approval_request_schema": (
         "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json"
     ),
+    "github_pr_actual_non_empty_diff_admission_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.schema.json"
+    ),
+    "github_pr_actual_non_empty_diff_admission_binding_example": EXPECTED_SOURCE_DIFF_ADMISSION_BINDING_REF,
     "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
     "github_task_receipt_emitter_dry_run_schema": (
         "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json"
@@ -104,6 +122,7 @@ REQUIRED_TRUE_FLAGS = (
     "approval_request_only",
     "response_record_required",
     "blocks_pr_admission",
+    "requires_actual_non_empty_diff_binding",
 )
 ALLOWED_SECRET_KEYS = {
     "dns_mutation_enabled",
@@ -140,7 +159,7 @@ class GitHubPrOperatorApprovalRequestValidation:
     schema_path: str
     example_paths: tuple[str, ...]
     example_count: int
-    source_preflight_ref: str
+    source_diff_admission_binding_ref: str
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -153,23 +172,27 @@ def validate_agentic_service_harness_github_pr_operator_approval_request(
     *,
     schema_path: Path = DEFAULT_SCHEMA,
     example_paths: Sequence[Path] = DEFAULT_EXAMPLES,
-    source_preflight_schema_path: Path = DEFAULT_SOURCE_PREFLIGHT_SCHEMA,
-    source_preflight_example_paths: Sequence[Path] = DEFAULT_SOURCE_PREFLIGHT_EXAMPLES,
+    source_diff_admission_binding_schema_path: Path = DEFAULT_SOURCE_DIFF_ADMISSION_BINDING_SCHEMA,
+    source_diff_admission_binding_example_paths: Sequence[Path] = DEFAULT_SOURCE_DIFF_ADMISSION_BINDING_EXAMPLES,
 ) -> GitHubPrOperatorApprovalRequestValidation:
     """Validate GitHub PR operator approval request examples."""
     errors: list[str] = []
     schema = _load_json_object(schema_path, "GitHub PR operator approval request schema", errors)
-    source_validation = validate_agentic_service_harness_github_pr_admission_preflight(
-        schema_path=source_preflight_schema_path,
-        example_paths=source_preflight_example_paths,
-    )
-    if not source_validation.ok:
-        errors.extend(f"source PR admission preflight: {error}" for error in source_validation.errors)
-    source_preflight = _load_json_object(
-        source_preflight_example_paths[0],
-        "GitHub PR admission preflight source",
+    source_diff_admission_binding_schema = _load_json_object(
+        source_diff_admission_binding_schema_path,
+        "GitHub PR actual non-empty diff admission binding source schema",
         errors,
     )
+    source_diff_admission_binding = _load_json_object(
+        source_diff_admission_binding_example_paths[0],
+        "GitHub PR actual non-empty diff admission binding source",
+        errors,
+    )
+    if source_diff_admission_binding_schema and source_diff_admission_binding:
+        errors.extend(
+            "source PR actual non-empty diff admission binding: " + error
+            for error in _validate_schema_instance(source_diff_admission_binding_schema, source_diff_admission_binding)
+        )
     examples: list[dict[str, Any]] = []
     for example_path in example_paths:
         example = _load_json_object(example_path, f"GitHub PR operator approval request {_path_label(example_path)}", errors)
@@ -180,14 +203,14 @@ def validate_agentic_service_harness_github_pr_operator_approval_request(
             errors.extend(
                 f"{_path_label(example_path)}: {error}" for error in _validate_schema_instance(schema, example)
             )
-        _validate_approval_request_semantics(example, source_preflight, errors, _path_label(example_path))
+        _validate_approval_request_semantics(example, source_diff_admission_binding, errors, _path_label(example_path))
     return GitHubPrOperatorApprovalRequestValidation(
         ok=not errors,
         errors=tuple(errors),
         schema_path=_path_label(schema_path),
         example_paths=tuple(_path_label(path) for path in example_paths),
         example_count=len(examples),
-        source_preflight_ref=EXPECTED_SOURCE_PREFLIGHT_REF,
+        source_diff_admission_binding_ref=EXPECTED_SOURCE_DIFF_ADMISSION_BINDING_REF,
     )
 
 
@@ -203,12 +226,18 @@ def write_github_pr_operator_approval_request_validation(
 
 def _validate_approval_request_semantics(
     payload: Mapping[str, Any],
-    source_preflight: Mapping[str, Any],
+    source_diff_admission_binding: Mapping[str, Any],
     errors: list[str],
     label: str,
 ) -> None:
     _require_equal(payload, ("request_id",), EXPECTED_REQUEST_ID, errors, label)
-    _require_equal(payload, ("source_preflight_ref",), EXPECTED_SOURCE_PREFLIGHT_REF, errors, label)
+    _require_equal(
+        payload,
+        ("source_actual_non_empty_diff_admission_binding_ref",),
+        EXPECTED_SOURCE_DIFF_ADMISSION_BINDING_REF,
+        errors,
+        label,
+    )
     _require_equal(payload, ("solver_outcome",), "AwaitingEvidence", errors, label)
     _require_equal(payload, ("witness_kind",), "operator_approval_request", errors, label)
     _require_equal(payload, ("requested_evidence_ref",), EXPECTED_REQUESTED_EVIDENCE_REF, errors, label)
@@ -231,18 +260,77 @@ def _validate_approval_request_semantics(
         label,
     )
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
-    if source_preflight:
+    if source_diff_admission_binding:
+        _require_equal(
+            source_diff_admission_binding,
+            ("binding_id",),
+            EXPECTED_SOURCE_DIFF_ADMISSION_BINDING_ID,
+            errors,
+            "GitHub PR actual non-empty diff admission binding source",
+        )
+        _require_equal(
+            source_diff_admission_binding,
+            ("pr_admission_diff_binding", "actual_non_empty_diff_receipt_ref"),
+            EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+            errors,
+            "GitHub PR actual non-empty diff admission binding source",
+        )
+        _require_equal(
+            source_diff_admission_binding,
+            ("effect_boundary", "pull_request_opened"),
+            False,
+            errors,
+            "GitHub PR actual non-empty diff admission binding source",
+        )
         _require_equal(
             payload,
             ("scope", "repository_slug"),
-            _get_nested(source_preflight, ("scope", "repository_slug")),
+            _get_nested(source_diff_admission_binding, ("scope", "repository_slug")),
             errors,
             label,
         )
         _require_equal(
             payload,
             ("scope", "repository_connection_id"),
-            _get_nested(source_preflight, ("scope", "repository_connection_id")),
+            _get_nested(source_diff_admission_binding, ("scope", "repository_connection_id")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("approval_request", "actual_non_empty_diff_receipt_ref"),
+            _get_nested(
+                source_diff_admission_binding,
+                ("pr_admission_diff_binding", "actual_non_empty_diff_receipt_ref"),
+            ),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("approval_request", "redacted_diff_bundle_ref"),
+            _get_nested(source_diff_admission_binding, ("pr_admission_diff_binding", "redacted_diff_bundle_ref")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("approval_request", "redacted_output_ref"),
+            _get_nested(source_diff_admission_binding, ("pr_admission_diff_binding", "redacted_output_ref")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("approval_request", "changed_file_refs"),
+            _get_nested(source_diff_admission_binding, ("pr_admission_diff_binding", "changed_file_refs")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("approval_request", "diff_refs"),
+            _get_nested(source_diff_admission_binding, ("pr_admission_diff_binding", "diff_refs")),
             errors,
             label,
         )
@@ -364,8 +452,17 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA)
     parser.add_argument("--example", type=Path, action="append", dest="examples")
-    parser.add_argument("--source-preflight-schema", type=Path, default=DEFAULT_SOURCE_PREFLIGHT_SCHEMA)
-    parser.add_argument("--source-preflight-example", type=Path, action="append", dest="source_preflight_examples")
+    parser.add_argument(
+        "--source-diff-admission-binding-schema",
+        type=Path,
+        default=DEFAULT_SOURCE_DIFF_ADMISSION_BINDING_SCHEMA,
+    )
+    parser.add_argument(
+        "--source-diff-admission-binding-example",
+        type=Path,
+        action="append",
+        dest="source_diff_admission_binding_examples",
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--json", action="store_true", help="Print machine-readable validation output.")
     parser.add_argument("--strict", action="store_true", help="Return nonzero when validation fails.")
@@ -377,9 +474,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     validation = validate_agentic_service_harness_github_pr_operator_approval_request(
         schema_path=args.schema,
         example_paths=tuple(args.examples) if args.examples else DEFAULT_EXAMPLES,
-        source_preflight_schema_path=args.source_preflight_schema,
-        source_preflight_example_paths=(
-            tuple(args.source_preflight_examples) if args.source_preflight_examples else DEFAULT_SOURCE_PREFLIGHT_EXAMPLES
+        source_diff_admission_binding_schema_path=args.source_diff_admission_binding_schema,
+        source_diff_admission_binding_example_paths=(
+            tuple(args.source_diff_admission_binding_examples)
+            if args.source_diff_admission_binding_examples
+            else DEFAULT_SOURCE_DIFF_ADMISSION_BINDING_EXAMPLES
         ),
     )
     write_github_pr_operator_approval_request_validation(validation, args.output)

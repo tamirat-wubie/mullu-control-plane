@@ -482,6 +482,21 @@ REQUIRED_GITHUB_PR_ACTUAL_NON_EMPTY_DIFF_ADMISSION_BINDING_TERMS = (
     "raw file content",
     "terminal closure fail closed",
 )
+REQUIRED_GITHUB_PR_OPERATOR_APPROVAL_ACTUAL_DIFF_BINDING_TERMS = (
+    "GitHub PR operator approval request actual-diff binding PR",
+    "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding",
+    "agentic_service_harness_github_pr_operator_approval_request",
+    "GitHub PR actual non-empty diff admission binding",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
+    "Approval remains AwaitingEvidence",
+    "PR creation",
+    "receipt-store append",
+    "terminal closure fail closed",
+)
 REQUIRED_GITHUB_PR_CI_GATE_TERMS = (
     "GitHub PR CI gate before ready-for-review witness PR",
     "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
@@ -739,6 +754,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     )
     _require_all(
         map_text,
+        REQUIRED_GITHUB_PR_OPERATOR_APPROVAL_ACTUAL_DIFF_BINDING_TERMS,
+        "github_pr_operator_approval_actual_diff_binding_term",
+        errors,
+    )
+    _require_all(
+        map_text,
         REQUIRED_GITHUB_PR_CI_GATE_TERMS,
         "github_pr_ci_gate_term",
         errors,
@@ -783,6 +804,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_non_empty_diff_file_summary_receipt_ready(map_text, errors)
     _validate_github_pr_admission_ready(map_text, errors)
     _validate_github_pr_actual_non_empty_diff_admission_binding_ready(map_text, errors)
+    _validate_github_pr_operator_approval_actual_diff_binding_ready(map_text, errors)
     _validate_github_pr_ci_gate_ready(map_text, errors)
     _validate_github_pr_effect_reconciliation_ready(map_text, errors)
     _validate_github_pr_terminal_closure_ready(map_text, errors)
@@ -1144,6 +1166,19 @@ def _validate_github_pr_actual_non_empty_diff_admission_binding_ready(
         errors.append("missing ready row: GitHub PR actual non-empty diff admission binding PR")
 
 
+def _validate_github_pr_operator_approval_actual_diff_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR operator approval request actual-diff binding PR \| READY \| .+actual non-empty diff receipt ref.+terminal closure fail closed\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR operator approval request actual-diff binding PR")
+
+
 def _validate_github_pr_ci_gate_ready(
     map_text: str,
     errors: list[str],
@@ -1265,7 +1300,8 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind operator approval request to PR actual non-empty diff admission binding",
+        "harness(pr): bind operator response witness to actual-diff approval request",
+        "harness(pr): bind branch-write authority to actual-diff approval response",
     )
     positions: list[int] = []
     for marker in sequence_markers:

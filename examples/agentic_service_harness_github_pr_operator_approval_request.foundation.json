@@ -3,7 +3,7 @@
   "schema_version": 1,
   "generated_at": "2026-06-17T00:00:00Z",
   "solver_outcome": "AwaitingEvidence",
-  "source_preflight_ref": "examples/agentic_service_harness_github_pr_admission_preflight.foundation.json",
+  "source_actual_non_empty_diff_admission_binding_ref": "examples/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json",
   "witness_kind": "operator_approval_request",
   "requested_evidence_ref": "approval://operator-github-pr-admission-required",
   "approval_status": "AwaitingEvidence",
@@ -26,7 +26,7 @@
   "approval_request": {
     "approval_request_id": "approval-request.github-pr-admission",
     "approver_role": "operator",
-    "question": "Record whether the operator permits a future GitHub pull-request admission path after branch-write authority, UAO admission, rollback, CI, and effect reconciliation evidence exist.",
+    "question": "Record whether the operator permits a future GitHub pull-request admission path after actual non-empty diff evidence, branch-write authority, UAO admission, rollback, CI, and effect reconciliation evidence exist.",
     "decision_required": "operator_response_required",
     "allowed_response_kinds": [
       "record_operator_pr_approval_witness",
@@ -35,6 +35,16 @@
     "default_response_kind": "record_operator_pr_rejection_witness",
     "response_record_required": true,
     "response_record_collected": false,
+    "requires_actual_non_empty_diff_binding": true,
+    "actual_non_empty_diff_receipt_ref": "witness://actual-non-empty-diff-receipt",
+    "redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "redacted_output_ref": "witness://filesystem-write-output-redacted",
+    "changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
     "approval_effect": "satisfies_operator_pr_approval_witness_only",
     "pr_creation_authorized_after_response": false
   },
@@ -103,6 +113,8 @@
   },
   "receipt_refs": {
     "github_pr_operator_approval_request_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json",
+    "github_pr_actual_non_empty_diff_admission_binding_schema": "schemas/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.schema.json",
+    "github_pr_actual_non_empty_diff_admission_binding_example": "examples/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.foundation.json",
     "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
     "github_task_receipt_emitter_dry_run_schema": "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json",
     "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json"
