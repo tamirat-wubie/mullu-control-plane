@@ -366,6 +366,18 @@ REQUIRED_ACTUAL_DIFF_COLLECTION_RECEIPT_TERMS = (
     "raw file content",
     "terminal closure remain blocked",
 )
+REQUIRED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_TERMS = (
+    "Non-empty diff/file summary receipt PR",
+    "agentic_service_harness_non_empty_diff_file_summary_receipt",
+    "filesystem-write admission preflight",
+    "actual filesystem write receipt",
+    "redacted diff bundle",
+    "receipt-store write path",
+    "raw diff bodies",
+    "raw file content",
+    "connector calls",
+    "terminal closure remain blocked",
+)
 REQUIRED_GITHUB_PR_ADMISSION_TERMS = (
     "GitHub PR admission preflight PR",
     "agentic_service_harness_github_pr_admission_preflight",
@@ -600,6 +612,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     )
     _require_all(
         map_text,
+        REQUIRED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_TERMS,
+        "non_empty_diff_file_summary_receipt_term",
+        errors,
+    )
+    _require_all(
+        map_text,
         REQUIRED_GITHUB_PR_ADMISSION_TERMS,
         "github_pr_admission_term",
         errors,
@@ -643,6 +661,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_non_empty_diff_receipt_admission_ready(map_text, errors)
     _validate_filesystem_write_admission_ready(map_text, errors)
     _validate_actual_diff_collection_receipt_ready(map_text, errors)
+    _validate_non_empty_diff_file_summary_receipt_ready(map_text, errors)
     _validate_github_pr_admission_ready(map_text, errors)
     _validate_github_pr_ci_gate_ready(map_text, errors)
     _validate_github_pr_effect_reconciliation_ready(map_text, errors)
@@ -914,6 +933,19 @@ def _validate_actual_diff_collection_receipt_ready(
         errors.append("missing ready row: Actual diff collection receipt admission PR")
 
 
+def _validate_non_empty_diff_file_summary_receipt_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Non-empty diff/file summary receipt PR \| READY \| .+actual filesystem write receipt.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Non-empty diff/file summary receipt PR")
+
+
 def _validate_github_pr_admission_ready(
     map_text: str,
     errors: list[str],
@@ -1048,7 +1080,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(workspace): add non-empty diff/file summary receipt after filesystem-write evidence",
+        "harness(pr): bind GitHub PR admission to non-empty diff/file summary receipt",
     )
     positions: list[int] = []
     for marker in sequence_markers:
