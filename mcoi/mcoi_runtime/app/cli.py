@@ -79,6 +79,7 @@ _REQUEST_PAYLOAD_OBJECT_ERROR = "request payload must be an object"
 _REQUEST_UNSUPPORTED_FIELDS_ERROR = "unsupported request fields"
 _REQUEST_TEMPLATE_OBJECT_ERROR = "request template must be an object"
 _AUTONOMOUS_DEMO_RECEIPT_SCHEMA_VERSION = "mcoi.autonomous_demo.receipt.v1"
+_AUTONOMOUS_DEMO_CAPABILITY_IDS = ("local.apply",)
 _REQUEST_BINDINGS_REQUIRED_ERROR = "request bindings are required"
 _REQUEST_BINDINGS_OBJECT_ERROR = "request bindings must be an object"
 
@@ -371,7 +372,7 @@ def autonomous_demo_command(args: argparse.Namespace) -> int:
         episode_id=args.episode_id,
         subject_id=args.subject_id,
         goal_id=args.goal_id,
-        capability_ids=("local.apply",),
+        capability_ids=_AUTONOMOUS_DEMO_CAPABILITY_IDS,
         bindings={
             "target": args.target,
             "objective": args.objective,
@@ -407,6 +408,7 @@ def _autonomous_demo_summary_envelope(view: AutonomousRequestEpisodeSummaryView)
     return {
         "operation": "autonomous-demo",
         "receipt_schema_version": _AUTONOMOUS_DEMO_RECEIPT_SCHEMA_VERSION,
+        "capability_ids": list(_AUTONOMOUS_DEMO_CAPABILITY_IDS),
         "episode_id": view.episode_id,
         "goal_id": view.goal_id,
         "automation_state": view.automation_state,
