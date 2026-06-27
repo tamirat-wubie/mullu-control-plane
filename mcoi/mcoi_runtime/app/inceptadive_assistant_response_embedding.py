@@ -7,7 +7,8 @@ Governance scope: assistant response metadata only; no connector dispatch,
 memory write authority, execution approval, or governance-verdict replacement.
 Dependencies: InceptaDive shadow runtime facade and non-executing hook helpers.
 Invariants: raw user input and assistant content are inspected only inside the
-bounded shadow runtime and are never returned by this embedder.
+bounded shadow runtime and are never returned by this embedder; arbitrary route,
+tenant, and model identifiers are exposed only as public refs.
 """
 
 from __future__ import annotations
@@ -18,6 +19,19 @@ from mcoi_runtime.app.inceptadive_shadow_integration import InceptaDiveShadowRun
 from mcoi_runtime.core.inceptadive_shadow_hooks import run_workflow_shadow_hook
 from mcoi_runtime.core.inceptadive_shadow_types import ShadowSeverity
 from mcoi_runtime.core.invariants import stable_identifier
+
+_PUBLIC_ROUTE_PREFIX = "assistant-response-route-"
+_SAFE_ROUTE_CHARS = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-_.:")
+_SENSITIVE_IDENTIFIER_MARKERS = (
+    "secret",
+    "token",
+    "credential",
+    "password",
+    "private",
+    "apikey",
+    "api_key",
+    "bearer",
+)
 
 
 def build_assistant_response_shadow_advisory(
@@ -43,6 +57,7 @@ def build_assistant_response_shadow_advisory(
 
     tenant_ref = _public_identifier_ref("assistant-response-tenant", tenant_id, fallback="system")
     model_ref = _public_identifier_ref("assistant-response-model", model_name, fallback="unknown")
+    route_ref = _public_route_ref(route)
     try:
         outcome = run_workflow_shadow_hook(
             runtime,
@@ -50,7 +65,7 @@ def build_assistant_response_shadow_advisory(
             user_input=user_input,
             workflow_steps=_response_shadow_steps(assistant_content, succeeded=succeeded),
             normal_intent="assistant_response",
-            explicit_target=route,
+            explicit_target=route_ref,
             scope=tenant_ref,
             risk_level=_response_shadow_risk(user_input, assistant_content, succeeded=succeeded),
             external_side_effect=False,
@@ -73,9 +88,10 @@ def build_assistant_response_shadow_advisory(
     advisory.update(
         {
             "embedding_surface": "assistant_response",
-            "route": route,
+            "route": route_ref,
             "tenant_ref": tenant_ref,
             "model_ref": model_ref,
+            "route_identifier_exposed": _route_is_public_path(route_ref),
             "tenant_identifier_exposed": False,
             "model_identifier_exposed": False,
             "assistant_content_exposed": False,
@@ -125,3 +141,26 @@ def _public_identifier_ref(namespace: str, value: str, *, fallback: str) -> str:
     if not normalized:
         normalized = fallback
     return stable_identifier(namespace, {"value": normalized})
+
+
+def _public_route_ref(route: str) -> str:
+    normalized = " ".join(str(route or "").strip().split())
+    if _route_is_public_path(normalized):
+        return normalized
+    return _PUBLIC_ROUTE_PREFIX + stable_identifier(
+        "assistant-response-route",
+        {"value": normalized or "unknown"},
+    )
+
+
+def _route_is_public_path(value: str) -> bool:
+    if not value or len(value) > 128:
+        return False
+    if value.startswith(_PUBLIC_ROUTE_PREFIX):
+        return False
+    if not value.startswith("/"):
+        return False
+    if any(character not in _SAFE_ROUTE_CHARS for character in value):
+        return False
+    lowered = value.lower()
+    return not any(marker in lowered for marker in _SENSITIVE_IDENTIFIER_MARKERS)
