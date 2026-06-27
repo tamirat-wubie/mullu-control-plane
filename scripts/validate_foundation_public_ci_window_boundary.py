@@ -112,6 +112,7 @@ ALLOWED_VISIBILITY_AFTER_BY_STATUS = {
     "closed": {"private", "private_or_bounded_public"},
     "bounded_public_awaiting_evidence": {"bounded_public", "private_or_bounded_public"},
 }
+EXPECTED_RECEIPT_WORKFLOW_RUN_COUNT = 2
 REQUIRED_RECEIPT_TEXT_FRAGMENTS = {
     "reason": (
         "Foundation Mode",
@@ -514,6 +515,13 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
             Finding("public_ci_window_receipt_workflow_urls_invalid", "workflow_run_urls must be a non-empty list")
         )
     else:
+        if len(workflow_urls) != EXPECTED_RECEIPT_WORKFLOW_RUN_COUNT:
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_workflow_url_count_invalid",
+                    f"workflow_run_urls must contain exactly {EXPECTED_RECEIPT_WORKFLOW_RUN_COUNT} runs",
+                )
+            )
         workflow_run_ids = tuple(_github_actions_run_id(item) for item in workflow_urls)
         if any(run_id is None for run_id in workflow_run_ids):
             findings.append(

@@ -259,6 +259,34 @@ def test_public_ci_window_receipt_rejects_duplicate_workflow_run_urls() -> None:
     assert all("28233991896" not in finding.message for finding in findings)
 
 
+def test_public_ci_window_receipt_rejects_missing_workflow_run_url() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["workflow_run_urls"] = [
+        "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28233991896"
+    ]
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_workflow_url_count_invalid" for finding in findings)
+    assert any("workflow_run_urls must contain exactly 2 runs" in finding.message for finding in findings)
+    assert all("28233991896" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_extra_workflow_run_url() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["workflow_run_urls"].append(
+        "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28233999999"
+    )
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_workflow_url_count_invalid" for finding in findings)
+    assert any("workflow_run_urls must contain exactly 2 runs" in finding.message for finding in findings)
+    assert all("28233999999" not in finding.message for finding in findings)
+
+
 def test_public_ci_window_receipt_derives_pr_check_command_from_pull_request() -> None:
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["pull_request"] = "https://github.com/tamirat-wubie/mullu-control-plane/pull/2230"
