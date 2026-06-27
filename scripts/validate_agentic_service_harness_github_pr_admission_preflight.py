@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """Validate Agentic Service Harness GitHub PR admission preflight.
 
-Purpose: prove a future GitHub pull-request action remains blocked until
-operator approval, branch-write authority, UAO admission, rollback, and CI
-evidence exist.
+Purpose: prove a future GitHub pull-request action remains blocked until the
+non-empty diff file summary receipt, operator approval, branch-write authority,
+UAO admission, rollback, and CI evidence exist.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: schemas/agentic_service_harness_github_pr_admission_preflight.schema.json,
 examples/agentic_service_harness_github_pr_admission_preflight.foundation.json,
+scripts.validate_agentic_service_harness_non_empty_diff_file_summary_receipt,
 scripts.validate_agentic_service_harness_github_task_receipt_emitter_dry_run,
 and scripts.validate_schemas.
 Invariants:
   - The preflight binds to the GitHub task receipt-emitter dry-run.
+  - The preflight binds to the non-empty diff file summary receipt.
   - Operator approval is absent and PR admission is denied.
   - Branch writes, PR creation, repository writes, adapter execution, connector
     calls, mutation routes, secret material, and terminal closure fail closed.
@@ -45,7 +47,16 @@ DEFAULT_EXAMPLES = (REPO_ROOT / "examples" / "agentic_service_harness_github_pr_
 DEFAULT_OUTPUT = (
     REPO_ROOT / ".change_assurance" / "agentic_service_harness_github_pr_admission_preflight_validation.json"
 )
+DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_SCHEMA = (
+    REPO_ROOT / "schemas" / "agentic_service_harness_non_empty_diff_file_summary_receipt.schema.json"
+)
+DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_EXAMPLES = (
+    REPO_ROOT / "examples" / "agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json",
+)
 EXPECTED_SOURCE_RECEIPT_REF = "examples/agentic_service_harness_github_task_receipt_emitter_dry_run.foundation.json"
+EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF = (
+    "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json"
+)
 EXPECTED_TASK_SERVICE_ID = "github-repo-task-service-read-only-foundation"
 EXPECTED_SOURCE_TASK_REF = "task://agentic-service-harness/github-repo-read-only"
 EXPECTED_PREFLIGHT_ID = "github-pr-admission-preflight-foundation"
@@ -68,6 +79,7 @@ REQUIRED_FORBIDDEN_ACTION_CLASSES = (
 )
 REQUIRED_SOURCE_REFS = (
     EXPECTED_SOURCE_RECEIPT_REF,
+    EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF,
     "examples/agentic_service_harness_github_repo_task_service.foundation.json",
     "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
 )
@@ -82,6 +94,7 @@ REQUIRED_GATE_REFS = (
 )
 REQUIRED_ADMISSION_OBLIGATIONS = (
     "obligation://record-pr-admission-preflight",
+    "obligation://require-non-empty-diff-file-summary-before-pr",
     "obligation://require-operator-approval-before-pr",
     "obligation://require-branch-write-authority-before-pr",
     "obligation://deny-pr-creation-without-approval",
@@ -91,12 +104,16 @@ REQUIRED_ADMISSION_OBLIGATIONS = (
 )
 REQUIRED_VALIDATION_REFS = (
     "scripts/validate_agentic_service_harness_github_pr_admission_preflight.py",
+    "scripts/validate_agentic_service_harness_non_empty_diff_file_summary_receipt.py",
     "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py",
     "scripts/validate_agentic_service_harness_github_repo_task_service.py",
 )
 REQUIRED_BEFORE_PR_REFS = (
+    EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF,
     "evidence://operator-approval-for-pr-admission",
     "evidence://branch-write-authority-binding",
+    "evidence://receipt-store-write-path-for-diff-collection",
+    "digest://redacted-diff-bundle",
     "evidence://repository-effect-rollback-plan",
     "evidence://uao-pr-admission",
     "evidence://ci-gate-before-ready-for-review",
@@ -104,6 +121,7 @@ REQUIRED_BEFORE_PR_REFS = (
 )
 REQUIRED_BLOCKERS = (
     "blocked://operator-approval/not-present",
+    "blocked://non-empty-diff-file-summary/not-terminal",
     "blocked://branch-write-authority/not-bound",
     "blocked://pr-creation/not-admitted",
     "blocked://terminal-closure/not-authorized",
@@ -112,6 +130,10 @@ REQUIRED_RECEIPT_REFS = {
     "github_pr_admission_preflight_schema": (
         "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json"
     ),
+    "non_empty_diff_file_summary_receipt_schema": (
+        "schemas/agentic_service_harness_non_empty_diff_file_summary_receipt.schema.json"
+    ),
+    "non_empty_diff_file_summary_receipt_example": EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF,
     "github_task_receipt_emitter_dry_run_schema": (
         "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json"
     ),
@@ -196,6 +218,7 @@ class GitHubPrAdmissionPreflightValidation:
     example_paths: tuple[str, ...]
     example_count: int
     source_receipt_ref: str
+    non_empty_diff_file_summary_receipt_ref: str
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -210,6 +233,8 @@ def validate_agentic_service_harness_github_pr_admission_preflight(
     example_paths: Sequence[Path] = DEFAULT_EXAMPLES,
     source_receipt_schema_path: Path = DEFAULT_SOURCE_RECEIPT_SCHEMA,
     source_receipt_example_paths: Sequence[Path] = DEFAULT_SOURCE_RECEIPT_EXAMPLES,
+    non_empty_diff_file_summary_schema_path: Path = DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_SCHEMA,
+    non_empty_diff_file_summary_example_paths: Sequence[Path] = DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_EXAMPLES,
 ) -> GitHubPrAdmissionPreflightValidation:
     """Validate GitHub PR admission preflight examples."""
     errors: list[str] = []
@@ -225,6 +250,21 @@ def validate_agentic_service_harness_github_pr_admission_preflight(
         "GitHub task receipt-emitter dry-run source",
         errors,
     )
+    file_summary_schema = _load_json_object(
+        non_empty_diff_file_summary_schema_path,
+        "non-empty diff file summary receipt schema",
+        errors,
+    )
+    file_summary_receipt = _load_json_object(
+        non_empty_diff_file_summary_example_paths[0],
+        "non-empty diff file summary receipt source",
+        errors,
+    )
+    if file_summary_schema and file_summary_receipt:
+        errors.extend(
+            "non-empty diff file summary receipt: " + error
+            for error in _validate_schema_instance(file_summary_schema, file_summary_receipt)
+        )
     examples: list[dict[str, Any]] = []
     for example_path in example_paths:
         example = _load_json_object(example_path, f"GitHub PR admission preflight {_path_label(example_path)}", errors)
@@ -235,7 +275,7 @@ def validate_agentic_service_harness_github_pr_admission_preflight(
             errors.extend(
                 f"{_path_label(example_path)}: {error}" for error in _validate_schema_instance(schema, example)
             )
-        _validate_preflight_semantics(example, source_receipt, errors, _path_label(example_path))
+        _validate_preflight_semantics(example, source_receipt, errors, _path_label(example_path), file_summary_receipt)
     return GitHubPrAdmissionPreflightValidation(
         ok=not errors,
         errors=tuple(errors),
@@ -243,6 +283,7 @@ def validate_agentic_service_harness_github_pr_admission_preflight(
         example_paths=tuple(_path_label(path) for path in example_paths),
         example_count=len(examples),
         source_receipt_ref=EXPECTED_SOURCE_RECEIPT_REF,
+        non_empty_diff_file_summary_receipt_ref=EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF,
     )
 
 
@@ -261,8 +302,25 @@ def _validate_preflight_semantics(
     source_receipt: Mapping[str, Any],
     errors: list[str],
     label: str,
+    non_empty_diff_file_summary_receipt: Mapping[str, Any] | None = None,
 ) -> None:
     _require_equal(payload, ("source_receipt_emitter_ref",), EXPECTED_SOURCE_RECEIPT_REF, errors, label)
+    _require_equal(
+        payload,
+        ("source_non_empty_diff_file_summary_receipt_ref",),
+        EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF,
+        errors,
+        label,
+    )
+    file_summary_receipt = (
+        non_empty_diff_file_summary_receipt
+        if non_empty_diff_file_summary_receipt is not None
+        else _load_json_object(
+            DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_EXAMPLES[0],
+            "non-empty diff file summary receipt source",
+            errors,
+        )
+    )
     _require_equal(payload, ("scope", "task_service_id"), EXPECTED_TASK_SERVICE_ID, errors, label)
     _require_equal(payload, ("preflight_contract", "preflight_id"), EXPECTED_PREFLIGHT_ID, errors, label)
     _require_equal(payload, ("preflight_contract", "preflight_mode"), EXPECTED_PREFLIGHT_MODE, errors, label)
@@ -291,6 +349,35 @@ def _validate_preflight_semantics(
             _get_nested(source_receipt, ("scope", "repository_connection_id")),
             errors,
             label,
+        )
+    if file_summary_receipt:
+        _require_equal(
+            payload,
+            ("scope", "repository_slug"),
+            _get_nested(file_summary_receipt, ("scope", "repository_slug")),
+            errors,
+            label,
+        )
+        _require_equal(
+            file_summary_receipt,
+            ("receipt_id",),
+            "agentic_service_harness_non_empty_diff_file_summary_receipt",
+            errors,
+            "non-empty diff file summary receipt source",
+        )
+        _require_equal(
+            file_summary_receipt,
+            ("receipt_is_not_terminal_closure",),
+            True,
+            errors,
+            "non-empty diff file summary receipt source",
+        )
+        _require_equal(
+            file_summary_receipt,
+            ("terminal_closure_required",),
+            True,
+            errors,
+            "non-empty diff file summary receipt source",
         )
     for required_ref in REQUIRED_ALLOWED_ACTION_CLASSES:
         _require_contains(
@@ -427,6 +514,17 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--example", type=Path, action="append", dest="examples")
     parser.add_argument("--source-receipt-schema", type=Path, default=DEFAULT_SOURCE_RECEIPT_SCHEMA)
     parser.add_argument("--source-receipt-example", type=Path, action="append", dest="source_receipt_examples")
+    parser.add_argument(
+        "--non-empty-diff-file-summary-schema",
+        type=Path,
+        default=DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_SCHEMA,
+    )
+    parser.add_argument(
+        "--non-empty-diff-file-summary-example",
+        type=Path,
+        action="append",
+        dest="non_empty_diff_file_summary_examples",
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--json", action="store_true", help="Print machine-readable validation output.")
     parser.add_argument("--strict", action="store_true", help="Return nonzero when validation fails.")
@@ -441,6 +539,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         source_receipt_schema_path=args.source_receipt_schema,
         source_receipt_example_paths=(
             tuple(args.source_receipt_examples) if args.source_receipt_examples else DEFAULT_SOURCE_RECEIPT_EXAMPLES
+        ),
+        non_empty_diff_file_summary_schema_path=args.non_empty_diff_file_summary_schema,
+        non_empty_diff_file_summary_example_paths=(
+            tuple(args.non_empty_diff_file_summary_examples)
+            if args.non_empty_diff_file_summary_examples
+            else DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_EXAMPLES
         ),
     )
     write_github_pr_admission_preflight_validation(validation, args.output)

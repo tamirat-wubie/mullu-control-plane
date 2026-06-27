@@ -646,7 +646,7 @@ def test_readiness_map_rejects_missing_actual_diff_collection_receipt_row(
     )
 
 
-def test_readiness_map_rejects_missing_non_empty_diff_file_summary_next_pr(
+def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     tmp_path: Path,
 ) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
@@ -655,7 +655,7 @@ def test_readiness_map_rejects_missing_non_empty_diff_file_summary_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind GitHub PR admission to non-empty diff file summary receipt`",
+            "1. `harness(workspace): add concrete filesystem-write non-empty diff evidence candidate`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -666,7 +666,7 @@ def test_readiness_map_rejects_missing_non_empty_diff_file_summary_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind GitHub PR admission to non-empty diff file summary receipt"
+        "missing next PR marker: harness(workspace): add concrete filesystem-write non-empty diff evidence candidate"
         in serialized_errors
     )
 

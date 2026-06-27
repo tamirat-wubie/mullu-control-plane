@@ -25,6 +25,10 @@ def test_github_pr_admission_preflight_passes() -> None:
     assert validation.errors == ()
     assert validation.example_count == 1
     assert validation.source_receipt_ref == validator.EXPECTED_SOURCE_RECEIPT_REF
+    assert (
+        validation.non_empty_diff_file_summary_receipt_ref
+        == validator.EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF
+    )
 
 
 def test_github_pr_admission_preflight_rejects_authority_drift() -> None:
@@ -107,6 +111,22 @@ def test_github_pr_admission_preflight_rejects_missing_required_refs() -> None:
     assert "approval_admission_gate.blocked_reason_refs missing required ref" in serialized_errors
 
 
+def test_github_pr_admission_preflight_rejects_missing_non_empty_diff_file_summary_binding() -> None:
+    payload = validator.build_mutated_preflight(
+        source_non_empty_diff_file_summary_receipt_ref="examples/missing-non-empty-diff-file-summary.json",
+    )
+    payload["receipt_refs"]["non_empty_diff_file_summary_receipt_example"] = "examples/missing.json"
+    payload["receipt_refs"]["non_empty_diff_file_summary_receipt_schema"] = "schemas/missing.json"
+
+    errors: list[str] = []
+    validator._validate_preflight_semantics(payload, _source_receipt(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "source_non_empty_diff_file_summary_receipt_ref expected" in serialized_errors
+    assert "receipt_refs.non_empty_diff_file_summary_receipt_example expected" in serialized_errors
+    assert "receipt_refs.non_empty_diff_file_summary_receipt_schema expected" in serialized_errors
+
+
 def test_github_pr_admission_preflight_rejects_mutation_route_and_secret_like_payload() -> None:
     payload = validator.build_mutated_preflight(next_action="POST /api/github/prs should never be admitted")
     payload["simulated_pr_admission"]["serialized_token_value"] = "github_pat_forbiddencredential"
@@ -133,6 +153,10 @@ def test_github_pr_admission_preflight_cli_writes_report(tmp_path: Path, capsys)
     assert file_payload["ok"] is True
     assert stdout_payload["errors"] == []
     assert file_payload["source_receipt_ref"] == validator.EXPECTED_SOURCE_RECEIPT_REF
+    assert (
+        file_payload["non_empty_diff_file_summary_receipt_ref"]
+        == validator.EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF
+    )
 
 
 def _source_receipt() -> dict[str, object]:
