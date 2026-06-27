@@ -401,6 +401,19 @@ REQUIRED_REDACTED_FILESYSTEM_WRITE_EXECUTION_RECEIPT_TERMS = (
     "connector calls",
     "terminal closure remain blocked",
 )
+REQUIRED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_BINDING_TERMS = (
+    "Actual non-empty diff receipt binding PR",
+    "agentic_service_harness_actual_non_empty_diff_receipt_binding",
+    "redacted non-empty changed-file and diff refs",
+    "redacted filesystem-write execution receipt",
+    "non-empty diff file summary receipt",
+    "actual non-empty diff receipt",
+    "raw diff bodies",
+    "raw file content",
+    "receipt append",
+    "PR creation",
+    "terminal closure remain blocked",
+)
 REQUIRED_ACTUAL_DIFF_COLLECTION_RECEIPT_TERMS = (
     "Actual diff collection receipt admission PR",
     "agentic_service_harness_actual_diff_collection_receipt",
@@ -680,6 +693,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     )
     _require_all(
         map_text,
+        REQUIRED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_BINDING_TERMS,
+        "actual_non_empty_diff_receipt_binding_term",
+        errors,
+    )
+    _require_all(
+        map_text,
         REQUIRED_ACTUAL_DIFF_COLLECTION_RECEIPT_TERMS,
         "actual_diff_collection_receipt_term",
         errors,
@@ -737,6 +756,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_concrete_filesystem_write_evidence_candidate_ready(map_text, errors)
     _validate_actual_filesystem_write_receipt_admission_ready(map_text, errors)
     _validate_redacted_filesystem_write_execution_receipt_ready(map_text, errors)
+    _validate_actual_non_empty_diff_receipt_binding_ready(map_text, errors)
     _validate_actual_diff_collection_receipt_ready(map_text, errors)
     _validate_non_empty_diff_file_summary_receipt_ready(map_text, errors)
     _validate_github_pr_admission_ready(map_text, errors)
@@ -1036,6 +1056,19 @@ def _validate_redacted_filesystem_write_execution_receipt_ready(
         errors.append("missing ready row: Redacted filesystem write execution receipt PR")
 
 
+def _validate_actual_non_empty_diff_receipt_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Actual non-empty diff receipt binding PR \| READY \| .+redacted non-empty changed-file and diff refs.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Actual non-empty diff receipt binding PR")
+
+
 def _validate_actual_diff_collection_receipt_ready(
     map_text: str,
     errors: list[str],
@@ -1196,7 +1229,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(diff): bind actual non-empty diff receipt to redacted execution evidence",
+        "harness(pr): bind GitHub PR admission to actual non-empty diff receipt binding",
     )
     positions: list[int] = []
     for marker in sequence_markers:

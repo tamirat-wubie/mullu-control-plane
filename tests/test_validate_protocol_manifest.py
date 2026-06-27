@@ -267,6 +267,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_redacted_filesystem_w
     assert receipt_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_actual_non_empty_diff_receipt_binding() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    binding_entry = entries[
+        "agentic-service-harness-actual-non-empty-diff-receipt-binding"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert binding_entry["path"] == (
+        "schemas/agentic_service_harness_actual_non_empty_diff_receipt_binding.schema.json"
+    )
+    assert binding_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-actual-non-empty-diff-receipt-binding:1"
+    )
+    assert binding_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_non_empty_diff_file_summary_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
