@@ -107,6 +107,11 @@ EXPECTED_RECEIPT_ROOT_KEYS = {
     "workflow_run_urls",
 }
 ALLOWED_RECEIPT_STATUSES = {"closed", "bounded_public_awaiting_evidence"}
+EXPECTED_VISIBILITY_BEFORE = "private"
+ALLOWED_VISIBILITY_AFTER_BY_STATUS = {
+    "closed": {"private", "private_or_bounded_public"},
+    "bounded_public_awaiting_evidence": {"bounded_public", "private_or_bounded_public"},
+}
 SECRET_SHAPED_FRAGMENTS = (
     "-----begin",
     "private key",
@@ -389,6 +394,21 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
             Finding(
                 "public_ci_window_receipt_solver_outcome_invalid",
                 "bounded public receipts must remain AwaitingEvidence",
+            )
+        )
+    if payload.get("repo_visibility_before") != EXPECTED_VISIBILITY_BEFORE:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_visibility_before_invalid",
+                "repo_visibility_before must be private",
+            )
+        )
+    allowed_visibility_after = ALLOWED_VISIBILITY_AFTER_BY_STATUS.get(status)
+    if allowed_visibility_after is not None and payload.get("repo_visibility_after") not in allowed_visibility_after:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_visibility_after_invalid",
+                "repo_visibility_after must match the receipt status",
             )
         )
 
