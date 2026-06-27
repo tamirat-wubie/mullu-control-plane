@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-actual-diff-collection-receipt-admission-preflight:1",
+  "title": "Agentic Service Harness Actual Diff Collection Receipt Admission Preflight",
+  "description": "Foundation Mode admission preflight for actual diff collection receipt evidence after filesystem-write admission preflight. This contract binds the prior filesystem-write preflight while keeping actual diff capture, non-empty diff receipt emission, raw diff bodies, raw file content, receipt-store append, runtime writes, mutation routes, connector calls, secret serialization, and terminal closure blocked.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "admission_status",
+    "source_filesystem_write_admission_preflight_ref",
+    "source_contract_refs",
+    "scope",
+    "source_preflight",
+    "admission_gates",
+    "actual_diff_receipt_contract",
+    "authority_denials",
+    "redaction_policy",
+    "receipt_refs",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "const": "agentic_service_harness_actual_diff_collection_receipt_admission_preflight"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "admission_status": { "type": "string", "const": "AwaitingEvidence" },
+    "source_filesystem_write_admission_preflight_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json"
+    },
+    "source_contract_refs": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": { "$ref": "#/$defs/scope" },
+    "source_preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filesystem_write_admission_preflight_verified",
+        "filesystem_write_admitted",
+        "candidate_changed_file_count",
+        "raw_diff_body_serialized",
+        "raw_file_content_serialized",
+        "receipt_append_ref"
+      ],
+      "properties": {
+        "filesystem_write_admission_preflight_verified": { "type": "boolean", "const": true },
+        "filesystem_write_admitted": { "type": "boolean", "const": false },
+        "candidate_changed_file_count": { "type": "integer", "const": 0 },
+        "raw_diff_body_serialized": { "type": "boolean", "const": false },
+        "raw_file_content_serialized": { "type": "boolean", "const": false },
+        "receipt_append_ref": {
+          "type": "string",
+          "const": "blocked://receipt-store-write-path/not-verified"
+        }
+      }
+    },
+    "admission_gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actual_diff_receipt_admitted",
+        "filesystem_write_preflight_verified",
+        "branch_write_authority_verified",
+        "workspace_write_authority_verified",
+        "operator_approval_collected",
+        "cleanup_receipt_verified",
+        "redaction_evidence_verified",
+        "uao_actual_diff_receipt_admission_verified",
+        "receipt_store_write_path_verified",
+        "required_before_actual_diff_receipt_refs",
+        "blocked_reason_refs",
+        "next_required_evidence_refs"
+      ],
+      "properties": {
+        "actual_diff_receipt_admitted": { "type": "boolean", "const": false },
+        "filesystem_write_preflight_verified": { "type": "boolean", "const": true },
+        "branch_write_authority_verified": { "type": "boolean", "const": false },
+        "workspace_write_authority_verified": { "type": "boolean", "const": false },
+        "operator_approval_collected": { "type": "boolean", "const": false },
+        "cleanup_receipt_verified": { "type": "boolean", "const": false },
+        "redaction_evidence_verified": { "type": "boolean", "const": false },
+        "uao_actual_diff_receipt_admission_verified": { "type": "boolean", "const": false },
+        "receipt_store_write_path_verified": { "type": "boolean", "const": false },
+        "required_before_actual_diff_receipt_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "next_required_evidence_refs": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "actual_diff_receipt_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_changed_file_count",
+        "changed_file_refs",
+        "diff_refs",
+        "redacted_diff_bundle_ref",
+        "raw_diff_body_serialized",
+        "raw_file_content_serialized",
+        "absolute_paths_allowed",
+        "parent_traversal_allowed",
+        "secret_paths_allowed",
+        "production_paths_allowed",
+        "receipt_append_ref"
+      ],
+      "properties": {
+        "candidate_changed_file_count": { "type": "integer", "const": 0 },
+        "changed_file_refs": {
+          "type": "array",
+          "maxItems": 0,
+          "items": false
+        },
+        "diff_refs": {
+          "type": "array",
+          "maxItems": 0,
+          "items": false
+        },
+        "redacted_diff_bundle_ref": {
+          "type": "string",
+          "const": "diff-bundle://not-admitted"
+        },
+        "raw_diff_body_serialized": { "type": "boolean", "const": false },
+        "raw_file_content_serialized": { "type": "boolean", "const": false },
+        "absolute_paths_allowed": { "type": "boolean", "const": false },
+        "parent_traversal_allowed": { "type": "boolean", "const": false },
+        "secret_paths_allowed": { "type": "boolean", "const": false },
+        "production_paths_allowed": { "type": "boolean", "const": false },
+        "receipt_append_ref": {
+          "type": "string",
+          "const": "blocked://receipt-store-write-path/not-verified"
+        }
+      }
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "redaction_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "secret_redaction_required",
+        "diff_redaction_required",
+        "redaction_evidence_ref",
+        "raw_secret_value_storage_allowed",
+        "raw_output_storage_allowed"
+      ],
+      "properties": {
+        "secret_redaction_required": { "type": "boolean", "const": true },
+        "diff_redaction_required": { "type": "boolean", "const": true },
+        "redaction_evidence_ref": {
+          "type": "string",
+          "const": "evidence://redaction-policy-for-file-change-collection"
+        },
+        "raw_secret_value_storage_allowed": { "type": "boolean", "const": false },
+        "raw_output_storage_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/evidence_ref" },
+      "required": [
+        "actual_diff_receipt_admission_preflight_schema",
+        "filesystem_write_admission_preflight_schema",
+        "filesystem_write_admission_preflight_example",
+        "actual_diff_collection_receipt_schema",
+        "receipt_store_write_path_ref",
+        "cleanup_receipt_ref",
+        "uao_actual_diff_receipt_admission_ref"
+      ]
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["validator_id", "command", "required_for_closure"],
+        "properties": {
+          "validator_id": { "$ref": "#/$defs/identifier" },
+          "command": { "type": "string", "minLength": 1 },
+          "required_for_closure": { "type": "boolean", "const": true }
+        }
+      }
+    },
+    "next_action": { "type": "string", "minLength": 1 },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure_required": { "type": "boolean", "const": true }
+  },
+  "$defs": {
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actual_diff_receipt_admitted",
+        "branch_write_enabled",
+        "workspace_write_enabled",
+        "filesystem_write_admitted",
+        "raw_diff_body_stored",
+        "raw_file_content_stored",
+        "receipt_store_append_enabled",
+        "runtime_state_write_enabled",
+        "connector_calls_enabled",
+        "mutation_route_enabled",
+        "secret_values_serialized",
+        "terminal_closure"
+      ],
+      "properties": {
+        "actual_diff_receipt_admitted": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "workspace_write_enabled": { "type": "boolean", "const": false },
+        "filesystem_write_admitted": { "type": "boolean", "const": false },
+        "raw_diff_body_stored": { "type": "boolean", "const": false },
+        "raw_file_content_stored": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "runtime_state_write_enabled": { "type": "boolean", "const": false },
+        "connector_calls_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "task_id",
+        "run_id",
+        "sandbox_id",
+        "repository_connection_id",
+        "repository_slug",
+        "mode",
+        "foundation_phase"
+      ],
+      "properties": {
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "task_id": { "$ref": "#/$defs/identifier" },
+        "run_id": { "$ref": "#/$defs/identifier" },
+        "sandbox_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": { "type": "string", "const": "tamirat-wubie/mullu-control-plane" },
+        "mode": { "type": "string", "const": "branch_write" },
+        "foundation_phase": {
+          "type": "string",
+          "const": "foundation_actual_diff_collection_receipt_admission_preflight"
+        }
+      }
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(approval|blocked|digest|evidence|examples|receipt|schemas|scripts|witness)://|^(examples|schemas|scripts)/|^MULLUSI_"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9_.-]*$"
+    }
+  }
+}
