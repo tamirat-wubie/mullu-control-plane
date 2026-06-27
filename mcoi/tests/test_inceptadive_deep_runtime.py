@@ -114,6 +114,47 @@ def test_runtime_redacts_direct_context_refs_before_result_and_receipt_persisten
     assert receipt.to_dict()["execution_authority"] is False
 
 
+def test_jsonl_store_hydrates_only_bounded_recent_window(tmp_path) -> None:
+    store_path = tmp_path / "shadow-store"
+    runtime = build_inceptadive_shadow_runtime(
+        {
+            "MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(store_path),
+            "MULLU_INCEPTADIVE_SHADOW_STORE_MAX_ITEMS": "3",
+        }
+    )
+    for index in range(5):
+        context = _context(
+            f"inspect bounded replay {index}",
+            request_id=f"shadow-store-window-{index}",
+            created_at=f"2026-06-18T00:0{index}:00+00:00",
+        )
+        result, receipt = runtime.inspect_request(context)
+        assert result.request_id == f"shadow-store-window-{index}"
+        assert receipt is not None
+        assert receipt.request_id == result.request_id
+
+    reloaded_runtime = build_inceptadive_shadow_runtime(
+        {
+            "MULLU_INCEPTADIVE_SHADOW_STORE_PATH": str(store_path),
+            "MULLU_INCEPTADIVE_SHADOW_STORE_MAX_ITEMS": "3",
+        }
+    )
+
+    recent_results, recent_receipts = reloaded_runtime.recent_activity(limit=5)
+    assert tuple(result.request_id for result in recent_results) == (
+        "shadow-store-window-2",
+        "shadow-store-window-3",
+        "shadow-store-window-4",
+    )
+    assert tuple(receipt.request_id for receipt in recent_receipts) == (
+        "shadow-store-window-2",
+        "shadow-store-window-3",
+        "shadow-store-window-4",
+    )
+    assert all(result.to_dict()["execution_authority"] is False for result in recent_results)
+    assert all(receipt.to_dict()["execution_authority"] is False for receipt in recent_receipts)
+
+
 def test_runtime_preflight_redacts_raw_required_evidence_refs_before_persistence(tmp_path) -> None:
     raw_evidence_ref = "approval-secret-evidence-001"
     store_path = tmp_path / "shadow-store"

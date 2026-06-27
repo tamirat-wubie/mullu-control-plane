@@ -174,7 +174,7 @@ def _read_jsonl_tail(
         raise RuntimeCoreInvariantError("limit must be positive")
     if not path.exists():
         return ()
-    loaded: list[LoadedRecordT] = []
+    loaded: Deque[LoadedRecordT] = deque(maxlen=limit)
     with path.open("r", encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
             stripped = line.strip()
@@ -190,4 +190,4 @@ def _read_jsonl_tail(
                 loaded.append(parser(payload))
             except RuntimeCoreInvariantError as exc:
                 raise RuntimeCoreInvariantError(f"invalid JSONL record in {path.name} at line {line_number}") from exc
-    return tuple(loaded[-limit:])
+    return tuple(loaded)
