@@ -13,7 +13,9 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any, Mapping
 
+from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistryEntry
 from mcoi_runtime.contracts.workflow import (
     StageType,
     WorkflowBinding,
@@ -56,6 +58,23 @@ class CapabilityUnlockLevel:
     def level_id(self) -> str:
         """Return the stable ladder level identifier."""
         return f"L{self.level}"
+
+
+@dataclass(frozen=True, slots=True)
+class CapabilityUnlockAdmissionProfile:
+    """Resolved ladder obligations for one governed capability."""
+
+    capability_id: str
+    ladder_id: str
+    level: int
+    level_id: str
+    gate_template_ids: tuple[str, ...]
+    requires_operator_approval: bool
+    requires_receipt: bool
+    requires_rollback: bool
+    requires_live_witness: bool
+    allowed_effects: tuple[str, ...]
+    forbidden_effects: tuple[str, ...]
 
 
 def default_gate_template_ids() -> tuple[str, ...]:
@@ -262,6 +281,83 @@ def validate_capability_unlock_ladder(
     return tuple(errors)
 
 
+def capability_unlock_profile_errors(entry: CapabilityRegistryEntry) -> tuple[str, ...]:
+    """Return explicit errors for an entry's reusable unlock ladder profile."""
+    if not isinstance(entry, CapabilityRegistryEntry):
+        return ("entry_must_be_capability_registry_entry",)
+    raw_profile = entry.metadata.get("unlock_ladder")
+    if raw_profile is None:
+        return ()
+    if not isinstance(raw_profile, Mapping):
+        return ("unlock_ladder_profile_must_be_object",)
+
+    errors: list[str] = []
+    levels_by_number = {level.level: level for level in default_capability_unlock_ladder()}
+    levels_by_id = {level.level_id: level for level in levels_by_number.values()}
+
+    ladder_id = raw_profile.get("ladder_id")
+    level = raw_profile.get("level")
+    level_id = raw_profile.get("level_id")
+    gate_template_ids = raw_profile.get("gate_template_ids")
+
+    if ladder_id != UNLOCK_LADDER_ID:
+        errors.append("unlock_ladder_id_mismatch")
+    if not isinstance(level, int) or isinstance(level, bool):
+        errors.append("unlock_ladder_level_must_be_integer")
+        ladder_level = None
+    else:
+        ladder_level = levels_by_number.get(level)
+        if ladder_level is None:
+            errors.append("unlock_ladder_level_unknown")
+
+    if not isinstance(level_id, str) or not level_id:
+        errors.append("unlock_ladder_level_id_missing")
+    elif level_id not in levels_by_id:
+        errors.append("unlock_ladder_level_id_unknown")
+    elif ladder_level is not None and level_id != ladder_level.level_id:
+        errors.append("unlock_ladder_level_id_mismatch")
+
+    if not isinstance(gate_template_ids, (tuple, list)) or not gate_template_ids:
+        errors.append("unlock_ladder_gate_template_ids_missing")
+    elif ladder_level is not None:
+        observed_gate_ids = tuple(str(gate_id) for gate_id in gate_template_ids)
+        if observed_gate_ids != ladder_level.required_gate_ids:
+            errors.append("unlock_ladder_gate_template_ids_mismatch")
+        unknown_gate_ids = tuple(gate_id for gate_id in observed_gate_ids if gate_id not in default_gate_template_ids())
+        if unknown_gate_ids:
+            errors.append("unlock_ladder_gate_template_ids_unknown")
+
+    return tuple(errors)
+
+
+def capability_unlock_admission_profile(
+    entry: CapabilityRegistryEntry,
+) -> CapabilityUnlockAdmissionProfile | None:
+    """Resolve a valid unlock profile into runtime admission obligations."""
+    errors = capability_unlock_profile_errors(entry)
+    if errors:
+        raise ValueError(";".join(errors))
+    raw_profile = entry.metadata.get("unlock_ladder")
+    if raw_profile is None:
+        return None
+    profile = _as_mapping(raw_profile)
+    level_number = int(profile["level"])
+    ladder_level = {level.level: level for level in default_capability_unlock_ladder()}[level_number]
+    return CapabilityUnlockAdmissionProfile(
+        capability_id=entry.capability_id,
+        ladder_id=UNLOCK_LADDER_ID,
+        level=ladder_level.level,
+        level_id=ladder_level.level_id,
+        gate_template_ids=ladder_level.required_gate_ids,
+        requires_operator_approval=ladder_level.requires_operator_approval,
+        requires_receipt=ladder_level.requires_receipt,
+        requires_rollback=ladder_level.requires_rollback,
+        requires_live_witness=ladder_level.requires_live_witness,
+        allowed_effects=ladder_level.allowed_effects,
+        forbidden_effects=ladder_level.forbidden_effects,
+    )
+
+
 def mullu_local_developer_workflow_v1_descriptor() -> WorkflowDescriptor:
     """Return the reusable local developer workflow descriptor."""
     return WorkflowDescriptor(
@@ -343,3 +439,9 @@ def mullu_local_developer_workflow_v1_descriptor() -> WorkflowDescriptor:
         ),
         created_at=FIXED_DESCRIPTOR_CREATED_AT,
     )
+
+
+def _as_mapping(value: Any) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError("value_must_be_mapping")
+    return value

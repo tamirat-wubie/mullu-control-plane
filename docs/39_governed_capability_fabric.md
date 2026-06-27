@@ -149,6 +149,27 @@ The focused contract test is:
 python -m pytest mcoi/tests/test_capability_unlock_ladder.py -q
 ```
 
+### Admission Projection
+
+`CommandCapabilityAdmissionGate` resolves `metadata.unlock_ladder` during typed
+intent admission. Accepted decisions now carry the ladder id, level, gate
+template ids, and approval, receipt, rollback, and live-witness booleans. This
+turns the ladder from documentation metadata into a reusable runtime policy
+surface without granting new authority.
+
+Malformed ladder metadata fails closed with a stable reason and structured
+rejection codes:
+
+```text
+reason: capability unlock profile invalid
+rejection_codes: (<profile_error_code>, ...)
+```
+
+The admission resolver preserves older capability entries that do not declare a
+ladder profile, but any entry that declares one must match the canonical ladder
+exactly. This keeps future capability packs from silently substituting weaker
+gates for effect-bearing actions.
+
 ## Capability Forge
 
 The capability forge emits candidate packages and certification handoffs, never registry mutations. A candidate handoff binds the package id, package hash, sandbox receipt, live receipt, worker deployment, recovery evidence, and optional autonomy-control reference into a `CapabilityCertificationEvidenceBundle` that the maturity synthesizer can consume. Effect-bearing handoffs fail closed until live-write and recovery evidence references are present.
