@@ -555,8 +555,8 @@ def test_readiness_map_rejects_missing_github_pr_terminal_decision_value_record_
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR terminal closure operator decision value record PR | READY |",
-            "| GitHub PR terminal closure operator decision value record PR | PARTIAL |",
+            "| GitHub PR terminal closure operator decision value record actual-diff request binding PR | READY |",
+            "| GitHub PR terminal closure operator decision value record actual-diff request binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -566,7 +566,7 @@ def test_readiness_map_rejects_missing_github_pr_terminal_decision_value_record_
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR terminal closure operator decision value record PR"
+        "missing ready row: GitHub PR terminal closure operator decision value record actual-diff request binding PR"
         in serialized_errors
     )
 
@@ -705,7 +705,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind terminal decision value record to actual-diff decision value request`",
+            "1. `harness(pr): bind terminal certificate minting to actual-diff decision value record`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -716,7 +716,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind terminal decision value record to actual-diff decision value request"
+        "missing next PR marker: harness(pr): bind terminal certificate minting to actual-diff decision value record"
         in serialized_errors
     )
 
