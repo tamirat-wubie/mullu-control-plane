@@ -1,0 +1,416 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:capability-passports:1",
+  "title": "Mullu Capability Passports",
+  "description": "Foundation-stage capability identity cards derived from governed capability packs. A passport is an operator read model and cannot grant execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "passport_set_id",
+    "mode",
+    "source_refs",
+    "passport_set_is_not_execution_authority",
+    "live_execution_enabled",
+    "summary",
+    "passports",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "passport_set_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "const": "foundation"
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_packs"
+      ],
+      "properties": {
+        "capability_packs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/repo_path"
+          }
+        }
+      }
+    },
+    "passport_set_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "passports": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/passport"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 480
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 220,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 320,
+      "pattern": "^[A-Za-z0-9._~:/{}@+ -]+$"
+    },
+    "string_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 320
+      }
+    },
+    "count_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "unlock_count_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "C0",
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "properties": {
+        "C0": { "type": "integer", "minimum": 0 },
+        "C1": { "type": "integer", "minimum": 0 },
+        "C2": { "type": "integer", "minimum": 0 },
+        "C3": { "type": "integer", "minimum": 0 },
+        "C4": { "type": "integer", "minimum": 0 },
+        "C5": { "type": "integer", "minimum": 0 },
+        "C6": { "type": "integer", "minimum": 0 },
+        "C7": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "operator_status_count_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Ready",
+        "Prepare-only",
+        "Needs approval",
+        "Blocked",
+        "Evidence missing",
+        "Live action disabled"
+      ],
+      "properties": {
+        "Ready": { "type": "integer", "minimum": 0 },
+        "Prepare-only": { "type": "integer", "minimum": 0 },
+        "Needs approval": { "type": "integer", "minimum": 0 },
+        "Blocked": { "type": "integer", "minimum": 0 },
+        "Evidence missing": { "type": "integer", "minimum": 0 },
+        "Live action disabled": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_count",
+        "passport_count",
+        "family_counts",
+        "unlock_level_counts",
+        "operator_status_counts",
+        "blocked_count",
+        "approval_required_count",
+        "receipt_required_count",
+        "rollback_ready_count"
+      ],
+      "properties": {
+        "capability_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "passport_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "family_counts": {
+          "$ref": "#/$defs/count_map"
+        },
+        "unlock_level_counts": {
+          "$ref": "#/$defs/unlock_count_map"
+        },
+        "operator_status_counts": {
+          "$ref": "#/$defs/operator_status_count_map"
+        },
+        "blocked_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "approval_required_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "receipt_required_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rollback_ready_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "rollback_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "rollback_capability",
+        "compensation_capability",
+        "review_required_on_failure"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_required",
+            "ready",
+            "compensation_only",
+            "review_only",
+            "missing"
+          ]
+        },
+        "rollback_capability": {
+          "type": "string"
+        },
+        "compensation_capability": {
+          "type": "string"
+        },
+        "review_required_on_failure": {
+          "type": "boolean"
+        }
+      }
+    },
+    "passport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "passport_id",
+        "capability_id",
+        "capability_name",
+        "family",
+        "version",
+        "source_ref",
+        "certification_status",
+        "current_unlock_level",
+        "unlock_label",
+        "operator_status",
+        "allowed_actions",
+        "allowed_tools",
+        "blocked_actions",
+        "required_gates",
+        "required_receipts",
+        "rollback_status",
+        "next_unlock_step",
+        "evidence_refs",
+        "production_ready",
+        "autonomy_ready",
+        "blockers",
+        "passport_is_not_execution_authority"
+      ],
+      "properties": {
+        "passport_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "capability_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 180
+        },
+        "family": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "source_ref": {
+          "$ref": "#/$defs/repo_path"
+        },
+        "certification_status": {
+          "type": "string",
+          "enum": [
+            "candidate",
+            "certified",
+            "suspended",
+            "retired"
+          ]
+        },
+        "current_unlock_level": {
+          "type": "string",
+          "enum": [
+            "C0",
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C7"
+          ]
+        },
+        "unlock_label": {
+          "type": "string",
+          "enum": [
+            "Specified",
+            "Implemented",
+            "Verified"
+          ]
+        },
+        "operator_status": {
+          "type": "string",
+          "enum": [
+            "Ready",
+            "Prepare-only",
+            "Needs approval",
+            "Blocked",
+            "Evidence missing",
+            "Live action disabled"
+          ]
+        },
+        "allowed_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "allowed_tools": {
+          "$ref": "#/$defs/string_list"
+        },
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "required_gates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          },
+          "contains": {
+            "const": "gate.receipt.append"
+          }
+        },
+        "required_receipts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "rollback_status": {
+          "$ref": "#/$defs/rollback_status"
+        },
+        "next_unlock_step": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/string_list"
+        },
+        "production_ready": {
+          "type": "boolean"
+        },
+        "autonomy_ready": {
+          "type": "boolean"
+        },
+        "blockers": {
+          "$ref": "#/$defs/string_list"
+        },
+        "passport_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

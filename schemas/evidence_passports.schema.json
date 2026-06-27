@@ -1,0 +1,538 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:evidence-passports:1",
+  "title": "Mullu Evidence Passports",
+  "description": "Foundation-stage evidence proof packets derived from capability passports and gate templates. Evidence passports are read models and cannot grant execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_passport_set_id",
+    "mode",
+    "evidence_passport_set_is_not_execution_authority",
+    "live_execution_enabled",
+    "source_refs",
+    "summary",
+    "evidence_passports",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "evidence_passport_set_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "const": "foundation"
+    },
+    "evidence_passport_set_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "live_execution_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "passport_set_id",
+        "gate_registry_id"
+      ],
+      "properties": {
+        "passport_set_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "gate_registry_id": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "evidence_passports": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/evidence_passport"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 480
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 220,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "string_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 320
+      }
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": [
+        "Pass",
+        "Fail",
+        "Unknown",
+        "BudgetUnknown"
+      ]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "SolvedVerified",
+        "AwaitingEvidence",
+        "SafeHalt",
+        "GovernanceBlocked",
+        "BudgetExhausted",
+        "ImpossibleProved",
+        "ModelInvalidated"
+      ]
+    },
+    "proof_state_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "Pass",
+        "Fail",
+        "Unknown",
+        "BudgetUnknown"
+      ],
+      "properties": {
+        "Pass": { "type": "integer", "minimum": 0 },
+        "Fail": { "type": "integer", "minimum": 0 },
+        "Unknown": { "type": "integer", "minimum": 0 },
+        "BudgetUnknown": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "outcome_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "SolvedVerified",
+        "AwaitingEvidence",
+        "SafeHalt",
+        "GovernanceBlocked",
+        "BudgetExhausted",
+        "ImpossibleProved",
+        "ModelInvalidated"
+      ],
+      "properties": {
+        "SolvedVerified": { "type": "integer", "minimum": 0 },
+        "AwaitingEvidence": { "type": "integer", "minimum": 0 },
+        "SafeHalt": { "type": "integer", "minimum": 0 },
+        "GovernanceBlocked": { "type": "integer", "minimum": 0 },
+        "BudgetExhausted": { "type": "integer", "minimum": 0 },
+        "ImpossibleProved": { "type": "integer", "minimum": 0 },
+        "ModelInvalidated": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_count",
+        "evidence_passport_count",
+        "family_counts",
+        "proof_state_counts",
+        "outcome_counts",
+        "approval_required_count",
+        "missing_evidence_count",
+        "blocked_action_count",
+        "replayable_count",
+        "rollback_ready_count",
+        "safe_to_continue_count",
+        "safe_for_live_action_count"
+      ],
+      "properties": {
+        "capability_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "evidence_passport_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "family_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "proof_state_counts": {
+          "$ref": "#/$defs/proof_state_counts"
+        },
+        "outcome_counts": {
+          "$ref": "#/$defs/outcome_counts"
+        },
+        "approval_required_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missing_evidence_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked_action_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "replayable_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rollback_ready_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "safe_to_continue_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "safe_for_live_action_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "evidence_passport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_passport_id",
+        "capability_id",
+        "capability_name",
+        "family",
+        "operator_status",
+        "current_unlock_level",
+        "proof_state",
+        "outcome",
+        "evidence_exists",
+        "required_evidence",
+        "missing_evidence",
+        "approval",
+        "blocked",
+        "replay",
+        "rollback",
+        "continuation",
+        "next_evidence_step",
+        "evidence_passport_is_not_execution_authority"
+      ],
+      "properties": {
+        "evidence_passport_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "capability_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "capability_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 180
+        },
+        "family": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "operator_status": {
+          "type": "string",
+          "enum": [
+            "Ready",
+            "Prepare-only",
+            "Needs approval",
+            "Blocked",
+            "Evidence missing",
+            "Live action disabled"
+          ]
+        },
+        "current_unlock_level": {
+          "type": "string",
+          "enum": [
+            "C0",
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6",
+            "C7"
+          ]
+        },
+        "proof_state": {
+          "$ref": "#/$defs/proof_state"
+        },
+        "outcome": {
+          "$ref": "#/$defs/outcome"
+        },
+        "evidence_exists": {
+          "$ref": "#/$defs/evidence_exists"
+        },
+        "required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "missing_evidence": {
+          "$ref": "#/$defs/string_list"
+        },
+        "approval": {
+          "$ref": "#/$defs/approval"
+        },
+        "blocked": {
+          "$ref": "#/$defs/blocked"
+        },
+        "replay": {
+          "$ref": "#/$defs/replay"
+        },
+        "rollback": {
+          "$ref": "#/$defs/rollback"
+        },
+        "continuation": {
+          "$ref": "#/$defs/continuation"
+        },
+        "next_evidence_step": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320
+        },
+        "evidence_passport_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "evidence_exists": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "present_evidence_refs",
+        "present_evidence_count"
+      ],
+      "properties": {
+        "present_evidence_refs": {
+          "$ref": "#/$defs/string_list"
+        },
+        "present_evidence_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_required",
+        "approved",
+        "approval_refs",
+        "missing_approval",
+        "approval_state"
+      ],
+      "properties": {
+        "approval_required": {
+          "type": "boolean"
+        },
+        "approved": {
+          "type": "boolean",
+          "const": false
+        },
+        "approval_refs": {
+          "type": "array",
+          "maxItems": 0,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "missing_approval": {
+          "type": "boolean"
+        },
+        "approval_state": {
+          "type": "string",
+          "enum": [
+            "not_required",
+            "required_missing",
+            "approved"
+          ]
+        }
+      }
+    },
+    "blocked": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blocked_actions",
+        "blocked_action_count",
+        "blocked_by_gate_ids"
+      ],
+      "properties": {
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "blocked_action_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "blocked_by_gate_ids": {
+          "$ref": "#/$defs/string_list"
+        }
+      }
+    },
+    "replay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "replay_required",
+        "replayable",
+        "replay_refs",
+        "missing_replay_evidence"
+      ],
+      "properties": {
+        "replay_required": {
+          "type": "boolean"
+        },
+        "replayable": {
+          "type": "boolean"
+        },
+        "replay_refs": {
+          "$ref": "#/$defs/string_list"
+        },
+        "missing_replay_evidence": {
+          "type": "boolean"
+        }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rollback_status",
+        "rollback_capability",
+        "compensation_capability",
+        "rollback_or_compensation_available",
+        "rollback_evidence_missing",
+        "can_rollback",
+        "can_compensate"
+      ],
+      "properties": {
+        "rollback_status": {
+          "type": "string",
+          "enum": [
+            "not_required",
+            "ready",
+            "compensation_only",
+            "review_only",
+            "missing"
+          ]
+        },
+        "rollback_capability": {
+          "type": "string"
+        },
+        "compensation_capability": {
+          "type": "string"
+        },
+        "rollback_or_compensation_available": {
+          "type": "boolean"
+        },
+        "rollback_evidence_missing": {
+          "type": "boolean"
+        },
+        "can_rollback": {
+          "type": "boolean"
+        },
+        "can_compensate": {
+          "type": "boolean"
+        }
+      }
+    },
+    "continuation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "safe_to_continue",
+        "safe_for_live_action",
+        "continuation_mode",
+        "live_action_disabled"
+      ],
+      "properties": {
+        "safe_to_continue": {
+          "type": "boolean"
+        },
+        "safe_for_live_action": {
+          "type": "boolean"
+        },
+        "continuation_mode": {
+          "type": "string",
+          "enum": [
+            "live_ready",
+            "approval_required",
+            "evidence_collection",
+            "prepare_only",
+            "live_action_disabled",
+            "blocked"
+          ]
+        },
+        "live_action_disabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

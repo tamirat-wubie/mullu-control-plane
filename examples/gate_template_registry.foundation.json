@@ -1,0 +1,378 @@
+{
+  "categories": {
+    "admission": 2,
+    "approval": 1,
+    "evidence": 2,
+    "external_effect": 1,
+    "isolation": 2,
+    "local_effect": 1,
+    "promotion": 1,
+    "receipt": 1,
+    "recovery": 1
+  },
+  "mode": "foundation",
+  "next_action": "Bind capability passport required_gates to this registry before building dashboard, evidence passport, promotion path, or debt report projections.",
+  "registry_id": "gate_template_registry.foundation.v1",
+  "registry_is_not_execution_authority": true,
+  "schema_version": 1,
+  "template_count": 12,
+  "templates": [
+    {
+      "applies_to": [
+        "all_capabilities"
+      ],
+      "blocks_when_missing": [
+        "unorchestrated_effect"
+      ],
+      "category": "admission",
+      "display_name": "UAO admission",
+      "failure_mode": "GovernanceBlocked",
+      "gate_id": "gate.uao.admission",
+      "operator_status_when_missing": "Blocked",
+      "purpose": "Require Universal Action Orchestration admission before effect-bearing or governed work proceeds.",
+      "required_inputs": [
+        "action",
+        "state",
+        "memory",
+        "policy",
+        "capabilities",
+        "exposure_boundary"
+      ],
+      "required_receipts": [
+        "universal_action_orchestration_validation_receipt"
+      ],
+      "validator_refs": [
+        "universal_action_orchestration_contract"
+      ]
+    },
+    {
+      "applies_to": [
+        "all_capabilities"
+      ],
+      "blocks_when_missing": [
+        "raw_tool_path",
+        "unregistered_capability"
+      ],
+      "category": "admission",
+      "display_name": "Capability registry binding",
+      "failure_mode": "GovernanceBlocked",
+      "gate_id": "gate.capability.registry",
+      "operator_status_when_missing": "Blocked",
+      "purpose": "Require the action to bind to a governed capability registry entry before execution.",
+      "required_inputs": [
+        "capability_id",
+        "capability_registry_entry",
+        "certification_status"
+      ],
+      "required_receipts": [
+        "capability_registry_entry"
+      ],
+      "validator_refs": [
+        "capability_passports_validator"
+      ]
+    },
+    {
+      "applies_to": [
+        "all_capabilities"
+      ],
+      "blocks_when_missing": [
+        "missing_evidence",
+        "unbound_evidence_ref"
+      ],
+      "category": "evidence",
+      "display_name": "Evidence intake",
+      "failure_mode": "AwaitingEvidence",
+      "gate_id": "gate.evidence.intake",
+      "operator_status_when_missing": "Evidence missing",
+      "purpose": "Require claimed evidence refs to be present, bounded, and associated with the capability.",
+      "required_inputs": [
+        "evidence_refs",
+        "source_ref",
+        "capability_id"
+      ],
+      "required_receipts": [
+        "evidence_intake_receipt"
+      ],
+      "validator_refs": [
+        "capability_passports_validator"
+      ]
+    },
+    {
+      "applies_to": [
+        "all_capabilities"
+      ],
+      "blocks_when_missing": [
+        "unverified_claim",
+        "stale_evidence"
+      ],
+      "category": "evidence",
+      "display_name": "Evidence verification",
+      "failure_mode": "AwaitingEvidence",
+      "gate_id": "gate.evidence.verification",
+      "operator_status_when_missing": "Evidence missing",
+      "purpose": "Require evidence to be checked before it can support readiness, execution, or closure claims.",
+      "required_inputs": [
+        "evidence_refs",
+        "verification_policy",
+        "capability_id"
+      ],
+      "required_receipts": [
+        "evidence_verification_receipt"
+      ],
+      "validator_refs": [
+        "capability_passports_validator"
+      ]
+    },
+    {
+      "applies_to": [
+        "all_capabilities"
+      ],
+      "blocks_when_missing": [
+        "success_without_receipt",
+        "terminal_closure_overclaim"
+      ],
+      "category": "receipt",
+      "display_name": "Receipt append",
+      "failure_mode": "GovernanceBlocked",
+      "gate_id": "gate.receipt.append",
+      "operator_status_when_missing": "Blocked",
+      "purpose": "Require action evidence to be appended as a receipt before terminal closure or success response.",
+      "required_inputs": [
+        "required_receipts",
+        "receipt_store",
+        "capability_id"
+      ],
+      "required_receipts": [
+        "effect_reconciliation_receipt",
+        "terminal_closure_certificate"
+      ],
+      "validator_refs": [
+        "capability_passports_validator"
+      ]
+    },
+    {
+      "applies_to": [
+        "high_risk",
+        "critical_risk",
+        "external_send",
+        "world_mutating"
+      ],
+      "blocks_when_missing": [
+        "execute_without_approval",
+        "self_approval"
+      ],
+      "category": "approval",
+      "display_name": "Approval required",
+      "failure_mode": "AwaitingEvidence",
+      "gate_id": "gate.approval.required",
+      "operator_status_when_missing": "Needs approval",
+      "purpose": "Require explicit operator or policy approval before high-risk or effect-bearing action execution.",
+      "required_inputs": [
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
+      ],
+      "required_receipts": [
+        "approval_decision_receipt"
+      ],
+      "validator_refs": [
+        "capability_passports_validator"
+      ]
+    },
+    {
+      "applies_to": [
+        "worker_bound",
+        "connector",
+        "browser",
+        "computer",
+        "physical"
+      ],
+      "blocks_when_missing": [
+        "live_without_sandbox",
+        "worker_without_rehearsal"
+      ],
+      "category": "isolation",
+      "display_name": "Sandbox required",
+      "failure_mode": "AwaitingEvidence",
+      "gate_id": "gate.sandbox.required",
+      "operator_status_when_missing": "Live action disabled",
+      "purpose": "Require sandbox or dry-run evidence before live promotion or worker execution.",
+      "required_inputs": [
+        "sandbox_receipt",
+        "isolation_profile",
+        "capability_id"
+      ],
+      "required_receipts": [
+        "sandbox_receipt"
+      ],
+      "validator_refs": [
+        "capability_passports_validator"
+      ]
+    },
+    {
+      "applies_to": [
+        "connector",
+        "browser",
+        "communication",
+        "financial",
+        "phone",
+        "physical"
+      ],
+      "blocks_when_missing": [
+        "connector_call_without_lease",
+        "credential_scope_exceeded"
+      ],
+      "category": "isolation",
+      "display_name": "Connector lease",
+      "failure_mode": "AwaitingEvidence",
+      "gate_id": "gate.connector.lease",
+      "operator_status_when_missing": "Evidence missing",
+      "purpose": "Require scoped connector or worker lease evidence before provider, mailbox, calendar, browser, or payment access.",
+      "required_inputs": [
+        "connector_id",
+        "lease_ref",
+        "secret_scope",
+        "network_allowlist"
+      ],
+      "required_receipts": [
+        "connector_lease_receipt"
+      ],
+      "validator_refs": [
+        "capability_passports_validator"
+      ]
+    },
+    {
+      "applies_to": [
+        "world_mutating",
+        "external_write",
+        "file_write",
+        "payment",
+        "physical"
+      ],
+      "blocks_when_missing": [
+        "execute_without_recovery",
+        "unrecoverable_effect_overclaim"
+      ],
+      "category": "recovery",
+      "display_name": "Rollback required",
+      "failure_mode": "GovernanceBlocked",
+      "gate_id": "gate.rollback.required",
+      "operator_status_when_missing": "Prepare-only",
+      "purpose": "Require rollback, compensation, or explicit review-only recovery status before effect-bearing action.",
+      "required_inputs": [
+        "rollback_status",
+        "rollback_capability",
+        "compensation_capability"
+      ],
+      "required_receipts": [
+        "rollback_or_recovery_receipt"
+      ],
+      "validator_refs": [
+        "capability_passports_validator"
+      ]
+    },
+    {
+      "applies_to": [
+        "external_send",
+        "communication",
+        "messaging",
+        "financial"
+      ],
+      "blocks_when_missing": [
+        "external_send_without_approval",
+        "recipient_unapproved"
+      ],
+      "category": "external_effect",
+      "display_name": "External send",
+      "failure_mode": "AwaitingEvidence",
+      "gate_id": "gate.external.send",
+      "operator_status_when_missing": "Needs approval",
+      "purpose": "Require approval, evidence, and receipts before email, invite, notification, payment, or other external send.",
+      "required_inputs": [
+        "recipient_hashes",
+        "approval_ref",
+        "provider_scope"
+      ],
+      "required_receipts": [
+        "external_send_receipt",
+        "provider_receipt"
+      ],
+      "validator_refs": [
+        "capability_passports_validator"
+      ]
+    },
+    {
+      "applies_to": [
+        "computer",
+        "software_dev",
+        "document",
+        "file_write"
+      ],
+      "blocks_when_missing": [
+        "unapproved_file_write",
+        "workspace_escape",
+        "missing_diff"
+      ],
+      "category": "local_effect",
+      "display_name": "Workspace write",
+      "failure_mode": "GovernanceBlocked",
+      "gate_id": "gate.workspace.write",
+      "operator_status_when_missing": "Prepare-only",
+      "purpose": "Require diff, path confinement, and rollback evidence before workspace file mutation.",
+      "required_inputs": [
+        "workspace_root",
+        "path_policy",
+        "diff_ref",
+        "rollback_ref"
+      ],
+      "required_receipts": [
+        "workspace_write_receipt",
+        "diff_receipt"
+      ],
+      "validator_refs": [
+        "capability_passports_validator"
+      ]
+    },
+    {
+      "applies_to": [
+        "production_claim",
+        "live_action",
+        "capability_promotion"
+      ],
+      "blocks_when_missing": [
+        "claim_production_ready",
+        "live_action_enablement"
+      ],
+      "category": "promotion",
+      "display_name": "Production evidence",
+      "failure_mode": "AwaitingEvidence",
+      "gate_id": "gate.production.evidence",
+      "operator_status_when_missing": "Live action disabled",
+      "purpose": "Require live read, live write when effect-bearing, worker, and recovery evidence before production readiness.",
+      "required_inputs": [
+        "maturity_assessment",
+        "production_blockers",
+        "evidence_refs"
+      ],
+      "required_receipts": [
+        "production_evidence_receipt"
+      ],
+      "validator_refs": [
+        "capability_passports_validator"
+      ]
+    }
+  ],
+  "validators": [
+    {
+      "command": "python scripts/validate_gate_template_registry.py",
+      "required_for_closure": true,
+      "validator_id": "gate_template_registry_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_gate_template_registry.py -q",
+      "required_for_closure": true,
+      "validator_id": "gate_template_registry_tests"
+    }
+  ]
+}

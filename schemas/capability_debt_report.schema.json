@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:capability-debt-report:1",
+  "title": "Mullu Capability Debt Report",
+  "description": "Foundation-stage capability debt read model derived from passports, evidence passports, and sandbox-to-live promotion paths. Debt reports are operator planning records and cannot grant execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "debt_report_id",
+    "mode",
+    "debt_report_is_not_execution_authority",
+    "live_execution_enabled",
+    "source_refs",
+    "summary",
+    "debt_rows",
+    "top_debt_items",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "debt_report_id": { "$ref": "#/$defs/identifier" },
+    "mode": { "type": "string", "const": "foundation" },
+    "debt_report_is_not_execution_authority": { "type": "boolean", "const": true },
+    "live_execution_enabled": { "type": "boolean", "const": false },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "passport_set_id",
+        "gate_registry_id",
+        "evidence_passport_set_id",
+        "promotion_path_set_id"
+      ],
+      "properties": {
+        "passport_set_id": { "$ref": "#/$defs/identifier" },
+        "gate_registry_id": { "$ref": "#/$defs/identifier" },
+        "evidence_passport_set_id": { "$ref": "#/$defs/identifier" },
+        "promotion_path_set_id": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "summary": { "$ref": "#/$defs/summary" },
+    "debt_rows": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/debt_row" }
+    },
+    "top_debt_items": {
+      "type": "array",
+      "maxItems": 25,
+      "items": { "$ref": "#/$defs/top_debt_item" }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 480
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 260,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"]
+    },
+    "category": {
+      "type": "string",
+      "enum": ["evidence", "approval", "rollback", "replay", "promotion", "live_action"]
+    },
+    "stage_id": {
+      "type": "string",
+      "enum": [
+        "sandbox",
+        "local_demo",
+        "dry_run",
+        "operator_review",
+        "pilot",
+        "limited_live",
+        "approved_live",
+        "production"
+      ]
+    },
+    "string_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 320
+      }
+    },
+    "severity_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["critical", "high", "medium", "low"],
+      "properties": {
+        "critical": { "type": "integer", "minimum": 0 },
+        "high": { "type": "integer", "minimum": 0 },
+        "medium": { "type": "integer", "minimum": 0 },
+        "low": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "category_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence", "approval", "rollback", "replay", "promotion", "live_action"],
+      "properties": {
+        "evidence": { "type": "integer", "minimum": 0 },
+        "approval": { "type": "integer", "minimum": 0 },
+        "rollback": { "type": "integer", "minimum": 0 },
+        "replay": { "type": "integer", "minimum": 0 },
+        "promotion": { "type": "integer", "minimum": 0 },
+        "live_action": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_count",
+        "debt_row_count",
+        "family_counts",
+        "severity_counts",
+        "category_counts",
+        "total_debt_item_count",
+        "capabilities_with_debt_count",
+        "live_action_enabled_count"
+      ],
+      "properties": {
+        "capability_count": { "type": "integer", "minimum": 1 },
+        "debt_row_count": { "type": "integer", "minimum": 1 },
+        "family_counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "severity_counts": { "$ref": "#/$defs/severity_counts" },
+        "category_counts": { "$ref": "#/$defs/category_counts" },
+        "total_debt_item_count": { "type": "integer", "minimum": 0 },
+        "capabilities_with_debt_count": { "type": "integer", "minimum": 0 },
+        "live_action_enabled_count": { "type": "integer", "const": 0 }
+      }
+    },
+    "debt_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "debt_row_id",
+        "capability_id",
+        "capability_name",
+        "family",
+        "operator_status",
+        "current_unlock_level",
+        "current_stage",
+        "debt_severity",
+        "debt_item_count",
+        "debt_items",
+        "next_action",
+        "live_action_enabled",
+        "debt_row_is_not_execution_authority"
+      ],
+      "properties": {
+        "debt_row_id": { "$ref": "#/$defs/identifier" },
+        "capability_id": { "$ref": "#/$defs/identifier" },
+        "capability_name": { "type": "string", "minLength": 1, "maxLength": 180 },
+        "family": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "operator_status": {
+          "type": "string",
+          "enum": [
+            "Ready",
+            "Prepare-only",
+            "Needs approval",
+            "Blocked",
+            "Evidence missing",
+            "Live action disabled"
+          ]
+        },
+        "current_unlock_level": {
+          "type": "string",
+          "enum": ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
+        },
+        "current_stage": { "$ref": "#/$defs/stage_id" },
+        "debt_severity": { "$ref": "#/$defs/severity" },
+        "debt_item_count": { "type": "integer", "minimum": 0 },
+        "debt_items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/debt_item" }
+        },
+        "next_action": { "type": "string", "minLength": 1, "maxLength": 480 },
+        "live_action_enabled": { "type": "boolean", "const": false },
+        "debt_row_is_not_execution_authority": { "type": "boolean", "const": true }
+      }
+    },
+    "debt_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["debt_id", "category", "severity", "description", "missing_refs", "fix"],
+      "properties": {
+        "debt_id": { "$ref": "#/$defs/identifier" },
+        "category": { "$ref": "#/$defs/category" },
+        "severity": { "$ref": "#/$defs/severity" },
+        "description": { "type": "string", "minLength": 1, "maxLength": 220 },
+        "missing_refs": { "$ref": "#/$defs/string_list" },
+        "fix": { "type": "string", "minLength": 1, "maxLength": 420 }
+      }
+    },
+    "top_debt_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability_id", "family", "debt_id", "category", "severity", "description", "missing_refs", "fix"],
+      "properties": {
+        "capability_id": { "$ref": "#/$defs/identifier" },
+        "family": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "debt_id": { "$ref": "#/$defs/identifier" },
+        "category": { "$ref": "#/$defs/category" },
+        "severity": { "$ref": "#/$defs/severity" },
+        "description": { "type": "string", "minLength": 1, "maxLength": 220 },
+        "missing_refs": { "$ref": "#/$defs/string_list" },
+        "fix": { "type": "string", "minLength": 1, "maxLength": 420 }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:gate-template-registry:1",
+  "title": "Mullu Gate Template Registry",
+  "description": "Reusable gate template registry for governed capability families. Templates are policy metadata and cannot grant execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "registry_id",
+    "mode",
+    "registry_is_not_execution_authority",
+    "template_count",
+    "categories",
+    "templates",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "registry_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "mode": {
+      "type": "string",
+      "const": "foundation"
+    },
+    "registry_is_not_execution_authority": {
+      "type": "boolean",
+      "const": true
+    },
+    "template_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "categories": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "templates": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/gate_template"
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 480
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 220,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "string_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 320
+      }
+    },
+    "gate_template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate_id",
+        "display_name",
+        "category",
+        "purpose",
+        "applies_to",
+        "required_inputs",
+        "required_receipts",
+        "blocks_when_missing",
+        "failure_mode",
+        "operator_status_when_missing",
+        "validator_refs"
+      ],
+      "properties": {
+        "gate_id": {
+          "type": "string",
+          "pattern": "^gate\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "admission",
+            "approval",
+            "evidence",
+            "receipt",
+            "recovery",
+            "isolation",
+            "external_effect",
+            "local_effect",
+            "promotion"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 420
+        },
+        "applies_to": {
+          "$ref": "#/$defs/string_list"
+        },
+        "required_inputs": {
+          "$ref": "#/$defs/string_list"
+        },
+        "required_receipts": {
+          "$ref": "#/$defs/string_list"
+        },
+        "blocks_when_missing": {
+          "$ref": "#/$defs/string_list"
+        },
+        "failure_mode": {
+          "type": "string",
+          "enum": [
+            "SolvedVerified",
+            "AwaitingEvidence",
+            "SafeHalt",
+            "GovernanceBlocked",
+            "BudgetExhausted",
+            "ImpossibleProved",
+            "ModelInvalidated"
+          ]
+        },
+        "operator_status_when_missing": {
+          "type": "string",
+          "enum": [
+            "Ready",
+            "Prepare-only",
+            "Needs approval",
+            "Blocked",
+            "Evidence missing",
+            "Live action disabled"
+          ]
+        },
+        "validator_refs": {
+          "$ref": "#/$defs/string_list"
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}
