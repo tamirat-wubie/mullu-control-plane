@@ -1,0 +1,407 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-generic-continuation-rejection:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Value Binding Record Verifier Execution Decision Value Record Value Generic Continuation Rejection",
+  "description": "No-effect witness proving generic continuation is rejected as an operator decision value.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "generic_continuation_rejection_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_record_value_absence_id",
+    "generic_continuation_rejection_state",
+    "decision",
+    "outcome",
+    "generic_continuation_rejection_count",
+    "generic_continuation_rejection_item_ids",
+    "receipt_ids",
+    "generic_continuation_rejections",
+    "effect_boundary",
+    "private_payload_policy",
+    "summary",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "generic_continuation_rejection_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_generic_continuation_rejection_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "governed": {
+      "const": true
+    },
+    "source_projection": {
+      "const": "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_absence"
+    },
+    "source_record_value_absence_id": {
+      "$ref": "#/$defs/non_empty_text"
+    },
+    "generic_continuation_rejection_state": {
+      "const": "generic_continuation_rejected_not_operator_value"
+    },
+    "decision": {
+      "const": "blocked"
+    },
+    "outcome": {
+      "const": "SolvedVerified"
+    },
+    "generic_continuation_rejection_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "generic_continuation_rejection_item_ids": {
+      "$ref": "#/$defs/string_array"
+    },
+    "receipt_ids": {
+      "$ref": "#/$defs/string_array"
+    },
+    "generic_continuation_rejections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/generic_continuation_rejection_item"
+      }
+    },
+    "effect_boundary": {
+      "$ref": "#/$defs/effect_boundary"
+    },
+    "private_payload_policy": {
+      "$ref": "#/$defs/private_payload_policy"
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "assurance": {
+      "$ref": "#/$defs/assurance"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    }
+  },
+  "$defs": {
+    "non_empty_text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/non_empty_text"
+      }
+    },
+    "generic_continuation_rejection_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generic_continuation_rejection_item_id",
+        "source_record_value_absence_item_id",
+        "evidence_kind",
+        "requirement_kind",
+        "approval_id",
+        "request_id",
+        "plan_id",
+        "skill_id",
+        "risk_level",
+        "submitted_evidence_ref",
+        "submitted_verifier_ref",
+        "record_value_absence_ref",
+        "generic_continuation_rejection",
+        "authority_status",
+        "receipt"
+      ],
+      "properties": {
+        "generic_continuation_rejection_item_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_generic_continuation_rejection_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "source_record_value_absence_item_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "evidence_kind": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "requirement_kind": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "approval_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "request_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "plan_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "skill_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "risk_level": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "submitted_evidence_ref": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "submitted_verifier_ref": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "record_value_absence_ref": {
+          "$ref": "#/$defs/source_ref"
+        },
+        "generic_continuation_rejection": {
+          "$ref": "#/$defs/generic_continuation_rejection"
+        },
+        "authority_status": {
+          "$ref": "#/$defs/authority_status"
+        },
+        "receipt": {
+          "type": "object"
+        }
+      }
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "source_record_value_absence_state": {
+          "const": "operator_decision_value_record_value_absent_not_collected_not_admitted"
+        },
+        "source_outcome": {
+          "const": "AwaitingEvidence"
+        },
+        "source_actual_operator_decision_value_absent": {
+          "const": true
+        },
+        "source_operator_decision_value_present": {
+          "const": false
+        },
+        "source_operator_value_record_created": {
+          "const": false
+        },
+        "source_verifier_execution_allowed": {
+          "const": false
+        },
+        "source_authority_granted": {
+          "const": false
+        }
+      }
+    },
+    "generic_continuation_rejection": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "generic_continuation_rejected",
+        "observed_input_kind",
+        "rejected_input_kind",
+        "rejected_reason",
+        "actual_operator_decision_value_absent",
+        "rejection_rules",
+        "generic_continuation_accepted_as_value",
+        "operator_decision_value_present",
+        "operator_value_record_created",
+        "verifier_execution_allowed",
+        "authority_granted"
+      ],
+      "properties": {
+        "generic_continuation_rejected": {
+          "const": true
+        },
+        "observed_input_kind": {
+          "const": "generic_continuation"
+        },
+        "rejected_input_kind": {
+          "const": "generic_continuation"
+        },
+        "rejected_reason": {
+          "const": "not_explicit_operator_decision_value"
+        },
+        "actual_operator_decision_value_absent": {
+          "const": true
+        },
+        "generic_continuation_accepted_as_value": {
+          "const": false
+        },
+        "generic_continuation_accepted_as_decision": {
+          "const": false
+        },
+        "operator_decision_value_present": {
+          "const": false
+        },
+        "operator_value_record_created": {
+          "const": false
+        },
+        "verifier_execution_allowed": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        },
+        "rejection_rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/rejection_rule"
+          }
+        }
+      }
+    },
+    "rejection_rule": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "applies": {
+          "const": true
+        },
+        "decision": {
+          "const": "reject"
+        },
+        "grants_authority": {
+          "const": false
+        },
+        "grants_verifier_execution": {
+          "const": false
+        }
+      }
+    },
+    "authority_status": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "authority_granted": {
+          "const": false
+        },
+        "live_connector_execution_allowed": {
+          "const": false
+        },
+        "connector_mutation_allowed": {
+          "const": false
+        },
+        "memory_write_allowed": {
+          "const": false
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "generic_continuation_rejected": {
+          "const": true
+        },
+        "actual_operator_decision_value_absent": {
+          "const": true
+        },
+        "generic_continuation_accepted_as_value": {
+          "const": false
+        },
+        "operator_decision_value_present": {
+          "const": false
+        },
+        "operator_value_record_created": {
+          "const": false
+        },
+        "verifier_execution_allowed": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        },
+        "live_connector_execution_allowed": {
+          "const": false
+        },
+        "connector_mutation_allowed": {
+          "const": false
+        },
+        "memory_write_allowed": {
+          "const": false
+        },
+        "deployment_mutation_allowed": {
+          "const": false
+        },
+        "nested_mind_live_activation_allowed": {
+          "const": false
+        },
+        "public_readiness_claim_allowed": {
+          "const": false
+        }
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "raw_private_payload_serialized": {
+          "const": false
+        },
+        "secret_values_serialized": {
+          "const": false
+        },
+        "operator_decision_value_projection": {
+          "const": "absent"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "generic_continuation_rejection_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "generic_continuation_rejected_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "generic_continuation_accepted_as_value_count": {
+          "const": 0
+        },
+        "operator_decision_value_present_count": {
+          "const": 0
+        },
+        "operator_value_record_creation_count": {
+          "const": 0
+        },
+        "verifier_execution_allowed_count": {
+          "const": 0
+        },
+        "authority_grant_count": {
+          "const": 0
+        }
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "outcome": {
+          "const": "SolvedVerified"
+        },
+        "generic_continuation_rejected": {
+          "const": true
+        },
+        "authority_granted": {
+          "const": false
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "runtime_boundary": {
+          "const": "generic_continuation_rejected_not_operator_value"
+        },
+        "authority_granted": {
+          "const": false
+        }
+      }
+    }
+  }
+}
