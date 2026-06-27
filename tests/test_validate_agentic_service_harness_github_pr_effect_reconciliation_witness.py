@@ -25,12 +25,14 @@ def test_github_pr_effect_reconciliation_witness_passes() -> None:
     assert validation.errors == ()
     assert validation.example_count == 1
     assert validation.source_ci_gate_before_ready_for_review_witness_ref == validator.EXPECTED_SOURCE_CI_GATE_WITNESS_REF
+    assert validation.actual_diff_ci_gate_before_ready_for_review_witness_ref == validator.EXPECTED_SOURCE_CI_GATE_WITNESS_REF
 
 
 def test_github_pr_effect_reconciliation_witness_rejects_collected_authority() -> None:
     payload = validator.build_mutated_effect_reconciliation_witness(
         effect_reconciliation_collected=True,
         authority_granted=True,
+        effect_reconciliation__requires_actual_diff_ci_gate_before_ready_for_review_witness=False,
         effect_reconciliation__ci_gate_before_ready_for_review_satisfied=True,
         effect_reconciliation__effect_reconciliation_collected=True,
         effect_reconciliation__terminal_closure_authorized_after_reconciliation=True,
@@ -43,6 +45,7 @@ def test_github_pr_effect_reconciliation_witness_rejects_collected_authority() -
 
     assert "effect_reconciliation_collected must be false" in serialized_errors
     assert "authority_granted must be false" in serialized_errors
+    assert "effect_reconciliation.requires_actual_diff_ci_gate_before_ready_for_review_witness must be true" in serialized_errors
     assert "effect_reconciliation.ci_gate_before_ready_for_review_satisfied must be false" in serialized_errors
     assert "effect_reconciliation.effect_reconciliation_collected must be false" in serialized_errors
     assert "effect_reconciliation.terminal_closure_authorized_after_reconciliation must be false" in serialized_errors
@@ -71,6 +74,38 @@ def test_github_pr_effect_reconciliation_witness_rejects_effect_authority() -> N
     assert "effect_boundary.branch_deleted must be false" in serialized_errors
     assert "effect_boundary.repository_written must be false" in serialized_errors
     assert "effect_boundary.connector_called must be false" in serialized_errors
+
+
+def test_github_pr_effect_reconciliation_witness_rejects_actual_diff_ci_gate_drift() -> None:
+    payload = validator.build_mutated_effect_reconciliation_witness(
+        effect_reconciliation__actual_diff_ci_gate_before_ready_for_review_witness_ref="examples/drift.json",
+        effect_reconciliation__actual_diff_repository_effect_rollback_plan_witness_ref="examples/drift.json",
+        effect_reconciliation__actual_diff_uao_admission_witness_ref="examples/drift.json",
+        effect_reconciliation__actual_diff_branch_write_binding_ref="examples/drift.json",
+        effect_reconciliation__actual_diff_operator_response_witness_ref="examples/drift.json",
+        effect_reconciliation__actual_diff_approval_request_binding_ref="examples/drift.json",
+        effect_reconciliation__actual_non_empty_diff_receipt_ref="witness://drift",
+        effect_reconciliation__changed_file_refs=["evidence://drift-file"],
+        effect_reconciliation__diff_refs=["evidence://drift-diff"],
+        effect_reconciliation__redacted_diff_bundle_ref="digest://drift-bundle",
+        effect_reconciliation__redacted_output_ref="witness://drift-output",
+    )
+
+    errors: list[str] = []
+    validator._validate_effect_reconciliation_witness_semantics(payload, _source_ci_gate_witness(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "effect_reconciliation.actual_diff_ci_gate_before_ready_for_review_witness_ref" in serialized_errors
+    assert "effect_reconciliation.actual_diff_repository_effect_rollback_plan_witness_ref" in serialized_errors
+    assert "effect_reconciliation.actual_diff_uao_admission_witness_ref" in serialized_errors
+    assert "effect_reconciliation.actual_diff_branch_write_binding_ref" in serialized_errors
+    assert "effect_reconciliation.actual_diff_operator_response_witness_ref" in serialized_errors
+    assert "effect_reconciliation.actual_diff_approval_request_binding_ref" in serialized_errors
+    assert "effect_reconciliation.actual_non_empty_diff_receipt_ref" in serialized_errors
+    assert "effect_reconciliation.changed_file_refs" in serialized_errors
+    assert "effect_reconciliation.diff_refs" in serialized_errors
+    assert "effect_reconciliation.redacted_diff_bundle_ref" in serialized_errors
+    assert "effect_reconciliation.redacted_output_ref" in serialized_errors
 
 
 def test_github_pr_effect_reconciliation_witness_rejects_remaining_witness_drift() -> None:
@@ -122,6 +157,10 @@ def test_github_pr_effect_reconciliation_witness_cli_writes_report(tmp_path: Pat
     assert file_payload["ok"] is True
     assert stdout_payload["errors"] == []
     assert file_payload["source_ci_gate_before_ready_for_review_witness_ref"] == validator.EXPECTED_SOURCE_CI_GATE_WITNESS_REF
+    assert (
+        file_payload["actual_diff_ci_gate_before_ready_for_review_witness_ref"]
+        == validator.EXPECTED_SOURCE_CI_GATE_WITNESS_REF
+    )
 
 
 def _source_ci_gate_witness() -> dict[str, object]:
