@@ -5,6 +5,7 @@ and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: scripts.validate_agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.
 Invariants:
+  - CI gate planning must consume actual-diff rollback evidence.
   - Missing CI gate evidence never grants ready-for-review or PR effects.
   - Effect reconciliation remains as the only terminal closure witness.
   - Mutation routes and secret-like payloads fail closed.
@@ -28,12 +29,17 @@ def test_github_pr_ci_gate_before_ready_for_review_witness_passes() -> None:
         validation.source_repository_effect_rollback_plan_witness_ref
         == validator.EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF
     )
+    assert (
+        validation.actual_diff_repository_effect_rollback_plan_witness_ref
+        == validator.EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF
+    )
 
 
 def test_github_pr_ci_gate_before_ready_for_review_witness_rejects_collected_authority() -> None:
     payload = validator.build_mutated_ci_gate_before_ready_for_review_witness(
         ci_gate_collected=True,
         authority_granted=True,
+        ci_gate__requires_actual_diff_repository_effect_rollback_plan_witness=False,
         ci_gate__repository_effect_rollback_plan_satisfied=True,
         ci_gate__ci_gate_before_ready_for_review_collected=True,
         ci_gate__ready_for_review_authorized_after_ci_gate=True,
@@ -52,6 +58,7 @@ def test_github_pr_ci_gate_before_ready_for_review_witness_rejects_collected_aut
 
     assert "ci_gate_collected must be false" in serialized_errors
     assert "authority_granted must be false" in serialized_errors
+    assert "ci_gate.requires_actual_diff_repository_effect_rollback_plan_witness must be true" in serialized_errors
     assert "ci_gate.repository_effect_rollback_plan_satisfied must be false" in serialized_errors
     assert "ci_gate.ci_gate_before_ready_for_review_collected must be false" in serialized_errors
     assert "ci_gate.ready_for_review_authorized_after_ci_gate must be false" in serialized_errors
@@ -113,6 +120,39 @@ def test_github_pr_ci_gate_before_ready_for_review_witness_rejects_witness_drift
     assert "remaining_witnesses.0.blocks_terminal_closure must be true" in serialized_errors
 
 
+def test_github_pr_ci_gate_before_ready_for_review_witness_rejects_actual_diff_rollback_drift() -> None:
+    payload = validator.build_mutated_ci_gate_before_ready_for_review_witness(
+        ci_gate__actual_diff_uao_admission_witness_ref="examples/drifted-uao.json",
+        ci_gate__actual_diff_branch_write_binding_ref="examples/drifted-branch-write.json",
+        ci_gate__actual_diff_operator_response_witness_ref="examples/drifted-response.json",
+        ci_gate__actual_diff_approval_request_binding_ref="examples/drifted-approval-binding.json",
+        ci_gate__actual_non_empty_diff_receipt_ref="witness://drifted-actual-diff-receipt",
+        ci_gate__changed_file_refs=["evidence://drifted-file"],
+        ci_gate__diff_refs=["evidence://drifted-diff"],
+        ci_gate__redacted_diff_bundle_ref="digest://drifted-bundle",
+        ci_gate__redacted_output_ref="witness://drifted-output",
+    )
+
+    errors: list[str] = []
+    validator._validate_ci_gate_before_ready_for_review_witness_semantics(
+        payload,
+        _source_rollback_plan_witness(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "ci_gate.actual_diff_uao_admission_witness_ref" in serialized_errors
+    assert "ci_gate.actual_diff_branch_write_binding_ref" in serialized_errors
+    assert "ci_gate.actual_diff_operator_response_witness_ref" in serialized_errors
+    assert "ci_gate.actual_diff_approval_request_binding_ref" in serialized_errors
+    assert "ci_gate.actual_non_empty_diff_receipt_ref" in serialized_errors
+    assert "ci_gate.changed_file_refs" in serialized_errors
+    assert "ci_gate.diff_refs" in serialized_errors
+    assert "ci_gate.redacted_diff_bundle_ref" in serialized_errors
+    assert "ci_gate.redacted_output_ref" in serialized_errors
+
+
 def test_github_pr_ci_gate_before_ready_for_review_witness_rejects_mutation_route_and_secret_like_payload() -> None:
     payload = validator.build_mutated_ci_gate_before_ready_for_review_witness(
         requested_evidence_ref="POST /api/github/ready-for-review authority",
@@ -150,6 +190,10 @@ def test_github_pr_ci_gate_before_ready_for_review_witness_cli_writes_report(
     assert stdout_payload["errors"] == []
     assert (
         file_payload["source_repository_effect_rollback_plan_witness_ref"]
+        == validator.EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF
+    )
+    assert (
+        file_payload["actual_diff_repository_effect_rollback_plan_witness_ref"]
         == validator.EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF
     )
 
