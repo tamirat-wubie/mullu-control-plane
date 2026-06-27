@@ -131,6 +131,60 @@ def test_github_pr_terminal_closure_certificate_minting_rejects_missing_evidence
     assert "operator_decision_value_record" in serialized_errors
 
 
+def test_github_pr_terminal_closure_certificate_minting_rejects_decision_record_evidence_drift(
+    tmp_path: Path,
+) -> None:
+    payload = build_mutated_terminal_closure_certificate_minting(
+        actual_diff_decision_value_record_evidence__source_decision_value_record_id="wrong-record",
+        actual_diff_decision_value_record_evidence__source_request_id="wrong-request",
+        actual_diff_decision_value_record_evidence__source_request_ref="examples/wrong-request.json",
+        actual_diff_decision_value_record_evidence__operator_decision_ref="operator-decision://wrong",
+        actual_diff_decision_value_record_evidence__decision_value="deny_terminal_certificate",
+        actual_diff_decision_value_record_evidence__operator_decision_gate_satisfied=False,
+        actual_diff_decision_value_record_evidence__certificate_minting_decision="blocked",
+        actual_diff_decision_value_record_evidence__actual_diff_terminal_closure_certificate_witness_ref="examples/wrong-certificate-witness.json",
+        actual_diff_decision_value_record_evidence__actual_diff_operator_response_witness_ref="examples/wrong-response.json",
+        actual_diff_decision_value_record_evidence__actual_diff_approval_request_binding_ref="examples/wrong-request-binding.json",
+        actual_diff_decision_value_record_evidence__actual_non_empty_diff_receipt_ref="witness://wrong-diff",
+        actual_diff_decision_value_record_evidence__changed_file_refs=["evidence://wrong-file"],
+        actual_diff_decision_value_record_evidence__diff_refs=["evidence://wrong-diff"],
+        actual_diff_decision_value_record_evidence__redacted_diff_bundle_ref="digest://wrong-bundle",
+        actual_diff_decision_value_record_evidence__redacted_output_ref="witness://wrong-output",
+    )
+    path = _write_payload(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_github_pr_terminal_closure_certificate_minting(
+        example_paths=(path,)
+    )
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "actual_diff_decision_value_record_evidence.source_decision_value_record_id expected" in serialized_errors
+    assert "actual_diff_decision_value_record_evidence.source_request_id expected" in serialized_errors
+    assert "actual_diff_decision_value_record_evidence.source_request_ref expected" in serialized_errors
+    assert "actual_diff_decision_value_record_evidence.operator_decision_ref expected" in serialized_errors
+    assert "actual_diff_decision_value_record_evidence.decision_value expected" in serialized_errors
+    assert "actual_diff_decision_value_record_evidence.operator_decision_gate_satisfied expected" in serialized_errors
+    assert "actual_diff_decision_value_record_evidence.certificate_minting_decision expected" in serialized_errors
+    assert (
+        "actual_diff_decision_value_record_evidence.actual_diff_terminal_closure_certificate_witness_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "actual_diff_decision_value_record_evidence.actual_diff_operator_response_witness_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "actual_diff_decision_value_record_evidence.actual_diff_approval_request_binding_ref expected"
+        in serialized_errors
+    )
+    assert "actual_diff_decision_value_record_evidence.actual_non_empty_diff_receipt_ref expected" in serialized_errors
+    assert "actual_diff_decision_value_record_evidence.changed_file_refs expected" in serialized_errors
+    assert "actual_diff_decision_value_record_evidence.diff_refs expected" in serialized_errors
+    assert "actual_diff_decision_value_record_evidence.redacted_diff_bundle_ref expected" in serialized_errors
+    assert "actual_diff_decision_value_record_evidence.redacted_output_ref expected" in serialized_errors
+
+
 def test_github_pr_terminal_closure_certificate_minting_rejects_mutation_authority(
     tmp_path: Path,
 ) -> None:

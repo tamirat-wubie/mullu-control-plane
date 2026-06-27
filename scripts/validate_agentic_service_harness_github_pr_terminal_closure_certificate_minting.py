@@ -89,6 +89,75 @@ REQUIRED_EVIDENCE_REFS = (
     "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record.foundation.json",
     "examples/agentic_service_harness_github_pr_terminal_closure_certificate_witness.foundation.json",
 )
+ACTUAL_DIFF_DECISION_VALUE_RECORD_EVIDENCE_BINDINGS = (
+    ("source_decision_value_record_id", ("record_id",)),
+    ("source_decision_value_record_ref", None),
+    ("source_request_id", ("actual_diff_decision_value_request_evidence", "source_request_id")),
+    ("source_request_ref", ("source_request_ref",)),
+    ("source_request_status", ("source_request_status",)),
+    ("source_rejection_binding_id", ("actual_diff_decision_value_request_evidence", "source_rejection_binding_id")),
+    ("source_rejection_witness_ref", ("actual_diff_decision_value_request_evidence", "source_rejection_witness_ref")),
+    (
+        "source_decision_contract_binding_id",
+        ("actual_diff_decision_value_request_evidence", "source_decision_contract_binding_id"),
+    ),
+    ("source_decision_contract_ref", ("actual_diff_decision_value_request_evidence", "source_decision_contract_ref")),
+    ("operator_decision_ref", ("witness_ref",)),
+    ("allowed_decision_values", ("actual_diff_decision_value_request_evidence", "allowed_decision_values")),
+    ("decision_value", ("decision_value",)),
+    ("operator_decision_gate_satisfied", ("operator_decision_gate_satisfied",)),
+    ("certificate_minting_decision", ("certificate_minting_decision",)),
+    ("operator_decision_value_collected", ("operator_decision_value_collected",)),
+    ("explicit_operator_decision_value_present", ("explicit_operator_decision_value_present",)),
+    (
+        "source_approval_gate_binding_id",
+        ("actual_diff_decision_value_request_evidence", "source_approval_gate_binding_id"),
+    ),
+    ("source_approval_gate_ref", ("actual_diff_decision_value_request_evidence", "source_approval_gate_ref")),
+    (
+        "actual_diff_terminal_closure_certificate_witness_ref",
+        ("actual_diff_decision_value_request_evidence", "actual_diff_terminal_closure_certificate_witness_ref"),
+    ),
+    (
+        "actual_diff_effect_reconciliation_witness_ref",
+        ("actual_diff_decision_value_request_evidence", "actual_diff_effect_reconciliation_witness_ref"),
+    ),
+    (
+        "actual_diff_ci_gate_before_ready_for_review_witness_ref",
+        ("actual_diff_decision_value_request_evidence", "actual_diff_ci_gate_before_ready_for_review_witness_ref"),
+    ),
+    (
+        "actual_diff_repository_effect_rollback_plan_witness_ref",
+        ("actual_diff_decision_value_request_evidence", "actual_diff_repository_effect_rollback_plan_witness_ref"),
+    ),
+    (
+        "actual_diff_uao_admission_witness_ref",
+        ("actual_diff_decision_value_request_evidence", "actual_diff_uao_admission_witness_ref"),
+    ),
+    (
+        "actual_diff_branch_write_binding_ref",
+        ("actual_diff_decision_value_request_evidence", "actual_diff_branch_write_binding_ref"),
+    ),
+    (
+        "actual_diff_operator_response_witness_ref",
+        ("actual_diff_decision_value_request_evidence", "actual_diff_operator_response_witness_ref"),
+    ),
+    (
+        "actual_diff_approval_request_binding_ref",
+        ("actual_diff_decision_value_request_evidence", "actual_diff_approval_request_binding_ref"),
+    ),
+    ("actual_non_empty_diff_receipt_ref", ("actual_diff_decision_value_request_evidence", "actual_non_empty_diff_receipt_ref")),
+    ("changed_file_refs", ("actual_diff_decision_value_request_evidence", "changed_file_refs")),
+    ("diff_refs", ("actual_diff_decision_value_request_evidence", "diff_refs")),
+    ("redacted_diff_bundle_ref", ("actual_diff_decision_value_request_evidence", "redacted_diff_bundle_ref")),
+    ("redacted_output_ref", ("actual_diff_decision_value_request_evidence", "redacted_output_ref")),
+    ("effect_reconciliation_collected", ("actual_diff_decision_value_request_evidence", "effect_reconciliation_collected")),
+    ("binds_branch_state", ("actual_diff_decision_value_request_evidence", "binds_branch_state")),
+    ("binds_pull_request_state", ("actual_diff_decision_value_request_evidence", "binds_pull_request_state")),
+    ("binds_check_state", ("actual_diff_decision_value_request_evidence", "binds_check_state")),
+    ("binds_merge_state", ("actual_diff_decision_value_request_evidence", "binds_merge_state")),
+    ("binds_branch_deletion_state", ("actual_diff_decision_value_request_evidence", "binds_branch_deletion_state")),
+)
 REQUIRED_RECEIPT_REFS = {
     "github_pr_terminal_closure_certificate_minting_schema": (
         "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_minting.schema.json"
@@ -134,6 +203,16 @@ REQUIRED_TRUE_FLAGS = (
     "effect_reconciliation_match",
     "forbidden_effects_checked",
     "read_only_inputs",
+    "requires_actual_diff_decision_value_record_evidence",
+    "requires_actual_diff_decision_value_request_evidence",
+    "operator_decision_value_collected",
+    "explicit_operator_decision_value_present",
+    "effect_reconciliation_collected",
+    "binds_branch_state",
+    "binds_pull_request_state",
+    "binds_check_state",
+    "binds_merge_state",
+    "binds_branch_deletion_state",
 )
 REQUIRED_FALSE_FLAGS = (
     "repository_mutation_authority_granted",
@@ -380,6 +459,7 @@ def _validate_source_bindings(
             errors,
             "source_decision_record",
         )
+        _validate_actual_diff_decision_value_record_evidence(payload, source_decision_record, errors, label)
         for source_path, target_path in (
             (("scope", "tenant_id"), ("scope", "tenant_id")),
             (("scope", "organization_id"), ("scope", "organization_id")),
@@ -411,6 +491,54 @@ def _validate_source_bindings(
             EXPECTED_SOURCE_LIVE_EVIDENCE_REF,
             errors,
             "source_candidate",
+        )
+
+
+def _validate_actual_diff_decision_value_record_evidence(
+    payload: Mapping[str, Any],
+    source_decision_record: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    evidence_path = ("actual_diff_decision_value_record_evidence",)
+    evidence = _get_nested(payload, evidence_path)
+    if not isinstance(evidence, Mapping):
+        errors.append(f"{label}: actual_diff_decision_value_record_evidence must be an object")
+        return
+
+    _require_equal(
+        payload,
+        ("actual_diff_decision_value_record_evidence", "requires_actual_diff_decision_value_record_evidence"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("actual_diff_decision_value_record_evidence", "requires_actual_diff_decision_value_request_evidence"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("actual_diff_decision_value_record_evidence", "source_decision_value_record_ref"),
+        _get_nested(payload, ("source_decision_value_record_ref",)),
+        errors,
+        label,
+    )
+    for evidence_key, source_path in ACTUAL_DIFF_DECISION_VALUE_RECORD_EVIDENCE_BINDINGS:
+        expected = (
+            EXPECTED_SOURCE_DECISION_VALUE_RECORD_REF
+            if source_path is None
+            else _get_nested(source_decision_record, source_path)
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_decision_value_record_evidence", evidence_key),
+            expected,
+            errors,
+            label,
         )
 
 
