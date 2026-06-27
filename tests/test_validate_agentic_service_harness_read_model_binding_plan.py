@@ -630,7 +630,7 @@ def test_readiness_map_rejects_missing_actual_diff_collection_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(workspace): admit actual diff collection receipt after filesystem-write preflight`",
+            "1. `harness(workspace): bind concrete filesystem write receipt and redacted diff bundle`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -641,7 +641,7 @@ def test_readiness_map_rejects_missing_actual_diff_collection_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(workspace): admit actual diff collection receipt after filesystem-write preflight"
+        "missing next PR marker: harness(workspace): bind concrete filesystem write receipt and redacted diff bundle"
         in serialized_errors
     )
 
