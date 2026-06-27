@@ -28,12 +28,12 @@ def test_component_read_model_builds_registry_router_proof_projection() -> None:
 
     assert read_model["governed"] is True
     assert read_model["route"] == "/api/v1/components/read-model"
-    assert read_model["summary"]["bound_route_count"] == 34
+    assert read_model["summary"]["bound_route_count"] == 35
     assert read_model["summary"]["route_family_classification_count"] == 79
-    assert read_model["summary"]["classified_declared_route_count"] == 452
+    assert read_model["summary"]["classified_declared_route_count"] == 453
     assert read_model["summary"]["lifecycle_receipt_count"] == 10
     assert read_model["summary"]["authority_witness_count"] == 10
-    assert components["governance_core"]["route_binding"]["route_count"] == 23
+    assert components["governance_core"]["route_binding"]["route_count"] == 24
     assert "component_harness_read_model" in components["governance_core"]["route_binding"]["proof_surface_ids"]
     assert "component_request_simulator" in components["governance_core"]["route_binding"]["proof_surface_ids"]
     assert "component_autopsy" in components["governance_core"]["route_binding"]["proof_surface_ids"]
@@ -67,7 +67,7 @@ def test_component_read_model_blocks_live_authority() -> None:
     assert payload["summary"]["proof_bound_count"] == 9
     assert payload["summary"]["awaiting_binding_count"] == 1
     assert payload["summary"]["blocked_component_count"] == 1
-    assert payload["summary"]["classified_declared_route_count"] == 452
+    assert payload["summary"]["classified_declared_route_count"] == 453
     for component in payload["components"]:
         authority = component["authority"]
         assert authority["can_execute"] is False
@@ -79,3 +79,33 @@ def test_component_read_model_blocks_live_authority() -> None:
         assert component["authority_witness"]["witness_is_not_execution_authority"] is True
         assert component["authority_witness"]["can_claim_terminal_closure"] is False
         assert "terminal_closure" in component["blocked_actions"]
+
+
+def test_capability_governance_read_model_route_is_selectable_and_read_only() -> None:
+    client = _client()
+
+    response = client.get("/api/v1/components/capability-governance")
+    post_response = client.post("/api/v1/components/capability-governance", json={"action": "mutate"})
+    put_response = client.put("/api/v1/components/capability-governance", json={"action": "mutate"})
+    delete_response = client.delete("/api/v1/components/capability-governance")
+
+    payload = response.json()
+    summary = payload["summary"]
+    assert response.status_code == 200
+    assert payload["read_model_id"] == "capability_governance_operator_read_model.foundation.v1"
+    assert payload["governed"] is True
+    assert payload["selectable"] is True
+    assert payload["read_model_is_not_execution_authority"] is True
+    assert payload["execution_authority_granted"] is False
+    assert payload["live_execution_enabled"] is False
+    assert payload["live_connector_send_enabled"] is False
+    assert payload["terminal_closure_required"] is True
+    assert summary["capability_count"] == payload["dashboard"]["summary"]["capability_count"]
+    assert summary["debt_row_count"] == payload["debt_report"]["summary"]["debt_row_count"]
+    assert summary["total_debt_item_count"] == payload["debt_report"]["summary"]["total_debt_item_count"]
+    assert summary["live_action_disabled"] is True
+    assert payload["dashboard"]["dashboard_is_not_execution_authority"] is True
+    assert payload["debt_report"]["debt_report_is_not_execution_authority"] is True
+    assert post_response.status_code == 405
+    assert put_response.status_code == 405
+    assert delete_response.status_code == 405

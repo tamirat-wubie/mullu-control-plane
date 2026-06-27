@@ -22,9 +22,9 @@
     "authority_witness_count": 10,
     "proof_bound_count": 9,
     "awaiting_binding_count": 1,
-    "bound_route_count": 34,
+    "bound_route_count": 35,
     "route_family_classification_count": 79,
-    "classified_declared_route_count": 452,
+    "classified_declared_route_count": 453,
     "blocked_component_count": 1
   },
   "components": [
@@ -115,7 +115,7 @@
           "gateway_capability_fabric",
           "gateway_webhook_ingress"
         ],
-        "route_count": 23
+        "route_count": 24
       },
       "proof_binding": {
         "state": "proof_bound",

@@ -1515,11 +1515,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 291,
+      "proven": 292,
       "unproven": 0,
       "witnessed": 161
     },
-    "route_count": 452,
+    "route_count": 453,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1900,6 +1900,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/compliance/summary",
         "surface_id": "compliance_evidence_exports"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/components/capability-governance",
+        "surface_id": "component_harness_read_model"
       },
       {
         "coverage_state": "proven",
@@ -4025,20 +4030,35 @@
       "audit": "audit_chain",
       "coverage_state": "proven",
       "evidence_files": [
+        "mcoi/mcoi_runtime/app/capability_debt_report.py",
+        "mcoi/mcoi_runtime/app/capability_passport_dashboard.py",
         "mcoi/mcoi_runtime/app/component_read_model.py",
         "mcoi/mcoi_runtime/app/routers/components.py",
+        "docs/76_capability_passport_dashboard.md",
+        "schemas/capability_debt_report.schema.json",
+        "schemas/capability_passport_dashboard.schema.json",
         "schemas/component_read_model.schema.json",
+        "examples/capability_debt_report.foundation.json",
+        "examples/capability_passport_dashboard.foundation.json",
         "examples/component_read_model.foundation.json",
+        "scripts/validate_capability_debt_report.py",
+        "scripts/validate_capability_passport_dashboard.py",
         "scripts/validate_component_read_model.py",
         "mcoi/tests/test_component_read_model_route.py",
+        "tests/test_validate_capability_debt_report.py",
+        "tests/test_validate_capability_passport_dashboard.py",
         "tests/test_validate_component_read_model.py"
       ],
-      "notes": "Component Harness read model joins registry, router inventory, and proof binding into one bounded projection with live execution, connector send, mutation, and terminal closure authority denied.",
+      "notes": "Component Harness read model joins registry, router inventory, proof binding, and capability governance dashboard/debt projections into bounded read-only operator surfaces with live execution, connector send, mutation, and terminal closure authority denied.",
       "representative_paths": [
-        "/api/v1/components/read-model"
+        "/api/v1/components/read-model",
+        "/api/v1/components/capability-governance"
       ],
       "request_proof": "read_model",
       "runtime_witness_anchor_aliases": {
+        "capability_governance_read_model_route_is_selectable_and_read_only": [
+          "capability_governance_read_model_route_is_selectable_and_read_only"
+        ],
         "component_read_model_blocks_live_authority": [
           "component_read_model_blocks_live_authority"
         ],
@@ -4058,6 +4078,7 @@
       "runtime_witnesses": [
         "component_read_model_builds_registry_router_proof_projection",
         "component_read_model_route_is_read_only",
+        "capability_governance_read_model_route_is_selectable_and_read_only",
         "component_read_model_schema_valid",
         "component_read_model_blocks_live_authority",
         "component_read_model_example_matches_runtime_projection"
@@ -15661,8 +15682,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1984,
-    "runtime_witness_count": 1984,
+    "exact_test_anchor_count": 1985,
+    "runtime_witness_count": 1985,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -15939,6 +15960,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_component_read_model_route.py::test_capability_governance_read_model_route_is_selectable_and_read_only"
+            ],
+            "witness": "capability_governance_read_model_route_is_selectable_and_read_only"
+          },
+          {
+            "anchors": [
               "tests/test_validate_component_read_model.py::test_component_read_model_schema_valid"
             ],
             "witness": "component_read_model_schema_valid"
@@ -15956,8 +15983,8 @@
             "witness": "component_read_model_example_matches_runtime_projection"
           }
         ],
-        "exact_test_anchor_count": 5,
-        "runtime_witness_count": 5,
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
         "surface_id": "component_harness_read_model",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
