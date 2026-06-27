@@ -127,6 +127,21 @@ def test_github_pr_admission_preflight_rejects_missing_non_empty_diff_file_summa
     assert "receipt_refs.non_empty_diff_file_summary_receipt_schema expected" in serialized_errors
 
 
+def test_github_pr_admission_preflight_rejects_non_empty_diff_file_summary_source_drift() -> None:
+    payload = validator.build_mutated_preflight(scope__repository_connection_id="github-installation://wrong")
+    file_summary_receipt = _file_summary_receipt()
+    file_summary_receipt["solver_outcome"] = "SolvedVerified"
+    file_summary_receipt["authority_denials"]["pr_creation_enabled"] = True
+
+    errors: list[str] = []
+    validator._validate_preflight_semantics(payload, _source_receipt(), errors, "mutated", file_summary_receipt)
+    serialized_errors = "\n".join(errors)
+
+    assert "scope.repository_connection_id expected" in serialized_errors
+    assert "solver_outcome expected 'AwaitingEvidence'" in serialized_errors
+    assert "authority_denials.pr_creation_enabled expected False" in serialized_errors
+
+
 def test_github_pr_admission_preflight_rejects_mutation_route_and_secret_like_payload() -> None:
     payload = validator.build_mutated_preflight(next_action="POST /api/github/prs should never be admitted")
     payload["simulated_pr_admission"]["serialized_token_value"] = "github_pat_forbiddencredential"
@@ -161,3 +176,7 @@ def test_github_pr_admission_preflight_cli_writes_report(tmp_path: Path, capsys)
 
 def _source_receipt() -> dict[str, object]:
     return json.loads(validator.DEFAULT_SOURCE_RECEIPT_EXAMPLES[0].read_text(encoding="utf-8"))
+
+
+def _file_summary_receipt() -> dict[str, object]:
+    return json.loads(validator.DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_EXAMPLES[0].read_text(encoding="utf-8"))

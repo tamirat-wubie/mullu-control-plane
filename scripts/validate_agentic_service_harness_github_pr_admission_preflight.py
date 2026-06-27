@@ -359,9 +359,30 @@ def _validate_preflight_semantics(
             label,
         )
         _require_equal(
+            payload,
+            ("scope", "repository_connection_id"),
+            _get_nested(file_summary_receipt, ("scope", "repository_connection_id")),
+            errors,
+            label,
+        )
+        _require_equal(
             file_summary_receipt,
             ("receipt_id",),
             "agentic_service_harness_non_empty_diff_file_summary_receipt",
+            errors,
+            "non-empty diff file summary receipt source",
+        )
+        _require_equal(
+            file_summary_receipt,
+            ("solver_outcome",),
+            "AwaitingEvidence",
+            errors,
+            "non-empty diff file summary receipt source",
+        )
+        _require_equal(
+            file_summary_receipt,
+            ("authority_denials", "pr_creation_enabled"),
+            False,
             errors,
             "non-empty diff file summary receipt source",
         )
