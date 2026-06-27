@@ -43,7 +43,13 @@
       "metadata": {
         "display_name": "Open browser page",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 1,
+          "level_id": "L1",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -99,7 +105,13 @@
       "metadata": {
         "display_name": "Capture browser screenshot",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 1,
+          "level_id": "L1",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -155,7 +167,13 @@
       "metadata": {
         "display_name": "Extract browser text",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 1,
+          "level_id": "L1",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -211,7 +229,18 @@
       "metadata": {
         "display_name": "Click browser element",
         "risk_tier": "medium"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 4,
+          "level_id": "L4",
+          "gate_template_ids": [
+            "evidence_intake_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -268,7 +297,18 @@
       "metadata": {
         "display_name": "Type into browser element",
         "risk_tier": "medium"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 4,
+          "level_id": "L4",
+          "gate_template_ids": [
+            "evidence_intake_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -325,7 +365,19 @@
       "metadata": {
         "display_name": "Submit browser form",
         "risk_tier": "high"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 8,
+          "level_id": "L8",
+          "gate_template_ids": [
+            "connector_lease_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,

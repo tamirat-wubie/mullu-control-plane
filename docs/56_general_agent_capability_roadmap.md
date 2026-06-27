@@ -506,6 +506,45 @@ Mullu Govern may claim general-agent readiness only when all required build fami
 6. Operator-visible audit and proof surfaces.
 7. Deployment witness evidence when the capability depends on public runtime infrastructure.
 
+## Reusable Unlock Ladder
+
+New capability families should not receive one-off gate stacks. They should
+declare the reusable unlock level they need, then inherit the same gate
+templates used by the rest of the capability fabric.
+
+The canonical ladder is implemented in
+`mcoi/mcoi_runtime/core/capability_unlock_ladder.py` and documented in
+`docs/39_governed_capability_fabric.md`.
+
+Default pattern:
+
+```text
+read -> prepare -> verify -> approve -> execute -> receipt -> review
+```
+
+Near-term target:
+
+```text
+mullu.local_developer_workflow.v1
+```
+
+This workflow proves the foundation-stage chain:
+
+```text
+task intake
+  -> local plan
+  -> bounded file or diff work
+  -> dry-run validation
+  -> receipt
+  -> operator approval
+  -> PR evidence preparation
+```
+
+Gmail, GitHub, documents, finance, browser, calendar, and worker capabilities
+should then declare their required level and gate templates instead of adding a
+separate approval, evidence, verifier, receipt, rollback, or connector gate for
+each tiny feature.
+
 STATUS:
   Completeness: 100%
   Invariants verified: [skill/capability separation, registry-first execution, receipt-bound effects, approval-gated high risk, deployment-witness production claim]

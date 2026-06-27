@@ -59,6 +59,49 @@ draft --> validated --> running --> completed
 | `communication` | Send or receive a message through the communication plane. |
 | `wait_for_event` | Block until an external event arrives. |
 
+## Local Developer Workflow v1
+
+`mullu.local_developer_workflow.v1` is the reusable foundation-stage software
+delivery chain. It composes existing skills and capability gates; it does not
+create new execution authority.
+
+Canonical implementation:
+
+```text
+mcoi/mcoi_runtime/core/capability_unlock_ladder.py
+```
+
+Stage order:
+
+```text
+plan_local_change
+  -> run_local_change_chain
+  -> verify_local_receipt
+  -> operator_review_gate
+  -> prepare_pr_evidence
+```
+
+Governed binding:
+
+| Stage | Type | Skill or gate | Closure evidence |
+| --- | --- | --- | --- |
+| `plan_local_change` | `skill_execution` | `agentic_control.coding_governor.v1` | `code_change_plan_ref` |
+| `run_local_change_chain` | `skill_execution` | `software_dev.change_closure.v1` | `change_receipt_id` |
+| `verify_local_receipt` | `skill_execution` | `agentic_control.quality_governor.v1` | `quality_verification_plan_ref` |
+| `operator_review_gate` | `approval_gate` | operator review boundary | `approval_decision_ref` |
+| `prepare_pr_evidence` | `skill_execution` | `agentic_control.release_governor.v1` | PR evidence and handoff packet |
+
+This is the first reusable chain for the unlock ladder:
+
+```text
+task -> local plan -> bounded change -> dry-run checks -> receipt
+  -> operator approval -> PR evidence
+```
+
+The workflow intentionally prepares PR evidence only after the operator review
+gate. It must not push, open a pull request, deploy, or mutate external state
+without a later approval-bound live action.
+
 ## Transition Rules
 
 1. Each stage must reach a terminal status (completed, failed, or skipped) before any successor stage may begin.

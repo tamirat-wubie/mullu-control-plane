@@ -43,7 +43,13 @@
       "metadata": {
         "display_name": "Extract document text",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 0,
+          "level_id": "L0",
+          "gate_template_ids": ["evidence_intake_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -98,7 +104,13 @@
       "metadata": {
         "display_name": "Extract document tables",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 0,
+          "level_id": "L0",
+          "gate_template_ids": ["evidence_intake_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -153,7 +165,13 @@
       "metadata": {
         "display_name": "Summarize document",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 2,
+          "level_id": "L2",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -208,7 +226,13 @@
       "metadata": {
         "display_name": "Generate DOCX artifact",
         "risk_tier": "medium"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 2,
+          "level_id": "L2",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -264,7 +288,13 @@
       "metadata": {
         "display_name": "Generate PDF artifact",
         "risk_tier": "medium"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 2,
+          "level_id": "L2",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -320,7 +350,13 @@
       "metadata": {
         "display_name": "Analyze spreadsheet",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 2,
+          "level_id": "L2",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -375,7 +411,13 @@
       "metadata": {
         "display_name": "Generate spreadsheet artifact",
         "risk_tier": "medium"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 2,
+          "level_id": "L2",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,

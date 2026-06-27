@@ -43,7 +43,13 @@
       "metadata": {
         "display_name": "Read email message",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -99,7 +105,13 @@
       "metadata": {
         "display_name": "Search email messages",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -155,7 +167,13 @@
       "metadata": {
         "display_name": "Create email draft",
         "risk_tier": "medium"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 2,
+          "level_id": "L2",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -212,7 +230,19 @@
       "metadata": {
         "display_name": "Send email with approval",
         "risk_tier": "high"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 8,
+          "level_id": "L8",
+          "gate_template_ids": [
+            "connector_lease_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -269,7 +299,13 @@
       "metadata": {
         "display_name": "Classify email content",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -325,7 +361,13 @@
       "metadata": {
         "display_name": "Suggest email reply",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -381,7 +423,13 @@
       "metadata": {
         "display_name": "Read calendar event",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -437,7 +485,13 @@
       "metadata": {
         "display_name": "Check calendar conflicts",
         "risk_tier": "low"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -493,7 +547,19 @@
       "metadata": {
         "display_name": "Schedule calendar event with approval",
         "risk_tier": "high"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 8,
+          "level_id": "L8",
+          "gate_template_ids": [
+            "connector_lease_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -550,7 +616,19 @@
       "metadata": {
         "display_name": "Reschedule calendar event with approval",
         "risk_tier": "high"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 8,
+          "level_id": "L8",
+          "gate_template_ids": [
+            "connector_lease_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -607,7 +685,19 @@
       "metadata": {
         "display_name": "Send calendar invite with approval",
         "risk_tier": "high"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 8,
+          "level_id": "L8",
+          "gate_template_ids": [
+            "connector_lease_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,

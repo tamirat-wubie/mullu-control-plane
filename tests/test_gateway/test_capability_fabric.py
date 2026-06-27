@@ -28,6 +28,10 @@ from gateway.capability_fabric import (
     load_software_dev_capability_entries,
     load_software_dev_domain_capsule,
 )
+from mcoi_runtime.core.capability_unlock_ladder import (
+    UNLOCK_LADDER_ID,
+    default_capability_unlock_ladder,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -337,6 +341,25 @@ def test_default_runtime_handlers_are_backed_by_capability_contracts() -> None:
     assert runtime_handler_ids <= contract_ids
 
 
+def test_default_capability_entries_declare_reusable_unlock_profiles() -> None:
+    entries = {
+        entry.capability_id: entry
+        for entry in (*load_default_capability_entries(), *load_software_dev_capability_entries())
+    }
+    expected_profiles = _expected_unlock_profiles()
+    ladder_by_level = {level.level: level for level in default_capability_unlock_ladder()}
+
+    assert expected_profiles.keys() <= entries.keys()
+    for capability_id, expected_level in expected_profiles.items():
+        profile = entries[capability_id].metadata["unlock_ladder"]
+        ladder_level = ladder_by_level[expected_level]
+
+        assert profile["ladder_id"] == UNLOCK_LADDER_ID
+        assert profile["level"] == expected_level
+        assert profile["level_id"] == ladder_level.level_id
+        assert tuple(profile["gate_template_ids"]) == ladder_level.required_gate_ids
+
+
 def test_default_capability_admission_gate_can_require_production_ready_maturity() -> None:
     gate = build_default_capability_admission_gate(clock=_clock, require_production_ready=True)
 
@@ -635,3 +658,50 @@ def test_default_read_model_projects_governed_capability_records() -> None:
         assert "allowed_tools" not in plane
         assert "input_schema_ref" not in plane
         assert "extensions" not in plane
+
+
+def _expected_unlock_profiles() -> dict[str, int]:
+    return {
+        "connector.google_drive.read": 7,
+        "connector.google_drive.write.with_approval": 8,
+        "connector.github.read": 7,
+        "connector.github.write.with_approval": 8,
+        "github.open_pull_request": 8,
+        "connector.postgres.query": 7,
+        "connector.postgres.write.with_approval": 8,
+        "document.extract_text": 0,
+        "document.extract_tables": 0,
+        "document.summarize": 2,
+        "document.generate_docx": 2,
+        "document.generate_pdf": 2,
+        "spreadsheet.analyze": 2,
+        "spreadsheet.generate": 2,
+        "financial.balance_check": 7,
+        "financial.transaction_history": 7,
+        "financial.spending_insights": 7,
+        "financial.send_payment": 8,
+        "financial.refund": 8,
+        "browser.open": 1,
+        "browser.screenshot": 1,
+        "browser.extract_text": 1,
+        "browser.click": 4,
+        "browser.type": 4,
+        "browser.submit": 8,
+        "email.read": 7,
+        "email.search": 7,
+        "email.draft": 2,
+        "email.send.with_approval": 8,
+        "email.classify": 7,
+        "email.reply_suggest": 7,
+        "calendar.read": 7,
+        "calendar.conflict_check": 7,
+        "calendar.schedule": 8,
+        "calendar.reschedule": 8,
+        "calendar.invite": 8,
+        "software_dev.repo_map.read": 0,
+        "software_dev.context_bundle.build": 2,
+        "software_dev.gate_plan.select": 2,
+        "software_dev.change.run": 4,
+        "software_dev.app_task_graph.plan": 2,
+        "software_dev.pr_candidate.prepare": 5,
+    }

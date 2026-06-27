@@ -45,7 +45,13 @@
         "risk_tier": "low",
         "connector_provider": "google_drive",
         "credential_boundary": "oauth_scope_allowlist"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -103,7 +109,19 @@
         "risk_tier": "high",
         "connector_provider": "google_drive",
         "credential_boundary": "oauth_scope_allowlist"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 8,
+          "level_id": "L8",
+          "gate_template_ids": [
+            "connector_lease_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -162,7 +180,13 @@
         "risk_tier": "low",
         "connector_provider": "github",
         "credential_boundary": "oauth_scope_allowlist"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -232,7 +256,19 @@
         "risk_tier": "high",
         "connector_provider": "github",
         "credential_boundary": "oauth_scope_allowlist"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 8,
+          "level_id": "L8",
+          "gate_template_ids": [
+            "connector_lease_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -305,7 +341,19 @@
         "credential_boundary": "oauth_scope_allowlist",
         "operation": "open_pull_request",
         "risk_tier": "high"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 8,
+          "level_id": "L8",
+          "gate_template_ids": [
+            "connector_lease_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,
@@ -369,7 +417,13 @@
         "risk_tier": "medium",
         "connector_provider": "postgres",
         "credential_boundary": "service_account_scope_allowlist"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 7,
+          "level_id": "L7",
+          "gate_template_ids": ["connector_lease_gate", "verifier_gate", "execution_receipt_gate"]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": true,
@@ -427,7 +481,19 @@
         "risk_tier": "high",
         "connector_provider": "postgres",
         "credential_boundary": "service_account_scope_allowlist"
-      },
+,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 8,
+          "level_id": "L8",
+          "gate_template_ids": [
+            "connector_lease_gate",
+            "approval_gate",
+            "verifier_gate",
+            "execution_receipt_gate",
+            "rollback_gate"
+          ]
+        }      },
       "extensions": {
         "governed_record": {
           "read_only": false,

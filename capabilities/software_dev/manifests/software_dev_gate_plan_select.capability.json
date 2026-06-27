@@ -24,6 +24,12 @@
   "receipt_contract_ref": "urn:mullusi:schema:software-gate-plan:1",
   "metadata": {
     "hot_reload_allowed_environments": ["local", "pilot"],
-    "direct_effects_allowed": false
+    "direct_effects_allowed": false,
+    "unlock_ladder": {
+      "ladder_id": "mullu.capability_unlock_ladder.v1",
+      "level": 2,
+      "level_id": "L2",
+      "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate"]
+    }
   }
 }
