@@ -325,7 +325,7 @@ def test_handoff_preflight_accepts_portfolio_source_plan_type(tmp_path: Path) ->
             {
                 "ok": True,
                 "action_count": 15,
-                "approval_required_action_count": 8,
+                "approval_required_action_count": 6,
                 "source_plan_types": ["adapter", "deployment", "portfolio"],
             }
         ),
@@ -337,8 +337,8 @@ def test_handoff_preflight_accepts_portfolio_source_plan_type(tmp_path: Path) ->
                 "ok": True,
                 "expected_action_count": 15,
                 "observed_action_count": 15,
-                "expected_approval_required_count": 8,
-                "observed_approval_required_count": 8,
+                "expected_approval_required_count": 6,
+                "observed_approval_required_count": 6,
             }
         ),
         encoding="utf-8",
@@ -357,7 +357,7 @@ def test_handoff_preflight_accepts_portfolio_source_plan_type(tmp_path: Path) ->
     assert report.ready is True
     assert report.blockers == ()
     assert "source_plan_types=['adapter', 'deployment', 'portfolio']" in step_details["closure plan schema validation"]
-    assert "expected_approval_required_count=8" in step_details["closure plan drift validation"]
+    assert "expected_approval_required_count=6" in step_details["closure plan drift validation"]
 
 
 def test_handoff_preflight_rejects_schema_and_drift_count_disagreement(tmp_path: Path) -> None:
@@ -460,7 +460,7 @@ def _write_valid_reports(
             {
                 "ok": True,
                 "action_count": action_count,
-                "approval_required_action_count": 8,
+                "approval_required_action_count": 6,
                 "source_plan_types": ["deployment", "portfolio"],
             }
         ),
@@ -472,8 +472,8 @@ def _write_valid_reports(
                 "ok": True,
                 "expected_action_count": action_count,
                 "observed_action_count": action_count,
-                "expected_approval_required_count": 8,
-                "observed_approval_required_count": 8,
+                "expected_approval_required_count": 6,
+                "observed_approval_required_count": 6,
             }
         ),
         encoding="utf-8",

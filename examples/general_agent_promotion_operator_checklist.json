@@ -1,22 +1,16 @@
 {
   "approval_required_blockers": [
-    "voice_dependency_missing:OPENAI_API_KEY",
-    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
-    "deployment_upstream_api_gate_not_ready",
+    "deployment_dns_not_verified",
     "capability_improvement_required:financial.refund",
     "capability_improvement_required:agentic_control.code_change.plan",
     "capability_improvement_required:agentic_control.evidence.append",
     "capability_improvement_required:agentic_control.governance_gate.evaluate",
     "capability_improvement_required:agentic_control.incident_recovery.plan"
   ],
-  "blocking_gap_ids": [
-    "adapter_evidence_not_closed"
-  ],
+  "blocking_gap_ids": [],
   "checklist_id": "general-agent-promotion-operator-v1",
   "conditional_approval_blockers": [
-    "voice_dependency_missing:OPENAI_API_KEY",
-    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
-    "deployment_upstream_api_gate_not_ready",
+    "deployment_dns_not_verified",
     "capability_improvement_required:financial.refund",
     "capability_improvement_required:agentic_control.code_change.plan",
     "capability_improvement_required:agentic_control.evidence.append",
@@ -28,30 +22,30 @@
       "command": "python scripts\\collect_capability_adapter_evidence.py --output .change_assurance\\capability_adapter_evidence.json",
       "required_evidence": [
         "capability_adapter_evidence.json exists",
-        "browser adapter blockers explicit",
+        "browser adapter closed evidence explicit",
         "document adapter closed evidence explicit",
-        "voice adapter blockers explicit",
-        "email/calendar adapter blockers explicit"
+        "voice adapter closed evidence explicit",
+        "email/calendar adapter closed evidence explicit"
       ],
       "step_id": "collect_adapter_evidence"
     },
     {
       "command": "python scripts\\validate_general_agent_promotion.py --output .change_assurance\\general_agent_promotion_readiness.json",
       "required_evidence": [
-        "readiness_level=pilot-governed-core",
+        "readiness_level=production-general-agent",
         "capability_count=81",
         "capsule_count=13",
-        "production blockers explicit"
+        "production blockers absent"
       ],
       "step_id": "write_promotion_readiness"
     },
     {
       "command": "python scripts\\plan_capability_adapter_closure.py --output .change_assurance\\capability_adapter_closure_plan.json && python scripts\\plan_deployment_publication_closure.py --output .change_assurance\\deployment_publication_closure_plan.json",
       "required_evidence": [
-        "capability_adapter_closure_plan.json action_count=4",
+        "capability_adapter_closure_plan.json action_count=0",
         "deployment_publication_closure_plan.json action_count=1",
-        "adapter closure actions present",
-        "upstream deployment closure action approval_required=true"
+        "adapter closure actions absent",
+        "deployment DNS verification action approval_required=true"
       ],
       "step_id": "write_source_closure_plans"
     },
@@ -60,15 +54,15 @@
       "required_evidence": [
         "capability_adapter_closure_plan_schema_validation.json ok=true",
         "adapter blocker coverage complete",
-        "adapter action verification_command present",
-        "adapter action receipt_validator present"
+        "adapter action count zero",
+        "adapter blockers empty"
       ],
       "step_id": "validate_adapter_closure_plan_schema"
     },
     {
       "command": "python scripts\\run_general_agent_promotion_closure_chain.py --json --strict",
       "required_evidence": [
-        "general_agent_promotion_closure_plan.json total_action_count=10",
+        "general_agent_promotion_closure_plan.json total_action_count=6",
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "capability_improvement_portfolio.json plan_count=5",
@@ -83,9 +77,9 @@
         "terminal_evidence_reconciliation ready_for_terminal_certificate_minting=false",
         "general_agent_promotion_terminal_minting_gate.json schema_valid=true",
         "terminal_minting_gate ready_for_terminal_certificate_minting=false",
-        "approval_required_action_count=8",
-        "source_plan_type includes adapter, deployment, and portfolio",
-        "closure_chain status=passed_blocked",
+        "approval_required_action_count=6",
+        "source_plan_type includes deployment and portfolio",
+        "closure_chain status=passed",
         "closure_chain artifact_valid=true"
       ],
       "step_id": "validate_aggregate_closure_plan"
@@ -131,8 +125,8 @@
       "required_evidence": [
         "deployment publication closure ok",
         "public health endpoint matches witness gateway URL",
-        "general-agent promotion ready=false",
-        "readiness_level=pilot-governed-core"
+        "general-agent promotion ready=true",
+        "readiness_level=production-general-agent"
       ],
       "step_id": "validate_publication_and_promotion"
     }

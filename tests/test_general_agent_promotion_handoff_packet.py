@@ -19,7 +19,7 @@ def test_handoff_packet_avoids_forbidden_terminology() -> None:
 
     assert FORBIDDEN_PHRASE not in packet_text.lower()
     assert "General-Agent Promotion Handoff Packet" in packet_text
-    assert "pilot-governed-core" in packet_text
+    assert "production-general-agent" in packet_text
 
 
 def test_handoff_packet_links_operator_artifacts() -> None:
@@ -67,15 +67,15 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     packet_text = _packet_text()
     packet = json.loads(PACKET_JSON.read_text(encoding="utf-8"))
     aggregate_closure_actions = packet["aggregate_closure_actions"]
-    assert packet["open_blockers"] == [
-        "adapter_evidence_not_closed",
-    ]
-    assert "deployment_upstream_api_gate_not_ready" in packet_text
+    assert packet["open_blockers"] == []
+    assert "deployment_dns_not_verified" in packet_text
+    assert "deployment_upstream_api_gate_not_ready" not in packet_text
     assert "document_adapter_not_closed" not in packet_text
     assert f"Aggregate closure actions | {aggregate_closure_actions}" in packet_text
     assert f"Approval-required actions | {packet['approval_required_actions']}" in packet_text
-    assert "deployment_upstream_api_gate_not_ready" in packet["approval_required_blockers"]
-    assert "voice_dependency_missing:OPENAI_API_KEY" in packet["approval_required_blockers"]
+    assert "deployment_dns_not_verified" in packet["approval_required_blockers"]
+    assert "voice_dependency_missing:OPENAI_API_KEY" not in packet["approval_required_blockers"]
+    assert "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN" not in packet["approval_required_blockers"]
     assert "deployment_witness_not_published" not in packet["approval_required_blockers"]
     assert "production_health_not_declared" not in packet["approval_required_blockers"]
     assert "capability_improvement_required:agentic_control.evidence.append" in packet_text
@@ -85,7 +85,7 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     assert "Inspect the live-evidence queue before executing any closure command" in packet_text
     assert "Validate the terminal approval receipt when approval refs are supplied" in packet_text
     assert "Inspect the terminal certificate gate before executing any closure command" in packet_text
-    assert "Inspect terminal certificate candidates and verify minting remains false" in packet_text
+    assert "Inspect terminal certificate candidates and verify minting remains governed by explicit authority" in packet_text
     assert "Produce capability-improvement proof receipts" in packet_text
     assert "Inspect terminal evidence reconciliation" in packet_text
     assert "Inspect terminal minting gate" in packet_text
@@ -96,4 +96,7 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     assert "runtime and authority responsibility debt are clear" in packet_text
     assert "debt-clear witness fields" in packet_text
     assert "validate_general_agent_promotion.py --strict" in packet_text
+    assert packet["status"] == "ready_for_final_validation"
+    assert packet["production_promotion"] == "ready"
+    assert packet["approval_required_actions"] == 6
     assert "STATUS:" in packet_text
