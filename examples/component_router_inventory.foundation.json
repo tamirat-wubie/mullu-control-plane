@@ -39,6 +39,7 @@
         "/commands/{command_id}/universal-action-orchestration",
         "/commands/{command_id}/universal-action-proof",
         "/api/v1/components/{component_id}/autopsy",
+        "/api/v1/components/capability-governance",
         "/api/v1/components/read-model",
         "/api/v1/components/simulate",
         "/api/v1/components/symbols",
@@ -768,9 +769,10 @@
         "governance_core"
       ],
       "component_lane": "governance_core",
-      "declared_route_count": 1,
+      "declared_route_count": 2,
       "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
       "sample_routes": [
+        "/api/v1/components/capability-governance",
         "/api/v1/components/read-model"
       ],
       "surface_id": "component_harness_read_model"

@@ -16,6 +16,14 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.capability_debt_report import (
+    CapabilityDebtReportError,
+    build_capability_debt_report,
+)
+from mcoi_runtime.app.capability_passport_dashboard import (
+    CapabilityPassportDashboardError,
+    build_capability_passport_dashboard,
+)
 from mcoi_runtime.app.component_autopsy import (
     ComponentAutopsyError,
     build_component_autopsy,
@@ -80,6 +88,50 @@ def components_symbol_read_model() -> dict[str, Any]:
                 "detail": str(exc)[:200],
             },
         ) from exc
+
+
+@router.get("/api/v1/components/capability-governance")
+def components_capability_governance_read_model() -> dict[str, Any]:
+    """Return the read-only capability governance operator surface."""
+
+    _inc_metric("requests_governed")
+    try:
+        dashboard = build_capability_passport_dashboard()
+        debt_report = build_capability_debt_report()
+    except (CapabilityPassportDashboardError, CapabilityDebtReportError) as exc:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "capability governance read model unavailable",
+                "error_code": "capability_governance_read_model_unavailable",
+                "governed": True,
+                "detail": str(exc)[:200],
+            },
+        ) from exc
+    dashboard_summary = dict(dashboard["summary"])
+    debt_summary = dict(debt_report["summary"])
+    return {
+        "read_model_id": "capability_governance_operator_read_model.foundation.v1",
+        "governed": True,
+        "selectable": True,
+        "read_model_is_not_execution_authority": True,
+        "execution_authority_granted": False,
+        "live_execution_enabled": False,
+        "live_connector_send_enabled": False,
+        "terminal_closure_required": True,
+        "summary": {
+            "capability_count": dashboard_summary["capability_count"],
+            "attention_required_count": dashboard_summary["attention_required_count"],
+            "ready_count": dashboard_summary["ready_count"],
+            "debt_row_count": debt_summary["debt_row_count"],
+            "total_debt_item_count": debt_summary["total_debt_item_count"],
+            "critical_debt_count": debt_summary["severity_counts"]["critical"],
+            "high_debt_count": debt_summary["severity_counts"]["high"],
+            "live_action_disabled": True,
+        },
+        "dashboard": dashboard,
+        "debt_report": debt_report,
+    }
 
 
 @router.get("/api/v1/components/{component_id}/autopsy")

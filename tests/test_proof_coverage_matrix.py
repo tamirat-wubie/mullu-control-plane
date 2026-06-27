@@ -1853,6 +1853,7 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/health/extensions"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/shadow"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/components/read-model"]["surface_id"] == "component_harness_read_model"
+    assert classified_routes["/api/v1/components/capability-governance"]["surface_id"] == "component_harness_read_model"
     assert classified_routes["/api/v1/components/simulate"]["surface_id"] == "component_request_simulator"
     assert classified_routes["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/readiness"]["surface_id"] == "operational_health_read_models"
