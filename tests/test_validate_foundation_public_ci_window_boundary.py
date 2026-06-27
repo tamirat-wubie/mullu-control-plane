@@ -138,6 +138,35 @@ def test_public_ci_window_receipt_rejects_extra_validator_fields() -> None:
     assert all("private validator output" not in finding.message for finding in findings)
 
 
+def test_public_ci_window_receipt_rejects_invalid_visibility_before_label() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["repo_visibility_before"] = "public"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_visibility_before_invalid" for finding in findings)
+    assert any("repo_visibility_before must be private" in finding.message for finding in findings)
+    assert all("public" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_invalid_bounded_visibility_after_label() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["status"] = "bounded_public_awaiting_evidence"
+    payload["solver_outcome"] = "AwaitingEvidence"
+    payload["closed_at"] = None
+    payload["repo_visibility_after"] = "private"
+    for validator in payload["validators"]:
+        validator["state"] = "AwaitingEvidence"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_visibility_after_invalid" for finding in findings)
+    assert any("repo_visibility_after must match the receipt status" in finding.message for finding in findings)
+    assert all("private" not in finding.message for finding in findings)
+
+
 def test_public_ci_window_receipt_rejects_invalid_opened_at_timestamp() -> None:
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["opened_at"] = "2026-06-26 10:51:56"
