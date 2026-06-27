@@ -630,8 +630,11 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
     "actual-diff operator approval gate evidence",
     "source approval gate binding id/ref",
-    "GitHub PR terminal closure generic continuation rejection PR",
+    "GitHub PR terminal closure generic continuation rejection actual-diff decision contract binding PR",
     "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
+    "actual-diff decision contract evidence",
+    "source decision contract binding id/ref",
+    "actual-diff-bound generic rejection evidence",
     "GitHub PR terminal closure operator decision value request PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
     "GitHub PR terminal closure operator decision value record PR",
@@ -646,12 +649,12 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "actual-diff-bound decision contract evidence",
     "approve_terminal_certificate",
     "deny_terminal_certificate",
-    "generic continuation text is rejected as terminal approval",
+    "Generic continuation remains rejected",
     "recording no operator decision value",
     "records the explicit operator value",
     "satisfies only the operator decision gate",
     "minting no certificate",
-    "no certificate minting, repository mutation, connector call, receipt-store append, secret serialization, destructive operation, or terminal closure authority is granted",
+    "certificate minting remains blocked",
     "mints the terminal closure certificate",
     "limiting authority to this GitHub PR proof thread",
     "granting no repository mutation, connector call, receipt-store append, deployment, secret serialization, or destructive-operation authority",
@@ -1448,12 +1451,14 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     generic_rejection_row = re.search(
-        r"^\| GitHub PR terminal closure generic continuation rejection PR \| READY \| .+generic continuation text is rejected.+terminal closure authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure generic continuation rejection actual-diff decision contract binding PR \| READY \| .+actual-diff decision contract evidence.+source decision contract binding id/ref.+Generic continuation remains rejected.+terminal closure authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if generic_rejection_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure generic continuation rejection PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure generic continuation rejection actual-diff decision contract binding PR"
+        )
 
     decision_value_request_row = re.search(
         r"^\| GitHub PR terminal closure operator decision value request PR \| READY \| .+approve_terminal_certificate.+deny_terminal_certificate.+recording no operator decision value.+terminal closure authority\. \|$",
@@ -1490,7 +1495,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure generic continuation rejection to actual-diff decision contract",
+        "harness(pr): bind terminal decision value request to actual-diff generic rejection",
     )
     positions: list[int] = []
     for marker in sequence_markers:
