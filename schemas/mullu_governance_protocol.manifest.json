@@ -131,6 +131,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-non-empty-diff-receipt-admission-preflight:1"
     },
     {
+      "path": "schemas/agentic_service_harness_non_empty_diff_file_summary_receipt.schema.json",
+      "schema_id": "agentic-service-harness-non-empty-diff-file-summary-receipt",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-non-empty-diff-file-summary-receipt:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_filesystem_write_admission_preflight.schema.json",
       "schema_id": "agentic-service-harness-filesystem-write-admission-preflight",
       "surface": "runtime",

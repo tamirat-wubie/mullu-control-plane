@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1782510652.541783,
-  "check_count": 294,
+  "check_count": 295,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -510,6 +510,19 @@
       ],
       "return_code": 0,
       "stdout": "[PASS] agentic_service_harness_filesystem_write_admission_preflight\nSTATUS: passed\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "agentic_service_harness_non_empty_diff_file_summary_receipt",
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_non_empty_diff_file_summary_receipt.py"
+      ],
+      "return_code": 0,
+      "stdout": "[PASS] agentic_service_harness_non_empty_diff_file_summary_receipt\nSTATUS: passed\n",
       "stderr": "",
       "termination_reason": "completed",
       "termination_signal": null,
