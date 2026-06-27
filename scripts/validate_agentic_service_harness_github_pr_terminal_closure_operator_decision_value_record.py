@@ -63,6 +63,40 @@ EXPECTED_RECORD_ID = (
 )
 EXPECTED_DECISION_VALUE = "approve_terminal_certificate"
 EXPECTED_CERTIFICATE_MINTING_DECISION = "approved_for_next_minting_step"
+ACTUAL_DIFF_DECISION_VALUE_REQUEST_EVIDENCE_KEYS = (
+    "source_rejection_binding_id",
+    "source_rejection_witness_ref",
+    "source_decision_contract_binding_id",
+    "source_decision_contract_ref",
+    "operator_decision_ref",
+    "requires_actual_diff_generic_rejection_evidence",
+    "generic_continuation_rejected",
+    "operator_decision_value_present",
+    "accepted_as_operator_approval",
+    "terminal_closure_certificate_minted",
+    "terminal_closure_authorized",
+    "source_approval_gate_binding_id",
+    "source_approval_gate_ref",
+    "actual_diff_terminal_closure_certificate_witness_ref",
+    "actual_diff_effect_reconciliation_witness_ref",
+    "actual_diff_ci_gate_before_ready_for_review_witness_ref",
+    "actual_diff_repository_effect_rollback_plan_witness_ref",
+    "actual_diff_uao_admission_witness_ref",
+    "actual_diff_branch_write_binding_ref",
+    "actual_diff_operator_response_witness_ref",
+    "actual_diff_approval_request_binding_ref",
+    "actual_non_empty_diff_receipt_ref",
+    "changed_file_refs",
+    "diff_refs",
+    "redacted_diff_bundle_ref",
+    "redacted_output_ref",
+    "effect_reconciliation_collected",
+    "binds_branch_state",
+    "binds_pull_request_state",
+    "binds_check_state",
+    "binds_merge_state",
+    "binds_branch_deletion_state",
+)
 REQUIRED_RECEIPT_REFS = {
     "github_pr_terminal_closure_operator_decision_value_record_schema": (
         "schemas/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record.schema.json"
@@ -109,10 +143,10 @@ REQUIRED_FALSE_FLAGS = (
     "receipt_store_appended_by_record",
     "secret_values_serialized_by_record",
     "terminal_certificate_minted_by_record",
+    "operator_decision_value_present",
+    "accepted_as_operator_approval",
 )
 REQUIRED_TRUE_FLAGS = (
-    "operator_decision_value_collected",
-    "explicit_operator_decision_value_present",
     "operator_decision_gate_satisfied",
     "planning_only",
     "read_only",
@@ -120,6 +154,15 @@ REQUIRED_TRUE_FLAGS = (
     "source_request_validated",
     "decision_value_matches_allowed_values",
     "scope_matches_request",
+    "requires_actual_diff_decision_value_request_evidence",
+    "requires_actual_diff_generic_rejection_evidence",
+    "generic_continuation_rejected",
+    "effect_reconciliation_collected",
+    "binds_branch_state",
+    "binds_pull_request_state",
+    "binds_check_state",
+    "binds_merge_state",
+    "binds_branch_deletion_state",
 )
 ALLOWED_SECRET_KEYS = {
     "dns_mutation_enabled",
@@ -235,6 +278,8 @@ def _validate_decision_value_record_semantics(
     _require_equal(payload, ("source_request_ref",), EXPECTED_SOURCE_REQUEST_REF, errors, label)
     _require_equal(payload, ("solver_outcome",), "SolvedVerified", errors, label)
     _require_equal(payload, ("source_request_status",), "awaiting_explicit_operator_decision_value", errors, label)
+    _require_equal(payload, ("operator_decision_value_collected",), True, errors, label)
+    _require_equal(payload, ("explicit_operator_decision_value_present",), True, errors, label)
     _require_equal(payload, ("decision_value",), EXPECTED_DECISION_VALUE, errors, label)
     _require_equal(payload, ("decision_text",), EXPECTED_DECISION_VALUE, errors, label)
     _require_equal(payload, ("certificate_minting_decision",), EXPECTED_CERTIFICATE_MINTING_DECISION, errors, label)
@@ -280,6 +325,63 @@ def _validate_source_request_binding(
         errors.append(f"{label}: source allowed decision values mismatch")
     if payload.get("decision_value") not in allowed_values:
         errors.append(f"{label}: decision_value is not allowed by source request")
+    _require_equal(
+        payload,
+        ("actual_diff_decision_value_request_evidence", "source_request_id"),
+        _get_nested(source_request, ("request_id",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("actual_diff_decision_value_request_evidence", "source_request_ref"),
+        EXPECTED_SOURCE_REQUEST_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("actual_diff_decision_value_request_evidence", "source_request_status"),
+        _get_nested(source_request, ("request_status",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("actual_diff_decision_value_request_evidence", "allowed_decision_values"),
+        list(allowed_values),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("actual_diff_decision_value_request_evidence", "requires_actual_diff_decision_value_request_evidence"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("actual_diff_decision_value_request_evidence", "operator_decision_value_collected"),
+        _get_nested(source_request, ("operator_decision_value_collected",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("actual_diff_decision_value_request_evidence", "explicit_operator_decision_value_present"),
+        _get_nested(source_request, ("explicit_operator_decision_value_present",)),
+        errors,
+        label,
+    )
+    for evidence_key in ACTUAL_DIFF_DECISION_VALUE_REQUEST_EVIDENCE_KEYS:
+        _require_equal(
+            payload,
+            ("actual_diff_decision_value_request_evidence", evidence_key),
+            _get_nested(source_request, ("actual_diff_generic_rejection_evidence", evidence_key)),
+            errors,
+            label,
+        )
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:

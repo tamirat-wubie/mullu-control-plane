@@ -638,8 +638,9 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "GitHub PR terminal closure operator decision value request actual-diff generic rejection binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
     "actual-diff-bound decision value request evidence",
-    "GitHub PR terminal closure operator decision value record PR",
+    "GitHub PR terminal closure operator decision value record actual-diff request binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record",
+    "actual-diff-bound decision value record evidence",
     "GitHub PR terminal closure certificate minting PR",
     "agentic_service_harness_github_pr_terminal_closure_certificate_minting",
     "terminal closure status remains AwaitingEvidence",
@@ -1472,12 +1473,14 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     decision_value_record_row = re.search(
-        r"^\| GitHub PR terminal closure operator decision value record PR \| READY \| .+approve_terminal_certificate.+satisfies only the operator decision gate.+terminal closure authority\. \|$",
+        r"^\| GitHub PR terminal closure operator decision value record actual-diff request binding PR \| READY \| .+actual-diff decision value request evidence.+source request id/ref/status.+approve_terminal_certificate.+satisfies only the operator decision gate.+terminal closure authority\. \|$",
         map_text,
         re.MULTILINE,
     )
     if decision_value_record_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure operator decision value record PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure operator decision value record actual-diff request binding PR"
+        )
 
     certificate_minting_row = re.search(
         r"^\| GitHub PR terminal closure certificate minting PR \| READY \| .+mints the terminal closure certificate.+GitHub PR proof thread.+destructive-operation authority\. \|$",
@@ -1498,7 +1501,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal decision value record to actual-diff decision value request",
+        "harness(pr): bind terminal certificate minting to actual-diff decision value record",
     )
     positions: list[int] = []
     for marker in sequence_markers:
