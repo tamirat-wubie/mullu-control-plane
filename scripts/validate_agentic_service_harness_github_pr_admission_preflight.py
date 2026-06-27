@@ -3,16 +3,19 @@
 
 Purpose: prove a future GitHub pull-request action remains blocked until the
 non-empty diff file summary receipt, operator approval, branch-write authority,
-UAO admission, rollback, and CI evidence exist.
+UAO admission, rollback, CI evidence, and terminal certificate read-model
+evidence exist.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: schemas/agentic_service_harness_github_pr_admission_preflight.schema.json,
 examples/agentic_service_harness_github_pr_admission_preflight.foundation.json,
 scripts.validate_agentic_service_harness_non_empty_diff_file_summary_receipt,
+scripts.validate_agentic_service_harness_github_pr_terminal_closure_certificate_read_model,
 scripts.validate_agentic_service_harness_github_task_receipt_emitter_dry_run,
 and scripts.validate_schemas.
 Invariants:
   - The preflight binds to the GitHub task receipt-emitter dry-run.
   - The preflight binds to the non-empty diff file summary receipt.
+  - The preflight binds to the terminal closure certificate read model.
   - Operator approval is absent and PR admission is denied.
   - Branch writes, PR creation, repository writes, adapter execution, connector
     calls, mutation routes, secret material, and terminal closure fail closed.
@@ -39,6 +42,11 @@ from scripts.validate_agentic_service_harness_github_task_receipt_emitter_dry_ru
     DEFAULT_SCHEMA as DEFAULT_SOURCE_RECEIPT_SCHEMA,
     validate_agentic_service_harness_github_task_receipt_emitter_dry_run,
 )
+from scripts.validate_agentic_service_harness_github_pr_terminal_closure_certificate_read_model import (  # noqa: E402
+    DEFAULT_EXAMPLES as DEFAULT_TERMINAL_CERTIFICATE_READ_MODEL_EXAMPLES,
+    DEFAULT_SCHEMA as DEFAULT_TERMINAL_CERTIFICATE_READ_MODEL_SCHEMA,
+    validate_agentic_service_harness_github_pr_terminal_closure_certificate_read_model,
+)
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -56,6 +64,9 @@ DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_EXAMPLES = (
 EXPECTED_SOURCE_RECEIPT_REF = "examples/agentic_service_harness_github_task_receipt_emitter_dry_run.foundation.json"
 EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF = (
     "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json"
+)
+EXPECTED_TERMINAL_CERTIFICATE_READ_MODEL_REF = (
+    "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json"
 )
 EXPECTED_TASK_SERVICE_ID = "github-repo-task-service-read-only-foundation"
 EXPECTED_SOURCE_TASK_REF = "task://agentic-service-harness/github-repo-read-only"
@@ -80,8 +91,10 @@ REQUIRED_FORBIDDEN_ACTION_CLASSES = (
 REQUIRED_SOURCE_REFS = (
     EXPECTED_SOURCE_RECEIPT_REF,
     EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF,
+    EXPECTED_TERMINAL_CERTIFICATE_READ_MODEL_REF,
     "examples/agentic_service_harness_github_repo_task_service.foundation.json",
     "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+    "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.schema.json",
 )
 REQUIRED_GATE_REFS = (
     "gate://harness/no-live-adapter-execution",
@@ -97,6 +110,8 @@ REQUIRED_ADMISSION_OBLIGATIONS = (
     "obligation://require-non-empty-diff-file-summary-before-pr",
     "obligation://require-operator-approval-before-pr",
     "obligation://require-branch-write-authority-before-pr",
+    "obligation://require-terminal-certificate-read-model-before-pr",
+    "obligation://deny-pr-creation-from-read-model-projection",
     "obligation://deny-pr-creation-without-approval",
     "obligation://deny-repository-effects",
     "obligation://deny-secret-material",
@@ -105,6 +120,7 @@ REQUIRED_ADMISSION_OBLIGATIONS = (
 REQUIRED_VALIDATION_REFS = (
     "scripts/validate_agentic_service_harness_github_pr_admission_preflight.py",
     "scripts/validate_agentic_service_harness_non_empty_diff_file_summary_receipt.py",
+    "scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_read_model.py",
     "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py",
     "scripts/validate_agentic_service_harness_github_repo_task_service.py",
 )
@@ -118,10 +134,12 @@ REQUIRED_BEFORE_PR_REFS = (
     "evidence://uao-pr-admission",
     "evidence://ci-gate-before-ready-for-review",
     "evidence://effect-reconciliation-before-terminal-closure",
+    EXPECTED_TERMINAL_CERTIFICATE_READ_MODEL_REF,
 )
 REQUIRED_BLOCKERS = (
     "blocked://operator-approval/not-present",
     "blocked://non-empty-diff-file-summary/not-terminal",
+    "blocked://terminal-certificate-read-model/projection-only",
     "blocked://branch-write-authority/not-bound",
     "blocked://pr-creation/not-admitted",
     "blocked://terminal-closure/not-authorized",
@@ -134,6 +152,10 @@ REQUIRED_RECEIPT_REFS = {
         "schemas/agentic_service_harness_non_empty_diff_file_summary_receipt.schema.json"
     ),
     "non_empty_diff_file_summary_receipt_example": EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF,
+    "terminal_closure_certificate_read_model_schema": (
+        "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.schema.json"
+    ),
+    "terminal_closure_certificate_read_model_example": EXPECTED_TERMINAL_CERTIFICATE_READ_MODEL_REF,
     "github_task_receipt_emitter_dry_run_schema": (
         "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json"
     ),
@@ -219,6 +241,7 @@ class GitHubPrAdmissionPreflightValidation:
     example_count: int
     source_receipt_ref: str
     non_empty_diff_file_summary_receipt_ref: str
+    terminal_certificate_read_model_ref: str
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -235,6 +258,8 @@ def validate_agentic_service_harness_github_pr_admission_preflight(
     source_receipt_example_paths: Sequence[Path] = DEFAULT_SOURCE_RECEIPT_EXAMPLES,
     non_empty_diff_file_summary_schema_path: Path = DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_SCHEMA,
     non_empty_diff_file_summary_example_paths: Sequence[Path] = DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_EXAMPLES,
+    terminal_certificate_read_model_schema_path: Path = DEFAULT_TERMINAL_CERTIFICATE_READ_MODEL_SCHEMA,
+    terminal_certificate_read_model_example_paths: Sequence[Path] = DEFAULT_TERMINAL_CERTIFICATE_READ_MODEL_EXAMPLES,
 ) -> GitHubPrAdmissionPreflightValidation:
     """Validate GitHub PR admission preflight examples."""
     errors: list[str] = []
@@ -265,6 +290,21 @@ def validate_agentic_service_harness_github_pr_admission_preflight(
             "non-empty diff file summary receipt: " + error
             for error in _validate_schema_instance(file_summary_schema, file_summary_receipt)
         )
+    terminal_read_model_validation = (
+        validate_agentic_service_harness_github_pr_terminal_closure_certificate_read_model(
+            schema_path=terminal_certificate_read_model_schema_path,
+            example_paths=terminal_certificate_read_model_example_paths,
+        )
+    )
+    if not terminal_read_model_validation.ok:
+        errors.extend(
+            f"terminal certificate read model: {error}" for error in terminal_read_model_validation.errors
+        )
+    terminal_read_model = _load_json_object(
+        terminal_certificate_read_model_example_paths[0],
+        "terminal certificate read model source",
+        errors,
+    )
     examples: list[dict[str, Any]] = []
     for example_path in example_paths:
         example = _load_json_object(example_path, f"GitHub PR admission preflight {_path_label(example_path)}", errors)
@@ -275,7 +315,14 @@ def validate_agentic_service_harness_github_pr_admission_preflight(
             errors.extend(
                 f"{_path_label(example_path)}: {error}" for error in _validate_schema_instance(schema, example)
             )
-        _validate_preflight_semantics(example, source_receipt, errors, _path_label(example_path), file_summary_receipt)
+        _validate_preflight_semantics(
+            example,
+            source_receipt,
+            errors,
+            _path_label(example_path),
+            file_summary_receipt,
+            terminal_read_model,
+        )
     return GitHubPrAdmissionPreflightValidation(
         ok=not errors,
         errors=tuple(errors),
@@ -284,6 +331,7 @@ def validate_agentic_service_harness_github_pr_admission_preflight(
         example_count=len(examples),
         source_receipt_ref=EXPECTED_SOURCE_RECEIPT_REF,
         non_empty_diff_file_summary_receipt_ref=EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF,
+        terminal_certificate_read_model_ref=EXPECTED_TERMINAL_CERTIFICATE_READ_MODEL_REF,
     )
 
 
@@ -303,12 +351,20 @@ def _validate_preflight_semantics(
     errors: list[str],
     label: str,
     non_empty_diff_file_summary_receipt: Mapping[str, Any] | None = None,
+    terminal_certificate_read_model: Mapping[str, Any] | None = None,
 ) -> None:
     _require_equal(payload, ("source_receipt_emitter_ref",), EXPECTED_SOURCE_RECEIPT_REF, errors, label)
     _require_equal(
         payload,
         ("source_non_empty_diff_file_summary_receipt_ref",),
         EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("source_terminal_closure_certificate_read_model_ref",),
+        EXPECTED_TERMINAL_CERTIFICATE_READ_MODEL_REF,
         errors,
         label,
     )
@@ -400,6 +456,17 @@ def _validate_preflight_semantics(
             errors,
             "non-empty diff file summary receipt source",
         )
+    read_model = (
+        terminal_certificate_read_model
+        if terminal_certificate_read_model is not None
+        else _load_json_object(
+            DEFAULT_TERMINAL_CERTIFICATE_READ_MODEL_EXAMPLES[0],
+            "terminal certificate read model source",
+            errors,
+        )
+    )
+    if read_model:
+        _validate_terminal_certificate_read_model_source(payload, read_model, errors, label)
     for required_ref in REQUIRED_ALLOWED_ACTION_CLASSES:
         _require_contains(
             payload,
@@ -455,6 +522,91 @@ def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, An
         errors.append(f"{label} must be a JSON object")
         return {}
     return payload
+
+
+def _validate_terminal_certificate_read_model_source(
+    payload: Mapping[str, Any],
+    read_model: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    _require_equal(
+        payload,
+        ("scope", "repository_slug"),
+        _get_nested(read_model, ("projection_scope", "repository_slug")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("scope", "repository_connection_id"),
+        _get_nested(read_model, ("projection_scope", "repository_connection_id")),
+        errors,
+        label,
+    )
+    _require_equal(
+        read_model,
+        ("read_model_id",),
+        "agentic-service-harness-github-pr-terminal-closure-certificate-read-model",
+        errors,
+        "terminal certificate read model source",
+    )
+    _require_equal(
+        read_model,
+        ("solver_outcome",),
+        "SolvedVerified",
+        errors,
+        "terminal certificate read model source",
+    )
+    _require_equal(
+        read_model,
+        ("projection_scope", "read_only"),
+        True,
+        errors,
+        "terminal certificate read model source",
+    )
+    _require_equal(
+        read_model,
+        ("projection_scope", "projection_only"),
+        True,
+        errors,
+        "terminal certificate read model source",
+    )
+    _require_equal(
+        read_model,
+        ("authority_denials", "pull_request_creation_enabled"),
+        False,
+        errors,
+        "terminal certificate read model source",
+    )
+    _require_equal(
+        read_model,
+        ("effect_boundary", "repository_written_by_read_model"),
+        False,
+        errors,
+        "terminal certificate read model source",
+    )
+    _require_equal(
+        read_model,
+        ("effect_boundary", "terminal_certificate_minted_by_read_model"),
+        False,
+        errors,
+        "terminal certificate read model source",
+    )
+    _require_equal(
+        read_model,
+        ("operator_view", "contains_secret_values"),
+        False,
+        errors,
+        "terminal certificate read model source",
+    )
+    _require_equal(
+        read_model,
+        ("read_model_is_not_terminal_closure",),
+        True,
+        errors,
+        "terminal certificate read model source",
+    )
 
 
 def _require_equal(
@@ -546,6 +698,17 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         action="append",
         dest="non_empty_diff_file_summary_examples",
     )
+    parser.add_argument(
+        "--terminal-certificate-read-model-schema",
+        type=Path,
+        default=DEFAULT_TERMINAL_CERTIFICATE_READ_MODEL_SCHEMA,
+    )
+    parser.add_argument(
+        "--terminal-certificate-read-model-example",
+        type=Path,
+        action="append",
+        dest="terminal_certificate_read_model_examples",
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--json", action="store_true", help="Print machine-readable validation output.")
     parser.add_argument("--strict", action="store_true", help="Return nonzero when validation fails.")
@@ -566,6 +729,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             tuple(args.non_empty_diff_file_summary_examples)
             if args.non_empty_diff_file_summary_examples
             else DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_EXAMPLES
+        ),
+        terminal_certificate_read_model_schema_path=args.terminal_certificate_read_model_schema,
+        terminal_certificate_read_model_example_paths=(
+            tuple(args.terminal_certificate_read_model_examples)
+            if args.terminal_certificate_read_model_examples
+            else DEFAULT_TERMINAL_CERTIFICATE_READ_MODEL_EXAMPLES
         ),
     )
     write_github_pr_admission_preflight_validation(validation, args.output)
