@@ -705,7 +705,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind PR creation dry-run receipt to certificate-read-model-bound admission preflight`",
+            "1. `harness(pr): bind PR creation execution admission to dry-run receipt`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -716,7 +716,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind PR creation dry-run receipt to certificate-read-model-bound admission preflight"
+        "missing next PR marker: harness(pr): bind PR creation execution admission to dry-run receipt"
         in serialized_errors
     )
 

@@ -3015,6 +3015,21 @@ def test_protocol_manifest_indexes_github_pr_terminal_certificate_read_model() -
     assert read_model_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_github_pr_creation_dry_run_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    dry_run_entry = entries["agentic-service-harness-github-pr-creation-dry-run-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert dry_run_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_creation_dry_run_receipt.schema.json"
+    )
+    assert dry_run_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-creation-dry-run-receipt:1"
+    )
+    assert dry_run_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:
     manifest = load_manifest()
     manifest["schemas"] = [

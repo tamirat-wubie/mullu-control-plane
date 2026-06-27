@@ -87,6 +87,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_actual_non_empty_diff_receipt_binding",
         "agentic_service_harness_non_empty_diff_file_summary_receipt",
         "agentic_service_harness_github_pr_admission_preflight",
+        "agentic_service_harness_github_pr_creation_dry_run_receipt",
         "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding",
         "agentic_service_harness_github_pr_operator_approval_request",
         "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding",
@@ -401,6 +402,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_github_pr_admission_preflight",
+        "agentic_service_harness_github_pr_creation_dry_run_receipt",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_creation_dry_run_receipt",
         "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding",
     )
     assert_ordered(
