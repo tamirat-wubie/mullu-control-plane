@@ -5,6 +5,7 @@ uncollected, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: scripts.validate_agentic_service_harness_github_pr_uao_admission_witness.
 Invariants:
+  - UAO PR admission witness must consume actual-diff branch-write evidence.
   - Missing UAO PR admission never grants branch or PR effects.
   - Remaining witnesses block PR admission.
   - Mutation routes and secret-like payloads fail closed.
@@ -25,12 +26,14 @@ def test_github_pr_uao_admission_witness_passes() -> None:
     assert validation.errors == ()
     assert validation.example_count == 1
     assert validation.source_branch_write_binding_ref == validator.EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF
+    assert validation.actual_diff_branch_write_binding_ref == validator.EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF
 
 
 def test_github_pr_uao_admission_witness_rejects_collected_authority() -> None:
     payload = validator.build_mutated_uao_admission_witness(
         authority_binding_collected=True,
         authority_granted=True,
+        uao_admission__requires_actual_diff_branch_write_binding=False,
         uao_admission__response_witness_satisfied=True,
         uao_admission__uao_pr_admission_collected=True,
         uao_admission__pr_creation_authorized_after_binding=True,
@@ -43,6 +46,7 @@ def test_github_pr_uao_admission_witness_rejects_collected_authority() -> None:
 
     assert "authority_binding_collected must be false" in serialized_errors
     assert "authority_granted must be false" in serialized_errors
+    assert "uao_admission.requires_actual_diff_branch_write_binding must be true" in serialized_errors
     assert "uao_admission.response_witness_satisfied must be false" in serialized_errors
     assert "uao_admission.uao_pr_admission_collected must be false" in serialized_errors
     assert "uao_admission.pr_creation_authorized_after_binding must be false" in serialized_errors
@@ -71,6 +75,30 @@ def test_github_pr_uao_admission_witness_rejects_effect_authority() -> None:
     assert "effect_boundary.pull_request_opened must be false" in serialized_errors
     assert "effect_boundary.repository_written must be false" in serialized_errors
     assert "effect_boundary.connector_called must be false" in serialized_errors
+
+
+def test_github_pr_uao_admission_witness_rejects_actual_diff_branch_write_drift() -> None:
+    payload = validator.build_mutated_uao_admission_witness(
+        uao_admission__actual_diff_operator_response_witness_ref="examples/drifted-response.json",
+        uao_admission__actual_diff_approval_request_binding_ref="examples/drifted-approval-binding.json",
+        uao_admission__actual_non_empty_diff_receipt_ref="witness://drifted-actual-diff-receipt",
+        uao_admission__changed_file_refs=["evidence://drifted-file"],
+        uao_admission__diff_refs=["evidence://drifted-diff"],
+        uao_admission__redacted_diff_bundle_ref="digest://drifted-bundle",
+        uao_admission__redacted_output_ref="witness://drifted-output",
+    )
+
+    errors: list[str] = []
+    validator._validate_uao_admission_witness_semantics(payload, _source_branch_write_binding(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "uao_admission.actual_diff_operator_response_witness_ref" in serialized_errors
+    assert "uao_admission.actual_diff_approval_request_binding_ref" in serialized_errors
+    assert "uao_admission.actual_non_empty_diff_receipt_ref" in serialized_errors
+    assert "uao_admission.changed_file_refs" in serialized_errors
+    assert "uao_admission.diff_refs" in serialized_errors
+    assert "uao_admission.redacted_diff_bundle_ref" in serialized_errors
+    assert "uao_admission.redacted_output_ref" in serialized_errors
 
 
 def test_github_pr_uao_admission_witness_rejects_witness_drift() -> None:
@@ -122,6 +150,7 @@ def test_github_pr_uao_admission_witness_cli_writes_report(tmp_path: Path, capsy
     assert file_payload["ok"] is True
     assert stdout_payload["errors"] == []
     assert file_payload["source_branch_write_binding_ref"] == validator.EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF
+    assert file_payload["actual_diff_branch_write_binding_ref"] == validator.EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF
 
 
 def _source_branch_write_binding() -> dict[str, object]:
