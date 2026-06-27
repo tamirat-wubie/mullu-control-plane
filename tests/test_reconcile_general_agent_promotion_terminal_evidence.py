@@ -135,6 +135,81 @@ def test_terminal_evidence_reconciliation_rejects_blocked_deployment_publication
     assert validate_general_agent_promotion_terminal_evidence_reconciliation(reconciliation) == ()
 
 
+def test_terminal_evidence_reconciliation_accepts_individual_dns_publication_receipts(
+    tmp_path: Path,
+) -> None:
+    candidate_path = _write_deployment_dns_candidates(tmp_path)
+    target_receipt = _write_gateway_dns_target_binding_receipt(tmp_path, ready=True)
+    target_validation = _write_gateway_dns_target_binding_validation(tmp_path, ready=True, valid=True)
+    resolution_receipt = _write_gateway_dns_resolution_receipt(tmp_path, resolved=True)
+    resolution_validation = _write_gateway_dns_resolution_validation(tmp_path, valid=True)
+    preflight_receipt = _write_deployment_witness_preflight(tmp_path, ready=True)
+
+    reconciliation = reconcile_general_agent_promotion_terminal_evidence(
+        candidate_path=candidate_path,
+        receipt_paths=(
+            target_receipt,
+            target_validation,
+            resolution_receipt,
+            resolution_validation,
+            preflight_receipt,
+        ),
+    )
+    candidate = reconciliation.candidates[0]
+
+    assert reconciliation.ready_for_terminal_certificate_minting is True
+    assert reconciliation.reconciled_candidate_count == 1
+    assert reconciliation.blocked_candidate_count == 0
+    assert reconciliation.missing_evidence_count == 0
+    assert set(candidate.evidence_matched) == {
+        "gateway_dns_target_binding_receipt",
+        "gateway_dns_target_binding_validation",
+        "dns_resolution_receipt",
+        "dns_resolution_receipt_validation",
+        "deployment_witness_preflight",
+    }
+    assert candidate.missing_evidence == ()
+    assert set(candidate.receipt_refs) == {
+        "gateway_dns_target_binding_receipt_validation.json",
+        "gateway_dns_resolution_receipt_validation.json",
+        "deployment_witness_preflight.json",
+    }
+    assert validate_general_agent_promotion_terminal_evidence_reconciliation(reconciliation) == ()
+
+
+def test_terminal_evidence_reconciliation_rejects_unready_individual_dns_publication_receipts(
+    tmp_path: Path,
+) -> None:
+    candidate_path = _write_deployment_dns_candidates(tmp_path)
+    target_receipt = _write_gateway_dns_target_binding_receipt(tmp_path, ready=False)
+    target_validation = _write_gateway_dns_target_binding_validation(tmp_path, ready=False, valid=True)
+    resolution_receipt = _write_gateway_dns_resolution_receipt(tmp_path, resolved=False)
+    resolution_validation = _write_gateway_dns_resolution_validation(tmp_path, valid=False)
+    preflight_receipt = _write_deployment_witness_preflight(tmp_path, ready=False)
+
+    reconciliation = reconcile_general_agent_promotion_terminal_evidence(
+        candidate_path=candidate_path,
+        receipt_paths=(
+            target_receipt,
+            target_validation,
+            resolution_receipt,
+            resolution_validation,
+            preflight_receipt,
+        ),
+    )
+    candidate = reconciliation.candidates[0]
+
+    assert reconciliation.ready_for_terminal_certificate_minting is False
+    assert reconciliation.reconciled_candidate_count == 0
+    assert reconciliation.blocked_candidate_count == 1
+    assert reconciliation.missing_evidence_count == 5
+    assert candidate.receipt_refs == ()
+    assert "gateway_dns_target_binding_receipt" in candidate.missing_evidence
+    assert "deployment_witness_preflight" in candidate.missing_evidence
+    assert "missing_evidence:dns_resolution_receipt_validation" in reconciliation.blocked_reasons
+    assert validate_general_agent_promotion_terminal_evidence_reconciliation(reconciliation) == ()
+
+
 def test_terminal_evidence_reconciliation_rejects_unsafe_capability_proof_receipt(tmp_path: Path) -> None:
     candidate_path = _write_capability_improvement_candidates(tmp_path)
     receipt_path = _write_capability_improvement_proof_receipt(tmp_path, registry_mutated=True)
@@ -426,6 +501,137 @@ def _write_deployment_publication_candidates(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     return candidate_path
+
+
+def _write_deployment_dns_candidates(tmp_path: Path) -> Path:
+    candidate_path = tmp_path / "general_agent_promotion_terminal_certificate_candidates.json"
+    candidate_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "candidate_set_id": "general-agent-promotion-terminal-certificate-candidates-0123456789abcdef",
+                "generated_at": "2026-05-01T12:00:00+00:00",
+                "source_gate_path": "gate.json",
+                "source_gate_id": "general-agent-promotion-terminal-certificate-gate-0123456789abcdef",
+                "ready_for_candidate_review": True,
+                "ready_for_terminal_certificate_minting": False,
+                "gate_action_count": 1,
+                "candidate_count": 1,
+                "skipped_gate_action_count": 0,
+                "blocked_gate_action_count": 0,
+                "blocked_reasons": ["terminal_certificate_minting_not_performed"],
+                "candidates": [
+                    {
+                        "candidate_id": "terminal-certificate-candidate-0123456789abcdef",
+                        "source_gate_item_id": "terminal-certificate-gate-item-01-dns",
+                        "source_queue_item_id": "live-evidence-queue-item-01-dns",
+                        "source_action_id": "verify-gateway-dns",
+                        "source_plan_type": "deployment",
+                        "terminal_gate_status": "admitted_approved",
+                        "approval_ref_present": True,
+                        "approval_ref": "approval://terminal-certificate-gate/dns",
+                        "evidence_required": [
+                            "gateway_dns_target_binding_receipt",
+                            "gateway_dns_target_binding_validation",
+                            "dns_resolution_receipt",
+                            "dns_resolution_receipt_validation",
+                            "deployment_witness_preflight",
+                        ],
+                        "receipt_validator": "deployment_publication_dns_evidence",
+                        "terminal_certificate_schema_id": "urn:mullusi:schema:terminal-closure-certificate:1",
+                        "minting_status": "candidate_only",
+                        "certificate_minted": False,
+                        "execution_performed": False,
+                    }
+                ],
+                "metadata": {
+                    "candidate_plan_is_not_execution": True,
+                    "terminal_certificates_minted": False,
+                    "secret_values_serialized": False,
+                    "source_gate_ready": True,
+                    "source_gate_hash": "a" * 64,
+                    "terminal_certificate_schema_id": "urn:mullusi:schema:terminal-closure-certificate:1",
+                    "terminal_certificate_gate_schema_id": (
+                        "urn:mullusi:schema:general-agent-promotion-terminal-certificate-gate:1"
+                    ),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return candidate_path
+
+
+def _write_gateway_dns_target_binding_receipt(tmp_path: Path, *, ready: bool) -> Path:
+    receipt_path = tmp_path / "gateway_dns_target_binding_receipt.json"
+    receipt_path.write_text(
+        json.dumps(
+            {
+                "receipt_id": "gateway-dns-target-binding-0123456789abcdef",
+                "ready": ready,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return receipt_path
+
+
+def _write_gateway_dns_target_binding_validation(tmp_path: Path, *, ready: bool, valid: bool) -> Path:
+    receipt_path = tmp_path / "gateway_dns_target_binding_receipt_validation.json"
+    receipt_path.write_text(
+        json.dumps(
+            {
+                "receipt_id": "gateway-dns-target-binding-0123456789abcdef",
+                "ready": ready,
+                "valid": valid,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return receipt_path
+
+
+def _write_gateway_dns_resolution_receipt(tmp_path: Path, *, resolved: bool) -> Path:
+    receipt_path = tmp_path / "gateway_dns_resolution_receipt.json"
+    receipt_path.write_text(
+        json.dumps(
+            {
+                "receipt_id": "gateway-dns-resolution-0123456789abcdef",
+                "resolved": resolved,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return receipt_path
+
+
+def _write_gateway_dns_resolution_validation(tmp_path: Path, *, valid: bool) -> Path:
+    receipt_path = tmp_path / "gateway_dns_resolution_receipt_validation.json"
+    receipt_path.write_text(
+        json.dumps(
+            {
+                "receipt_id": "gateway-dns-resolution-0123456789abcdef",
+                "valid": valid,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return receipt_path
+
+
+def _write_deployment_witness_preflight(tmp_path: Path, *, ready: bool) -> Path:
+    receipt_path = tmp_path / "deployment_witness_preflight.json"
+    receipt_path.write_text(
+        json.dumps(
+            {
+                "gateway_url": "https://api.mullusi.com",
+                "expected_environment": "pilot",
+                "ready": ready,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return receipt_path
 
 
 def _write_document_receipt(tmp_path: Path, *, status: str) -> Path:
