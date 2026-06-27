@@ -368,6 +368,22 @@ REQUIRED_CONCRETE_FILESYSTEM_WRITE_EVIDENCE_CANDIDATE_TERMS = (
     "PR creation",
     "terminal closure remain blocked",
 )
+REQUIRED_ACTUAL_FILESYSTEM_WRITE_RECEIPT_ADMISSION_TERMS = (
+    "Actual filesystem write receipt admission PR",
+    "agentic_service_harness_actual_filesystem_write_receipt_admission",
+    "concrete filesystem-write evidence candidate",
+    "cleanup",
+    "rollback",
+    "redaction",
+    "UAO",
+    "receipt-store write-path",
+    "terminal certificate",
+    "filesystem write execution",
+    "raw diff bodies",
+    "raw file content",
+    "connector calls",
+    "terminal closure remain blocked",
+)
 REQUIRED_ACTUAL_DIFF_COLLECTION_RECEIPT_TERMS = (
     "Actual diff collection receipt admission PR",
     "agentic_service_harness_actual_diff_collection_receipt",
@@ -635,6 +651,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     )
     _require_all(
         map_text,
+        REQUIRED_ACTUAL_FILESYSTEM_WRITE_RECEIPT_ADMISSION_TERMS,
+        "actual_filesystem_write_receipt_admission_term",
+        errors,
+    )
+    _require_all(
+        map_text,
         REQUIRED_ACTUAL_DIFF_COLLECTION_RECEIPT_TERMS,
         "actual_diff_collection_receipt_term",
         errors,
@@ -690,6 +712,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_non_empty_diff_receipt_admission_ready(map_text, errors)
     _validate_filesystem_write_admission_ready(map_text, errors)
     _validate_concrete_filesystem_write_evidence_candidate_ready(map_text, errors)
+    _validate_actual_filesystem_write_receipt_admission_ready(map_text, errors)
     _validate_actual_diff_collection_receipt_ready(map_text, errors)
     _validate_non_empty_diff_file_summary_receipt_ready(map_text, errors)
     _validate_github_pr_admission_ready(map_text, errors)
@@ -963,6 +986,19 @@ def _validate_concrete_filesystem_write_evidence_candidate_ready(
         errors.append("missing ready row: Concrete filesystem write evidence candidate PR")
 
 
+def _validate_actual_filesystem_write_receipt_admission_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Actual filesystem write receipt admission PR \| READY \| .+concrete filesystem-write evidence candidate.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Actual filesystem write receipt admission PR")
+
+
 def _validate_actual_diff_collection_receipt_ready(
     map_text: str,
     errors: list[str],
@@ -1123,7 +1159,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(write): bind actual filesystem-write receipt admission to concrete candidate",
+        "harness(write): collect redacted actual filesystem-write execution receipt evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:
