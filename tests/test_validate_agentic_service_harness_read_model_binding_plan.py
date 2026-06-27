@@ -605,8 +605,8 @@ def test_readiness_map_rejects_missing_github_pr_terminal_certificate_read_model
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR terminal closure certificate read model PR | READY |",
-            "| GitHub PR terminal closure certificate read model PR | PARTIAL |",
+            "| GitHub PR terminal closure certificate read model actual-diff minting binding PR | READY |",
+            "| GitHub PR terminal closure certificate read model actual-diff minting binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -616,7 +616,7 @@ def test_readiness_map_rejects_missing_github_pr_terminal_certificate_read_model
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR terminal closure certificate read model PR"
+        "missing ready row: GitHub PR terminal closure certificate read model actual-diff minting binding PR"
         in serialized_errors
     )
 
@@ -705,7 +705,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind terminal certificate read model to actual-diff certificate minting`",
+            "1. `harness(pr): bind PR creation admission to actual-diff terminal certificate read model`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -716,7 +716,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind terminal certificate read model to actual-diff certificate minting"
+        "missing next PR marker: harness(pr): bind PR creation admission to actual-diff terminal certificate read model"
         in serialized_errors
     )
 
