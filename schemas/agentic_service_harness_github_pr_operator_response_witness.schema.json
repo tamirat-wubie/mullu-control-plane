@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-response-witness:1",
   "title": "Agentic Service Harness GitHub PR Operator Response Witness",
-  "description": "Foundation Mode witness for the GitHub pull-request admission operator response. This schema records the response evidence state only and does not create branches, open pull requests, write repositories, call connectors, admit mutation routes, append receipt stores, deploy, mutate DNS, serialize secrets, perform destructive operations, or provide terminal closure.",
+  "description": "Foundation Mode witness for the GitHub pull-request admission operator response after the operator approval request is bound to actual non-empty diff evidence. This schema records the response evidence state only and does not create branches, open pull requests, write repositories, call connectors, admit mutation routes, append receipt stores, deploy, mutate DNS, serialize raw diff bodies or file content, serialize secrets, perform destructive operations, or provide terminal closure.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,6 +11,7 @@
     "generated_at",
     "solver_outcome",
     "source_approval_request_ref",
+    "source_actual_diff_approval_request_binding_ref",
     "witness_kind",
     "requested_evidence_ref",
     "response_status",
@@ -43,6 +44,10 @@
     "source_approval_request_ref": {
       "type": "string",
       "const": "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json"
+    },
+    "source_actual_diff_approval_request_binding_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
     },
     "witness_kind": { "type": "string", "const": "operator_response_witness" },
     "requested_evidence_ref": { "$ref": "#/$defs/evidence_ref" },
@@ -95,6 +100,12 @@
       "maxLength": 256,
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
     },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
     "scope": {
       "type": "object",
       "additionalProperties": false,
@@ -135,6 +146,13 @@
         "response_record_ref",
         "response_record_required",
         "response_record_collected",
+        "requires_actual_non_empty_diff_approval_request_binding",
+        "actual_diff_approval_request_binding_ref",
+        "actual_non_empty_diff_receipt_ref",
+        "changed_file_refs",
+        "diff_refs",
+        "redacted_diff_bundle_ref",
+        "redacted_output_ref",
         "approval_effect",
         "pr_creation_authorized_after_response"
       ],
@@ -172,6 +190,25 @@
         "response_record_ref": { "$ref": "#/$defs/evidence_ref" },
         "response_record_required": { "type": "boolean", "const": true },
         "response_record_collected": { "type": "boolean" },
+        "requires_actual_non_empty_diff_approval_request_binding": { "type": "boolean", "const": true },
+        "actual_diff_approval_request_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
+        },
+        "actual_non_empty_diff_receipt_ref": {
+          "type": "string",
+          "const": "witness://actual-non-empty-diff-receipt"
+        },
+        "changed_file_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "diff_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "redacted_diff_bundle_ref": {
+          "type": "string",
+          "const": "digest://redacted-filesystem-write-diff-bundle-candidate"
+        },
+        "redacted_output_ref": {
+          "type": "string",
+          "const": "witness://filesystem-write-output-redacted"
+        },
         "approval_effect": {
           "type": "string",
           "const": "satisfies_operator_pr_approval_witness_only"
@@ -268,12 +305,16 @@
       "required": [
         "github_pr_operator_response_witness_schema",
         "github_pr_operator_approval_request_schema",
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema",
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_example",
         "github_pr_admission_preflight_schema",
         "github_repo_task_service_schema"
       ],
       "properties": {
         "github_pr_operator_response_witness_schema": { "$ref": "#/$defs/evidence_ref" },
         "github_pr_operator_approval_request_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": { "$ref": "#/$defs/evidence_ref" },
         "github_pr_admission_preflight_schema": { "$ref": "#/$defs/evidence_ref" },
         "github_repo_task_service_schema": { "$ref": "#/$defs/evidence_ref" }
       }

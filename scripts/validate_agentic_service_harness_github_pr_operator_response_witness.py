@@ -2,14 +2,17 @@
 """Validate Agentic Service Harness GitHub PR operator response witness.
 
 Purpose: prove the GitHub pull-request admission operator response witness is
-explicit, read-only, and non-authorizing.
+explicit, actual-diff-bound, read-only, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json,
 examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json,
-scripts.validate_agentic_service_harness_github_pr_operator_approval_request, and
+scripts.validate_agentic_service_harness_github_pr_operator_approval_request,
+the actual-diff approval request binding schema/example, and
 scripts.validate_schemas.
 Invariants:
   - The witness binds to the GitHub PR operator approval request.
+  - The witness binds to the actual-diff approval request binding.
+  - Redacted changed-file and diff refs match the source approval binding.
   - Missing response remains AwaitingEvidence and uncollected.
   - Response witness alone grants no branch, PR, repository, connector, network,
     mutation-route, receipt-store, secret, destructive, or terminal authority.
@@ -46,10 +49,29 @@ DEFAULT_EXAMPLES = (
 DEFAULT_OUTPUT = (
     REPO_ROOT / ".change_assurance" / "agentic_service_harness_github_pr_operator_response_witness_validation.json"
 )
+DEFAULT_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_SCHEMA = (
+    REPO_ROOT
+    / "schemas"
+    / "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json"
+)
+DEFAULT_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_EXAMPLES = (
+    REPO_ROOT
+    / "examples"
+    / "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
+)
 EXPECTED_SOURCE_APPROVAL_REQUEST_REF = "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json"
+EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF = (
+    "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
+)
+EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_ID = (
+    "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding"
+)
 EXPECTED_RESPONSE_WITNESS_ID = "agentic_service_harness_github_pr_operator_response_witness"
 EXPECTED_APPROVAL_REQUEST_ID = "approval-request.github-pr-admission"
 EXPECTED_REQUESTED_EVIDENCE_REF = "evidence://operator-pr-approval-response-record"
+EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF = "witness://actual-non-empty-diff-receipt"
+EXPECTED_REDACTED_DIFF_BUNDLE_REF = "digest://redacted-filesystem-write-diff-bundle-candidate"
+EXPECTED_REDACTED_OUTPUT_REF = "witness://filesystem-write-output-redacted"
 EXPECTED_RESPONSE_KINDS = (
     "record_operator_pr_approval_witness",
     "record_operator_pr_rejection_witness",
@@ -67,6 +89,12 @@ REQUIRED_RECEIPT_REFS = {
     ),
     "github_pr_operator_approval_request_schema": (
         "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json"
+    ),
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json"
+    ),
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": (
+        EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF
     ),
     "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
     "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json",
@@ -101,6 +129,7 @@ REQUIRED_TRUE_FLAGS = (
     "read_only",
     "report_is_not_terminal_closure",
     "response_record_required",
+    "requires_actual_non_empty_diff_approval_request_binding",
     "blocks_pr_admission",
 )
 ALLOWED_SECRET_KEYS = {
@@ -139,6 +168,7 @@ class GitHubPrOperatorResponseWitnessValidation:
     example_paths: tuple[str, ...]
     example_count: int
     source_approval_request_ref: str
+    source_actual_diff_approval_request_binding_ref: str
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -153,6 +183,10 @@ def validate_agentic_service_harness_github_pr_operator_response_witness(
     example_paths: Sequence[Path] = DEFAULT_EXAMPLES,
     source_approval_request_schema_path: Path = DEFAULT_SOURCE_APPROVAL_REQUEST_SCHEMA,
     source_approval_request_example_paths: Sequence[Path] = DEFAULT_SOURCE_APPROVAL_REQUEST_EXAMPLES,
+    source_actual_diff_approval_binding_schema_path: Path = DEFAULT_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_SCHEMA,
+    source_actual_diff_approval_binding_example_paths: Sequence[Path] = (
+        DEFAULT_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_EXAMPLES
+    ),
 ) -> GitHubPrOperatorResponseWitnessValidation:
     """Validate GitHub PR operator response witness examples."""
     errors: list[str] = []
@@ -163,11 +197,26 @@ def validate_agentic_service_harness_github_pr_operator_response_witness(
     )
     if not source_validation.ok:
         errors.extend(f"source PR operator approval request: {error}" for error in source_validation.errors)
+    source_actual_diff_binding_schema = _load_json_object(
+        source_actual_diff_approval_binding_schema_path,
+        "GitHub PR actual-diff approval request binding source schema",
+        errors,
+    )
     source_approval_request = _load_json_object(
         source_approval_request_example_paths[0],
         "GitHub PR operator approval request source",
         errors,
     )
+    source_actual_diff_binding = _load_json_object(
+        source_actual_diff_approval_binding_example_paths[0],
+        "GitHub PR actual-diff approval request binding source",
+        errors,
+    )
+    if source_actual_diff_binding_schema and source_actual_diff_binding:
+        errors.extend(
+            "source PR actual-diff approval request binding: " + error
+            for error in _validate_schema_instance(source_actual_diff_binding_schema, source_actual_diff_binding)
+        )
     examples: list[dict[str, Any]] = []
     for example_path in example_paths:
         example = _load_json_object(example_path, f"GitHub PR operator response witness {_path_label(example_path)}", errors)
@@ -178,7 +227,13 @@ def validate_agentic_service_harness_github_pr_operator_response_witness(
             errors.extend(
                 f"{_path_label(example_path)}: {error}" for error in _validate_schema_instance(schema, example)
             )
-        _validate_response_witness_semantics(example, source_approval_request, errors, _path_label(example_path))
+        _validate_response_witness_semantics(
+            example,
+            source_approval_request,
+            source_actual_diff_binding,
+            errors,
+            _path_label(example_path),
+        )
     return GitHubPrOperatorResponseWitnessValidation(
         ok=not errors,
         errors=tuple(errors),
@@ -186,6 +241,7 @@ def validate_agentic_service_harness_github_pr_operator_response_witness(
         example_paths=tuple(_path_label(path) for path in example_paths),
         example_count=len(examples),
         source_approval_request_ref=EXPECTED_SOURCE_APPROVAL_REQUEST_REF,
+        source_actual_diff_approval_request_binding_ref=EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
     )
 
 
@@ -202,11 +258,19 @@ def write_github_pr_operator_response_witness_validation(
 def _validate_response_witness_semantics(
     payload: Mapping[str, Any],
     source_approval_request: Mapping[str, Any],
+    source_actual_diff_binding: Mapping[str, Any],
     errors: list[str],
     label: str,
 ) -> None:
     _require_equal(payload, ("response_witness_id",), EXPECTED_RESPONSE_WITNESS_ID, errors, label)
     _require_equal(payload, ("source_approval_request_ref",), EXPECTED_SOURCE_APPROVAL_REQUEST_REF, errors, label)
+    _require_equal(
+        payload,
+        ("source_actual_diff_approval_request_binding_ref",),
+        EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
     _require_equal(payload, ("solver_outcome",), "AwaitingEvidence", errors, label)
     _require_equal(payload, ("witness_kind",), "operator_response_witness", errors, label)
     _require_equal(payload, ("requested_evidence_ref",), EXPECTED_REQUESTED_EVIDENCE_REF, errors, label)
@@ -225,6 +289,34 @@ def _validate_response_witness_semantics(
         payload,
         ("operator_response", "observed_response_kind"),
         "operator_pr_approval_response_missing",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("operator_response", "actual_diff_approval_request_binding_ref"),
+        EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("operator_response", "actual_non_empty_diff_receipt_ref"),
+        EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("operator_response", "redacted_diff_bundle_ref"),
+        EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("operator_response", "redacted_output_ref"),
+        EXPECTED_REDACTED_OUTPUT_REF,
         errors,
         label,
     )
@@ -251,6 +343,30 @@ def _validate_response_witness_semantics(
             errors,
             label,
         )
+    if source_actual_diff_binding:
+        _require_equal(
+            source_actual_diff_binding,
+            ("binding_id",),
+            EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_ID,
+            errors,
+            "GitHub PR actual-diff approval request binding source",
+        )
+        _require_equal(
+            source_actual_diff_binding,
+            ("approval_request_diff_binding", "operator_response_collected"),
+            False,
+            errors,
+            "GitHub PR actual-diff approval request binding source",
+        )
+        binding = _mapping(source_actual_diff_binding.get("approval_request_diff_binding"))
+        for key in (
+            "changed_file_refs",
+            "diff_refs",
+            "actual_non_empty_diff_receipt_ref",
+            "redacted_diff_bundle_ref",
+            "redacted_output_ref",
+        ):
+            _require_equal(payload, ("operator_response", key), binding.get(key), errors, label)
     for response_kind in EXPECTED_RESPONSE_KINDS:
         _require_contains(payload, ("operator_response", "required_response_kinds"), response_kind, errors, label)
     observed_witnesses = _get_nested(payload, ("remaining_witnesses",))
@@ -293,6 +409,10 @@ def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, An
         errors.append(f"{label} must be a JSON object")
         return {}
     return payload
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
 
 
 def _require_equal(
@@ -373,6 +493,17 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--example", type=Path, action="append", dest="examples")
     parser.add_argument("--source-approval-request-schema", type=Path, default=DEFAULT_SOURCE_APPROVAL_REQUEST_SCHEMA)
     parser.add_argument("--source-approval-request-example", type=Path, action="append", dest="source_approval_examples")
+    parser.add_argument(
+        "--source-actual-diff-approval-binding-schema",
+        type=Path,
+        default=DEFAULT_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_SCHEMA,
+    )
+    parser.add_argument(
+        "--source-actual-diff-approval-binding-example",
+        type=Path,
+        action="append",
+        dest="source_actual_diff_approval_binding_examples",
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--json", action="store_true", help="Print machine-readable validation output.")
     parser.add_argument("--strict", action="store_true", help="Return nonzero when validation fails.")
@@ -389,6 +520,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             tuple(args.source_approval_examples)
             if args.source_approval_examples
             else DEFAULT_SOURCE_APPROVAL_REQUEST_EXAMPLES
+        ),
+        source_actual_diff_approval_binding_schema_path=args.source_actual_diff_approval_binding_schema,
+        source_actual_diff_approval_binding_example_paths=(
+            tuple(args.source_actual_diff_approval_binding_examples)
+            if args.source_actual_diff_approval_binding_examples
+            else DEFAULT_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_EXAMPLES
         ),
     )
     write_github_pr_operator_response_witness_validation(validation, args.output)
