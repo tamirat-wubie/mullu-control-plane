@@ -2033,6 +2033,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-template:1"
     },
     {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_collection_gate.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-collection-gate",
+      "surface": "personal-assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-collection-gate:1"
+    },
+    {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
       "schema_id": "personal-assistant-foundation-closure-packet",
       "surface": "assistant",
