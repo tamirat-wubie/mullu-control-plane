@@ -641,7 +641,7 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "GitHub PR terminal closure operator decision value record actual-diff request binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record",
     "actual-diff-bound decision value record evidence",
-    "GitHub PR terminal closure certificate minting PR",
+    "GitHub PR terminal closure certificate minting actual-diff decision value record binding PR",
     "agentic_service_harness_github_pr_terminal_closure_certificate_minting",
     "terminal closure status remains AwaitingEvidence",
     "Candidate status remains AwaitingEvidence/operator-approval-bound",
@@ -657,9 +657,10 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "satisfies only the operator decision gate",
     "mints no certificate",
     "certificate minting remains blocked",
-    "mints the terminal closure certificate",
-    "limiting authority to this GitHub PR proof thread",
-    "granting no repository mutation, connector call, receipt-store append, deployment, secret serialization, or destructive-operation authority",
+    "actual-diff decision value record evidence",
+    "actual-diff-bound certificate minting evidence",
+    "limited to the GitHub PR proof thread",
+    "grants no repository mutation, connector call, receipt-store append, deployment, secret serialization, or destructive-operation authority",
 )
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
@@ -1483,12 +1484,14 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     certificate_minting_row = re.search(
-        r"^\| GitHub PR terminal closure certificate minting PR \| READY \| .+mints the terminal closure certificate.+GitHub PR proof thread.+destructive-operation authority\. \|$",
+        r"^\| GitHub PR terminal closure certificate minting actual-diff decision value record binding PR \| READY \| .+actual-diff decision value record evidence.+source decision value record id/ref.+source request id/ref/status.+approve_terminal_certificate.+actual non-empty diff receipt ref.+GitHub PR proof thread.+destructive-operation authority\. \|$",
         map_text,
         re.MULTILINE,
     )
     if certificate_minting_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure certificate minting PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure certificate minting actual-diff decision value record binding PR"
+        )
 
     certificate_read_model_row = re.search(
         r"^\| GitHub PR terminal closure certificate read model PR \| READY \| .+projects the minted terminal closure certificate.+operator inspection.+new terminal-closure authority\. \|$",
@@ -1501,7 +1504,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal certificate minting to actual-diff decision value record",
+        "harness(pr): bind terminal certificate read model to actual-diff certificate minting",
     )
     positions: list[int] = []
     for marker in sequence_markers:
