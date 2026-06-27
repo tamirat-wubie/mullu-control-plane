@@ -547,6 +547,24 @@ REQUIRED_GITHUB_PR_UAO_ACTUAL_DIFF_BRANCH_WRITE_BINDING_TERMS = (
     "raw file content",
     "terminal closure fail closed",
 )
+REQUIRED_GITHUB_PR_ROLLBACK_ACTUAL_DIFF_UAO_BINDING_TERMS = (
+    "GitHub PR repository-effect rollback actual-diff UAO binding PR",
+    "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+    "actual-diff UAO admission witness",
+    "actual-diff branch-write authority binding",
+    "actual-diff operator response witness",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
+    "Repository-effect rollback remains AwaitingEvidence",
+    "CI evidence",
+    "PR creation",
+    "raw diff bodies",
+    "raw file content",
+    "terminal closure fail closed",
+)
 REQUIRED_GITHUB_PR_CI_GATE_TERMS = (
     "GitHub PR CI gate before ready-for-review witness PR",
     "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
@@ -828,6 +846,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     )
     _require_all(
         map_text,
+        REQUIRED_GITHUB_PR_ROLLBACK_ACTUAL_DIFF_UAO_BINDING_TERMS,
+        "github_pr_rollback_actual_diff_uao_binding_term",
+        errors,
+    )
+    _require_all(
+        map_text,
         REQUIRED_GITHUB_PR_CI_GATE_TERMS,
         "github_pr_ci_gate_term",
         errors,
@@ -876,6 +900,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_github_pr_operator_response_actual_diff_binding_ready(map_text, errors)
     _validate_github_pr_branch_write_actual_diff_response_binding_ready(map_text, errors)
     _validate_github_pr_uao_actual_diff_branch_write_binding_ready(map_text, errors)
+    _validate_github_pr_rollback_actual_diff_uao_binding_ready(map_text, errors)
     _validate_github_pr_ci_gate_ready(map_text, errors)
     _validate_github_pr_effect_reconciliation_ready(map_text, errors)
     _validate_github_pr_terminal_closure_ready(map_text, errors)
@@ -1289,6 +1314,19 @@ def _validate_github_pr_uao_actual_diff_branch_write_binding_ready(
         errors.append("missing ready row: GitHub PR UAO admission actual-diff branch-write binding PR")
 
 
+def _validate_github_pr_rollback_actual_diff_uao_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR repository-effect rollback actual-diff UAO binding PR \| READY \| .+actual-diff UAO admission witness.+terminal closure fail closed\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR repository-effect rollback actual-diff UAO binding PR")
+
+
 def _validate_github_pr_ci_gate_ready(
     map_text: str,
     errors: list[str],
@@ -1410,7 +1448,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind repository-effect rollback to actual-diff UAO PR admission",
+        "harness(pr): bind CI gate to actual-diff rollback evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:
