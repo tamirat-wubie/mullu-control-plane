@@ -566,9 +566,17 @@ REQUIRED_GITHUB_PR_ROLLBACK_ACTUAL_DIFF_UAO_BINDING_TERMS = (
     "terminal closure fail closed",
 )
 REQUIRED_GITHUB_PR_CI_GATE_TERMS = (
-    "GitHub PR CI gate before ready-for-review witness PR",
+    "GitHub PR CI gate before ready-for-review actual-diff rollback binding PR",
     "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
-    "repository effect rollback plan",
+    "actual-diff repository-effect rollback witness",
+    "actual-diff UAO admission witness",
+    "actual-diff branch-write authority binding",
+    "actual-diff operator response witness",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
     "requested CI evidence ref",
     "required check result",
     "effect_reconciliation",
@@ -1332,12 +1340,12 @@ def _validate_github_pr_ci_gate_ready(
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| GitHub PR CI gate before ready-for-review witness PR \| READY \| .+CI gate authority remains AwaitingEvidence.+terminal authority is granted\. \|$",
+        r"^\| GitHub PR CI gate before ready-for-review actual-diff rollback binding PR \| READY \| .+actual-diff repository-effect rollback witness.+terminal authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if closure_row is None:
-        errors.append("missing ready row: GitHub PR CI gate before ready-for-review witness PR")
+        errors.append("missing ready row: GitHub PR CI gate before ready-for-review actual-diff rollback binding PR")
 
 
 def _validate_github_pr_effect_reconciliation_ready(
@@ -1448,7 +1456,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind CI gate to actual-diff rollback evidence",
+        "harness(pr): bind effect reconciliation to actual-diff CI gate",
     )
     positions: list[int] = []
     for marker in sequence_markers:
