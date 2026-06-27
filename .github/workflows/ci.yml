@@ -142,10 +142,18 @@ jobs:
     if: always()
     steps:
       - name: Confirm bounded Python gates passed
+        shell: bash
+        env:
+          PYTHON_TESTS_RESULT: ${{ needs['python-tests'].result }}
+          PYTHON_COMPATIBILITY_RESULT: ${{ needs['python-compatibility'].result }}
+          PYTHON_SOAK_TESTS_RESULT: ${{ needs['python-soak-tests'].result }}
         run: |
-          test "${{ needs.python-tests.result }}" = "success"
-          test "${{ needs.python-compatibility.result }}" = "success"
-          test "${{ needs.python-soak-tests.result }}" = "success"
+          echo "python-tests=${PYTHON_TESTS_RESULT}"
+          echo "python-compatibility=${PYTHON_COMPATIBILITY_RESULT}"
+          echo "python-soak-tests=${PYTHON_SOAK_TESTS_RESULT}"
+          [[ "${PYTHON_TESTS_RESULT}" == "success" ]]
+          [[ "${PYTHON_COMPATIBILITY_RESULT}" == "success" ]]
+          [[ "${PYTHON_SOAK_TESTS_RESULT}" == "success" ]]
 
   typescript-sdk:
     name: TypeScript SDK Verification
@@ -616,6 +624,9 @@ jobs:
 
       - name: Test Agentic Service Harness non-empty diff file summary receipt
         run: python -m pytest tests/test_validate_agentic_service_harness_non_empty_diff_file_summary_receipt.py -q
+
+      - name: Test Agentic Service Harness GitHub PR actual non-empty diff admission binding
+        run: python -m pytest tests/test_validate_agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.py -q
 
       - name: Run component and workspace file capability tests
         run: python -m pytest tests/test_validate_component_registry.py tests/test_validate_component_router_inventory.py tests/test_validate_component_proof_binding.py tests/test_validate_component_read_model.py tests/test_validate_component_authority_envelope_witnesses.py tests/test_validate_component_route_family_ownership.py tests/test_validate_component_route_family_promotion_approval_candidates.py tests/test_validate_component_route_family_promotion_approval_intake.py tests/test_validate_component_route_family_promotion_authority_decision_report.py tests/test_validate_component_route_family_promotion_authority_upgrade_witness_decision_report.py tests/test_validate_component_route_family_promotion_gate_satisfaction_evaluator.py tests/test_validate_component_route_family_promotion_lifecycle_transition_decision_report.py tests/test_validate_component_route_family_promotion_missing_evidence_ledger.py tests/test_validate_component_route_family_promotion_operator_submitted_evidence_records.py tests/test_validate_component_route_family_promotion_preflight.py tests/test_validate_component_route_family_promotion_product_ownership_decision_report.py tests/test_validate_component_route_family_promotion_route_binding_decision_report.py tests/test_validate_component_route_family_promotion_router_inventory_delta_candidate.py tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_minting_denial_report.py tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_minting_preflight.py tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request.py tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_evidence_request_status_ledger.py tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_remediation_plan.py tests/test_validate_component_route_family_promotion_router_inventory_delta_witness_requirements.py tests/test_validate_component_route_family_promotion_submitted_evidence_payload_examples.py tests/test_validate_component_route_family_promotion_submitted_evidence_records.py tests/test_validate_component_route_family_promotion_submitted_evidence_verifier.py tests/test_validate_component_route_family_promotion_terminal_closure_denial_report.py tests/test_validate_component_route_family_promotion_witness_evidence.py tests/test_validate_component_route_family_promotion_witness_requirements.py tests/test_validate_component_evidence_postmerge_audit.py tests/test_workspace_file_capability.py -q
