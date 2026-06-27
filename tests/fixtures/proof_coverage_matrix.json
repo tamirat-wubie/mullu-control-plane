@@ -1515,11 +1515,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 290,
+      "proven": 291,
       "unproven": 0,
       "witnessed": 161
     },
-    "route_count": 451,
+    "route_count": 452,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -3479,6 +3479,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/workflow/history",
+        "surface_id": "workflow_execution_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/workflow/local-developer/read-model",
         "surface_id": "workflow_execution_lifecycle"
       },
       {
@@ -8518,6 +8523,7 @@
         "/api/v1/ledger",
         "/api/v1/workflow/execute",
         "/api/v1/workflow/history",
+        "/api/v1/workflow/local-developer/read-model",
         "/api/v1/workflow/traced",
         "/api/v1/cognitive/shadow/observations",
         "/api/v1/pipeline/execute",
@@ -8529,6 +8535,7 @@
       "runtime_witnesses": [
         "execute_workflow",
         "execute_workflow_bad_capability",
+        "local_developer_workflow_read_model_is_selectable_and_read_only",
         "workflow_history",
         "read_surfaces_observations_and_summary_when_enabled",
         "read_respects_limit",
@@ -15654,8 +15661,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1983,
-    "runtime_witness_count": 1983,
+    "exact_test_anchor_count": 1984,
+    "runtime_witness_count": 1984,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -21083,6 +21090,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_workflow_execution_lifecycle.py::test_local_developer_workflow_read_model_is_selectable_and_read_only"
+            ],
+            "witness": "local_developer_workflow_read_model_is_selectable_and_read_only"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_agent_workflow.py::test_workflow_history",
               "mcoi/tests/test_server_phase205.py::test_workflow_history"
             ],
@@ -21198,8 +21211,8 @@
             "witness": "list_by_category"
           }
         ],
-        "exact_test_anchor_count": 21,
-        "runtime_witness_count": 21,
+        "exact_test_anchor_count": 22,
+        "runtime_witness_count": 22,
         "surface_id": "workflow_execution_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

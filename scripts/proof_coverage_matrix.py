@@ -4644,6 +4644,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/ledger",
                 "/api/v1/workflow/execute",
                 "/api/v1/workflow/history",
+                "/api/v1/workflow/local-developer/read-model",
                 "/api/v1/workflow/traced",
                 "/api/v1/cognitive/shadow/observations",
                 "/api/v1/pipeline/execute",
@@ -4674,6 +4675,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "execute_workflow",
                 "execute_workflow_bad_capability",
+                "local_developer_workflow_read_model_is_selectable_and_read_only",
                 "workflow_history",
                 "read_surfaces_observations_and_summary_when_enabled",
                 "read_respects_limit",

@@ -472,6 +472,26 @@ def test_ledger_read_model_bounded(test_client) -> None:
     assert len(body["entries"]) <= 5
 
 
+def test_local_developer_workflow_read_model_is_selectable_and_read_only(test_client) -> None:
+    response = test_client.get("/api/v1/workflow/local-developer/read-model")
+
+    body = response.json()
+    read_model = body["read_model"]
+    assert response.status_code == 200
+    assert body["workflow_id"] == "mullu.local_developer_workflow.v1"
+    assert body["selectable"] is True
+    assert body["execution_authority_granted"] is False
+    assert body["governed"] is True
+    assert read_model["valid"] is True
+    assert read_model["external_mutation_allowed"] is False
+    assert read_model["approval_stage_id"] == "operator_review_gate"
+    assert read_model["stage_count"] == 5
+    assert read_model["binding_count"] == 4
+    assert read_model["stages"][1]["effect_class"] == "external_write"
+    assert read_model["stages"][1]["grants_new_capability_authority"] is False
+    assert read_model["workflow"]["workflow_id"] == body["workflow_id"]
+
+
 @pytest.mark.parametrize(
     ("endpoint", "params"),
     [

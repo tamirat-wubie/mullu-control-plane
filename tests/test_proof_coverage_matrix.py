@@ -1879,6 +1879,10 @@ def test_representative_routes_are_not_unclassified() -> None:
     )
     assert classified_routes["/api/v1/workflow/execute"]["surface_id"] == "workflow_execution_lifecycle"
     assert classified_routes["/api/v1/workflow/history"]["surface_id"] == "workflow_execution_lifecycle"
+    assert (
+        classified_routes["/api/v1/workflow/local-developer/read-model"]["surface_id"]
+        == "workflow_execution_lifecycle"
+    )
     assert classified_routes["/api/v1/workflow/traced"]["surface_id"] == "workflow_execution_lifecycle"
     assert classified_routes["/api/v1/execute"]["surface_id"] == "workflow_execution_lifecycle"
     assert classified_routes["/api/v1/pipeline/execute"]["surface_id"] == "workflow_execution_lifecycle"
@@ -5072,6 +5076,7 @@ def test_workflow_execution_lifecycle_surface_tracks_execution_history_and_traci
     assert workflow_surface["action_proof"] == "action_proof"
     assert "/api/v1/workflow/execute" in workflow_surface["representative_paths"]
     assert "/api/v1/workflow/history" in workflow_surface["representative_paths"]
+    assert "/api/v1/workflow/local-developer/read-model" in workflow_surface["representative_paths"]
     assert "/api/v1/workflow/traced" in workflow_surface["representative_paths"]
     assert "/api/v1/execute" in workflow_surface["representative_paths"]
     assert "/api/v1/pipeline/execute" in workflow_surface["representative_paths"]
@@ -5086,6 +5091,7 @@ def test_workflow_execution_lifecycle_surface_tracks_execution_history_and_traci
     assert "mcoi/tests/test_server_phase205.py" in workflow_surface["evidence_files"]
     assert "execute_workflow" in witnesses
     assert "execute_workflow_bad_capability" in witnesses
+    assert "local_developer_workflow_read_model_is_selectable_and_read_only" in witnesses
     assert "workflow_history" in witnesses
     assert "audit_on_success" in witnesses
     assert "audit_on_failure" in witnesses
@@ -5105,6 +5111,11 @@ def test_workflow_execution_lifecycle_surface_tracks_execution_history_and_traci
     assert "list_by_category" in witnesses
     assert route_records["/api/v1/workflow/execute"]["coverage_state"] == "proven"
     assert route_records["/api/v1/workflow/execute"]["surface_id"] == "workflow_execution_lifecycle"
+    assert route_records["/api/v1/workflow/local-developer/read-model"]["coverage_state"] == "proven"
+    assert (
+        route_records["/api/v1/workflow/local-developer/read-model"]["surface_id"]
+        == "workflow_execution_lifecycle"
+    )
     assert route_records["/api/v1/workflow/traced"]["coverage_state"] == "proven"
     assert route_records["/api/v1/workflow/traced"]["surface_id"] == "workflow_execution_lifecycle"
     assert route_records["/api/v1/pipeline/execute"]["surface_id"] == "workflow_execution_lifecycle"

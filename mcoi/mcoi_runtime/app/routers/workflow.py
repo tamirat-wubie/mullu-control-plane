@@ -22,6 +22,7 @@ from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.agent_protocol import AgentCapability
 from mcoi_runtime.core.batch_pipeline import PipelineStep
+from mcoi_runtime.core.capability_unlock_ladder import build_local_developer_workflow_read_model
 from mcoi_runtime.core.request_tracing import TraceContext
 from mcoi_runtime.core.tool_use import certify_tool_capability_policy_receipt
 
@@ -275,6 +276,19 @@ def workflow_history(limit: str = "50"):
             for r in deps.workflow_engine.history(limit=read_limit)
         ],
         "summary": deps.workflow_engine.summary(),
+    }
+
+
+@router.get("/api/v1/workflow/local-developer/read-model")
+def local_developer_workflow_read_model():
+    """Return the read-only Local Developer Workflow v1 operator surface."""
+    read_model = build_local_developer_workflow_read_model()
+    return {
+        "workflow_id": read_model["read_model_id"],
+        "read_model": read_model,
+        "selectable": read_model["valid"] is True,
+        "execution_authority_granted": False,
+        "governed": True,
     }
 
 

@@ -79,6 +79,17 @@ validate_local_developer_workflow_descriptor()
 build_local_developer_workflow_read_model()
 ```
 
+Operator read endpoint:
+
+```text
+GET /api/v1/workflow/local-developer/read-model
+```
+
+The endpoint is read-only. It returns the descriptor, validation state,
+selectability, stage rows, binding count, approval boundary, and authority
+flags. It does not start workflow execution, open a pull request, push a branch,
+or grant live connector authority.
+
 Stage order:
 
 ```text
