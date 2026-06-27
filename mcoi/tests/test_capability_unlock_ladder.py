@@ -12,6 +12,9 @@ Invariants:
 
 from __future__ import annotations
 
+from dataclasses import replace
+
+from mcoi_runtime.contracts.skill import EffectClass
 from mcoi_runtime.contracts.workflow import StageType
 from mcoi_runtime.core.capability_unlock_ladder import (
     GATE_APPROVAL,
@@ -23,12 +26,14 @@ from mcoi_runtime.core.capability_unlock_ladder import (
     GATE_WORKSPACE_WRITE,
     LOCAL_DEVELOPER_WORKFLOW_ID,
     UNLOCK_LADDER_ID,
+    build_local_developer_workflow_read_model,
     capability_unlock_admission_profile,
     capability_unlock_profile_errors,
     default_capability_unlock_ladder,
     default_gate_template_ids,
     mullu_local_developer_workflow_v1_descriptor,
     validate_capability_unlock_ladder,
+    validate_local_developer_workflow_descriptor,
 )
 from mcoi_runtime.core.default_skill_catalog import default_skill_descriptors
 from mcoi_runtime.core.workflow import WorkflowValidator
@@ -118,6 +123,54 @@ def test_local_developer_workflow_bindings_match_declared_skill_outputs() -> Non
     assert approval_binding.target_stage_id == "prepare_pr_evidence"
     assert approval_binding.source_output_key == "approval_decision_ref"
     assert GATE_OPERATOR_REVIEW in default_gate_template_ids()
+
+
+def test_local_developer_workflow_validator_and_read_model_are_valid() -> None:
+    descriptor = mullu_local_developer_workflow_v1_descriptor()
+    read_model = build_local_developer_workflow_read_model()
+
+    assert validate_local_developer_workflow_descriptor(descriptor) == ()
+    assert read_model["read_model_id"] == LOCAL_DEVELOPER_WORKFLOW_ID
+    assert read_model["valid"] is True
+    assert read_model["approval_stage_id"] == "operator_review_gate"
+    assert read_model["external_mutation_allowed"] is False
+    assert read_model["stage_count"] == 5
+    assert read_model["binding_count"] == 4
+    assert read_model["violations"] == ()
+    assert read_model["stages"][1]["effect_class"] == "external_write"
+    assert read_model["stages"][1]["grants_new_capability_authority"] is False
+
+
+def test_local_developer_workflow_validation_rejects_topology_drift() -> None:
+    descriptor = mullu_local_developer_workflow_v1_descriptor()
+    stages = list(descriptor.stages)
+    stages[-1] = replace(stages[-1], predecessors=("verify_local_receipt",))
+    drifted = replace(descriptor, stages=tuple(stages))
+
+    violations = validate_local_developer_workflow_descriptor(drifted)
+
+    assert "prepare_pr_evidence predecessor binding changed" in violations
+    assert "local developer workflow handoff bindings changed" not in violations
+    assert len(violations) == 1
+
+
+def test_local_developer_workflow_validation_rejects_skill_authority_drift() -> None:
+    skills = {descriptor.skill_id: descriptor for descriptor in default_skill_descriptors()}
+    write_skill = skills["software_dev.change_closure.v1"]
+    skills["software_dev.change_closure.v1"] = replace(
+        write_skill,
+        effect_class=EffectClass.EXTERNAL_READ,
+        metadata={**write_skill.metadata, "approval_expected": False},
+    )
+
+    violations = validate_local_developer_workflow_descriptor(
+        mullu_local_developer_workflow_v1_descriptor(),
+        skills,
+    )
+
+    assert "run_local_change_chain must remain the only write-bearing skill stage" in violations
+    assert "run_local_change_chain approval expectation missing" in violations
+    assert len(violations) == 2
 
 
 def test_unlock_admission_profile_resolves_default_capability_metadata() -> None:

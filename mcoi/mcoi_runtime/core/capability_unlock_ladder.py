@@ -13,15 +13,22 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistryEntry
+from mcoi_runtime.contracts.skill import (
+    EffectClass,
+    SkillDescriptor,
+    SkillLifecycle,
+    VerificationStrength,
+)
 from mcoi_runtime.contracts.workflow import (
     StageType,
     WorkflowBinding,
     WorkflowDescriptor,
     WorkflowStage,
 )
+from mcoi_runtime.core.default_skill_catalog import default_skill_descriptors
 
 
 GATE_EVIDENCE_INTAKE = "evidence_intake_gate"
@@ -36,6 +43,13 @@ GATE_OPERATOR_REVIEW = "operator_review_gate"
 UNLOCK_LADDER_ID = "mullu.capability_unlock_ladder.v1"
 LOCAL_DEVELOPER_WORKFLOW_ID = "mullu.local_developer_workflow.v1"
 FIXED_DESCRIPTOR_CREATED_AT = "2026-06-26T00:00:00+00:00"
+LOCAL_DEVELOPER_STAGE_TIMEOUT_SECONDS = {
+    "plan_local_change": 300,
+    "run_local_change_chain": 1200,
+    "verify_local_receipt": 300,
+    "operator_review_gate": 86400,
+    "prepare_pr_evidence": 300,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +89,68 @@ class CapabilityUnlockAdmissionProfile:
     requires_live_witness: bool
     allowed_effects: tuple[str, ...]
     forbidden_effects: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class LocalDeveloperWorkflowStage:
+    """Canonical stage contract for the local developer workflow."""
+
+    order: int
+    stage_id: str
+    stage_type: StageType
+    skill_id: str
+    predecessor_id: str
+    closure_evidence_key: str
+    responsibility: str
+
+
+CANONICAL_LOCAL_DEVELOPER_WORKFLOW: tuple[LocalDeveloperWorkflowStage, ...] = (
+    LocalDeveloperWorkflowStage(
+        order=1,
+        stage_id="plan_local_change",
+        stage_type=StageType.SKILL_EXECUTION,
+        skill_id="agentic_control.coding_governor.v1",
+        predecessor_id="",
+        closure_evidence_key="code_change_plan_ref",
+        responsibility="create the local plan, change boundary, test contract, and rollback plan",
+    ),
+    LocalDeveloperWorkflowStage(
+        order=2,
+        stage_id="run_local_change_chain",
+        stage_type=StageType.SKILL_EXECUTION,
+        skill_id="software_dev.change_closure.v1",
+        predecessor_id="plan_local_change",
+        closure_evidence_key="change_receipt_id",
+        responsibility="generate context, run the bounded local change path, and emit receipt evidence",
+    ),
+    LocalDeveloperWorkflowStage(
+        order=3,
+        stage_id="verify_local_receipt",
+        stage_type=StageType.SKILL_EXECUTION,
+        skill_id="agentic_control.quality_governor.v1",
+        predecessor_id="run_local_change_chain",
+        closure_evidence_key="quality_verification_plan_ref",
+        responsibility="verify receipt, gates, rollback evidence, and residual risk before review",
+    ),
+    LocalDeveloperWorkflowStage(
+        order=4,
+        stage_id="operator_review_gate",
+        stage_type=StageType.APPROVAL_GATE,
+        skill_id="",
+        predecessor_id="verify_local_receipt",
+        closure_evidence_key="approval_decision_ref",
+        responsibility="suspend for operator approval before PR-opening or external mutation intent",
+    ),
+    LocalDeveloperWorkflowStage(
+        order=5,
+        stage_id="prepare_pr_evidence",
+        stage_type=StageType.SKILL_EXECUTION,
+        skill_id="agentic_control.release_governor.v1",
+        predecessor_id="operator_review_gate",
+        closure_evidence_key="release_handoff_plan_ref",
+        responsibility="prepare PR evidence and release handoff packet without pushing or opening PR",
+    ),
+)
 
 
 def default_gate_template_ids() -> tuple[str, ...]:
@@ -441,7 +517,192 @@ def mullu_local_developer_workflow_v1_descriptor() -> WorkflowDescriptor:
     )
 
 
+def validate_local_developer_workflow_descriptor(
+    descriptor: WorkflowDescriptor | None = None,
+    skill_descriptors: Iterable[SkillDescriptor] | Mapping[str, SkillDescriptor] | None = None,
+) -> tuple[str, ...]:
+    """Return validation violations for Local Developer Workflow v1."""
+    workflow = descriptor or mullu_local_developer_workflow_v1_descriptor()
+    skill_map = _skill_map(skill_descriptors)
+    violations: list[str] = []
+
+    if workflow.workflow_id != LOCAL_DEVELOPER_WORKFLOW_ID:
+        violations.append("local developer workflow identifier changed")
+    if len(workflow.stages) != len(CANONICAL_LOCAL_DEVELOPER_WORKFLOW):
+        violations.append("local developer workflow stage count changed")
+
+    expected_stage_ids = tuple(stage.stage_id for stage in CANONICAL_LOCAL_DEVELOPER_WORKFLOW)
+    actual_stage_ids = tuple(stage.stage_id for stage in workflow.stages)
+    if actual_stage_ids != expected_stage_ids:
+        violations.append("local developer workflow stage order changed")
+
+    for index, expected in enumerate(CANONICAL_LOCAL_DEVELOPER_WORKFLOW):
+        if index >= len(workflow.stages):
+            continue
+        actual = workflow.stages[index]
+        expected_predecessors = () if not expected.predecessor_id else (expected.predecessor_id,)
+        expected_skill_id = expected.skill_id or None
+        if actual.stage_id != expected.stage_id:
+            violations.append(f"{expected.stage_id} stage identifier changed")
+        if actual.stage_type is not expected.stage_type:
+            violations.append(f"{expected.stage_id} stage type changed")
+        if actual.skill_id != expected_skill_id:
+            violations.append(f"{expected.stage_id} skill binding changed")
+        if actual.predecessors != expected_predecessors:
+            violations.append(f"{expected.stage_id} predecessor binding changed")
+        if actual.timeout_seconds != LOCAL_DEVELOPER_STAGE_TIMEOUT_SECONDS[expected.stage_id]:
+            violations.append(f"{expected.stage_id} timeout boundary changed")
+        if expected.skill_id:
+            violations.extend(_validate_local_developer_skill(expected, skill_map))
+
+    expected_bindings = _expected_local_developer_bindings()
+    actual_bindings = tuple(
+        (
+            binding.binding_id,
+            binding.source_stage_id,
+            binding.source_output_key,
+            binding.target_stage_id,
+            binding.target_input_key,
+        )
+        for binding in workflow.bindings
+    )
+    if actual_bindings != expected_bindings:
+        violations.append("local developer workflow handoff bindings changed")
+
+    return tuple(violations)
+
+
+def build_local_developer_workflow_read_model(
+    skill_descriptors: Iterable[SkillDescriptor] | Mapping[str, SkillDescriptor] | None = None,
+    *,
+    created_at: str = FIXED_DESCRIPTOR_CREATED_AT,
+) -> dict[str, object]:
+    """Project Local Developer Workflow v1 into a deterministic operator read model."""
+    workflow = mullu_local_developer_workflow_v1_descriptor()
+    if created_at != FIXED_DESCRIPTOR_CREATED_AT:
+        workflow = WorkflowDescriptor(
+            workflow_id=workflow.workflow_id,
+            name=workflow.name,
+            description=workflow.description,
+            stages=workflow.stages,
+            bindings=workflow.bindings,
+            created_at=created_at,
+        )
+    skill_map = _skill_map(skill_descriptors)
+    violations = validate_local_developer_workflow_descriptor(workflow, skill_map)
+    stage_rows = []
+    for stage in CANONICAL_LOCAL_DEVELOPER_WORKFLOW:
+        skill = skill_map.get(stage.skill_id) if stage.skill_id else None
+        stage_rows.append(
+            {
+                "order": stage.order,
+                "stage_id": stage.stage_id,
+                "stage_type": stage.stage_type.value,
+                "skill_id": stage.skill_id,
+                "skill_name": skill.name if skill is not None else "",
+                "effect_class": skill.effect_class.value if skill is not None else "",
+                "lifecycle": skill.lifecycle.value if skill is not None else "",
+                "verification_strength": skill.verification_strength.value if skill is not None else "",
+                "responsibility": stage.responsibility,
+                "closure_evidence_key": stage.closure_evidence_key,
+                "predecessor_id": stage.predecessor_id,
+                "timeout_seconds": LOCAL_DEVELOPER_STAGE_TIMEOUT_SECONDS[stage.stage_id],
+                "grants_new_capability_authority": (
+                    skill.metadata.get("grants_new_capability_authority") if skill is not None else False
+                ),
+            }
+        )
+    return {
+        "read_model_id": LOCAL_DEVELOPER_WORKFLOW_ID,
+        "foundation_mode": True,
+        "governed": True,
+        "valid": not violations,
+        "violations": violations,
+        "stage_count": len(stage_rows),
+        "binding_count": len(workflow.bindings),
+        "approval_stage_id": "operator_review_gate",
+        "external_mutation_allowed": False,
+        "workflow": workflow.to_json_dict(),
+        "stages": stage_rows,
+    }
+
+
 def _as_mapping(value: Any) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise ValueError("value_must_be_mapping")
     return value
+
+
+def _skill_map(
+    skill_descriptors: Iterable[SkillDescriptor] | Mapping[str, SkillDescriptor] | None,
+) -> dict[str, SkillDescriptor]:
+    if skill_descriptors is None:
+        descriptors = default_skill_descriptors()
+    elif isinstance(skill_descriptors, Mapping):
+        return dict(skill_descriptors)
+    else:
+        descriptors = tuple(skill_descriptors)
+    return {descriptor.skill_id: descriptor for descriptor in descriptors}
+
+
+def _validate_local_developer_skill(
+    expected: LocalDeveloperWorkflowStage,
+    skill_map: Mapping[str, SkillDescriptor],
+) -> tuple[str, ...]:
+    violations: list[str] = []
+    skill = skill_map.get(expected.skill_id)
+    if skill is None:
+        return (f"{expected.stage_id} skill descriptor missing",)
+    if skill.lifecycle is SkillLifecycle.BLOCKED:
+        violations.append(f"{expected.stage_id} skill is blocked")
+    if skill.verification_strength is not VerificationStrength.MANDATORY:
+        violations.append(f"{expected.stage_id} skill must require mandatory verification")
+    if skill.metadata.get("grants_new_capability_authority") is not False:
+        violations.append(f"{expected.stage_id} skill must not grant capability authority")
+    if expected.stage_id == "run_local_change_chain":
+        if skill.effect_class is not EffectClass.EXTERNAL_WRITE:
+            violations.append("run_local_change_chain must remain the only write-bearing skill stage")
+        if skill.metadata.get("approval_expected") is not True:
+            violations.append("run_local_change_chain approval expectation missing")
+    elif skill.effect_class is not EffectClass.EXTERNAL_READ:
+        violations.append(f"{expected.stage_id} skill must remain read-only")
+    if not _skill_outputs_key(skill, expected.closure_evidence_key):
+        violations.append(f"{expected.stage_id} closure evidence key missing")
+    return tuple(violations)
+
+
+def _skill_outputs_key(skill: SkillDescriptor, output_key: str) -> bool:
+    return any(output_key in step.output_keys for step in skill.steps)
+
+
+def _expected_local_developer_bindings() -> tuple[tuple[str, str, str, str, str], ...]:
+    return (
+        (
+            "local_plan_to_change_chain",
+            "plan_local_change",
+            "code_change_plan_ref",
+            "run_local_change_chain",
+            "code_change_plan_ref",
+        ),
+        (
+            "change_receipt_to_verifier",
+            "run_local_change_chain",
+            "change_receipt_id",
+            "verify_local_receipt",
+            "change_receipt_id",
+        ),
+        (
+            "verification_to_operator_review",
+            "verify_local_receipt",
+            "quality_verification_plan_ref",
+            "operator_review_gate",
+            "verification_plan_ref",
+        ),
+        (
+            "approval_to_pr_evidence",
+            "operator_review_gate",
+            "approval_decision_ref",
+            "prepare_pr_evidence",
+            "approval_decision_ref",
+        ),
+    )
