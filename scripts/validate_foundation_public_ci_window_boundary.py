@@ -51,6 +51,7 @@ EXPECTED_VALIDATOR_COMMANDS = (
     "python scripts/validate_release_status.py",
     "python scripts/report_ci_health.py --repo tamirat-wubie/mullu-control-plane --branch main --json",
 )
+EXPECTED_VALIDATOR_KEYS = {"command", "state"}
 EXPECTED_RECEIPT_BASE_VALIDATOR_COMMANDS = (
     "python scripts/validate_public_repository_surface.py --local-only",
     "python scripts/validate_proprietary_boundary.py",
@@ -247,6 +248,13 @@ def validate_witness(payload: dict[str, Any]) -> list[Finding]:
     if not isinstance(validators, list) or not all(isinstance(item, dict) for item in validators):
         findings.append(Finding("public_ci_window_validators_invalid", "validators must be a list of objects"))
     else:
+        if not all(set(item) == EXPECTED_VALIDATOR_KEYS for item in validators):
+            findings.append(
+                Finding(
+                    "public_ci_window_validator_entry_keys_invalid",
+                    "validator entries must contain only command and state",
+                )
+            )
         observed_commands = tuple(item.get("command") for item in validators)
         observed_states = tuple(item.get("state") for item in validators)
         if observed_commands != EXPECTED_VALIDATOR_COMMANDS:
@@ -473,6 +481,13 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
     if not isinstance(validators, list) or not all(isinstance(item, dict) for item in validators):
         findings.append(Finding("public_ci_window_receipt_validators_invalid", "validators must be a list of objects"))
     else:
+        if not all(set(item) == EXPECTED_VALIDATOR_KEYS for item in validators):
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_validator_entry_keys_invalid",
+                    "validator entries must contain only command and state",
+                )
+            )
         expected_validator_commands = EXPECTED_RECEIPT_BASE_VALIDATOR_COMMANDS
         if pull_request_number is not None:
             expected_validator_commands = (
