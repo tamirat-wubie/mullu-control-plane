@@ -759,6 +759,62 @@ prerequisite count, monitoring-activation denial, alert-routing denial,
 production-claim denial, and no-effect posture. It is a production monitoring
 readiness projection only and does not activate monitors, route alerts, make
 production claims, or perform external effects.
+The sandbox patch incident response readiness field is
+`operator_sandbox_patch_incident_response_readiness_summary`, anchored to the
+documented `sandbox_patch_receipt` incident response readiness path. It reports
+incident status, incident target, prerequisites, missing prerequisite count,
+incident-response denial, containment denial, rollback-execution denial, paging
+denial, and no-effect posture. It is an incident response readiness projection
+only and does not contain incidents, execute rollback, page operators, or
+perform external effects.
+The sandbox patch recovery closure readiness field is
+`operator_sandbox_patch_recovery_closure_readiness_summary`, anchored to the
+documented `sandbox_patch_receipt` recovery closure readiness path. It reports
+recovery status, recovery target, prerequisites, missing prerequisite count,
+recovery-closure denial, closure-certification denial, replay-promotion denial,
+post-incident-publication denial, and no-effect posture. It is a recovery
+closure readiness projection only and does not certify closure, promote replay,
+publish post-incident updates, or perform external effects.
+The sandbox patch trust ledger readiness field is
+`operator_sandbox_patch_trust_ledger_readiness_summary`, anchored to the
+documented `sandbox_patch_receipt` trust ledger readiness path. It reports
+ledger status, ledger target, prerequisites, missing prerequisite count,
+ledger-anchor denial, remote-submission denial, verification-publication
+denial, and no-effect posture. It is a trust ledger readiness projection only
+and does not anchor ledger entries, submit remote evidence, publish
+verification, or perform external effects.
+The sandbox patch terminal audit export readiness field is
+`operator_sandbox_patch_terminal_audit_export_readiness_summary`, anchored to
+the documented `sandbox_patch_receipt` terminal audit export readiness path. It
+reports audit export status, audit export target, prerequisites, missing
+prerequisite count, audit-export denial, archive-submission denial,
+external-publication denial, and no-effect posture. It is a terminal audit
+export readiness projection only and does not export audit packages, submit
+archives, publish external verification, or perform external effects.
+The sandbox patch foundation closure readiness field is
+`operator_sandbox_patch_foundation_closure_readiness_summary`, anchored to the
+documented `sandbox_patch_receipt` foundation closure readiness path. It reports
+foundation closure status, closure target, prerequisites, missing prerequisite
+count, closure-certification denial, promotion denial, handoff-publication
+denial, and no-effect posture. It is a foundation closure readiness projection
+only and does not certify closure, promote the workflow, publish handoff state,
+or perform external effects.
+The sandbox patch iteration resume readiness field is
+`operator_sandbox_patch_iteration_resume_readiness_summary`, anchored to the
+documented `sandbox_patch_receipt` iteration resume readiness path. It reports
+iteration resume status, resume target, prerequisites, missing prerequisite
+count, next-iteration-start denial, automatic-resume denial,
+authority-carryover denial, and no-effect posture. It is an iteration resume
+readiness projection only and does not start the next iteration, automatically
+resume execution, carry over authority, or perform external effects.
+The sandbox patch next scope admission readiness field is
+`operator_sandbox_patch_next_scope_admission_readiness_summary`, anchored to
+the documented `sandbox_patch_receipt` next scope admission readiness path. It
+reports next scope admission status, scope target, prerequisites, missing
+prerequisite count, scope-admission denial, execution denial,
+authority-promotion denial, and no-effect posture. It is a next scope admission
+readiness projection only and does not admit scope, start execution, promote
+authority, or perform external effects.
 The operator handoff field is `operator_handoff_summary`, composed from
 `workflow_monitor.metadata.developer_workflow_milestone_summary` and
 `workflow_monitor.metadata.operator_decision_summary`. It gives a future
