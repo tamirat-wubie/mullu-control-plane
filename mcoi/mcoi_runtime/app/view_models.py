@@ -471,6 +471,7 @@ class AutonomousRequestEpisodeSummaryView:
     stage_policy_bindings: tuple[Mapping[str, object], ...] = ()
     stage_rollback_bindings: tuple[Mapping[str, object], ...] = ()
     stage_dependency_bindings: tuple[Mapping[str, object], ...] = ()
+    stage_repair_bindings: tuple[Mapping[str, object], ...] = ()
 
     @staticmethod
     def from_receipt(
@@ -551,6 +552,18 @@ class AutonomousRequestEpisodeSummaryView:
                 for step in receipt.step_receipts
                 if step.plan_stage_id is not None
             ),
+            stage_repair_bindings=tuple(
+                {
+                    "stage_id": step.plan_stage_id,
+                    "receipt_ref": step.receipt_ref,
+                    "attempt_count": step.attempt_count,
+                    "retry_count": step.retry_count,
+                    "repair_receipt_refs": [repair.receipt_ref for repair in step.repair_receipts],
+                    "repair_status": _autonomous_request_repair_status(step.retry_count, step.validation_error),
+                }
+                for step in receipt.step_receipts
+                if step.plan_stage_id is not None
+            ),
             rollback_ref=receipt.rollback_ref,
         )
 
@@ -567,6 +580,15 @@ def _autonomous_request_dependency_status(structured_error_codes: tuple[str, ...
     if "dependency_blocked" in structured_error_codes:
         return "blocked"
     return "satisfied"
+
+
+def _autonomous_request_repair_status(retry_count: int, validation_error: str | None) -> str:
+    """Classify whether a stage needed autonomous repair before settling."""
+    if retry_count == 0:
+        return "not_required"
+    if validation_error is None:
+        return "repaired"
+    return "repair_failed"
 
 
 # ---------------------------------------------------------------------------
