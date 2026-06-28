@@ -110,6 +110,9 @@ def test_public_ci_window_closed_receipt_example_passes() -> None:
     assert payload["solver_outcome"] == "SolvedVerified"
     assert payload["public_readiness_claimed"] is False
     assert payload["raw_secrets_committed"] is False
+    assert payload["repo_visibility_after"] == "private"
+    assert payload["repo_visibility_restored"] is True
+    assert payload["repo_visibility_restored_at"] == "2026-06-26T11:15:01Z"
     assert payload["workflow_run_urls"]
     assert payload["branch_deleted"] is True
 
@@ -180,7 +183,13 @@ def test_public_ci_window_receipt_rejects_invalid_bounded_visibility_after_label
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["status"] = "bounded_public_awaiting_evidence"
     payload["solver_outcome"] = "AwaitingEvidence"
+    payload["repo_visibility_after"] = "bounded_public"
     payload["closed_at"] = None
+    payload["branch_deleted"] = False
+    payload["merge_commit"] = None
+    payload["merged_at"] = None
+    payload["repo_visibility_restored"] = False
+    payload["repo_visibility_restored_at"] = None
     payload["repo_visibility_after"] = "private"
     for validator in payload["validators"]:
         validator["state"] = "AwaitingEvidence"
@@ -191,6 +200,104 @@ def test_public_ci_window_receipt_rejects_invalid_bounded_visibility_after_label
     assert any(finding.rule_id == "public_ci_window_receipt_visibility_after_invalid" for finding in findings)
     assert any("repo_visibility_after must match the receipt status" in finding.message for finding in findings)
     assert all("private" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_unrestored_visibility_label() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["repo_visibility_after"] = "private_or_bounded_public"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_visibility_after_invalid" for finding in findings)
+    assert any("repo_visibility_after must match the receipt status" in finding.message for finding in findings)
+    assert all("private_or_bounded_public" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_missing_visibility_restoration() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    del payload["repo_visibility_restored"]
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_root_keys_invalid" for finding in findings)
+    assert any(finding.rule_id == "public_ci_window_receipt_visibility_restored_invalid" for finding in findings)
+    assert any("closed receipts must confirm private visibility restoration" in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_false_visibility_restoration() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["repo_visibility_restored"] = False
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_visibility_restored_invalid" for finding in findings)
+    assert any("closed receipts must confirm private visibility restoration" in finding.message for finding in findings)
+    assert all("False" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_missing_visibility_restored_at() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["repo_visibility_restored_at"] = None
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_visibility_restored_at_invalid" for finding in findings)
+    assert any("closed receipts require repo_visibility_restored_at" in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_invalid_visibility_restored_at() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["repo_visibility_restored_at"] = "2026-06-26 11:15:01"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_visibility_restored_at_invalid" for finding in findings)
+    assert any(
+        "repo_visibility_restored_at must be an ISO-8601 UTC timestamp ending in Z" in finding.message
+        for finding in findings
+    )
+    assert all("2026-06-26 11:15:01" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_visibility_restored_before_opened_at() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["repo_visibility_restored_at"] = "2026-06-26T10:50:00Z"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(
+        finding.rule_id == "public_ci_window_receipt_visibility_restoration_order_invalid"
+        for finding in findings
+    )
+    assert any(
+        "repo_visibility_restored_at must be greater than or equal to opened_at" in finding.message
+        for finding in findings
+    )
+    assert all("2026-06-26T10:50:00Z" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_closed_at_before_visibility_restored_at() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["repo_visibility_restored_at"] = "2026-06-26T11:16:00Z"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(
+        finding.rule_id == "public_ci_window_receipt_visibility_restoration_closure_order_invalid"
+        for finding in findings
+    )
+    assert any(
+        "closed_at must be greater than or equal to repo_visibility_restored_at" in finding.message
+        for finding in findings
+    )
+    assert all("2026-06-26T11:16:00Z" not in finding.message for finding in findings)
 
 
 def test_public_ci_window_receipt_rejects_reason_without_budget_actions_boundary() -> None:
@@ -457,10 +564,13 @@ def test_public_ci_window_receipt_allows_bounded_public_awaiting_evidence() -> N
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["status"] = "bounded_public_awaiting_evidence"
     payload["solver_outcome"] = "AwaitingEvidence"
+    payload["repo_visibility_after"] = "bounded_public"
     payload["closed_at"] = None
     payload["branch_deleted"] = False
     payload["merge_commit"] = None
     payload["merged_at"] = None
+    payload["repo_visibility_restored"] = False
+    payload["repo_visibility_restored_at"] = None
     payload["opened_at"] = "2026-06-26T10:51:56Z"
     for validator in payload["validators"]:
         validator["state"] = "AwaitingEvidence"
@@ -470,6 +580,8 @@ def test_public_ci_window_receipt_allows_bounded_public_awaiting_evidence() -> N
     assert findings == []
     assert payload["status"] == "bounded_public_awaiting_evidence"
     assert payload["branch_deleted"] is False
+    assert payload["repo_visibility_restored"] is False
+    assert payload["repo_visibility_restored_at"] is None
     assert payload["closed_at"] is None
     assert payload["merge_commit"] is None
     assert payload["merged_at"] is None
@@ -480,10 +592,13 @@ def test_public_ci_window_bounded_receipt_rejects_stale_open_window() -> None:
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["status"] = "bounded_public_awaiting_evidence"
     payload["solver_outcome"] = "AwaitingEvidence"
+    payload["repo_visibility_after"] = "bounded_public"
     payload["closed_at"] = None
     payload["branch_deleted"] = False
     payload["merge_commit"] = None
     payload["merged_at"] = None
+    payload["repo_visibility_restored"] = False
+    payload["repo_visibility_restored_at"] = None
     for validator in payload["validators"]:
         validator["state"] = "AwaitingEvidence"
 
@@ -513,8 +628,11 @@ def test_public_ci_window_bounded_receipt_rejects_merge_evidence_claim() -> None
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["status"] = "bounded_public_awaiting_evidence"
     payload["solver_outcome"] = "AwaitingEvidence"
+    payload["repo_visibility_after"] = "bounded_public"
     payload["closed_at"] = None
     payload["branch_deleted"] = False
+    payload["repo_visibility_restored"] = False
+    payload["repo_visibility_restored_at"] = None
     for validator in payload["validators"]:
         validator["state"] = "AwaitingEvidence"
 
@@ -530,10 +648,13 @@ def test_public_ci_window_bounded_receipt_rejects_true_branch_cleanup_claim() ->
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["status"] = "bounded_public_awaiting_evidence"
     payload["solver_outcome"] = "AwaitingEvidence"
+    payload["repo_visibility_after"] = "bounded_public"
     payload["closed_at"] = None
     payload["merge_commit"] = None
     payload["merged_at"] = None
     payload["branch_deleted"] = True
+    payload["repo_visibility_restored"] = False
+    payload["repo_visibility_restored_at"] = None
     for validator in payload["validators"]:
         validator["state"] = "AwaitingEvidence"
 
@@ -543,6 +664,50 @@ def test_public_ci_window_bounded_receipt_rejects_true_branch_cleanup_claim() ->
     assert any(finding.rule_id == "public_ci_window_receipt_branch_deleted_invalid" for finding in findings)
     assert any("bounded public receipts must keep branch_deleted false" in finding.message for finding in findings)
     assert all("True" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_bounded_receipt_rejects_true_visibility_restoration_claim() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["status"] = "bounded_public_awaiting_evidence"
+    payload["solver_outcome"] = "AwaitingEvidence"
+    payload["repo_visibility_after"] = "bounded_public"
+    payload["closed_at"] = None
+    payload["branch_deleted"] = False
+    payload["merge_commit"] = None
+    payload["merged_at"] = None
+    payload["repo_visibility_restored"] = True
+    payload["repo_visibility_restored_at"] = None
+    for validator in payload["validators"]:
+        validator["state"] = "AwaitingEvidence"
+
+    findings = validate_window_receipt(payload, observed_at=datetime(2026, 6, 26, 12, 51, 56, tzinfo=timezone.utc))
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_visibility_restored_invalid" for finding in findings)
+    assert any("bounded public receipts must keep repo_visibility_restored false" in finding.message for finding in findings)
+    assert all("True" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_bounded_receipt_rejects_visibility_restored_at_claim() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["status"] = "bounded_public_awaiting_evidence"
+    payload["solver_outcome"] = "AwaitingEvidence"
+    payload["repo_visibility_after"] = "bounded_public"
+    payload["closed_at"] = None
+    payload["branch_deleted"] = False
+    payload["merge_commit"] = None
+    payload["merged_at"] = None
+    payload["repo_visibility_restored"] = False
+    payload["repo_visibility_restored_at"] = "2026-06-26T11:15:01Z"
+    for validator in payload["validators"]:
+        validator["state"] = "AwaitingEvidence"
+
+    findings = validate_window_receipt(payload, observed_at=datetime(2026, 6, 26, 12, 51, 56, tzinfo=timezone.utc))
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_visibility_restored_at_invalid" for finding in findings)
+    assert any("bounded public receipts must keep repo_visibility_restored_at null" in finding.message for finding in findings)
+    assert all("2026-06-26T11:15:01Z" not in finding.message for finding in findings)
 
 
 def test_public_ci_window_boundary_cli_passes(capsys) -> None:
