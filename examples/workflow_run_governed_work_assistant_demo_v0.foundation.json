@@ -1,0 +1,286 @@
+{
+  "workflow_run_id": "workflow-run-governed-work-assistant-demo-v0",
+  "workflow_id": "governed_work_assistant.demo.v0",
+  "tenant_id": "foundation-tenant",
+  "actor_id": "foundation-operator",
+  "user_id": "foundation-operator",
+  "project_id": "mullu-control-plane",
+  "request": "Summarize the current governed work queue without external effects.",
+  "intent": "Produce a read-only governed work assistant status summary with receipt-backed closure.",
+  "boundary": {
+    "inside_scope": [
+      "request_intake",
+      "read_work_queue",
+      "summarize_status",
+      "emit_receipt"
+    ],
+    "outside_scope": [
+      "send email",
+      "write external systems",
+      "mutate production data"
+    ],
+    "approval_required": false,
+    "external_effects_allowed": false,
+    "forbidden_effects": [
+      "unapproved_external_effect",
+      "unreceipted_closure"
+    ],
+    "protected_refs": [
+      "tenant_hash:foundation",
+      "operator_hash:foundation"
+    ]
+  },
+  "goal": "Return a validated read-only work assistant summary.",
+  "goal_contract": {
+    "desired_state": "Read-only work assistant summary is closed with evidence and receipt.",
+    "success_conditions": [
+      "risk class remains R1",
+      "external effects remain disabled",
+      "receipt refs are attached"
+    ],
+    "failure_conditions": [
+      "external effect attempted",
+      "closure without receipt",
+      "unbounded approval bypass"
+    ],
+    "proof_required": [
+      "evidence://workflow-run/demo-v0/read-only-observation",
+      "receipt://workflow-run/demo-v0/closure"
+    ],
+    "stop_conditions": [
+      "CLOSED",
+      "BLOCKED",
+      "FAILED"
+    ]
+  },
+  "lifecycle_state": "CLOSED",
+  "risk_class": "R1",
+  "status": "committed",
+  "tasks": [
+    {
+      "task_id": "request_intake",
+      "task_type": "human_review_task",
+      "action": "capture_operator_request",
+      "depends_on": [],
+      "approval_required": false,
+      "verification_required": false,
+      "retry_limit": 1,
+      "compensation_task_id": "",
+      "evidence_required": [],
+      "metadata": {
+        "stage": "intake"
+      }
+    },
+    {
+      "task_id": "read_work_queue",
+      "task_type": "task",
+      "action": "read_governed_work_queue",
+      "depends_on": [
+        "request_intake"
+      ],
+      "approval_required": false,
+      "verification_required": true,
+      "retry_limit": 1,
+      "compensation_task_id": "",
+      "evidence_required": [
+        "evidence://workflow-run/demo-v0/read-only-observation"
+      ],
+      "metadata": {
+        "stage": "read_only"
+      }
+    },
+    {
+      "task_id": "summarize_status",
+      "task_type": "task",
+      "action": "summarize_governed_status",
+      "depends_on": [
+        "read_work_queue"
+      ],
+      "approval_required": false,
+      "verification_required": true,
+      "retry_limit": 1,
+      "compensation_task_id": "",
+      "evidence_required": [
+        "evidence://workflow-run/demo-v0/summary-validation"
+      ],
+      "metadata": {
+        "stage": "validation"
+      }
+    },
+    {
+      "task_id": "emit_receipt",
+      "task_type": "close_certificate",
+      "action": "emit_workflow_receipt",
+      "depends_on": [
+        "summarize_status"
+      ],
+      "approval_required": false,
+      "verification_required": false,
+      "retry_limit": 1,
+      "compensation_task_id": "",
+      "evidence_required": [],
+      "metadata": {
+        "stage": "receipt"
+      }
+    }
+  ],
+  "task_runs": [
+    {
+      "task_run_id": "task-run-demo-v0-request-intake",
+      "workflow_run_id": "workflow-run-governed-work-assistant-demo-v0",
+      "task_id": "request_intake",
+      "status": "committed",
+      "attempts": 1,
+      "max_attempts": 1,
+      "approval_ref": "",
+      "evidence_refs": [
+        "evidence://workflow-run/demo-v0/request"
+      ],
+      "terminal_certificate_id": "",
+      "failure_reason": "",
+      "task_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "metadata": {}
+    },
+    {
+      "task_run_id": "task-run-demo-v0-read-work-queue",
+      "workflow_run_id": "workflow-run-governed-work-assistant-demo-v0",
+      "task_id": "read_work_queue",
+      "status": "committed",
+      "attempts": 1,
+      "max_attempts": 1,
+      "approval_ref": "",
+      "evidence_refs": [
+        "evidence://workflow-run/demo-v0/read-only-observation"
+      ],
+      "terminal_certificate_id": "",
+      "failure_reason": "",
+      "task_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "metadata": {}
+    },
+    {
+      "task_run_id": "task-run-demo-v0-summarize-status",
+      "workflow_run_id": "workflow-run-governed-work-assistant-demo-v0",
+      "task_id": "summarize_status",
+      "status": "committed",
+      "attempts": 1,
+      "max_attempts": 1,
+      "approval_ref": "",
+      "evidence_refs": [
+        "evidence://workflow-run/demo-v0/summary-validation"
+      ],
+      "terminal_certificate_id": "",
+      "failure_reason": "",
+      "task_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "metadata": {}
+    },
+    {
+      "task_run_id": "task-run-demo-v0-emit-receipt",
+      "workflow_run_id": "workflow-run-governed-work-assistant-demo-v0",
+      "task_id": "emit_receipt",
+      "status": "committed",
+      "attempts": 1,
+      "max_attempts": 1,
+      "approval_ref": "",
+      "evidence_refs": [
+        "receipt://workflow-run/demo-v0/closure"
+      ],
+      "terminal_certificate_id": "terminal-demo-v0",
+      "failure_reason": "",
+      "task_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "metadata": {}
+    }
+  ],
+  "evidence_refs": [
+    "evidence://workflow-run/demo-v0/request",
+    "evidence://workflow-run/demo-v0/read-only-observation",
+    "evidence://workflow-run/demo-v0/summary-validation"
+  ],
+  "approval_refs": [],
+  "sandbox_refs": [
+    "sandbox://foundation/demo-v0/read-only"
+  ],
+  "action_plan": {
+    "selected_action": "read_governed_work_queue",
+    "steps": [
+      {
+        "task_id": "request_intake",
+        "action": "capture_operator_request",
+        "risk_class": "R1",
+        "depends_on": []
+      },
+      {
+        "task_id": "read_work_queue",
+        "action": "read_governed_work_queue",
+        "risk_class": "R1",
+        "depends_on": [
+          "request_intake"
+        ]
+      },
+      {
+        "task_id": "summarize_status",
+        "action": "summarize_governed_status",
+        "risk_class": "R1",
+        "depends_on": [
+          "read_work_queue"
+        ]
+      },
+      {
+        "task_id": "emit_receipt",
+        "action": "emit_workflow_receipt",
+        "risk_class": "R1",
+        "depends_on": [
+          "summarize_status"
+        ]
+      }
+    ],
+    "option_count": 1,
+    "external_effects_allowed": false
+  },
+  "execution_status": {
+    "current_status": "committed",
+    "current_task_id": "",
+    "tasks_total": 4,
+    "tasks_closed": 4,
+    "tasks_waiting_for_approval": 0,
+    "tasks_failed": 0,
+    "effects_executed": true
+  },
+  "receipt_refs": [
+    "receipt://workflow-run/demo-v0/closure"
+  ],
+  "rollback_plan": {
+    "reversibility_label": "NOT_REQUIRED",
+    "rollback_required": false,
+    "rollback_ready": true,
+    "rollback_refs": [],
+    "compensating_action": ""
+  },
+  "validation_result": {
+    "status": "PASS",
+    "goal_satisfied": true,
+    "constraints_respected": true,
+    "evidence_attached": true,
+    "receipt_emitted": true,
+    "rollback_state_known": true,
+    "monitoring_handled": true,
+    "checked_at": "workflow-demo-v0:closed",
+    "evidence_refs": [
+      "evidence://workflow-run/demo-v0/read-only-observation",
+      "evidence://workflow-run/demo-v0/summary-validation"
+    ]
+  },
+  "monitoring_state": {
+    "monitoring_required": false,
+    "monitoring_status": "not_required",
+    "monitor_refs": []
+  },
+  "terminal_certificate_id": "terminal-demo-v0",
+  "run_hash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "metadata": {
+    "schema_ref": "urn:mullusi:schema:workflow-run:1",
+    "fixture": "governed_work_assistant_demo_v0",
+    "foundation_mode": true,
+    "projection_only": true,
+    "external_effects_allowed": false
+  }
+}

@@ -205,6 +205,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `read_only_worker_operator_runtime_enablement_approval_ref.schema.json` | Review-only operator approval reference evidence for read-only worker runtime enablement |
 | `read_only_worker_trusted_runtime_clock_receipt.schema.json` | Review-only trusted runtime clock evidence for read-only worker runtime enablement |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
+| `workflow_run.schema.json` | Canonical causal workflow-run envelope with intent, boundary, risk, approval, rollback, validation, receipts, and monitoring |
 | `plan.schema.json` | Shared plan definition |
 | `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |
 | `policy_studio_session.schema.json` | Canonical read-only policy studio session with simulations and bounded probe report |

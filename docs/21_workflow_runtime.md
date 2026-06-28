@@ -29,6 +29,7 @@ not routine stage separators.
 | `WorkflowStage` | One unit of work within a workflow (skill execution, approval gate, etc.). |
 | `WorkflowBinding` | Data-flow edge connecting one stage's output to another's input. |
 | `WorkflowExecutionRecord` | Full trace of a workflow run including per-stage results. |
+| `WorkflowRun` | Causal run envelope binding request, intent, boundary, risk, approval, rollback, validation, receipts, and monitoring. |
 | `WorkflowTransition` | Typed edge describing how control flows between stages. |
 | `WorkflowVerificationRecord` | Post-execution verification of a completed workflow. |
 
@@ -1039,3 +1040,13 @@ Real-world effects remain outside this workflow. Opening an external pull
 request, pushing a branch, merging, deployment, customer communication, or
 production data mutation must enter a stronger workflow with approval, witness,
 monitoring, and rollback evidence.
+
+The canonical causal run contract is documented in
+`docs/WORKFLOW_RUN_CONTRACT.md`. Its schema is
+`schemas/workflow_run.schema.json`, its fixture is
+`examples/workflow_run_governed_work_assistant_demo_v0.foundation.json`, and its
+validator is:
+
+```powershell
+python scripts/validate_workflow_run.py
+```
