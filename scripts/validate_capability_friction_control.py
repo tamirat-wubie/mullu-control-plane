@@ -50,6 +50,7 @@ EXPECTED_SOFTWARE_DEV_CAPABILITIES = {
     "software_dev.change.run",
     "software_dev.app_task_graph.plan",
     "software_dev.pr_candidate.prepare",
+    "software_dev.github_actions_failure.diagnose_read_only",
 }
 REQUIRED_VALIDATOR_COMMANDS = {
     "capability_friction_control_validator": "python scripts/validate_capability_friction_control.py",
