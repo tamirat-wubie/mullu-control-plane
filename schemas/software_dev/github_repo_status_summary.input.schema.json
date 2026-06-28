@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:software-dev:github-repo-status-summary-input:1",
+  "title": "Software Dev GitHub Repository Status Summary Input",
+  "description": "Governed read-only request for GitHub repository status summary. The request may read repository metadata, recent commits, open pull requests, open issues, and workflow runs but cannot create issues, comment, trigger workflows, mutate repository state, or claim release readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_id",
+    "request_id",
+    "repository_ref",
+    "workspace_ref",
+    "requested_evidence_kinds",
+    "max_items_per_kind",
+    "metadata"
+  ],
+  "properties": {
+    "capability_id": {
+      "const": "software_dev.github_repo_status.summarize_read_only"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workspace_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requested_evidence_kinds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": ["repository", "recent_commits", "open_pull_requests", "open_issues", "workflow_runs"]
+      }
+    },
+    "max_items_per_kind": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30
+    },
+    "write_authority_granted": {
+      "const": false
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

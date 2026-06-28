@@ -149,14 +149,14 @@ def test_capability_fabric_env_loader_projects_local_manifest_registry(
     read_model = gate.read_model()
     manifest_registry = read_model["capability_manifest_registry"]
     assert read_model["capsule_count"] == 1
-    assert read_model["capability_count"] == 7
+    assert read_model["capability_count"] == 8
     assert read_model["capability_manifest_registry_configured"] is True
-    assert manifest_registry["manifest_count"] == 7
-    assert manifest_registry["admission_count"] == 7
+    assert manifest_registry["manifest_count"] == 8
+    assert manifest_registry["admission_count"] == 8
     assert "software_dev.change.run" in manifest_registry["capability_ids"]
     assert read_model["capability_manifest_gated"] is True
     assert read_model["capability_manifest_coverage_status"] == "complete"
-    assert read_model["capability_manifest_covered_count"] == 7
+    assert read_model["capability_manifest_covered_count"] == 8
     assert read_model["capability_manifest_missing_count"] == 0
     coverage = {record["capability_id"]: record for record in read_model["capability_manifest_coverage"]}
     assert coverage["software_dev.change.run"]["manifest_admitted"] is True
