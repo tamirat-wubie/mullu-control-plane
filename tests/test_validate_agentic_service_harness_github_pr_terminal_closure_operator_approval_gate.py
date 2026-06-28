@@ -5,6 +5,8 @@ explicit operator approval decision exists.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: scripts.validate_agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.
 Invariants:
+  - Command-preview candidate binding remains explicit.
+  - Actual-diff candidate binding remains explicit.
   - Candidate binding remains explicit.
   - Operator approval remains AwaitingEvidence.
   - Mutation authority and terminal closure claims fail closed.
@@ -65,6 +67,42 @@ def test_github_pr_terminal_closure_operator_approval_gate_rejects_candidate_bin
     assert "approval_gate.source_candidate_binding_id expected" in serialized_errors
     assert "terminal_closure_certificate_candidate_ready must be true" in serialized_errors
     assert "approval_gate.candidate_ready must be true" in serialized_errors
+
+
+def test_github_pr_terminal_closure_operator_approval_gate_rejects_command_preview_candidate_evidence_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_operator_approval_gate(
+        approval_gate__command_preview_candidate_evidence__command_preview_terminal_closure_certificate_witness_ref=(
+            "examples/other-terminal-witness.json"
+        ),
+        approval_gate__command_preview_candidate_evidence__command_preview_effect_reconciliation_witness_ref=(
+            "examples/other-effect-witness.json"
+        ),
+        approval_gate__command_preview_candidate_evidence__command_preview_operator_response_binding_ref=(
+            "examples/other-command-response-binding.json"
+        ),
+        approval_gate__command_preview_candidate_evidence__command_preview_operator_response_witness_ref=(
+            "examples/other-response.json"
+        ),
+        approval_gate__command_preview_candidate_evidence__command_preview_operator_approval_request_binding_ref=(
+            "examples/other-command-approval.json"
+        ),
+        approval_gate__command_preview_candidate_evidence__command_preview_ref="examples/other-command-preview.json",
+        approval_gate__command_preview_candidate_evidence__redacted_command_preview="gh pr create --body leaked",
+        approval_gate__command_preview_candidate_evidence__command_preview_bound=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_operator_approval_gate_semantics(payload, _source_candidate(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_effect_reconciliation_witness_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_operator_response_binding_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_operator_response_witness_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_operator_approval_request_binding_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.redacted_command_preview expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_bound expected True" in serialized_errors
 
 
 def test_github_pr_terminal_closure_operator_approval_gate_rejects_actual_diff_candidate_evidence_drift() -> None:
