@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:forge-lineage-receipt-attestation:1",
+  "$comment": "Purpose: reference-only contract for the mullu-forge-runtime-v0.1.0-dev3 signed H_lineage receipt attestation. Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]. Invariants: receipt hash, service identity, trust epoch, signature, and attestation hash are explicit.",
+  "title": "ForgeLineageReceiptAttestation",
+  "description": "Signed H_lineage receipt attestation shape required before a Forge service-separated persistence commit can proceed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "service_id",
+    "receipt_hash",
+    "signed_at",
+    "key_id",
+    "trust_epoch",
+    "signature",
+    "attestation_hash"
+  ],
+  "properties": {
+    "profile": { "type": "string", "const": "forge.hlineage.receipt-attestation.v0.1" },
+    "service_id": { "type": "string", "minLength": 1 },
+    "receipt_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "signed_at": { "type": "string", "format": "date-time" },
+    "key_id": { "type": "string", "minLength": 1 },
+    "trust_epoch": { "type": "integer", "minimum": 1 },
+    "signature": { "type": "string", "minLength": 40 },
+    "attestation_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}
