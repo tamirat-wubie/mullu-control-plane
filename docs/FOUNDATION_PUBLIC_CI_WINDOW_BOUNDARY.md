@@ -85,6 +85,8 @@ A public CI window receipt must include:
 | reason | Budget or Actions access reason for opening visibility. |
 | repo_visibility_before | Visibility before opening the window. |
 | repo_visibility_after | Visibility after closing or bounding the window. |
+| repo_visibility_restored | Whether repository visibility was restored to private for a closed window. |
+| repo_visibility_restored_at | Timestamp for private visibility restoration, or null while bounded public evidence remains unresolved. |
 | opened_at | Timestamp for public visibility start, if known. |
 | closed_at | Timestamp for private restoration, or null with bounded reason. |
 | branch | Branch or pull request being verified. |
