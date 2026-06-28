@@ -1574,13 +1574,13 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     certificate_read_model_row = re.search(
-        r"^\| GitHub PR terminal closure certificate read model actual-diff minting binding PR \| READY \| .+actual-diff certificate minting evidence.+source minting id/ref/time.+approve_terminal_certificate.+actual non-empty diff receipt ref.+read-only, projection-only, reference-only.+new terminal-closure authority\. \|$",
+        r"^\| GitHub PR terminal closure certificate read model command-preview minting binding PR \| READY \| .+command-preview certificate minting evidence.+preserving actual-diff certificate minting evidence.+source minting id/ref/time.+approve_terminal_certificate.+redacted command preview.+command-preview-bound status.+read-only, projection-only, reference-only.+new terminal-closure authority\. \|$",
         map_text,
         re.MULTILINE,
     )
     if certificate_read_model_row is None:
         errors.append(
-            "missing ready row: GitHub PR terminal closure certificate read model actual-diff minting binding PR"
+            "missing ready row: GitHub PR terminal closure certificate read model command-preview minting binding PR"
         )
 
     pr_creation_read_model_binding_row = re.search(
@@ -1646,7 +1646,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure certificate read model to command-preview certificate minting evidence",
+        "harness(pr): bind PR creation admission to command-preview certificate read model evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:
