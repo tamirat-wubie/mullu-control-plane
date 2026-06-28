@@ -1594,13 +1594,13 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     pr_creation_dry_run_receipt_row = re.search(
-        r"^\| GitHub PR creation dry-run receipt terminal certificate admission binding PR \| READY \| .+agentic_service_harness_github_pr_creation_dry_run_receipt.+certificate-read-model-bound admission preflight.+terminal certificate read model.+dry-run-only PR creation.+runtime PR execution.+pull-request opened.+branch creation.+repository writes.+receipt-store append.+adapter execution.+connector calls.+mutation routes.+secret material.+terminal closure\. \|$",
+        r"^\| GitHub PR creation dry-run receipt command-preview read-model binding PR \| READY \| .+agentic_service_harness_github_pr_creation_dry_run_receipt.+command-preview certificate read-model evidence.+source read-model id/ref.+command preview ref.+redacted command preview.+approve_terminal_certificate.+projection-only status.+pull-request creation denial.+dry-run-only PR creation.+runtime PR execution.+terminal closure\. \|$",
         map_text,
         re.MULTILINE,
     )
     if pr_creation_dry_run_receipt_row is None:
         errors.append(
-            "missing ready row: GitHub PR creation dry-run receipt terminal certificate admission binding PR"
+            "missing ready row: GitHub PR creation dry-run receipt command-preview read-model binding PR"
         )
 
     pr_creation_execution_admission_row = re.search(
@@ -1646,7 +1646,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind PR creation admission to command-preview certificate read model evidence",
+        "harness(pr): bind PR creation execution admission to command-preview dry-run receipt evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:

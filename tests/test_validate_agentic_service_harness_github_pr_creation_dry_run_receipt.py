@@ -110,6 +110,57 @@ def test_github_pr_creation_dry_run_receipt_rejects_read_model_source_drift() ->
     assert "operator_view.contains_secret_values expected False" in serialized_errors
 
 
+def test_github_pr_creation_dry_run_receipt_rejects_command_preview_read_model_evidence_drift() -> None:
+    payload = validator.build_mutated_pr_creation_dry_run(
+        command_preview_certificate_read_model_evidence__source_read_model_id="wrong-read-model",
+        command_preview_certificate_read_model_evidence__source_certificate_id="wrong-certificate",
+        command_preview_certificate_read_model_evidence__source_minting_ref="examples/wrong-minting.json",
+        command_preview_certificate_read_model_evidence__requires_command_preview_certificate_minting_evidence=False,
+        command_preview_certificate_read_model_evidence__command_preview_bound=False,
+        command_preview_certificate_read_model_evidence__command_preview_ref="examples/wrong-command-preview.json",
+        command_preview_certificate_read_model_evidence__redacted_command_preview="gh pr create --body raw",
+        command_preview_certificate_read_model_evidence__operator_decision_ref="operator-decision://wrong",
+        command_preview_certificate_read_model_evidence__decision_value="deny_terminal_certificate",
+        command_preview_certificate_read_model_evidence__terminal_closure_projected=False,
+        command_preview_certificate_read_model_evidence__terminal_certificate_minted=False,
+        command_preview_certificate_read_model_evidence__projection_only=False,
+        command_preview_certificate_read_model_evidence__read_model_is_not_terminal_closure=False,
+        command_preview_certificate_read_model_evidence__pull_request_creation_enabled=True,
+        command_preview_certificate_read_model_evidence__repository_written_by_read_model=True,
+        command_preview_certificate_read_model_evidence__contains_secret_values=True,
+    )
+
+    errors: list[str] = []
+    validator._validate_pr_creation_dry_run_semantics(payload, _source_preflight(), _read_model(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_certificate_read_model_evidence.source_read_model_id expected" in serialized_errors
+    assert "command_preview_certificate_read_model_evidence.source_certificate_id expected" in serialized_errors
+    assert "command_preview_certificate_read_model_evidence.source_minting_ref expected" in serialized_errors
+    assert (
+        "command_preview_certificate_read_model_evidence.requires_command_preview_certificate_minting_evidence expected"
+        in serialized_errors
+    )
+    assert "command_preview_certificate_read_model_evidence.command_preview_bound expected" in serialized_errors
+    assert "command_preview_certificate_read_model_evidence.command_preview_ref expected" in serialized_errors
+    assert "command_preview_certificate_read_model_evidence.redacted_command_preview expected" in serialized_errors
+    assert "command_preview_certificate_read_model_evidence.operator_decision_ref expected" in serialized_errors
+    assert "command_preview_certificate_read_model_evidence.decision_value expected" in serialized_errors
+    assert "command_preview_certificate_read_model_evidence.terminal_closure_projected expected" in serialized_errors
+    assert "command_preview_certificate_read_model_evidence.terminal_certificate_minted expected" in serialized_errors
+    assert "command_preview_certificate_read_model_evidence.projection_only expected" in serialized_errors
+    assert (
+        "command_preview_certificate_read_model_evidence.read_model_is_not_terminal_closure expected"
+        in serialized_errors
+    )
+    assert "command_preview_certificate_read_model_evidence.pull_request_creation_enabled expected" in serialized_errors
+    assert (
+        "command_preview_certificate_read_model_evidence.repository_written_by_read_model expected"
+        in serialized_errors
+    )
+    assert "command_preview_certificate_read_model_evidence.contains_secret_values expected" in serialized_errors
+
+
 def test_github_pr_creation_dry_run_receipt_rejects_missing_required_refs() -> None:
     payload = validator.build_mutated_pr_creation_dry_run(
         dry_run_contract__forbidden_action_classes=["open_pr"],
