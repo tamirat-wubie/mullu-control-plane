@@ -38,6 +38,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | Gateway ingress renderer | `scripts/render_gateway_ingress.py` renders a concrete ignored ingress manifest and optionally applies it through `kubectl` | Reflected |
 | Manual deployment witness workflow | `.github/workflows/deployment-witness.yml` uploads `runtime-conformance-collection` and `deployment-witness` artifacts from the collectors and conditionally emits a public-health declaration receipt when `operator_approval_ref` is supplied | Reflected |
 | Gateway publication workflow | `.github/workflows/gateway-publication.yml` runs the self-gating publication orchestrator from GitHub with optional kubeconfig-backed ingress apply | Reflected |
+| API image publication workflow | `.github/workflows/api-image-publication.yml` builds the root `Dockerfile`, publishes to GHCR only when `confirm_publication=true` and `operator_approval_ref` is supplied, and uploads `.change_assurance/api_image_publication_receipt.json` without secret values, DNS mutation, or runtime mutation | Reflected |
 | Gateway publication readiness report | `scripts/report_gateway_publication_readiness.py` derives the publication host, verifies GitHub/DNS readiness gates, and emits the exact dispatch command without exposing secret values | Reflected |
 | Gateway publication readiness handoff | `scripts/dispatch_gateway_publication.py --readiness-report` consumes a ready publication report and re-validates dispatch prerequisites | Reflected |
 | Gateway publication publisher | `scripts/publish_gateway_publication.py` writes readiness evidence, then optionally dispatches from that report through the handoff contract | Reflected |
@@ -116,6 +117,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | Upstream API readiness | `api.mullusi.com` has a verified published deployment witness, clear runtime and authority responsibility debt, production evidence closure, and declared public health endpoint `https://api.mullusi.com/health` |
 | Deployment witness workflow runs | A deployment witness workflow run collected the published witness for `https://api.mullusi.com`; the local deployment witness records verified signatures, clear runtime and authority responsibility debt, production evidence closure, and `deployment_claim=published` |
 | Gateway publication workflow runs | `gateway-publication.yml` run `27489039439` completed successfully and dispatched deployment witness run `27489044697` |
+| API image publication workflow runs | `.github/workflows/api-image-publication.yml` is the approval-bound GHCR publication lane for immutable API image digest evidence; use the uploaded `api-image-publication-receipt` artifact as the public-safe production image evidence reference |
 
 ## Closure Requirements
 
@@ -151,6 +153,8 @@ Before this witness can claim public deployment health, the repository must name
 | Gateway ingress rendering | `python scripts/render_gateway_ingress.py --gateway-host "$MULLU_GATEWAY_HOST"` |
 | Manual deployment witness workflow | `.github/workflows/deployment-witness.yml` |
 | Gateway publication workflow | `.github/workflows/gateway-publication.yml` |
+| API image publication workflow validation | `python scripts/validate_api_image_publication_workflow.py` |
+| API image publication workflow | `.github/workflows/api-image-publication.yml` |
 | Gateway publication readiness | `python scripts/report_gateway_publication_readiness.py --gateway-url "$MULLU_GATEWAY_URL" --dispatch-witness` |
 | Gateway publication readiness handoff | `python scripts/dispatch_gateway_publication.py --readiness-report .change_assurance/gateway_publication_readiness.json` |
 | Upstream API production readiness reporter | `(from mullusi-site) node scripts/check-api-production-readiness.mjs --require-ready --production-image-published --runtime-host-ready --managed-postgres-ready --schema-applied --production-secrets-stored --deploy-env-ready --release-preflight-ready --persistence-ready --host-firewall-configured --tls-certificate-ready --rollback-path-defined --private-runtime-witness-ready --dns-authority-ready` |

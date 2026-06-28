@@ -1,0 +1,153 @@
+name: API Image Publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      operator_approval_ref:
+        description: "Approval reference authorizing image publication; do not enter secrets."
+        required: true
+        type: string
+      confirm_publication:
+        description: "Publish the image to GHCR when true; false runs a non-publishing build check."
+        required: true
+        default: false
+        type: boolean
+      image_name:
+        description: "GHCR image name for the API container."
+        required: true
+        default: "ghcr.io/tamirat-wubie/mullu-control-plane"
+        type: string
+      image_tag:
+        description: "Human-readable image tag; digest remains the immutable evidence."
+        required: true
+        default: "manual"
+        type: string
+      dockerfile:
+        description: "Dockerfile path."
+        required: true
+        default: "Dockerfile"
+        type: string
+      install_worker_deps:
+        description: "Install all worker dependency extras in the image."
+        required: true
+        default: false
+        type: boolean
+      install_playwright_browsers:
+        description: "Install Playwright browser binaries when worker deps are enabled."
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  publish-api-image:
+    name: Build And Publish API Image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate publication inputs
+        run: |
+          if [ -z "${{ inputs.operator_approval_ref }}" ]; then
+            echo "operator_approval_ref is required"
+            exit 1
+          fi
+          case "${{ inputs.image_name }}" in
+            ghcr.io/*) ;;
+            *)
+              echo "image_name must target ghcr.io"
+              exit 1
+              ;;
+          esac
+          if [ ! -f "${{ inputs.dockerfile }}" ]; then
+            echo "dockerfile not found: ${{ inputs.dockerfile }}"
+            exit 1
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: ${{ inputs.confirm_publication }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build API image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          push: ${{ inputs.confirm_publication }}
+          tags: |
+            ${{ inputs.image_name }}:${{ inputs.image_tag }}
+            ${{ inputs.image_name }}:sha-${{ github.sha }}
+          build-args: |
+            MULLU_INSTALL_WORKER_DEPS=${{ inputs.install_worker_deps }}
+            MULLU_INSTALL_PLAYWRIGHT_BROWSERS=${{ inputs.install_playwright_browsers }}
+
+      - name: Emit publication receipt
+        if: always()
+        env:
+          IMAGE_NAME: ${{ inputs.image_name }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          OPERATOR_APPROVAL_REF: ${{ inputs.operator_approval_ref }}
+          CONFIRM_PUBLICATION: ${{ inputs.confirm_publication }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          mkdir -p .change_assurance
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          image_name = os.environ["IMAGE_NAME"]
+          image_digest = os.environ.get("IMAGE_DIGEST", "")
+          image_published = os.environ["CONFIRM_PUBLICATION"].lower() == "true" and bool(image_digest)
+          receipt = {
+              "schema": "mullusi-api-image-publication-receipt.v1",
+              "status": "Pass" if image_published else "AwaitingEvidence",
+              "image_published": image_published,
+              "image_name": image_name,
+              "image_tag": os.environ["IMAGE_TAG"],
+              "image_digest": image_digest or None,
+              "image_ref": f"{image_name}@{image_digest}" if image_digest else None,
+              "source_commit": os.environ["SOURCE_COMMIT"],
+              "run_id": os.environ["RUN_ID"],
+              "run_url": os.environ["RUN_URL"],
+              "operator_approval_ref": os.environ["OPERATOR_APPROVAL_REF"],
+              "emitted_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+              "secret_values_serialized": False,
+              "dns_mutated": False,
+              "runtime_mutated": False,
+          }
+          Path(".change_assurance/api_image_publication_receipt.json").write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(f"api image publication receipt status={receipt['status']}")
+          if receipt["image_ref"]:
+              print(f"api image immutable ref={receipt['image_ref']}")
+          PY
+
+      - name: Upload API image publication receipt
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: api-image-publication-receipt
+          path: .change_assurance/api_image_publication_receipt.json
+          if-no-files-found: error

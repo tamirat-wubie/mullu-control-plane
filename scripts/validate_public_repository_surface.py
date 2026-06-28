@@ -76,6 +76,7 @@ REQUIRED_PUBLIC_DOCUMENTS = (
 )
 DEPLOYMENT_WITNESS_WORKFLOW_PATH = ".github/workflows/deployment-witness.yml"
 GATEWAY_PUBLICATION_WORKFLOW_PATH = ".github/workflows/gateway-publication.yml"
+API_IMAGE_PUBLICATION_WORKFLOW_PATH = ".github/workflows/api-image-publication.yml"
 CI_WORKFLOW_PATH = ".github/workflows/ci.yml"
 GOVERNANCE_PROTOCOL_DOC_PATH = "docs/52_mullu_governance_protocol.md"
 GITHUB_SURFACE_REQUIRED_LITERALS = (
@@ -157,6 +158,10 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "python scripts/render_gateway_ingress.py --gateway-host \"$MULLU_GATEWAY_HOST\"",
     ".github/workflows/deployment-witness.yml",
     ".github/workflows/gateway-publication.yml",
+    ".github/workflows/api-image-publication.yml",
+    "python scripts/validate_api_image_publication_workflow.py",
+    ".change_assurance/api_image_publication_receipt.json",
+    "api-image-publication-receipt",
     "python scripts/report_gateway_publication_readiness.py --gateway-url \"$MULLU_GATEWAY_URL\" --dispatch-witness",
     "python scripts/dispatch_gateway_publication.py --readiness-report .change_assurance/gateway_publication_readiness.json",
     "python scripts/collect_deployment_publication_evidence_packet.py --output-dir .change_assurance\\deployment_publication_evidence_packet --gateway-url \"$env:MULLU_GATEWAY_URL\" --expected-environment \"$env:MULLU_EXPECTED_RUNTIME_ENV\" --upstream-readiness-report \"$env:UPSTREAM_API_READINESS_REPORT\" --dns-record-type \"$env:MULLU_GATEWAY_DNS_RECORD_TYPE\" --dns-target \"$env:MULLU_GATEWAY_DNS_TARGET\" --dns-provider \"$env:MULLU_DNS_PROVIDER\" --dispatch-witness --json",
@@ -365,6 +370,22 @@ GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS = (
     "--accept-deployment-witness-secret-env",
     "actions/upload-artifact@v6",
 )
+API_IMAGE_PUBLICATION_WORKFLOW_REQUIRED_LITERALS = (
+    "API Image Publication",
+    "workflow_dispatch",
+    "operator_approval_ref",
+    "confirm_publication",
+    "packages: write",
+    "docker/login-action@v3",
+    "docker/build-push-action@v6",
+    "ghcr.io/tamirat-wubie/mullu-control-plane",
+    "push: ${{ inputs.confirm_publication }}",
+    "api_image_publication_receipt.json",
+    "api-image-publication-receipt",
+    "secret_values_serialized",
+    "dns_mutated",
+    "runtime_mutated",
+)
 CI_WORKFLOW_REQUIRED_LITERALS = (
     "Validate Reflex deployment witness replay",
     "schemas/reflex_deployment_witness_validator_receipt.schema.json",
@@ -373,6 +394,8 @@ CI_WORKFLOW_REQUIRED_LITERALS = (
     "reflex-deployment-witness-validator-receipt",
     ".change_assurance/reflex_deployment_witness_validator_junit.xml",
     ".change_assurance/reflex_deployment_witness_validator_receipt.json",
+    "Validate API image publication workflow",
+    "python scripts/validate_api_image_publication_workflow.py",
 )
 
 
@@ -691,6 +714,18 @@ def validate_local_public_documents() -> list[str]:
                 document_name=GATEWAY_PUBLICATION_WORKFLOW_PATH,
                 content=publication_workflow_path.read_text(encoding="utf-8"),
                 required_literals=GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS,
+            )
+        )
+
+    api_image_workflow_path = REPO_ROOT / API_IMAGE_PUBLICATION_WORKFLOW_PATH
+    if not api_image_workflow_path.exists():
+        errors.append(f"missing required API image publication workflow: {API_IMAGE_PUBLICATION_WORKFLOW_PATH}")
+    else:
+        errors.extend(
+            validate_required_document_text(
+                document_name=API_IMAGE_PUBLICATION_WORKFLOW_PATH,
+                content=api_image_workflow_path.read_text(encoding="utf-8"),
+                required_literals=API_IMAGE_PUBLICATION_WORKFLOW_REQUIRED_LITERALS,
             )
         )
 
