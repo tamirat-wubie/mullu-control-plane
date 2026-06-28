@@ -693,9 +693,9 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "actual-diff decision contract evidence",
     "source decision contract binding id/ref",
     "command-preview-bound generic rejection evidence",
-    "GitHub PR terminal closure operator decision value request actual-diff generic rejection binding PR",
+    "GitHub PR terminal closure operator decision value request command-preview generic rejection binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
-    "actual-diff-bound decision value request evidence",
+    "command-preview-bound decision value request evidence",
     "GitHub PR terminal closure operator decision value record actual-diff request binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record",
     "actual-diff-bound decision value record evidence",
@@ -1542,13 +1542,13 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     decision_value_request_row = re.search(
-        r"^\| GitHub PR terminal closure operator decision value request actual-diff generic rejection binding PR \| READY \| .+actual-diff generic rejection evidence.+source rejection binding id/ref.+approve_terminal_certificate.+deny_terminal_certificate.+records no operator decision value.+terminal closure authority\. \|$",
+        r"^\| GitHub PR terminal closure operator decision value request command-preview generic rejection binding PR \| READY \| .+command-preview generic rejection evidence.+actual-diff generic rejection evidence.+source rejection binding id/ref.+approve_terminal_certificate.+deny_terminal_certificate.+records no operator decision value.+terminal closure authority\. \|$",
         map_text,
         re.MULTILINE,
     )
     if decision_value_request_row is None:
         errors.append(
-            "missing ready row: GitHub PR terminal closure operator decision value request actual-diff generic rejection binding PR"
+            "missing ready row: GitHub PR terminal closure operator decision value request command-preview generic rejection binding PR"
         )
 
     decision_value_record_row = re.search(
@@ -1644,7 +1644,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure operator decision value request to command-preview generic rejection",
+        "harness(pr): bind terminal closure operator decision value record to command-preview request",
     )
     positions: list[int] = []
     for marker in sequence_markers:
