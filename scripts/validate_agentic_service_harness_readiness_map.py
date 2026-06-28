@@ -1532,7 +1532,7 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     generic_rejection_row = re.search(
-        r"^\| GitHub PR terminal closure generic continuation rejection command-preview decision contract binding PR \| READY \| .+command-preview decision contract evidence.+actual-diff decision contract evidence.+source decision contract binding id/ref.+redacted command preview.+Generic continuation remains rejected.+terminal closure authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure generic continuation rejection command-preview decision contract binding PR \| READY \| .+command-preview decision contract evidence.+actual-diff decision contract evidence.+source decision contract binding id/ref.+redacted command preview.+actual-diff operator approval gate evidence.+Generic continuation remains rejected.+terminal closure authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )

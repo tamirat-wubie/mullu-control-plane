@@ -469,6 +469,7 @@ class AutonomousRequestEpisodeSummaryView:
     stage_execution_bindings: tuple[Mapping[str, object], ...] = ()
     stage_verification_bindings: tuple[Mapping[str, object], ...] = ()
     stage_policy_bindings: tuple[Mapping[str, object], ...] = ()
+    stage_rollback_bindings: tuple[Mapping[str, object], ...] = ()
 
     @staticmethod
     def from_receipt(
@@ -528,8 +529,26 @@ class AutonomousRequestEpisodeSummaryView:
                 for step in receipt.step_receipts
                 if step.plan_stage_id is not None
             ),
+            stage_rollback_bindings=tuple(
+                {
+                    "stage_id": step.plan_stage_id,
+                    "receipt_ref": step.receipt_ref,
+                    "rollback_ref": receipt.rollback_ref,
+                    "rollback_scope": _autonomous_request_rollback_scope(step.action_class),
+                    "compensation_required": False,
+                }
+                for step in receipt.step_receipts
+                if step.plan_stage_id is not None
+            ),
             rollback_ref=receipt.rollback_ref,
         )
+
+
+def _autonomous_request_rollback_scope(action_class: str) -> str:
+    """Classify local autonomous demo rollback scope from the step action class."""
+    if action_class == "execute_write":
+        return "local_reversible"
+    return "no_effect"
 
 
 # ---------------------------------------------------------------------------
