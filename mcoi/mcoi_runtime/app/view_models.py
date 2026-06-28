@@ -472,6 +472,7 @@ class AutonomousRequestEpisodeSummaryView:
     stage_rollback_bindings: tuple[Mapping[str, object], ...] = ()
     stage_dependency_bindings: tuple[Mapping[str, object], ...] = ()
     stage_repair_bindings: tuple[Mapping[str, object], ...] = ()
+    stage_error_bindings: tuple[Mapping[str, object], ...] = ()
 
     @staticmethod
     def from_receipt(
@@ -564,6 +565,20 @@ class AutonomousRequestEpisodeSummaryView:
                 for step in receipt.step_receipts
                 if step.plan_stage_id is not None
             ),
+            stage_error_bindings=tuple(
+                {
+                    "stage_id": step.plan_stage_id,
+                    "receipt_ref": step.receipt_ref,
+                    "validation_error": step.validation_error,
+                    "structured_error_codes": list(step.structured_error_codes),
+                    "error_status": _autonomous_request_error_status(
+                        step.validation_error,
+                        step.structured_error_codes,
+                    ),
+                }
+                for step in receipt.step_receipts
+                if step.plan_stage_id is not None
+            ),
             rollback_ref=receipt.rollback_ref,
         )
 
@@ -589,6 +604,18 @@ def _autonomous_request_repair_status(retry_count: int, validation_error: str | 
     if validation_error is None:
         return "repaired"
     return "repair_failed"
+
+
+def _autonomous_request_error_status(
+    validation_error: str | None,
+    structured_error_codes: tuple[str, ...],
+) -> str:
+    """Classify whether a stage emitted validation or structured error evidence."""
+    if validation_error is None and not structured_error_codes:
+        return "clear"
+    if "dependency_blocked" in structured_error_codes:
+        return "dependency_blocked"
+    return "blocked"
 
 
 # ---------------------------------------------------------------------------
