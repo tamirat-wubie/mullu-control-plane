@@ -5,7 +5,7 @@ explicit operator approval decision exists.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: scripts.validate_agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.
 Invariants:
-  - Candidate binding remains explicit.
+  - Command-preview candidate binding remains explicit.
   - Operator approval remains AwaitingEvidence.
   - Mutation authority and terminal closure claims fail closed.
 """
@@ -67,42 +67,43 @@ def test_github_pr_terminal_closure_operator_approval_gate_rejects_candidate_bin
     assert "approval_gate.candidate_ready must be true" in serialized_errors
 
 
-def test_github_pr_terminal_closure_operator_approval_gate_rejects_actual_diff_candidate_evidence_drift() -> None:
+def test_github_pr_terminal_closure_operator_approval_gate_rejects_command_preview_candidate_evidence_drift() -> None:
     payload = validator.build_mutated_terminal_closure_operator_approval_gate(
-        approval_gate__actual_diff_candidate_evidence__actual_diff_terminal_closure_certificate_witness_ref=(
+        approval_gate__command_preview_candidate_evidence__command_preview_terminal_closure_certificate_witness_ref=(
             "examples/other-terminal-witness.json"
         ),
-        approval_gate__actual_diff_candidate_evidence__actual_diff_effect_reconciliation_witness_ref=(
+        approval_gate__command_preview_candidate_evidence__command_preview_effect_reconciliation_witness_ref=(
             "examples/other-effect-witness.json"
         ),
-        approval_gate__actual_diff_candidate_evidence__actual_diff_operator_response_witness_ref=(
+        approval_gate__command_preview_candidate_evidence__command_preview_operator_response_binding_ref=(
+            "examples/other-response-binding.json"
+        ),
+        approval_gate__command_preview_candidate_evidence__command_preview_operator_response_witness_ref=(
             "examples/other-response.json"
         ),
-        approval_gate__actual_diff_candidate_evidence__actual_diff_approval_request_binding_ref=(
+        approval_gate__command_preview_candidate_evidence__command_preview_operator_approval_request_binding_ref=(
             "examples/other-approval.json"
         ),
-        approval_gate__actual_diff_candidate_evidence__actual_non_empty_diff_receipt_ref=(
-            "witness://other-diff-receipt"
+        approval_gate__command_preview_candidate_evidence__command_preview_ref=(
+            "examples/other-command-preview.json"
         ),
-        approval_gate__actual_diff_candidate_evidence__changed_file_refs=["evidence://redacted-file-change-candidate/other"],
-        approval_gate__actual_diff_candidate_evidence__diff_refs=["evidence://redacted-diff-candidate/other"],
-        approval_gate__actual_diff_candidate_evidence__redacted_diff_bundle_ref="digest://other-bundle",
-        approval_gate__actual_diff_candidate_evidence__redacted_output_ref="witness://other-output",
+        approval_gate__command_preview_candidate_evidence__redacted_command_preview="gh pr create --unsafe",
+        approval_gate__command_preview_candidate_evidence__command_preview_bound=False,
     )
 
     errors: list[str] = []
     validator._validate_terminal_closure_operator_approval_gate_semantics(payload, _source_candidate(), errors, "mutated")
     serialized_errors = "\n".join(errors)
 
-    assert "approval_gate.actual_diff_candidate_evidence.actual_diff_terminal_closure_certificate_witness_ref expected" in serialized_errors
-    assert "approval_gate.actual_diff_candidate_evidence.actual_diff_effect_reconciliation_witness_ref expected" in serialized_errors
-    assert "approval_gate.actual_diff_candidate_evidence.actual_diff_operator_response_witness_ref expected" in serialized_errors
-    assert "approval_gate.actual_diff_candidate_evidence.actual_diff_approval_request_binding_ref expected" in serialized_errors
-    assert "approval_gate.actual_diff_candidate_evidence.actual_non_empty_diff_receipt_ref expected" in serialized_errors
-    assert "approval_gate.actual_diff_candidate_evidence.changed_file_refs expected" in serialized_errors
-    assert "approval_gate.actual_diff_candidate_evidence.diff_refs expected" in serialized_errors
-    assert "approval_gate.actual_diff_candidate_evidence.redacted_diff_bundle_ref expected" in serialized_errors
-    assert "approval_gate.actual_diff_candidate_evidence.redacted_output_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_effect_reconciliation_witness_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_operator_response_binding_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_operator_response_witness_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_operator_approval_request_binding_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.redacted_command_preview expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_bound expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_bound must be true" in serialized_errors
 
 
 def test_github_pr_terminal_closure_operator_approval_gate_rejects_mutation_authority() -> None:
