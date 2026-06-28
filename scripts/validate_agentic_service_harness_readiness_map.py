@@ -530,6 +530,26 @@ REQUIRED_GITHUB_PR_BRANCH_WRITE_ACTUAL_DIFF_RESPONSE_BINDING_TERMS = (
     "raw file content",
     "terminal closure fail closed",
 )
+REQUIRED_GITHUB_PR_BRANCH_WRITE_COMMAND_PREVIEW_RESPONSE_BINDING_TERMS = (
+    "GitHub PR branch-write authority command-preview response binding PR",
+    "agentic_service_harness_github_pr_branch_write_authority_binding",
+    "command-preview-bound operator response witness",
+    "operator response witness ref",
+    "command-preview approval request binding ref",
+    "redacted command preview",
+    "argument vector template",
+    "placeholder refs",
+    "branch-write evidence ref",
+    "Branch-write authority remains AwaitingEvidence",
+    "PR command execution",
+    "pull-request creation",
+    "repository writes",
+    "connector calls",
+    "mutation routes",
+    "receipt-store append",
+    "secret material",
+    "terminal closure remain blocked",
+)
 REQUIRED_GITHUB_PR_UAO_ACTUAL_DIFF_BRANCH_WRITE_BINDING_TERMS = (
     "GitHub PR UAO admission actual-diff branch-write binding PR",
     "agentic_service_harness_github_pr_uao_admission_witness",
@@ -882,6 +902,12 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     )
     _require_all(
         map_text,
+        REQUIRED_GITHUB_PR_BRANCH_WRITE_COMMAND_PREVIEW_RESPONSE_BINDING_TERMS,
+        "github_pr_branch_write_command_preview_response_binding_term",
+        errors,
+    )
+    _require_all(
+        map_text,
         REQUIRED_GITHUB_PR_UAO_ACTUAL_DIFF_BRANCH_WRITE_BINDING_TERMS,
         "github_pr_uao_actual_diff_branch_write_binding_term",
         errors,
@@ -941,6 +967,7 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_github_pr_operator_approval_actual_diff_binding_ready(map_text, errors)
     _validate_github_pr_operator_response_actual_diff_binding_ready(map_text, errors)
     _validate_github_pr_branch_write_actual_diff_response_binding_ready(map_text, errors)
+    _validate_github_pr_branch_write_command_preview_response_binding_ready(map_text, errors)
     _validate_github_pr_uao_actual_diff_branch_write_binding_ready(map_text, errors)
     _validate_github_pr_rollback_actual_diff_uao_binding_ready(map_text, errors)
     _validate_github_pr_ci_gate_ready(map_text, errors)
@@ -1343,6 +1370,19 @@ def _validate_github_pr_branch_write_actual_diff_response_binding_ready(
         errors.append("missing ready row: GitHub PR branch-write authority actual-diff response binding PR")
 
 
+def _validate_github_pr_branch_write_command_preview_response_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR branch-write authority command-preview response binding PR \| READY \| .+command-preview-bound operator response witness.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR branch-write authority command-preview response binding PR")
+
+
 def _validate_github_pr_uao_actual_diff_branch_write_binding_ready(
     map_text: str,
     errors: list[str],
@@ -1566,7 +1606,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind branch-write authority to command-preview response",
+        "harness(pr): bind UAO admission to command-preview branch-write",
     )
     positions: list[int] = []
     for marker in sequence_markers:

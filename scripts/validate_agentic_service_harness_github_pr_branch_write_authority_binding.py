@@ -2,14 +2,14 @@
 """Validate Agentic Service Harness GitHub PR branch-write authority binding.
 
 Purpose: prove the GitHub pull-request branch-write authority binding request
-is actual-diff-response-bound, read-only, and non-authorizing.
+is command-preview-response-bound, read-only, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json,
 examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json,
-scripts.validate_agentic_service_harness_github_pr_operator_response_witness, and
+scripts.validate_agentic_service_harness_github_pr_operator_response_command_preview_binding, and
 scripts.validate_schemas.
 Invariants:
-  - The binding request binds to the actual-diff GitHub PR operator response witness.
+  - The binding request binds to the command-preview GitHub PR operator response witness.
   - Branch-write authority remains AwaitingEvidence and uncollected.
   - Binding request alone grants no branch, PR, repository, connector, network,
     mutation-route, receipt-store, secret, destructive, or terminal authority.
@@ -31,15 +31,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.validate_agentic_service_harness_github_pr_operator_response_witness import (  # noqa: E402
-    EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
-    EXPECTED_REDACTED_DIFF_BUNDLE_REF,
-    EXPECTED_REDACTED_OUTPUT_REF,
-    EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
-    DEFAULT_EXAMPLES as DEFAULT_SOURCE_RESPONSE_WITNESS_EXAMPLES,
-    DEFAULT_SCHEMA as DEFAULT_SOURCE_RESPONSE_WITNESS_SCHEMA,
-    validate_agentic_service_harness_github_pr_operator_response_witness,
-)
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -50,8 +41,51 @@ DEFAULT_EXAMPLES = (
 DEFAULT_OUTPUT = (
     REPO_ROOT / ".change_assurance" / "agentic_service_harness_github_pr_branch_write_authority_binding_validation.json"
 )
-EXPECTED_SOURCE_RESPONSE_WITNESS_REF = (
+DEFAULT_SOURCE_RESPONSE_COMMAND_PREVIEW_SCHEMA = (
+    REPO_ROOT
+    / "schemas"
+    / "agentic_service_harness_github_pr_operator_response_command_preview_binding.schema.json"
+)
+DEFAULT_SOURCE_RESPONSE_COMMAND_PREVIEW_EXAMPLES = (
+    REPO_ROOT
+    / "examples"
+    / "agentic_service_harness_github_pr_operator_response_command_preview_binding.foundation.json",
+)
+EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF = (
+    "examples/agentic_service_harness_github_pr_operator_response_command_preview_binding.foundation.json"
+)
+EXPECTED_SOURCE_OPERATOR_RESPONSE_REF = (
     "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
+)
+EXPECTED_SOURCE_RESPONSE_WITNESS_REF = EXPECTED_SOURCE_OPERATOR_RESPONSE_REF
+EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF = (
+    "examples/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.foundation.json"
+)
+EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF = (
+    "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
+)
+EXPECTED_SOURCE_COMMAND_PREVIEW_REF = (
+    "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json"
+)
+EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF = "witness://actual-non-empty-diff-receipt"
+EXPECTED_REDACTED_DIFF_BUNDLE_REF = "digest://redacted-filesystem-write-diff-bundle-candidate"
+EXPECTED_REDACTED_OUTPUT_REF = "witness://filesystem-write-output-redacted"
+EXPECTED_COMMAND_PREVIEW = (
+    "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> "
+    "--body-file <redacted-body-file-ref>"
+)
+EXPECTED_ARGUMENT_VECTOR = (
+    "gh",
+    "pr",
+    "create",
+    "--base",
+    "main",
+    "--head",
+    "<branch-ref>",
+    "--title",
+    "<redacted-title-ref>",
+    "--body-file",
+    "<redacted-body-file-ref>",
 )
 EXPECTED_BINDING_ID = "agentic_service_harness_github_pr_branch_write_authority_binding"
 EXPECTED_AUTHORITY_REQUEST_ID = "authority-binding.github-pr-branch-write"
@@ -59,30 +93,39 @@ EXPECTED_APPROVAL_REQUEST_ID = "approval-request.github-pr-admission"
 EXPECTED_REQUESTED_EVIDENCE_REF = "evidence://branch-write-authority-binding"
 EXPECTED_SOURCE_RESPONSE_RECORD_REF = "evidence://operator-pr-approval-response-record"
 EXPECTED_REMAINING_WITNESSES = (
+    "operator_execution_approval",
     "uao_pr_admission",
     "repository_effect_rollback_plan",
+    "receipt_store_write_path",
     "ci_gate_before_ready_for_review",
     "effect_reconciliation",
+    "terminal_certificate",
 )
 REQUIRED_RECEIPT_REFS = {
     "github_pr_branch_write_authority_binding_schema": (
         "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json"
     ),
+    "github_pr_operator_response_command_preview_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_response_command_preview_binding.schema.json"
+    ),
+    "github_pr_operator_response_command_preview_binding_example": (
+        "examples/agentic_service_harness_github_pr_operator_response_command_preview_binding.foundation.json"
+    ),
     "github_pr_operator_response_witness_schema": (
         "schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json"
     ),
-    "github_pr_operator_response_witness_example": (
-        "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
+    "github_pr_operator_response_witness_example": EXPECTED_SOURCE_OPERATOR_RESPONSE_REF,
+    "github_pr_operator_approval_request_command_preview_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.schema.json"
     ),
-    "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": (
-        "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json"
-    ),
-    "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": (
-        "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
-    ),
+    "github_pr_operator_approval_request_command_preview_binding_example": EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
     "github_pr_operator_approval_request_schema": (
         "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json"
     ),
+    "github_pr_creation_command_preview_schema": (
+        "schemas/agentic_service_harness_github_pr_creation_command_preview.schema.json"
+    ),
+    "github_pr_creation_command_preview_example": EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
     "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
     "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json",
 }
@@ -115,7 +158,9 @@ REQUIRED_TRUE_FLAGS = (
     "planning_only",
     "read_only",
     "report_is_not_terminal_closure",
-    "requires_actual_diff_operator_response_witness",
+    "requires_command_preview_operator_response_witness",
+    "command_preview_bound",
+    "operator_response_bound",
     "response_witness_required",
     "branch_write_authority_required",
     "blocks_pr_admission",
@@ -155,8 +200,8 @@ class GitHubPrBranchWriteAuthorityBindingValidation:
     schema_path: str
     example_paths: tuple[str, ...]
     example_count: int
-    source_response_witness_ref: str
-    actual_diff_operator_response_witness_ref: str
+    source_response_command_preview_binding_ref: str
+    command_preview_operator_response_witness_ref: str
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -169,23 +214,28 @@ def validate_agentic_service_harness_github_pr_branch_write_authority_binding(
     *,
     schema_path: Path = DEFAULT_SCHEMA,
     example_paths: Sequence[Path] = DEFAULT_EXAMPLES,
-    source_response_witness_schema_path: Path = DEFAULT_SOURCE_RESPONSE_WITNESS_SCHEMA,
-    source_response_witness_example_paths: Sequence[Path] = DEFAULT_SOURCE_RESPONSE_WITNESS_EXAMPLES,
+    source_response_command_preview_schema_path: Path = DEFAULT_SOURCE_RESPONSE_COMMAND_PREVIEW_SCHEMA,
+    source_response_command_preview_example_paths: Sequence[Path] = DEFAULT_SOURCE_RESPONSE_COMMAND_PREVIEW_EXAMPLES,
 ) -> GitHubPrBranchWriteAuthorityBindingValidation:
     """Validate GitHub PR branch-write authority binding examples."""
     errors: list[str] = []
     schema = _load_json_object(schema_path, "GitHub PR branch-write authority binding schema", errors)
-    source_validation = validate_agentic_service_harness_github_pr_operator_response_witness(
-        schema_path=source_response_witness_schema_path,
-        example_paths=source_response_witness_example_paths,
-    )
-    if not source_validation.ok:
-        errors.extend(f"source PR operator response witness: {error}" for error in source_validation.errors)
-    source_response_witness = _load_json_object(
-        source_response_witness_example_paths[0],
-        "GitHub PR operator response witness source",
+    source_schema = _load_json_object(
+        source_response_command_preview_schema_path,
+        "GitHub PR operator response command-preview binding schema source",
         errors,
     )
+    source_response_command_preview = _load_json_object(
+        source_response_command_preview_example_paths[0],
+        "GitHub PR operator response command-preview binding source",
+        errors,
+    )
+    if source_schema and source_response_command_preview:
+        errors.extend(
+            f"source PR operator response command-preview binding: {error}"
+            for error in _validate_schema_instance(source_schema, source_response_command_preview)
+        )
+    _validate_source_response_command_preview_minimal(source_response_command_preview, errors)
     examples: list[dict[str, Any]] = []
     for example_path in example_paths:
         example = _load_json_object(
@@ -202,7 +252,7 @@ def validate_agentic_service_harness_github_pr_branch_write_authority_binding(
             )
         _validate_branch_write_authority_binding_semantics(
             example,
-            source_response_witness,
+            source_response_command_preview,
             errors,
             _path_label(example_path),
         )
@@ -212,8 +262,8 @@ def validate_agentic_service_harness_github_pr_branch_write_authority_binding(
         schema_path=_path_label(schema_path),
         example_paths=tuple(_path_label(path) for path in example_paths),
         example_count=len(examples),
-        source_response_witness_ref=EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
-        actual_diff_operator_response_witness_ref=EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        source_response_command_preview_binding_ref=EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
+        command_preview_operator_response_witness_ref=EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
     )
 
 
@@ -227,18 +277,102 @@ def write_github_pr_branch_write_authority_binding_validation(
     return output_path
 
 
+def _validate_source_response_command_preview_minimal(
+    source_response_command_preview: Mapping[str, Any],
+    errors: list[str],
+) -> None:
+    """Validate the source binding without importing its validator and creating a cycle."""
+    if not source_response_command_preview:
+        return
+    label = "GitHub PR operator response command-preview binding source"
+    _require_equal(
+        source_response_command_preview,
+        ("binding_id",),
+        "agentic_service_harness_github_pr_operator_response_command_preview_binding",
+        errors,
+        label,
+    )
+    _require_equal(
+        source_response_command_preview,
+        ("solver_outcome",),
+        "AwaitingEvidence",
+        errors,
+        label,
+    )
+    _require_equal(
+        source_response_command_preview,
+        ("source_operator_response_witness_ref",),
+        EXPECTED_SOURCE_OPERATOR_RESPONSE_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        source_response_command_preview,
+        ("source_operator_approval_request_command_preview_binding_ref",),
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        source_response_command_preview,
+        ("response_command_preview_binding", "command_preview_ref"),
+        EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        source_response_command_preview,
+        ("response_command_preview_binding", "redacted_command_preview"),
+        EXPECTED_COMMAND_PREVIEW,
+        errors,
+        label,
+    )
+    observed_vector = _get_nested(
+        source_response_command_preview,
+        ("response_command_preview_binding", "argument_vector_template"),
+    )
+    if tuple(observed_vector) != EXPECTED_ARGUMENT_VECTOR:
+        errors.append(
+            f"{label}: response_command_preview_binding.argument_vector_template expected "
+            f"{EXPECTED_ARGUMENT_VECTOR!r}, observed {observed_vector!r}"
+        )
+    for path in (
+        ("response_command_preview_binding", "operator_response_collected"),
+        ("response_command_preview_binding", "command_execution_admitted"),
+        ("response_command_preview_binding", "branch_write_enabled"),
+        ("response_command_preview_binding", "pull_request_creation_enabled"),
+        ("response_command_preview_binding", "repository_write_enabled"),
+        ("response_command_preview_binding", "connector_call_enabled"),
+        ("response_command_preview_binding", "receipt_store_append_enabled"),
+        ("terminal_closure",),
+    ):
+        _require_equal(source_response_command_preview, path, False, errors, label)
+
+
 def _validate_branch_write_authority_binding_semantics(
     payload: Mapping[str, Any],
-    source_response_witness: Mapping[str, Any],
+    source_response_command_preview: Mapping[str, Any],
     errors: list[str],
     label: str,
 ) -> None:
     _require_equal(payload, ("binding_id",), EXPECTED_BINDING_ID, errors, label)
-    _require_equal(payload, ("source_response_witness_ref",), EXPECTED_SOURCE_RESPONSE_WITNESS_REF, errors, label)
+    _require_equal(
+        payload,
+        ("source_response_command_preview_binding_ref",),
+        EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
+        errors,
+        label,
+    )
     _require_equal(payload, ("solver_outcome",), "AwaitingEvidence", errors, label)
     _require_equal(payload, ("witness_kind",), "branch_write_authority_binding", errors, label)
     _require_equal(payload, ("requested_evidence_ref",), EXPECTED_REQUESTED_EVIDENCE_REF, errors, label)
-    _require_equal(payload, ("binding_status",), "AwaitingEvidence", errors, label)
+    _require_equal(
+        payload,
+        ("binding_status",),
+        "AwaitingEvidence",
+        errors,
+        label,
+    )
     _require_equal(payload, ("branch_write_binding", "authority_request_id"), EXPECTED_AUTHORITY_REQUEST_ID, errors, label)
     _require_equal(payload, ("branch_write_binding", "source_approval_request_id"), EXPECTED_APPROVAL_REQUEST_ID, errors, label)
     _require_equal(
@@ -250,46 +384,54 @@ def _validate_branch_write_authority_binding_semantics(
     )
     _require_equal(
         payload,
-        ("branch_write_binding", "requires_actual_diff_operator_response_witness"),
+        ("branch_write_binding", "requires_command_preview_operator_response_witness"),
         True,
         errors,
         label,
     )
     _require_equal(
         payload,
-        ("branch_write_binding", "actual_diff_operator_response_witness_ref"),
-        EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        ("branch_write_binding", "command_preview_operator_response_binding_ref"),
+        EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
         errors,
         label,
     )
     _require_equal(
         payload,
-        ("branch_write_binding", "actual_diff_approval_request_binding_ref"),
-        EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+        ("branch_write_binding", "operator_response_witness_ref"),
+        EXPECTED_SOURCE_OPERATOR_RESPONSE_REF,
         errors,
         label,
     )
     _require_equal(
         payload,
-        ("branch_write_binding", "actual_non_empty_diff_receipt_ref"),
-        EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+        ("branch_write_binding", "operator_approval_request_command_preview_binding_ref"),
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
         errors,
         label,
     )
     _require_equal(
         payload,
-        ("branch_write_binding", "redacted_diff_bundle_ref"),
-        EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+        ("branch_write_binding", "command_preview_ref"),
+        EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
         errors,
         label,
     )
     _require_equal(
         payload,
-        ("branch_write_binding", "redacted_output_ref"),
-        EXPECTED_REDACTED_OUTPUT_REF,
+        ("branch_write_binding", "redacted_command_preview"),
+        EXPECTED_COMMAND_PREVIEW,
         errors,
         label,
     )
+    observed_vector = _get_nested(payload, ("branch_write_binding", "argument_vector_template"))
+    if tuple(observed_vector) != EXPECTED_ARGUMENT_VECTOR:
+        errors.append(
+            f"{label}: branch_write_binding.argument_vector_template expected "
+            f"{EXPECTED_ARGUMENT_VECTOR!r}, observed {observed_vector!r}"
+        )
+    _require_equal(payload, ("branch_write_binding", "command_preview_bound"), True, errors, label)
+    _require_equal(payload, ("branch_write_binding", "operator_response_bound"), True, errors, label)
     _require_equal(
         payload,
         ("branch_write_binding", "required_authority_kind"),
@@ -312,61 +454,87 @@ def _validate_branch_write_authority_binding_semantics(
         label,
     )
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
-    if source_response_witness:
-        source_operator_response = _mapping(_get_nested(source_response_witness, ("operator_response",)))
+    if source_response_command_preview:
+        source_binding = _mapping(_get_nested(source_response_command_preview, ("response_command_preview_binding",)))
         _require_equal(
             payload,
-            ("branch_write_binding", "actual_diff_approval_request_binding_ref"),
-            source_operator_response.get("actual_diff_approval_request_binding_ref"),
+            ("branch_write_binding", "operator_response_witness_ref"),
+            _get_nested(source_response_command_preview, ("source_operator_response_witness_ref",)),
             errors,
             label,
         )
         _require_equal(
             payload,
-            ("branch_write_binding", "actual_non_empty_diff_receipt_ref"),
-            source_operator_response.get("actual_non_empty_diff_receipt_ref"),
+            ("branch_write_binding", "operator_approval_request_command_preview_binding_ref"),
+            _get_nested(source_response_command_preview, ("source_operator_approval_request_command_preview_binding_ref",)),
             errors,
             label,
         )
         _require_equal(
             payload,
-            ("branch_write_binding", "changed_file_refs"),
-            source_operator_response.get("changed_file_refs"),
+            ("branch_write_binding", "command_preview_ref"),
+            source_binding.get("command_preview_ref"),
             errors,
             label,
         )
         _require_equal(
             payload,
-            ("branch_write_binding", "diff_refs"),
-            source_operator_response.get("diff_refs"),
+            ("branch_write_binding", "redacted_command_preview"),
+            source_binding.get("redacted_command_preview"),
             errors,
             label,
         )
         _require_equal(
             payload,
-            ("branch_write_binding", "redacted_diff_bundle_ref"),
-            source_operator_response.get("redacted_diff_bundle_ref"),
+            ("branch_write_binding", "argument_vector_template"),
+            source_binding.get("argument_vector_template"),
             errors,
             label,
         )
         _require_equal(
             payload,
-            ("branch_write_binding", "redacted_output_ref"),
-            source_operator_response.get("redacted_output_ref"),
+            ("branch_write_binding", "placeholder_refs"),
+            source_binding.get("placeholder_refs"),
             errors,
             label,
         )
+        for required_ref in (
+            EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
+            EXPECTED_SOURCE_OPERATOR_RESPONSE_REF,
+            EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+            EXPECTED_REQUESTED_EVIDENCE_REF,
+            "evidence://operator-approval-for-pr-execution",
+            "evidence://uao-pr-execution-admission",
+            "evidence://repository-effect-rollback-plan",
+            "evidence://receipt-store-write-path-binding",
+            "evidence://effect-reconciliation-before-terminal-closure",
+            "witness://github-pr-terminal-closure-certificate",
+        ):
+            _require_contains(
+                payload,
+                ("branch_write_binding", "required_before_execution_refs"),
+                required_ref,
+                errors,
+                label,
+            )
         _require_equal(
             payload,
             ("scope", "repository_slug"),
-            _get_nested(source_response_witness, ("scope", "repository_slug")),
+            _get_nested(source_response_command_preview, ("scope", "repository_slug")),
             errors,
             label,
         )
         _require_equal(
             payload,
             ("scope", "repository_connection_id"),
-            _get_nested(source_response_witness, ("scope", "repository_connection_id")),
+            _get_nested(source_response_command_preview, ("scope", "repository_connection_id")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("scope", "foundation_phase"),
+            "foundation_pr_branch_write_command_preview_response_bound",
             errors,
             label,
         )
@@ -381,6 +549,16 @@ def _validate_branch_write_authority_binding_semantics(
             errors.append(f"{label}: remaining_witnesses must preserve canonical witness order")
     for key, expected_value in REQUIRED_RECEIPT_REFS.items():
         _require_equal(payload, ("receipt_refs", key), expected_value, errors, label)
+    next_action = _get_nested(payload, ("next_action",))
+    if isinstance(next_action, str):
+        for phrase in (
+            "UAO PR admission",
+            "command-preview branch-write authority",
+            "PR command execution",
+            "terminal closure",
+        ):
+            if phrase not in next_action:
+                errors.append(f"{label}: next_action missing phrase {phrase!r}")
     for path, value in _walk_leaves(payload):
         if not path:
             continue
@@ -422,6 +600,18 @@ def _require_equal(
     observed = _get_nested(payload, path)
     if observed != expected:
         errors.append(f"{label}: {'.'.join(path)} expected {expected!r}, observed {observed!r}")
+
+
+def _require_contains(
+    payload: Mapping[str, Any],
+    path: tuple[str, ...],
+    expected: str,
+    errors: list[str],
+    label: str,
+) -> None:
+    observed = _get_nested(payload, path)
+    if not isinstance(observed, list) or expected not in observed:
+        errors.append(f"{label}: {'.'.join(path)} missing required ref {expected!r}")
 
 
 def _get_nested(payload: Mapping[str, Any], path: tuple[str, ...]) -> Any:
@@ -480,8 +670,17 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA)
     parser.add_argument("--example", type=Path, action="append", dest="examples")
-    parser.add_argument("--source-response-witness-schema", type=Path, default=DEFAULT_SOURCE_RESPONSE_WITNESS_SCHEMA)
-    parser.add_argument("--source-response-witness-example", type=Path, action="append", dest="source_response_examples")
+    parser.add_argument(
+        "--source-response-command-preview-schema",
+        type=Path,
+        default=DEFAULT_SOURCE_RESPONSE_COMMAND_PREVIEW_SCHEMA,
+    )
+    parser.add_argument(
+        "--source-response-command-preview-example",
+        type=Path,
+        action="append",
+        dest="source_response_command_preview_examples",
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--json", action="store_true", help="Print machine-readable validation output.")
     parser.add_argument("--strict", action="store_true", help="Return nonzero when validation fails.")
@@ -493,9 +692,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     validation = validate_agentic_service_harness_github_pr_branch_write_authority_binding(
         schema_path=args.schema,
         example_paths=tuple(args.examples) if args.examples else DEFAULT_EXAMPLES,
-        source_response_witness_schema_path=args.source_response_witness_schema,
-        source_response_witness_example_paths=(
-            tuple(args.source_response_examples) if args.source_response_examples else DEFAULT_SOURCE_RESPONSE_WITNESS_EXAMPLES
+        source_response_command_preview_schema_path=args.source_response_command_preview_schema,
+        source_response_command_preview_example_paths=(
+            tuple(args.source_response_command_preview_examples)
+            if args.source_response_command_preview_examples
+            else DEFAULT_SOURCE_RESPONSE_COMMAND_PREVIEW_EXAMPLES
         ),
     )
     write_github_pr_branch_write_authority_binding_validation(validation, args.output)
