@@ -187,6 +187,71 @@ def test_github_pr_admission_preflight_rejects_terminal_certificate_read_model_s
     assert "operator_view.contains_secret_values expected False" in serialized_errors
 
 
+def test_github_pr_admission_preflight_rejects_command_preview_read_model_evidence_drift() -> None:
+    payload = validator.build_mutated_preflight(
+        command_preview_terminal_certificate_read_model_evidence__source_read_model_id="wrong-read-model",
+        command_preview_terminal_certificate_read_model_evidence__source_minting_ref="examples/wrong-minting.json",
+        command_preview_terminal_certificate_read_model_evidence__source_certificate_id="wrong-certificate",
+        command_preview_terminal_certificate_read_model_evidence__source_command_preview_certificate_minting_required=False,
+        command_preview_terminal_certificate_read_model_evidence__source_command_preview_decision_value_record_required=False,
+        command_preview_terminal_certificate_read_model_evidence__command_preview_ref="examples/wrong-command-preview.json",
+        command_preview_terminal_certificate_read_model_evidence__redacted_command_preview="gh pr create --body raw",
+        command_preview_terminal_certificate_read_model_evidence__command_preview_bound=False,
+        command_preview_terminal_certificate_read_model_evidence__read_model_read_only=False,
+        command_preview_terminal_certificate_read_model_evidence__read_model_projection_only=False,
+        command_preview_terminal_certificate_read_model_evidence__read_model_reference_only=False,
+        command_preview_terminal_certificate_read_model_evidence__pull_request_creation_enabled=True,
+        command_preview_terminal_certificate_read_model_evidence__repository_write_enabled=True,
+        command_preview_terminal_certificate_read_model_evidence__terminal_certificate_minted_by_read_model=True,
+        command_preview_terminal_certificate_read_model_evidence__read_model_is_not_terminal_closure=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_preflight_semantics(
+        payload,
+        _source_receipt(),
+        errors,
+        "mutated",
+        _file_summary_receipt(),
+        _terminal_certificate_read_model(),
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_terminal_certificate_read_model_evidence.source_read_model_id expected" in serialized_errors
+    assert "command_preview_terminal_certificate_read_model_evidence.source_minting_ref expected" in serialized_errors
+    assert "command_preview_terminal_certificate_read_model_evidence.source_certificate_id expected" in serialized_errors
+    assert (
+        "command_preview_terminal_certificate_read_model_evidence.source_command_preview_certificate_minting_required expected"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_terminal_certificate_read_model_evidence.source_command_preview_decision_value_record_required expected"
+        in serialized_errors
+    )
+    assert "command_preview_terminal_certificate_read_model_evidence.command_preview_ref expected" in serialized_errors
+    assert (
+        "command_preview_terminal_certificate_read_model_evidence.redacted_command_preview expected"
+        in serialized_errors
+    )
+    assert "command_preview_terminal_certificate_read_model_evidence.command_preview_bound expected" in serialized_errors
+    assert "command_preview_terminal_certificate_read_model_evidence.read_model_read_only expected" in serialized_errors
+    assert "command_preview_terminal_certificate_read_model_evidence.read_model_projection_only expected" in serialized_errors
+    assert "command_preview_terminal_certificate_read_model_evidence.read_model_reference_only expected" in serialized_errors
+    assert (
+        "command_preview_terminal_certificate_read_model_evidence.pull_request_creation_enabled expected"
+        in serialized_errors
+    )
+    assert "command_preview_terminal_certificate_read_model_evidence.repository_write_enabled expected" in serialized_errors
+    assert (
+        "command_preview_terminal_certificate_read_model_evidence.terminal_certificate_minted_by_read_model expected"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_terminal_certificate_read_model_evidence.read_model_is_not_terminal_closure expected"
+        in serialized_errors
+    )
+
+
 def test_github_pr_admission_preflight_rejects_mutation_route_and_secret_like_payload() -> None:
     payload = validator.build_mutated_preflight(next_action="POST /api/github/prs should never be admitted")
     payload["simulated_pr_admission"]["serialized_token_value"] = "github_pat_forbiddencredential"
