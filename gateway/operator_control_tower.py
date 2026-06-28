@@ -2531,6 +2531,70 @@ def operator_control_tower_status_receipt(snapshot: OperatorControlTowerSnapshot
                 "Merge readiness blocked until CI pass, review approval, rollback, and merge approval evidence are complete"
             ),
         },
+        "operator_sandbox_patch_release_handoff_readiness_summary": {
+            "summary_id": "operator_sandbox_patch_release_handoff_readiness.foundation",
+            "handoff_status": "blocked_until_terminal_closure",
+            "handoff_target": "release_handoff_packet",
+            "required_before_handoff": [
+                "merge_execution_receipt_recorded",
+                "terminal_closure_certificate_minted",
+                "effect_reconciliation_witness_bound",
+                "rollback_retention_verified",
+                "release_notes_prepared",
+            ],
+            "missing_prerequisite_count": 5,
+            "handoff_performed": False,
+            "release_publication_allowed": False,
+            "deployment_allowed": False,
+            "public_claim_allowed": False,
+            "external_effects_allowed": False,
+            "operator_message": (
+                "Release handoff blocked until terminal closure, reconciliation, rollback, and release-note evidence are complete"
+            ),
+        },
+        "operator_sandbox_patch_deployment_publication_readiness_summary": {
+            "summary_id": "operator_sandbox_patch_deployment_publication_readiness.foundation",
+            "publication_status": "blocked_until_release_handoff",
+            "publication_target": "deployment_publication_closure_plan",
+            "required_before_publication": [
+                "release_handoff_packet_prepared",
+                "deployment_publication_closure_plan_verified",
+                "production_evidence_witness_bound",
+                "dns_target_binding_verified",
+                "operator_deployment_approval_recorded",
+            ],
+            "missing_prerequisite_count": 5,
+            "publication_performed": False,
+            "deployment_allowed": False,
+            "dns_change_allowed": False,
+            "production_claim_allowed": False,
+            "public_endpoint_allowed": False,
+            "external_effects_allowed": False,
+            "operator_message": (
+                "Deployment publication blocked until release handoff, production evidence, DNS binding, and deployment approval evidence are complete"
+            ),
+        },
+        "operator_sandbox_patch_production_monitoring_readiness_summary": {
+            "summary_id": "operator_sandbox_patch_production_monitoring_readiness.foundation",
+            "monitoring_status": "blocked_until_publication",
+            "monitoring_target": "production_monitoring_witness",
+            "required_before_monitoring": [
+                "deployment_publication_witness_recorded",
+                "public_health_witness_bound",
+                "runtime_conformance_certificate_available",
+                "telemetry_monitoring_plan_verified",
+                "incident_rollback_recovery_plan_verified",
+            ],
+            "missing_prerequisite_count": 5,
+            "monitoring_activation_performed": False,
+            "monitor_activation_allowed": False,
+            "alert_routing_allowed": False,
+            "production_claim_allowed": False,
+            "external_effects_allowed": False,
+            "operator_message": (
+                "Production monitoring blocked until deployment publication, health, runtime conformance, telemetry, and incident recovery evidence are complete"
+            ),
+        },
         "operator_handoff_summary": {
             "summary_id": "operator_handoff.foundation",
             "handoff_status": (
@@ -3510,6 +3574,15 @@ def operator_control_tower_status_receipt(snapshot: OperatorControlTowerSnapshot
             ),
             "operator_sandbox_patch_merge_readiness_summary": (
                 "docs/21_workflow_runtime.md sandbox_patch_receipt merge readiness"
+            ),
+            "operator_sandbox_patch_release_handoff_readiness_summary": (
+                "docs/21_workflow_runtime.md sandbox_patch_receipt release handoff readiness"
+            ),
+            "operator_sandbox_patch_deployment_publication_readiness_summary": (
+                "docs/21_workflow_runtime.md sandbox_patch_receipt deployment publication readiness"
+            ),
+            "operator_sandbox_patch_production_monitoring_readiness_summary": (
+                "docs/21_workflow_runtime.md sandbox_patch_receipt production monitoring readiness"
             ),
             "operator_handoff_summary": (
                 "workflow_monitor.metadata.developer_workflow_milestone_summary + "
@@ -4795,6 +4868,47 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     sandbox_patch_merge_message = (
         "Merge readiness blocked until CI pass, review approval, rollback, and merge approval evidence are complete"
     )
+    sandbox_patch_release_handoff_status = "blocked_until_terminal_closure"
+    sandbox_patch_release_handoff_required = (
+        "merge_execution_receipt_recorded, terminal_closure_certificate_minted, "
+        "effect_reconciliation_witness_bound, rollback_retention_verified, "
+        "release_notes_prepared"
+    )
+    sandbox_patch_release_handoff_missing = 5
+    sandbox_patch_release_handoff_performed = False
+    sandbox_patch_release_publication = False
+    sandbox_patch_deployment = False
+    sandbox_patch_public_claim = False
+    sandbox_patch_release_handoff_message = (
+        "Release handoff blocked until terminal closure, reconciliation, rollback, and release-note evidence are complete"
+    )
+    sandbox_patch_deployment_publication_status = "blocked_until_release_handoff"
+    sandbox_patch_deployment_publication_required = (
+        "release_handoff_packet_prepared, deployment_publication_closure_plan_verified, "
+        "production_evidence_witness_bound, dns_target_binding_verified, "
+        "operator_deployment_approval_recorded"
+    )
+    sandbox_patch_deployment_publication_missing = 5
+    sandbox_patch_deployment_publication_performed = False
+    sandbox_patch_dns_change = False
+    sandbox_patch_production_claim = False
+    sandbox_patch_public_endpoint = False
+    sandbox_patch_deployment_publication_message = (
+        "Deployment publication blocked until release handoff, production evidence, DNS binding, and deployment approval evidence are complete"
+    )
+    sandbox_patch_production_monitoring_status = "blocked_until_publication"
+    sandbox_patch_production_monitoring_required = (
+        "deployment_publication_witness_recorded, public_health_witness_bound, "
+        "runtime_conformance_certificate_available, telemetry_monitoring_plan_verified, "
+        "incident_rollback_recovery_plan_verified"
+    )
+    sandbox_patch_production_monitoring_missing = 5
+    sandbox_patch_monitoring_activation = False
+    sandbox_patch_monitor_activation = False
+    sandbox_patch_alert_routing = False
+    sandbox_patch_production_monitoring_message = (
+        "Production monitoring blocked until deployment publication, health, runtime conformance, telemetry, and incident recovery evidence are complete"
+    )
     operator_handoff_status = (
         "ready_for_local_resume" if friction_reduction_local_allowed else "blocked_pending_approval"
     )
@@ -5401,6 +5515,52 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
       <span class="field"><strong>Merge allowed</strong>{escape(str(sandbox_patch_merge_allowed).lower())}</span>
       <span class="field"><strong>Branch write allowed</strong>{escape(str(sandbox_patch_branch_write).lower())}</span>
       <span class="field"><strong>GitHub call allowed</strong>{escape(str(sandbox_patch_github_call).lower())}</span>
+      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
+    </div>
+  </section>
+  <section>
+    <h2>Operator Sandbox Patch Release Handoff Readiness</h2>
+    <div class="task">
+      <span class="field"><strong>Message</strong>{escape(sandbox_patch_release_handoff_message)}</span>
+      <span class="field"><strong>Status</strong>{escape(sandbox_patch_release_handoff_status)}</span>
+      <span class="field"><strong>Handoff target</strong>release_handoff_packet</span>
+      <span class="field"><strong>Required before handoff</strong>{escape(sandbox_patch_release_handoff_required)}</span>
+      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_release_handoff_missing}</span>
+      <span class="field"><strong>Handoff performed</strong>{escape(str(sandbox_patch_release_handoff_performed).lower())}</span>
+      <span class="field"><strong>Release publication allowed</strong>{escape(str(sandbox_patch_release_publication).lower())}</span>
+      <span class="field"><strong>Deployment allowed</strong>{escape(str(sandbox_patch_deployment).lower())}</span>
+      <span class="field"><strong>Public claim allowed</strong>{escape(str(sandbox_patch_public_claim).lower())}</span>
+      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
+    </div>
+  </section>
+  <section>
+    <h2>Operator Sandbox Patch Deployment Publication Readiness</h2>
+    <div class="task">
+      <span class="field"><strong>Message</strong>{escape(sandbox_patch_deployment_publication_message)}</span>
+      <span class="field"><strong>Status</strong>{escape(sandbox_patch_deployment_publication_status)}</span>
+      <span class="field"><strong>Publication target</strong>deployment_publication_closure_plan</span>
+      <span class="field"><strong>Required before publication</strong>{escape(sandbox_patch_deployment_publication_required)}</span>
+      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_deployment_publication_missing}</span>
+      <span class="field"><strong>Publication performed</strong>{escape(str(sandbox_patch_deployment_publication_performed).lower())}</span>
+      <span class="field"><strong>Deployment allowed</strong>{escape(str(sandbox_patch_deployment).lower())}</span>
+      <span class="field"><strong>DNS change allowed</strong>{escape(str(sandbox_patch_dns_change).lower())}</span>
+      <span class="field"><strong>Production claim allowed</strong>{escape(str(sandbox_patch_production_claim).lower())}</span>
+      <span class="field"><strong>Public endpoint allowed</strong>{escape(str(sandbox_patch_public_endpoint).lower())}</span>
+      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
+    </div>
+  </section>
+  <section>
+    <h2>Operator Sandbox Patch Production Monitoring Readiness</h2>
+    <div class="task">
+      <span class="field"><strong>Message</strong>{escape(sandbox_patch_production_monitoring_message)}</span>
+      <span class="field"><strong>Status</strong>{escape(sandbox_patch_production_monitoring_status)}</span>
+      <span class="field"><strong>Monitoring target</strong>production_monitoring_witness</span>
+      <span class="field"><strong>Required before monitoring</strong>{escape(sandbox_patch_production_monitoring_required)}</span>
+      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_production_monitoring_missing}</span>
+      <span class="field"><strong>Monitoring activation performed</strong>{escape(str(sandbox_patch_monitoring_activation).lower())}</span>
+      <span class="field"><strong>Monitor activation allowed</strong>{escape(str(sandbox_patch_monitor_activation).lower())}</span>
+      <span class="field"><strong>Alert routing allowed</strong>{escape(str(sandbox_patch_alert_routing).lower())}</span>
+      <span class="field"><strong>Production claim allowed</strong>{escape(str(sandbox_patch_production_claim).lower())}</span>
       <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
     </div>
   </section>
