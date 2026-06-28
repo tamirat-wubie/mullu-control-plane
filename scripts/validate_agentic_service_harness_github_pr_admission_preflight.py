@@ -194,6 +194,8 @@ REQUIRED_FALSE_FLAGS = (
     "secret_mutation_enabled",
     "destructive_operation_enabled",
     "default_high_risk_authority",
+    "pull_request_creation_enabled",
+    "terminal_certificate_minted_by_read_model",
 )
 REQUIRED_TRUE_FLAGS = (
     "read_only",
@@ -201,6 +203,13 @@ REQUIRED_TRUE_FLAGS = (
     "preflight_recorded",
     "report_is_not_terminal_closure",
     "terminal_closure_required",
+    "source_command_preview_certificate_minting_required",
+    "source_command_preview_decision_value_record_required",
+    "command_preview_bound",
+    "read_model_read_only",
+    "read_model_projection_only",
+    "read_model_reference_only",
+    "read_model_is_not_terminal_closure",
 )
 ALLOWED_SECRET_KEYS = {
     "dns_mutation_enabled",
@@ -530,6 +539,14 @@ def _validate_terminal_certificate_read_model_source(
     errors: list[str],
     label: str,
 ) -> None:
+    evidence = _get_nested(payload, ("command_preview_terminal_certificate_read_model_evidence",))
+    if not isinstance(evidence, Mapping):
+        errors.append(f"{label}: command_preview_terminal_certificate_read_model_evidence must be an object")
+        return
+    command_preview_minting = _get_nested(read_model, ("command_preview_certificate_minting_evidence",))
+    if not isinstance(command_preview_minting, Mapping):
+        errors.append("terminal certificate read model source: command_preview_certificate_minting_evidence must be an object")
+        return
     _require_equal(
         payload,
         ("scope", "repository_slug"),
@@ -550,6 +567,136 @@ def _validate_terminal_certificate_read_model_source(
         "agentic-service-harness-github-pr-terminal-closure-certificate-read-model",
         errors,
         "terminal certificate read model source",
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "source_read_model_id"),
+        _get_nested(read_model, ("read_model_id",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "source_read_model_ref"),
+        _get_nested(payload, ("source_terminal_closure_certificate_read_model_ref",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "source_minting_ref"),
+        _get_nested(read_model, ("source_minting_ref",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "source_certificate_id"),
+        _get_nested(read_model, ("source_certificate_id",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        (
+            "command_preview_terminal_certificate_read_model_evidence",
+            "source_command_preview_certificate_minting_required",
+        ),
+        _get_nested(
+            read_model,
+            (
+                "command_preview_certificate_minting_evidence",
+                "requires_command_preview_certificate_minting_evidence",
+            ),
+        ),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        (
+            "command_preview_terminal_certificate_read_model_evidence",
+            "source_command_preview_decision_value_record_required",
+        ),
+        _get_nested(
+            read_model,
+            (
+                "command_preview_certificate_minting_evidence",
+                "requires_command_preview_decision_value_record_evidence",
+            ),
+        ),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "command_preview_ref"),
+        _get_nested(read_model, ("command_preview_certificate_minting_evidence", "command_preview_ref")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "redacted_command_preview"),
+        _get_nested(read_model, ("command_preview_certificate_minting_evidence", "redacted_command_preview")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "command_preview_bound"),
+        _get_nested(read_model, ("command_preview_certificate_minting_evidence", "command_preview_bound")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "read_model_read_only"),
+        _get_nested(read_model, ("projection_scope", "read_only")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "read_model_projection_only"),
+        _get_nested(read_model, ("projection_scope", "projection_only")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "read_model_reference_only"),
+        _get_nested(read_model, ("operator_view", "inline_evidence_payloads_allowed")) is False,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "pull_request_creation_enabled"),
+        _get_nested(read_model, ("authority_denials", "pull_request_creation_enabled")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "repository_write_enabled"),
+        _get_nested(read_model, ("authority_denials", "repository_write_enabled")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "terminal_certificate_minted_by_read_model"),
+        _get_nested(read_model, ("effect_boundary", "terminal_certificate_minted_by_read_model")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_terminal_certificate_read_model_evidence", "read_model_is_not_terminal_closure"),
+        _get_nested(read_model, ("read_model_is_not_terminal_closure",)),
+        errors,
+        label,
     )
     _require_equal(
         read_model,
