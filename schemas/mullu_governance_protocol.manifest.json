@@ -251,6 +251,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-approval-request-actual-non-empty-diff-binding:1"
     },
     {
+      "path": "schemas/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-operator-approval-request-command-preview-binding",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-approval-request-command-preview-binding:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json",
       "schema_id": "agentic-service-harness-github-pr-operator-response-witness",
       "surface": "runtime",
