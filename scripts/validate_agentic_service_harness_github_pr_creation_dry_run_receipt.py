@@ -67,6 +67,36 @@ EXPECTED_SIMULATED_ACTION_KIND = "future_github_pull_request_creation"
 EXPECTED_RESULT_STATE = "PR_CREATION_DRY_RUN_RECORDED"
 EXPECTED_EXECUTION_DECISION = "PR_CREATION_EXECUTION_BLOCKED_AWAITING_EXPLICIT_ADMISSION"
 EXPECTED_EXECUTION_TARGET_REF = "github-pr://agentic-service-harness/task-run"
+COMMAND_PREVIEW_READ_MODEL_EVIDENCE_BINDINGS = (
+    ("source_read_model_id", ("read_model_id",)),
+    ("source_read_model_ref", None),
+    ("source_certificate_id", ("source_certificate_id",)),
+    ("source_minting_ref", ("source_minting_ref",)),
+    (
+        "requires_command_preview_certificate_minting_evidence",
+        ("command_preview_certificate_minting_evidence", "requires_command_preview_certificate_minting_evidence"),
+    ),
+    (
+        "requires_command_preview_decision_value_record_evidence",
+        ("command_preview_certificate_minting_evidence", "requires_command_preview_decision_value_record_evidence"),
+    ),
+    (
+        "requires_command_preview_decision_value_request_evidence",
+        ("command_preview_certificate_minting_evidence", "requires_command_preview_decision_value_request_evidence"),
+    ),
+    ("command_preview_bound", ("command_preview_certificate_minting_evidence", "command_preview_bound")),
+    ("command_preview_ref", ("command_preview_certificate_minting_evidence", "command_preview_ref")),
+    ("redacted_command_preview", ("command_preview_certificate_minting_evidence", "redacted_command_preview")),
+    ("operator_decision_ref", ("command_preview_certificate_minting_evidence", "operator_decision_ref")),
+    ("decision_value", ("command_preview_certificate_minting_evidence", "decision_value")),
+    ("terminal_closure_projected", ("certificate_summary", "terminal_closure_projected")),
+    ("terminal_certificate_minted", ("certificate_summary", "terminal_certificate_minted")),
+    ("projection_only", ("projection_scope", "projection_only")),
+    ("read_model_is_not_terminal_closure", ("read_model_is_not_terminal_closure",)),
+    ("pull_request_creation_enabled", ("authority_denials", "pull_request_creation_enabled")),
+    ("repository_written_by_read_model", ("effect_boundary", "repository_written_by_read_model")),
+    ("contains_secret_values", ("operator_view", "contains_secret_values")),
+)
 REQUIRED_FORBIDDEN_ACTION_CLASSES = (
     "execute_adapter",
     "write_to_branch",
@@ -172,6 +202,8 @@ REQUIRED_FALSE_FLAGS = (
     "secret_mutation_enabled",
     "destructive_operation_enabled",
     "default_high_risk_authority",
+    "repository_written_by_read_model",
+    "contains_secret_values",
 )
 REQUIRED_TRUE_FLAGS = (
     "read_only",
@@ -179,11 +211,20 @@ REQUIRED_TRUE_FLAGS = (
     "dry_run_receipt_recorded",
     "source_terminal_certificate_read_model_projection_only",
     "source_terminal_certificate_read_model_not_terminal_closure",
+    "requires_command_preview_certificate_minting_evidence",
+    "requires_command_preview_decision_value_record_evidence",
+    "requires_command_preview_decision_value_request_evidence",
+    "command_preview_bound",
+    "terminal_closure_projected",
+    "terminal_certificate_minted",
+    "projection_only",
+    "read_model_is_not_terminal_closure",
     "report_is_not_terminal_closure",
     "terminal_closure_required",
     "required_for_closure",
 )
 ALLOWED_SECRET_KEYS = {
+    "contains_secret_values",
     "dns_mutation_enabled",
     "raw_secret_material_included",
     "secret_mutation",
@@ -323,6 +364,7 @@ def _validate_pr_creation_dry_run_semantics(
     )
     _validate_source_preflight(payload, source_preflight, errors, label)
     _validate_read_model_source(payload, read_model, errors, label)
+    _validate_command_preview_read_model_evidence(payload, read_model, errors, label)
     _validate_contract_sections(payload, errors, label)
     _validate_ref_sets(payload, errors, label)
     _validate_receipt_refs(payload, errors, label)
@@ -437,6 +479,31 @@ def _validate_read_model_source(
         errors,
         label,
     )
+
+
+def _validate_command_preview_read_model_evidence(
+    payload: Mapping[str, Any],
+    read_model: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    evidence = _get_nested(payload, ("command_preview_certificate_read_model_evidence",))
+    if not isinstance(evidence, Mapping):
+        errors.append(f"{label}: command_preview_certificate_read_model_evidence must be an object")
+        return
+    for evidence_key, source_path in COMMAND_PREVIEW_READ_MODEL_EVIDENCE_BINDINGS:
+        expected = (
+            EXPECTED_TERMINAL_CERTIFICATE_READ_MODEL_REF
+            if source_path is None
+            else _get_nested(read_model, source_path)
+        )
+        _require_equal(
+            payload,
+            ("command_preview_certificate_read_model_evidence", evidence_key),
+            expected,
+            errors,
+            label,
+        )
 
 
 def _validate_contract_sections(payload: Mapping[str, Any], errors: list[str], label: str) -> None:

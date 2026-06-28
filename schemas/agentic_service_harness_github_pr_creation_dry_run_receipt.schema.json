@@ -12,6 +12,7 @@
     "solver_outcome",
     "source_pr_admission_preflight_ref",
     "source_terminal_closure_certificate_read_model_ref",
+    "command_preview_certificate_read_model_evidence",
     "scope",
     "dry_run_contract",
     "simulated_pr_creation",
@@ -47,6 +48,9 @@
     "source_terminal_closure_certificate_read_model_ref": {
       "type": "string",
       "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json"
+    },
+    "command_preview_certificate_read_model_evidence": {
+      "$ref": "#/$defs/command_preview_certificate_read_model_evidence"
     },
     "scope": {
       "$ref": "#/$defs/scope"
@@ -105,6 +109,73 @@
       "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/evidence_ref"
+      }
+    },
+    "command_preview_certificate_read_model_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_read_model_id",
+        "source_read_model_ref",
+        "source_certificate_id",
+        "source_minting_ref",
+        "requires_command_preview_certificate_minting_evidence",
+        "requires_command_preview_decision_value_record_evidence",
+        "requires_command_preview_decision_value_request_evidence",
+        "command_preview_bound",
+        "command_preview_ref",
+        "redacted_command_preview",
+        "operator_decision_ref",
+        "decision_value",
+        "terminal_closure_projected",
+        "terminal_certificate_minted",
+        "projection_only",
+        "read_model_is_not_terminal_closure",
+        "pull_request_creation_enabled",
+        "repository_written_by_read_model",
+        "contains_secret_values"
+      ],
+      "properties": {
+        "source_read_model_id": {
+          "type": "string",
+          "const": "agentic-service-harness-github-pr-terminal-closure-certificate-read-model"
+        },
+        "source_read_model_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json"
+        },
+        "source_certificate_id": {
+          "type": "string",
+          "const": "terminal-closure-certificate.github-pr-chain.foundation"
+        },
+        "source_minting_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_minting.foundation.json"
+        },
+        "requires_command_preview_certificate_minting_evidence": { "type": "boolean", "const": true },
+        "requires_command_preview_decision_value_record_evidence": { "type": "boolean", "const": true },
+        "requires_command_preview_decision_value_request_evidence": { "type": "boolean", "const": true },
+        "command_preview_bound": { "type": "boolean", "const": true },
+        "command_preview_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json"
+        },
+        "redacted_command_preview": {
+          "type": "string",
+          "const": "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> --body-file <redacted-body-file-ref>"
+        },
+        "operator_decision_ref": {
+          "type": "string",
+          "const": "operator-decision://github-pr-terminal-closure/2026-06-26/approve-terminal-certificate"
+        },
+        "decision_value": { "type": "string", "const": "approve_terminal_certificate" },
+        "terminal_closure_projected": { "type": "boolean", "const": true },
+        "terminal_certificate_minted": { "type": "boolean", "const": true },
+        "projection_only": { "type": "boolean", "const": true },
+        "read_model_is_not_terminal_closure": { "type": "boolean", "const": true },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "repository_written_by_read_model": { "type": "boolean", "const": false },
+        "contains_secret_values": { "type": "boolean", "const": false }
       }
     },
     "scope": {
