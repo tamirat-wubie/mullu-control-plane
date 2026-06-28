@@ -530,8 +530,8 @@ def test_readiness_map_rejects_missing_github_pr_terminal_candidate_binding_row(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR terminal closure certificate candidate actual-diff witness binding PR | READY |",
-            "| GitHub PR terminal closure certificate candidate actual-diff witness binding PR | PARTIAL |",
+            "| GitHub PR terminal closure certificate candidate command-preview certificate binding PR | READY |",
+            "| GitHub PR terminal closure certificate candidate command-preview certificate binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -541,7 +541,7 @@ def test_readiness_map_rejects_missing_github_pr_terminal_candidate_binding_row(
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR terminal closure certificate candidate actual-diff witness binding PR"
+        "missing ready row: GitHub PR terminal closure certificate candidate command-preview certificate binding PR"
         in serialized_errors
     )
 
@@ -730,7 +730,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind terminal closure candidate to command-preview certificate`",
+            "1. `harness(pr): bind terminal closure operator approval gate to command-preview candidate`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -741,7 +741,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind terminal closure candidate to command-preview certificate"
+        "missing next PR marker: harness(pr): bind terminal closure operator approval gate to command-preview candidate"
         in serialized_errors
     )
 
