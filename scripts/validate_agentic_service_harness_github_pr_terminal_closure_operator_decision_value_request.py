@@ -81,6 +81,25 @@ EXPECTED_FORBIDDEN_FIELDS = (
     "secret_value",
     "token",
 )
+COMMAND_PREVIEW_GENERIC_REJECTION_EVIDENCE_KEYS = (
+    "source_approval_gate_binding_id",
+    "source_approval_gate_ref",
+    "operator_decision_ref",
+    "requires_command_preview_operator_approval_gate_evidence",
+    "requires_command_preview_terminal_closure_certificate_witness",
+    "command_preview_terminal_closure_certificate_witness_ref",
+    "command_preview_effect_reconciliation_witness_ref",
+    "command_preview_ci_gate_before_ready_for_review_witness_ref",
+    "command_preview_repository_effect_rollback_plan_witness_ref",
+    "command_preview_uao_admission_witness_ref",
+    "command_preview_branch_write_binding_ref",
+    "command_preview_operator_response_binding_ref",
+    "command_preview_operator_response_witness_ref",
+    "command_preview_operator_approval_request_binding_ref",
+    "command_preview_ref",
+    "redacted_command_preview",
+    "command_preview_bound",
+)
 ACTUAL_DIFF_GENERIC_REJECTION_EVIDENCE_KEYS = (
     "source_approval_gate_binding_id",
     "source_approval_gate_ref",
@@ -158,6 +177,10 @@ REQUIRED_FALSE_FLAGS = (
 )
 REQUIRED_TRUE_FLAGS = (
     "generic_continuation_rejected",
+    "requires_command_preview_generic_rejection_evidence",
+    "requires_command_preview_operator_approval_gate_evidence",
+    "requires_command_preview_terminal_closure_certificate_witness",
+    "command_preview_bound",
     "requires_actual_diff_generic_rejection_evidence",
     "requires_actual_diff_operator_approval_gate_evidence",
     "effect_reconciliation_collected",
@@ -313,6 +336,101 @@ def _validate_decision_value_request_semantics(
             errors,
             label,
         )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "source_rejection_binding_id"),
+            _get_nested(source_rejection, ("binding_id",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "source_rejection_witness_ref"),
+            EXPECTED_SOURCE_REJECTION_REF,
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "source_decision_contract_binding_id"),
+            _get_nested(source_rejection, ("continuation_rejection", "source_decision_contract_binding_id")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "source_decision_contract_ref"),
+            _get_nested(source_rejection, ("continuation_rejection", "source_decision_contract_ref")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "rejection_id"),
+            _get_nested(source_rejection, ("continuation_rejection", "rejection_id")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "rejection_status"),
+            _get_nested(source_rejection, ("rejection_status",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "requires_command_preview_generic_rejection_evidence"),
+            True,
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "generic_continuation_rejected"),
+            _get_nested(source_rejection, ("generic_continuation_rejected",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "operator_decision_value_present"),
+            _get_nested(source_rejection, ("operator_decision_value_present",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "accepted_as_operator_approval"),
+            _get_nested(source_rejection, ("accepted_as_operator_approval",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "terminal_closure_certificate_minted"),
+            _get_nested(source_rejection, ("terminal_closure_certificate_minted",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_generic_rejection_evidence", "terminal_closure_authorized"),
+            _get_nested(source_rejection, ("terminal_closure_authorized",)),
+            errors,
+            label,
+        )
+        for evidence_key in COMMAND_PREVIEW_GENERIC_REJECTION_EVIDENCE_KEYS:
+            _require_equal(
+                payload,
+                ("command_preview_generic_rejection_evidence", evidence_key),
+                _get_nested(
+                    source_rejection,
+                    ("continuation_rejection", "command_preview_decision_contract_evidence", evidence_key),
+                ),
+                errors,
+                label,
+            )
         _require_equal(
             payload,
             ("actual_diff_generic_rejection_evidence", "source_rejection_binding_id"),
