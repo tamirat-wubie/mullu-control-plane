@@ -21,6 +21,12 @@ from html import escape
 from typing import Any, Mapping
 
 from gateway.command_spine import canonical_hash
+from gateway.operator_sandbox_patch_readiness import (
+    SANDBOX_PATCH_READINESS_REGISTRY,
+    sandbox_patch_readiness_compact_summary,
+    sandbox_patch_readiness_receipt_entries,
+    sandbox_patch_readiness_source_refs,
+)
 
 
 class OperatorPanelKind(StrEnum):
@@ -398,6 +404,85 @@ def _local_rollback_readiness_verdict(value: object) -> str:
         "ready_for_dry_run",
     }
     return verdict if verdict in allowed else "awaiting_selection"
+
+
+def _readiness_title(summary_key: str) -> str:
+    title_source = summary_key
+    if title_source.startswith("operator_"):
+        title_source = title_source[len("operator_") :]
+    if title_source.endswith("_summary"):
+        title_source = title_source[: -len("_summary")]
+    title = title_source.replace("_", " ").title()
+    return f"Operator {title}".replace(" Pr ", " PR ").replace(" Ci ", " CI ")
+
+
+def _readiness_field_label(field_key: str) -> str:
+    if field_key == "operator_message":
+        return "Message"
+    if field_key.endswith("_status"):
+        return "Status"
+    if field_key == "missing_prerequisite_count":
+        return "Missing prerequisites"
+    return field_key.replace("_", " ").replace("pr ", "PR ").title()
+
+
+def _readiness_field_value(value: object) -> str:
+    if isinstance(value, bool):
+        return str(value).lower()
+    if isinstance(value, list):
+        return ", ".join(str(item) for item in value)
+    return str(value)
+
+
+def _readiness_payload_display_items(payload: Mapping[str, Any]) -> tuple[tuple[str, object], ...]:
+    ordered_items: list[tuple[str, object]] = []
+    if "operator_message" in payload:
+        ordered_items.append(("operator_message", payload["operator_message"]))
+    for key, value in payload.items():
+        if key in {"summary_id", "operator_message"}:
+            continue
+        ordered_items.append((key, value))
+    return tuple(ordered_items)
+
+
+def _render_sandbox_patch_readiness_sections() -> str:
+    sections = []
+    for summary_key, payload, _source_ref in SANDBOX_PATCH_READINESS_REGISTRY:
+        field_rows = "\n".join(
+            "      "
+            f"<span class=\"field\"><strong>{escape(_readiness_field_label(field_key))}</strong>"
+            f"{escape(_readiness_field_value(value))}</span>"
+            for field_key, value in _readiness_payload_display_items(payload)
+        )
+        sections.append(
+            "  <section>\n"
+            f"    <h2>{escape(_readiness_title(summary_key))}</h2>\n"
+            "    <div class=\"task\">\n"
+            f"{field_rows}\n"
+            "    </div>\n"
+            "  </section>"
+        )
+    return "\n".join(sections)
+
+
+def _render_sandbox_patch_readiness_compact_section(summary: Mapping[str, Any]) -> str:
+    required_before_unlock = summary.get("required_before_unlock", ())
+    if not isinstance(required_before_unlock, list):
+        required_before_unlock = []
+    required_text = ", ".join(str(item) for item in required_before_unlock)
+    return f"""  <section>
+    <h2>Operator Sandbox Patch Readiness Summary</h2>
+    <div class="task">
+      <span class="field"><strong>Message</strong>{escape(str(summary.get("operator_message") or ""))}</span>
+      <span class="field"><strong>Blocked stage</strong>{escape(str(summary.get("blocked_stage_summary_key") or ""))}</span>
+      <span class="field"><strong>Status</strong>{escape(str(summary.get("blocked_stage_status") or ""))}</span>
+      <span class="field"><strong>Target</strong>{escape(str(summary.get("blocked_stage_target") or ""))}</span>
+      <span class="field"><strong>Next evidence</strong>{escape(str(summary.get("next_evidence_id") or ""))}</span>
+      <span class="field"><strong>Missing prerequisites</strong>{int(summary.get("missing_prerequisite_count") or 0)}</span>
+      <span class="field"><strong>Required before unlock</strong>{escape(required_text)}</span>
+      <span class="field"><strong>External effects allowed</strong>{escape(str(summary.get("external_effects_allowed") is True).lower())}</span>
+    </div>
+  </section>"""
 
 
 def operator_control_tower_status_receipt(snapshot: OperatorControlTowerSnapshot) -> dict[str, Any]:
@@ -2385,358 +2470,8 @@ def operator_control_tower_status_receipt(snapshot: OperatorControlTowerSnapshot
                 "Sandbox patch bundle preview ready; bundle generation and validation not executed"
             ),
         },
-        "operator_sandbox_patch_validation_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_validation_readiness.foundation",
-            "validation_status": "blocked_missing_bundle",
-            "bundle_path": "developer_workflow_sandbox_receipt_bundle.collected.json",
-            "validator_command": (
-                "python scripts/validate_developer_workflow_sandbox_receipt_bundle.py "
-                "--bundle developer_workflow_sandbox_receipt_bundle.collected.json"
-            ),
-            "required_before_validation": [
-                "sandbox_patch_receipt_bundle_generated",
-                "sandbox_patch_receipt_attached",
-            ],
-            "missing_prerequisite_count": 2,
-            "validation_performed": False,
-            "terminal_review_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Sandbox patch validation blocked until the collected bundle exists and receipt is attached"
-            ),
-        },
-        "operator_sandbox_patch_terminal_review_summary": {
-            "summary_id": "operator_sandbox_patch_terminal_review.foundation",
-            "review_status": "blocked_until_validation",
-            "review_target": "sandbox_patch_receipt",
-            "required_before_review": [
-                "sandbox_patch_receipt_bundle_generated",
-                "sandbox_patch_receipt_attached",
-                "sandbox_patch_bundle_validated",
-            ],
-            "missing_prerequisite_count": 3,
-            "review_command": (
-                "python scripts/validate_developer_workflow_sandbox_receipt_bundle.py "
-                "--bundle developer_workflow_sandbox_receipt_bundle.collected.json"
-            ),
-            "review_performed": False,
-            "approval_request_allowed": False,
-            "pr_creation_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Sandbox patch terminal review blocked until bundle generation, attachment, and validation complete"
-            ),
-        },
-        "operator_sandbox_patch_approval_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_approval_readiness.foundation",
-            "approval_status": "blocked_until_terminal_review",
-            "approval_target": "sandbox_patch_receipt",
-            "required_before_approval": [
-                "sandbox_patch_receipt_bundle_generated",
-                "sandbox_patch_receipt_attached",
-                "sandbox_patch_bundle_validated",
-                "sandbox_patch_terminal_review_complete",
-            ],
-            "missing_prerequisite_count": 4,
-            "approval_request_allowed": False,
-            "approval_request_performed": False,
-            "pr_preparation_allowed": False,
-            "pr_creation_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Sandbox patch approval blocked until terminal review closes with validated evidence"
-            ),
-        },
-        "operator_sandbox_patch_pr_preparation_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_pr_preparation_readiness.foundation",
-            "preparation_status": "blocked_until_approval",
-            "preparation_target": "local_pr_candidate_packet",
-            "required_before_preparation": [
-                "sandbox_patch_receipt_bundle_generated",
-                "sandbox_patch_receipt_attached",
-                "sandbox_patch_bundle_validated",
-                "sandbox_patch_terminal_review_complete",
-                "operator_approval_recorded",
-            ],
-            "missing_prerequisite_count": 5,
-            "preparation_performed": False,
-            "pr_preparation_allowed": False,
-            "branch_push_allowed": False,
-            "pr_creation_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "PR preparation blocked until sandbox patch approval is recorded with validated evidence"
-            ),
-        },
-        "operator_sandbox_patch_pr_creation_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_pr_creation_readiness.foundation",
-            "creation_status": "blocked_until_pr_preparation",
-            "creation_target": "github_pull_request",
-            "required_before_creation": [
-                "local_pr_candidate_packet_prepared",
-                "local_pr_candidate_packet_validated",
-                "external_pr_execution_approval_recorded",
-                "branch_push_authority_bound",
-                "github_pr_admission_passed",
-            ],
-            "missing_prerequisite_count": 5,
-            "creation_performed": False,
-            "branch_push_allowed": False,
-            "pr_creation_allowed": False,
-            "connector_call_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "PR creation blocked until local PR preparation and external PR approval evidence are complete"
-            ),
-        },
-        "operator_sandbox_patch_pr_ci_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_pr_ci_readiness.foundation",
-            "ci_status": "blocked_until_pr_creation",
-            "ci_target": "github_pr_ci_checks",
-            "required_before_ci": [
-                "github_pull_request_created",
-                "pr_metadata_packet_recorded",
-                "ci_gate_before_ready_for_review_witness_bound",
-                "github_check_read_authority_bound",
-                "pr_effect_reconciliation_pending",
-            ],
-            "missing_prerequisite_count": 5,
-            "ci_observation_performed": False,
-            "github_poll_allowed": False,
-            "check_update_allowed": False,
-            "ready_for_review_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "PR CI readiness blocked until PR creation evidence and CI observation authority are complete"
-            ),
-        },
-        "operator_sandbox_patch_merge_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_merge_readiness.foundation",
-            "merge_status": "blocked_until_ci_pass",
-            "merge_target": "protected_branch_merge",
-            "required_before_merge": [
-                "github_pull_request_created",
-                "ci_checks_passed",
-                "review_approval_recorded",
-                "rollback_plan_verified",
-                "merge_approval_recorded",
-            ],
-            "missing_prerequisite_count": 5,
-            "merge_performed": False,
-            "merge_allowed": False,
-            "branch_write_allowed": False,
-            "github_call_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Merge readiness blocked until CI pass, review approval, rollback, and merge approval evidence are complete"
-            ),
-        },
-        "operator_sandbox_patch_release_handoff_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_release_handoff_readiness.foundation",
-            "handoff_status": "blocked_until_terminal_closure",
-            "handoff_target": "release_handoff_packet",
-            "required_before_handoff": [
-                "merge_execution_receipt_recorded",
-                "terminal_closure_certificate_minted",
-                "effect_reconciliation_witness_bound",
-                "rollback_retention_verified",
-                "release_notes_prepared",
-            ],
-            "missing_prerequisite_count": 5,
-            "handoff_performed": False,
-            "release_publication_allowed": False,
-            "deployment_allowed": False,
-            "public_claim_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Release handoff blocked until terminal closure, reconciliation, rollback, and release-note evidence are complete"
-            ),
-        },
-        "operator_sandbox_patch_deployment_publication_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_deployment_publication_readiness.foundation",
-            "publication_status": "blocked_until_release_handoff",
-            "publication_target": "deployment_publication_closure_plan",
-            "required_before_publication": [
-                "release_handoff_packet_prepared",
-                "deployment_publication_closure_plan_verified",
-                "production_evidence_witness_bound",
-                "dns_target_binding_verified",
-                "operator_deployment_approval_recorded",
-            ],
-            "missing_prerequisite_count": 5,
-            "publication_performed": False,
-            "deployment_allowed": False,
-            "dns_change_allowed": False,
-            "production_claim_allowed": False,
-            "public_endpoint_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Deployment publication blocked until release handoff, production evidence, DNS binding, and deployment approval evidence are complete"
-            ),
-        },
-        "operator_sandbox_patch_production_monitoring_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_production_monitoring_readiness.foundation",
-            "monitoring_status": "blocked_until_publication",
-            "monitoring_target": "production_monitoring_witness",
-            "required_before_monitoring": [
-                "deployment_publication_witness_recorded",
-                "public_health_witness_bound",
-                "runtime_conformance_certificate_available",
-                "telemetry_monitoring_plan_verified",
-                "incident_rollback_recovery_plan_verified",
-            ],
-            "missing_prerequisite_count": 5,
-            "monitoring_activation_performed": False,
-            "monitor_activation_allowed": False,
-            "alert_routing_allowed": False,
-            "production_claim_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Production monitoring blocked until deployment publication, health, runtime conformance, telemetry, and incident recovery evidence are complete"
-            ),
-        },
-        "operator_sandbox_patch_incident_response_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_incident_response_readiness.foundation",
-            "incident_status": "blocked_until_monitoring",
-            "incident_target": "incident_response_runbook",
-            "required_before_incident_response": [
-                "production_monitoring_witness_recorded",
-                "incident_response_runbook_verified",
-                "rollback_execution_receipt_template_bound",
-                "containment_evidence_contract_bound",
-                "operator_incident_authority_recorded",
-            ],
-            "missing_prerequisite_count": 5,
-            "incident_response_performed": False,
-            "containment_allowed": False,
-            "rollback_execution_allowed": False,
-            "paging_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Incident response blocked until monitoring, runbook, rollback, containment, and operator authority evidence are complete"
-            ),
-        },
-        "operator_sandbox_patch_recovery_closure_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_recovery_closure_readiness.foundation",
-            "recovery_status": "blocked_until_incident_response",
-            "recovery_target": "recovery_closure_packet",
-            "required_before_recovery_closure": [
-                "incident_containment_evidence_recorded",
-                "rollback_or_replay_receipt_recorded",
-                "post_incident_verification_passed",
-                "operator_recovery_closure_approval_recorded",
-                "terminal_recovery_closure_packet_prepared",
-            ],
-            "missing_prerequisite_count": 5,
-            "recovery_closure_performed": False,
-            "closure_certification_allowed": False,
-            "replay_promotion_allowed": False,
-            "post_incident_publication_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Recovery closure blocked until containment, rollback or replay, verification, approval, and terminal recovery packet evidence are complete"
-            ),
-        },
-        "operator_sandbox_patch_trust_ledger_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_trust_ledger_readiness.foundation",
-            "ledger_status": "blocked_until_recovery_closure",
-            "ledger_target": "trust_ledger_anchor_packet",
-            "required_before_trust_ledger_anchor": [
-                "terminal_recovery_closure_packet_prepared",
-                "trust_ledger_bundle_export_prepared",
-                "evidence_artifact_hashes_recorded",
-                "operator_trust_ledger_anchor_approval_recorded",
-                "remote_submission_preflight_passed",
-            ],
-            "missing_prerequisite_count": 5,
-            "ledger_anchor_performed": False,
-            "remote_submission_allowed": False,
-            "verification_publication_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Trust ledger anchoring blocked until recovery closure, export, hash, approval, and remote submission preflight evidence are complete"
-            ),
-        },
-        "operator_sandbox_patch_terminal_audit_export_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_terminal_audit_export_readiness.foundation",
-            "audit_export_status": "blocked_until_trust_ledger_anchor",
-            "audit_export_target": "terminal_audit_export_package",
-            "required_before_terminal_audit_export": [
-                "trust_ledger_anchor_receipt_recorded",
-                "trust_ledger_anchor_verification_passed",
-                "audit_bundle_integrity_report_recorded",
-                "operator_audit_export_approval_recorded",
-                "export_retention_boundary_verified",
-            ],
-            "missing_prerequisite_count": 5,
-            "audit_export_performed": False,
-            "archive_submission_allowed": False,
-            "external_publication_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Terminal audit export blocked until trust ledger anchor, verification, integrity, approval, and retention evidence are complete"
-            ),
-        },
-        "operator_sandbox_patch_foundation_closure_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_foundation_closure_readiness.foundation",
-            "foundation_closure_status": "blocked_until_terminal_audit_export",
-            "foundation_closure_target": "foundation_closure_certificate",
-            "required_before_foundation_closure": [
-                "terminal_audit_export_package_prepared",
-                "operator_final_closure_approval_recorded",
-                "all_no_effect_denials_preserved",
-                "open_gap_register_reviewed",
-                "next_iteration_handoff_recorded",
-            ],
-            "missing_prerequisite_count": 5,
-            "foundation_closure_certified": False,
-            "promotion_allowed": False,
-            "handoff_publication_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Foundation closure blocked until terminal audit export, final approval, denial preservation, gap review, and next-iteration handoff evidence are complete"
-            ),
-        },
-        "operator_sandbox_patch_iteration_resume_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_iteration_resume_readiness.foundation",
-            "iteration_resume_status": "blocked_until_foundation_closure",
-            "iteration_resume_target": "next_iteration_intake_packet",
-            "required_before_iteration_resume": [
-                "foundation_closure_certificate_recorded",
-                "next_iteration_scope_declared",
-                "next_iteration_risk_boundary_reviewed",
-                "next_iteration_evidence_queue_seeded",
-                "operator_resume_intent_recorded",
-            ],
-            "missing_prerequisite_count": 5,
-            "next_iteration_started": False,
-            "automatic_resume_allowed": False,
-            "authority_carryover_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Iteration resume blocked until foundation closure, next scope, risk boundary, evidence queue, and operator resume intent evidence are complete"
-            ),
-        },
-        "operator_sandbox_patch_next_scope_admission_readiness_summary": {
-            "summary_id": "operator_sandbox_patch_next_scope_admission_readiness.foundation",
-            "next_scope_admission_status": "blocked_until_iteration_resume",
-            "next_scope_target": "next_scope_admission_packet",
-            "required_before_next_scope_admission": [
-                "next_iteration_intake_packet_prepared",
-                "next_scope_boundaries_declared",
-                "next_scope_acceptance_criteria_recorded",
-                "next_scope_risk_review_recorded",
-                "next_scope_rollback_expectations_recorded",
-            ],
-            "missing_prerequisite_count": 5,
-            "scope_admitted": False,
-            "execution_allowed": False,
-            "authority_promotion_allowed": False,
-            "external_effects_allowed": False,
-            "operator_message": (
-                "Next scope admission blocked until intake, boundaries, acceptance criteria, risk review, and rollback expectation evidence are complete"
-            ),
-        },
+        "operator_sandbox_patch_readiness_compact_summary": sandbox_patch_readiness_compact_summary(),
+        **sandbox_patch_readiness_receipt_entries(),
         "operator_handoff_summary": {
             "summary_id": "operator_handoff.foundation",
             "handoff_status": (
@@ -3696,57 +3431,10 @@ def operator_control_tower_status_receipt(snapshot: OperatorControlTowerSnapshot
             "operator_sandbox_patch_bundle_preview_summary": (
                 "docs/21_workflow_runtime.md sandbox_patch_receipt bundle validation"
             ),
-            "operator_sandbox_patch_validation_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt validation readiness"
+            "operator_sandbox_patch_readiness_compact_summary": (
+                "gateway.operator_sandbox_patch_readiness.SANDBOX_PATCH_READINESS_REGISTRY compact first-blocker projection"
             ),
-            "operator_sandbox_patch_terminal_review_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt terminal review readiness"
-            ),
-            "operator_sandbox_patch_approval_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt approval readiness"
-            ),
-            "operator_sandbox_patch_pr_preparation_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt PR preparation readiness"
-            ),
-            "operator_sandbox_patch_pr_creation_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt PR creation readiness"
-            ),
-            "operator_sandbox_patch_pr_ci_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt PR CI readiness"
-            ),
-            "operator_sandbox_patch_merge_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt merge readiness"
-            ),
-            "operator_sandbox_patch_release_handoff_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt release handoff readiness"
-            ),
-            "operator_sandbox_patch_deployment_publication_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt deployment publication readiness"
-            ),
-            "operator_sandbox_patch_production_monitoring_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt production monitoring readiness"
-            ),
-            "operator_sandbox_patch_incident_response_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt incident response readiness"
-            ),
-            "operator_sandbox_patch_recovery_closure_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt recovery closure readiness"
-            ),
-            "operator_sandbox_patch_trust_ledger_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt trust ledger readiness"
-            ),
-            "operator_sandbox_patch_terminal_audit_export_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt terminal audit export readiness"
-            ),
-            "operator_sandbox_patch_foundation_closure_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt foundation closure readiness"
-            ),
-            "operator_sandbox_patch_iteration_resume_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt iteration resume readiness"
-            ),
-            "operator_sandbox_patch_next_scope_admission_readiness_summary": (
-                "docs/21_workflow_runtime.md sandbox_patch_receipt next scope admission readiness"
-            ),
+            **sandbox_patch_readiness_source_refs(),
             "operator_handoff_summary": (
                 "workflow_monitor.metadata.developer_workflow_milestone_summary + "
                 "workflow_monitor.metadata.operator_decision_summary"
@@ -4249,6 +3937,7 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     control_system_evidence_text = ", ".join(str(item) for item in control_system_evidence if str(item).strip())
     if not control_system_evidence_text:
         control_system_evidence_text = "none"
+    friction_mode_recommended = str(friction_mode_summary.get("foundation_recommended_mode") or "fast")
     control_system_message = str(
         control_system_summary.get("operator_message")
         or f"Control system in {friction_mode_recommended} mode; next unlock {unlock_readiness_next_unlock}"
@@ -4948,223 +4637,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     sandbox_patch_bundle_message = (
         "Sandbox patch bundle preview ready; bundle generation and validation not executed"
     )
-    sandbox_patch_validation_status = "blocked_missing_bundle"
-    sandbox_patch_validation_required = (
-        "sandbox_patch_receipt_bundle_generated, sandbox_patch_receipt_attached"
+    sandbox_patch_readiness_compact = sandbox_patch_readiness_compact_summary()
+    sandbox_patch_readiness_compact_section = _render_sandbox_patch_readiness_compact_section(
+        sandbox_patch_readiness_compact
     )
-    sandbox_patch_validation_missing = 2
-    sandbox_patch_validation_terminal_review = False
-    sandbox_patch_validation_message = (
-        "Sandbox patch validation blocked until the collected bundle exists and receipt is attached"
-    )
-    sandbox_patch_terminal_review_status = "blocked_until_validation"
-    sandbox_patch_terminal_review_required = (
-        "sandbox_patch_receipt_bundle_generated, sandbox_patch_receipt_attached, "
-        "sandbox_patch_bundle_validated"
-    )
-    sandbox_patch_terminal_review_missing = 3
-    sandbox_patch_terminal_review_performed = False
-    sandbox_patch_terminal_review_approval = False
-    sandbox_patch_terminal_review_pr = False
-    sandbox_patch_terminal_review_message = (
-        "Sandbox patch terminal review blocked until bundle generation, attachment, and validation complete"
-    )
-    sandbox_patch_approval_status = "blocked_until_terminal_review"
-    sandbox_patch_approval_required = (
-        "sandbox_patch_receipt_bundle_generated, sandbox_patch_receipt_attached, "
-        "sandbox_patch_bundle_validated, sandbox_patch_terminal_review_complete"
-    )
-    sandbox_patch_approval_missing = 4
-    sandbox_patch_approval_request_performed = False
-    sandbox_patch_pr_preparation = False
-    sandbox_patch_approval_message = (
-        "Sandbox patch approval blocked until terminal review closes with validated evidence"
-    )
-    sandbox_patch_pr_preparation_status = "blocked_until_approval"
-    sandbox_patch_pr_preparation_required = (
-        "sandbox_patch_receipt_bundle_generated, sandbox_patch_receipt_attached, "
-        "sandbox_patch_bundle_validated, sandbox_patch_terminal_review_complete, "
-        "operator_approval_recorded"
-    )
-    sandbox_patch_pr_preparation_missing = 5
-    sandbox_patch_pr_preparation_performed = False
-    sandbox_patch_branch_push = False
-    sandbox_patch_pr_preparation_message = (
-        "PR preparation blocked until sandbox patch approval is recorded with validated evidence"
-    )
-    sandbox_patch_pr_creation_status = "blocked_until_pr_preparation"
-    sandbox_patch_pr_creation_required = (
-        "local_pr_candidate_packet_prepared, local_pr_candidate_packet_validated, "
-        "external_pr_execution_approval_recorded, branch_push_authority_bound, "
-        "github_pr_admission_passed"
-    )
-    sandbox_patch_pr_creation_missing = 5
-    sandbox_patch_pr_creation_performed = False
-    sandbox_patch_connector_call = False
-    sandbox_patch_pr_creation_message = (
-        "PR creation blocked until local PR preparation and external PR approval evidence are complete"
-    )
-    sandbox_patch_pr_ci_status = "blocked_until_pr_creation"
-    sandbox_patch_pr_ci_required = (
-        "github_pull_request_created, pr_metadata_packet_recorded, "
-        "ci_gate_before_ready_for_review_witness_bound, "
-        "github_check_read_authority_bound, pr_effect_reconciliation_pending"
-    )
-    sandbox_patch_pr_ci_missing = 5
-    sandbox_patch_pr_ci_observation = False
-    sandbox_patch_github_poll = False
-    sandbox_patch_check_update = False
-    sandbox_patch_ready_for_review = False
-    sandbox_patch_pr_ci_message = (
-        "PR CI readiness blocked until PR creation evidence and CI observation authority are complete"
-    )
-    sandbox_patch_merge_status = "blocked_until_ci_pass"
-    sandbox_patch_merge_required = (
-        "github_pull_request_created, ci_checks_passed, review_approval_recorded, "
-        "rollback_plan_verified, merge_approval_recorded"
-    )
-    sandbox_patch_merge_missing = 5
-    sandbox_patch_merge_performed = False
-    sandbox_patch_merge_allowed = False
-    sandbox_patch_branch_write = False
-    sandbox_patch_github_call = False
-    sandbox_patch_merge_message = (
-        "Merge readiness blocked until CI pass, review approval, rollback, and merge approval evidence are complete"
-    )
-    sandbox_patch_release_handoff_status = "blocked_until_terminal_closure"
-    sandbox_patch_release_handoff_required = (
-        "merge_execution_receipt_recorded, terminal_closure_certificate_minted, "
-        "effect_reconciliation_witness_bound, rollback_retention_verified, "
-        "release_notes_prepared"
-    )
-    sandbox_patch_release_handoff_missing = 5
-    sandbox_patch_release_handoff_performed = False
-    sandbox_patch_release_publication = False
-    sandbox_patch_deployment = False
-    sandbox_patch_public_claim = False
-    sandbox_patch_release_handoff_message = (
-        "Release handoff blocked until terminal closure, reconciliation, rollback, and release-note evidence are complete"
-    )
-    sandbox_patch_deployment_publication_status = "blocked_until_release_handoff"
-    sandbox_patch_deployment_publication_required = (
-        "release_handoff_packet_prepared, deployment_publication_closure_plan_verified, "
-        "production_evidence_witness_bound, dns_target_binding_verified, "
-        "operator_deployment_approval_recorded"
-    )
-    sandbox_patch_deployment_publication_missing = 5
-    sandbox_patch_deployment_publication_performed = False
-    sandbox_patch_dns_change = False
-    sandbox_patch_production_claim = False
-    sandbox_patch_public_endpoint = False
-    sandbox_patch_deployment_publication_message = (
-        "Deployment publication blocked until release handoff, production evidence, DNS binding, and deployment approval evidence are complete"
-    )
-    sandbox_patch_production_monitoring_status = "blocked_until_publication"
-    sandbox_patch_production_monitoring_required = (
-        "deployment_publication_witness_recorded, public_health_witness_bound, "
-        "runtime_conformance_certificate_available, telemetry_monitoring_plan_verified, "
-        "incident_rollback_recovery_plan_verified"
-    )
-    sandbox_patch_production_monitoring_missing = 5
-    sandbox_patch_monitoring_activation = False
-    sandbox_patch_monitor_activation = False
-    sandbox_patch_alert_routing = False
-    sandbox_patch_production_monitoring_message = (
-        "Production monitoring blocked until deployment publication, health, runtime conformance, telemetry, and incident recovery evidence are complete"
-    )
-    sandbox_patch_incident_response_status = "blocked_until_monitoring"
-    sandbox_patch_incident_response_required = (
-        "production_monitoring_witness_recorded, incident_response_runbook_verified, "
-        "rollback_execution_receipt_template_bound, containment_evidence_contract_bound, "
-        "operator_incident_authority_recorded"
-    )
-    sandbox_patch_incident_response_missing = 5
-    sandbox_patch_incident_response_performed = False
-    sandbox_patch_containment = False
-    sandbox_patch_rollback_execution = False
-    sandbox_patch_paging = False
-    sandbox_patch_incident_response_message = (
-        "Incident response blocked until monitoring, runbook, rollback, containment, and operator authority evidence are complete"
-    )
-    sandbox_patch_recovery_closure_status = "blocked_until_incident_response"
-    sandbox_patch_recovery_closure_required = (
-        "incident_containment_evidence_recorded, rollback_or_replay_receipt_recorded, "
-        "post_incident_verification_passed, operator_recovery_closure_approval_recorded, "
-        "terminal_recovery_closure_packet_prepared"
-    )
-    sandbox_patch_recovery_closure_missing = 5
-    sandbox_patch_recovery_closure_performed = False
-    sandbox_patch_closure_certification = False
-    sandbox_patch_replay_promotion = False
-    sandbox_patch_post_incident_publication = False
-    sandbox_patch_recovery_closure_message = (
-        "Recovery closure blocked until containment, rollback or replay, verification, approval, and terminal recovery packet evidence are complete"
-    )
-    sandbox_patch_trust_ledger_status = "blocked_until_recovery_closure"
-    sandbox_patch_trust_ledger_required = (
-        "terminal_recovery_closure_packet_prepared, trust_ledger_bundle_export_prepared, "
-        "evidence_artifact_hashes_recorded, operator_trust_ledger_anchor_approval_recorded, "
-        "remote_submission_preflight_passed"
-    )
-    sandbox_patch_trust_ledger_missing = 5
-    sandbox_patch_trust_ledger_anchor_performed = False
-    sandbox_patch_remote_submission = False
-    sandbox_patch_verification_publication = False
-    sandbox_patch_trust_ledger_message = (
-        "Trust ledger anchoring blocked until recovery closure, export, hash, approval, and remote submission preflight evidence are complete"
-    )
-    sandbox_patch_terminal_audit_export_status = "blocked_until_trust_ledger_anchor"
-    sandbox_patch_terminal_audit_export_required = (
-        "trust_ledger_anchor_receipt_recorded, trust_ledger_anchor_verification_passed, "
-        "audit_bundle_integrity_report_recorded, operator_audit_export_approval_recorded, "
-        "export_retention_boundary_verified"
-    )
-    sandbox_patch_terminal_audit_export_missing = 5
-    sandbox_patch_terminal_audit_export_performed = False
-    sandbox_patch_archive_submission = False
-    sandbox_patch_external_publication = False
-    sandbox_patch_terminal_audit_export_message = (
-        "Terminal audit export blocked until trust ledger anchor, verification, integrity, approval, and retention evidence are complete"
-    )
-    sandbox_patch_foundation_closure_status = "blocked_until_terminal_audit_export"
-    sandbox_patch_foundation_closure_required = (
-        "terminal_audit_export_package_prepared, operator_final_closure_approval_recorded, "
-        "all_no_effect_denials_preserved, open_gap_register_reviewed, "
-        "next_iteration_handoff_recorded"
-    )
-    sandbox_patch_foundation_closure_missing = 5
-    sandbox_patch_foundation_closure_certified = False
-    sandbox_patch_promotion_allowed = False
-    sandbox_patch_handoff_publication = False
-    sandbox_patch_foundation_closure_message = (
-        "Foundation closure blocked until terminal audit export, final approval, denial preservation, gap review, and next-iteration handoff evidence are complete"
-    )
-    sandbox_patch_iteration_resume_status = "blocked_until_foundation_closure"
-    sandbox_patch_iteration_resume_required = (
-        "foundation_closure_certificate_recorded, next_iteration_scope_declared, "
-        "next_iteration_risk_boundary_reviewed, next_iteration_evidence_queue_seeded, "
-        "operator_resume_intent_recorded"
-    )
-    sandbox_patch_iteration_resume_missing = 5
-    sandbox_patch_next_iteration_started = False
-    sandbox_patch_automatic_resume = False
-    sandbox_patch_authority_carryover = False
-    sandbox_patch_iteration_resume_message = (
-        "Iteration resume blocked until foundation closure, next scope, risk boundary, evidence queue, and operator resume intent evidence are complete"
-    )
-    sandbox_patch_next_scope_admission_status = "blocked_until_iteration_resume"
-    sandbox_patch_next_scope_admission_required = (
-        "next_iteration_intake_packet_prepared, next_scope_boundaries_declared, "
-        "next_scope_acceptance_criteria_recorded, next_scope_risk_review_recorded, "
-        "next_scope_rollback_expectations_recorded"
-    )
-    sandbox_patch_next_scope_admission_missing = 5
-    sandbox_patch_scope_admitted = False
-    sandbox_patch_scope_execution_allowed = False
-    sandbox_patch_scope_authority_promotion = False
-    sandbox_patch_next_scope_admission_message = (
-        "Next scope admission blocked until intake, boundaries, acceptance criteria, risk review, and rollback expectation evidence are complete"
-    )
+    sandbox_patch_readiness_sections = _render_sandbox_patch_readiness_sections()
     operator_handoff_status = (
         "ready_for_local_resume" if friction_reduction_local_allowed else "blocked_pending_approval"
     )
@@ -5314,7 +4791,6 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
         or f"fast mode recommended for local lab; fast allows {fast_allowed} capabilities; balanced holds {balanced_approval} approvals"
     )
     friction_mode_default = str(friction_mode_summary.get("default_mode") or "balanced")
-    friction_mode_recommended = str(friction_mode_summary.get("foundation_recommended_mode") or "fast")
     friction_strict_allowed = int(friction_mode_summary.get("strict_allowed_count") or 0)
     friction_strict_approval = int(friction_mode_summary.get("strict_approval_required_count") or strict_approval)
     friction_strict_blocked = int(friction_mode_summary.get("strict_blocked_count") or 0)
@@ -5670,256 +5146,8 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
       <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
     </div>
   </section>
-  <section>
-    <h2>Operator Sandbox Patch Validation Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_validation_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_validation_status)}</span>
-      <span class="field"><strong>Bundle path</strong>{escape(sandbox_patch_bundle_path)}</span>
-      <span class="field"><strong>Validator command</strong>{escape(sandbox_patch_bundle_validation)}</span>
-      <span class="field"><strong>Required before validation</strong>{escape(sandbox_patch_validation_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_validation_missing}</span>
-      <span class="field"><strong>Validation performed</strong>{escape(str(sandbox_patch_bundle_validation_performed).lower())}</span>
-      <span class="field"><strong>Terminal review allowed</strong>{escape(str(sandbox_patch_validation_terminal_review).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Terminal Review</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_terminal_review_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_terminal_review_status)}</span>
-      <span class="field"><strong>Review target</strong>sandbox_patch_receipt</span>
-      <span class="field"><strong>Required before review</strong>{escape(sandbox_patch_terminal_review_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_terminal_review_missing}</span>
-      <span class="field"><strong>Review command</strong>{escape(sandbox_patch_bundle_validation)}</span>
-      <span class="field"><strong>Review performed</strong>{escape(str(sandbox_patch_terminal_review_performed).lower())}</span>
-      <span class="field"><strong>Approval request allowed</strong>{escape(str(sandbox_patch_terminal_review_approval).lower())}</span>
-      <span class="field"><strong>PR creation allowed</strong>{escape(str(sandbox_patch_terminal_review_pr).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Approval Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_approval_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_approval_status)}</span>
-      <span class="field"><strong>Approval target</strong>sandbox_patch_receipt</span>
-      <span class="field"><strong>Required before approval</strong>{escape(sandbox_patch_approval_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_approval_missing}</span>
-      <span class="field"><strong>Approval request allowed</strong>{escape(str(sandbox_patch_terminal_review_approval).lower())}</span>
-      <span class="field"><strong>Approval request performed</strong>{escape(str(sandbox_patch_approval_request_performed).lower())}</span>
-      <span class="field"><strong>PR preparation allowed</strong>{escape(str(sandbox_patch_pr_preparation).lower())}</span>
-      <span class="field"><strong>PR creation allowed</strong>{escape(str(sandbox_patch_terminal_review_pr).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch PR Preparation Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_pr_preparation_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_pr_preparation_status)}</span>
-      <span class="field"><strong>Preparation target</strong>local_pr_candidate_packet</span>
-      <span class="field"><strong>Required before preparation</strong>{escape(sandbox_patch_pr_preparation_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_pr_preparation_missing}</span>
-      <span class="field"><strong>Preparation performed</strong>{escape(str(sandbox_patch_pr_preparation_performed).lower())}</span>
-      <span class="field"><strong>PR preparation allowed</strong>{escape(str(sandbox_patch_pr_preparation).lower())}</span>
-      <span class="field"><strong>Branch push allowed</strong>{escape(str(sandbox_patch_branch_push).lower())}</span>
-      <span class="field"><strong>PR creation allowed</strong>{escape(str(sandbox_patch_terminal_review_pr).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch PR Creation Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_pr_creation_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_pr_creation_status)}</span>
-      <span class="field"><strong>Creation target</strong>github_pull_request</span>
-      <span class="field"><strong>Required before creation</strong>{escape(sandbox_patch_pr_creation_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_pr_creation_missing}</span>
-      <span class="field"><strong>Creation performed</strong>{escape(str(sandbox_patch_pr_creation_performed).lower())}</span>
-      <span class="field"><strong>Branch push allowed</strong>{escape(str(sandbox_patch_branch_push).lower())}</span>
-      <span class="field"><strong>PR creation allowed</strong>{escape(str(sandbox_patch_terminal_review_pr).lower())}</span>
-      <span class="field"><strong>Connector call allowed</strong>{escape(str(sandbox_patch_connector_call).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch PR CI Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_pr_ci_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_pr_ci_status)}</span>
-      <span class="field"><strong>CI target</strong>github_pr_ci_checks</span>
-      <span class="field"><strong>Required before CI</strong>{escape(sandbox_patch_pr_ci_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_pr_ci_missing}</span>
-      <span class="field"><strong>CI observation performed</strong>{escape(str(sandbox_patch_pr_ci_observation).lower())}</span>
-      <span class="field"><strong>GitHub poll allowed</strong>{escape(str(sandbox_patch_github_poll).lower())}</span>
-      <span class="field"><strong>Check update allowed</strong>{escape(str(sandbox_patch_check_update).lower())}</span>
-      <span class="field"><strong>Ready for review allowed</strong>{escape(str(sandbox_patch_ready_for_review).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Merge Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_merge_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_merge_status)}</span>
-      <span class="field"><strong>Merge target</strong>protected_branch_merge</span>
-      <span class="field"><strong>Required before merge</strong>{escape(sandbox_patch_merge_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_merge_missing}</span>
-      <span class="field"><strong>Merge performed</strong>{escape(str(sandbox_patch_merge_performed).lower())}</span>
-      <span class="field"><strong>Merge allowed</strong>{escape(str(sandbox_patch_merge_allowed).lower())}</span>
-      <span class="field"><strong>Branch write allowed</strong>{escape(str(sandbox_patch_branch_write).lower())}</span>
-      <span class="field"><strong>GitHub call allowed</strong>{escape(str(sandbox_patch_github_call).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Release Handoff Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_release_handoff_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_release_handoff_status)}</span>
-      <span class="field"><strong>Handoff target</strong>release_handoff_packet</span>
-      <span class="field"><strong>Required before handoff</strong>{escape(sandbox_patch_release_handoff_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_release_handoff_missing}</span>
-      <span class="field"><strong>Handoff performed</strong>{escape(str(sandbox_patch_release_handoff_performed).lower())}</span>
-      <span class="field"><strong>Release publication allowed</strong>{escape(str(sandbox_patch_release_publication).lower())}</span>
-      <span class="field"><strong>Deployment allowed</strong>{escape(str(sandbox_patch_deployment).lower())}</span>
-      <span class="field"><strong>Public claim allowed</strong>{escape(str(sandbox_patch_public_claim).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Deployment Publication Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_deployment_publication_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_deployment_publication_status)}</span>
-      <span class="field"><strong>Publication target</strong>deployment_publication_closure_plan</span>
-      <span class="field"><strong>Required before publication</strong>{escape(sandbox_patch_deployment_publication_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_deployment_publication_missing}</span>
-      <span class="field"><strong>Publication performed</strong>{escape(str(sandbox_patch_deployment_publication_performed).lower())}</span>
-      <span class="field"><strong>Deployment allowed</strong>{escape(str(sandbox_patch_deployment).lower())}</span>
-      <span class="field"><strong>DNS change allowed</strong>{escape(str(sandbox_patch_dns_change).lower())}</span>
-      <span class="field"><strong>Production claim allowed</strong>{escape(str(sandbox_patch_production_claim).lower())}</span>
-      <span class="field"><strong>Public endpoint allowed</strong>{escape(str(sandbox_patch_public_endpoint).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Production Monitoring Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_production_monitoring_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_production_monitoring_status)}</span>
-      <span class="field"><strong>Monitoring target</strong>production_monitoring_witness</span>
-      <span class="field"><strong>Required before monitoring</strong>{escape(sandbox_patch_production_monitoring_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_production_monitoring_missing}</span>
-      <span class="field"><strong>Monitoring activation performed</strong>{escape(str(sandbox_patch_monitoring_activation).lower())}</span>
-      <span class="field"><strong>Monitor activation allowed</strong>{escape(str(sandbox_patch_monitor_activation).lower())}</span>
-      <span class="field"><strong>Alert routing allowed</strong>{escape(str(sandbox_patch_alert_routing).lower())}</span>
-      <span class="field"><strong>Production claim allowed</strong>{escape(str(sandbox_patch_production_claim).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Incident Response Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_incident_response_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_incident_response_status)}</span>
-      <span class="field"><strong>Incident target</strong>incident_response_runbook</span>
-      <span class="field"><strong>Required before incident response</strong>{escape(sandbox_patch_incident_response_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_incident_response_missing}</span>
-      <span class="field"><strong>Incident response performed</strong>{escape(str(sandbox_patch_incident_response_performed).lower())}</span>
-      <span class="field"><strong>Containment allowed</strong>{escape(str(sandbox_patch_containment).lower())}</span>
-      <span class="field"><strong>Rollback execution allowed</strong>{escape(str(sandbox_patch_rollback_execution).lower())}</span>
-      <span class="field"><strong>Paging allowed</strong>{escape(str(sandbox_patch_paging).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Recovery Closure Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_recovery_closure_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_recovery_closure_status)}</span>
-      <span class="field"><strong>Recovery target</strong>recovery_closure_packet</span>
-      <span class="field"><strong>Required before recovery closure</strong>{escape(sandbox_patch_recovery_closure_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_recovery_closure_missing}</span>
-      <span class="field"><strong>Recovery closure performed</strong>{escape(str(sandbox_patch_recovery_closure_performed).lower())}</span>
-      <span class="field"><strong>Closure certification allowed</strong>{escape(str(sandbox_patch_closure_certification).lower())}</span>
-      <span class="field"><strong>Replay promotion allowed</strong>{escape(str(sandbox_patch_replay_promotion).lower())}</span>
-      <span class="field"><strong>Post-incident publication allowed</strong>{escape(str(sandbox_patch_post_incident_publication).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Trust Ledger Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_trust_ledger_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_trust_ledger_status)}</span>
-      <span class="field"><strong>Ledger target</strong>trust_ledger_anchor_packet</span>
-      <span class="field"><strong>Required before trust ledger anchor</strong>{escape(sandbox_patch_trust_ledger_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_trust_ledger_missing}</span>
-      <span class="field"><strong>Ledger anchor performed</strong>{escape(str(sandbox_patch_trust_ledger_anchor_performed).lower())}</span>
-      <span class="field"><strong>Remote submission allowed</strong>{escape(str(sandbox_patch_remote_submission).lower())}</span>
-      <span class="field"><strong>Verification publication allowed</strong>{escape(str(sandbox_patch_verification_publication).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Terminal Audit Export Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_terminal_audit_export_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_terminal_audit_export_status)}</span>
-      <span class="field"><strong>Audit export target</strong>terminal_audit_export_package</span>
-      <span class="field"><strong>Required before terminal audit export</strong>{escape(sandbox_patch_terminal_audit_export_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_terminal_audit_export_missing}</span>
-      <span class="field"><strong>Audit export performed</strong>{escape(str(sandbox_patch_terminal_audit_export_performed).lower())}</span>
-      <span class="field"><strong>Archive submission allowed</strong>{escape(str(sandbox_patch_archive_submission).lower())}</span>
-      <span class="field"><strong>External publication allowed</strong>{escape(str(sandbox_patch_external_publication).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Foundation Closure Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_foundation_closure_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_foundation_closure_status)}</span>
-      <span class="field"><strong>Foundation closure target</strong>foundation_closure_certificate</span>
-      <span class="field"><strong>Required before foundation closure</strong>{escape(sandbox_patch_foundation_closure_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_foundation_closure_missing}</span>
-      <span class="field"><strong>Foundation closure certified</strong>{escape(str(sandbox_patch_foundation_closure_certified).lower())}</span>
-      <span class="field"><strong>Promotion allowed</strong>{escape(str(sandbox_patch_promotion_allowed).lower())}</span>
-      <span class="field"><strong>Handoff publication allowed</strong>{escape(str(sandbox_patch_handoff_publication).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Iteration Resume Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_iteration_resume_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_iteration_resume_status)}</span>
-      <span class="field"><strong>Iteration resume target</strong>next_iteration_intake_packet</span>
-      <span class="field"><strong>Required before iteration resume</strong>{escape(sandbox_patch_iteration_resume_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_iteration_resume_missing}</span>
-      <span class="field"><strong>Next iteration started</strong>{escape(str(sandbox_patch_next_iteration_started).lower())}</span>
-      <span class="field"><strong>Automatic resume allowed</strong>{escape(str(sandbox_patch_automatic_resume).lower())}</span>
-      <span class="field"><strong>Authority carryover allowed</strong>{escape(str(sandbox_patch_authority_carryover).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
-  <section>
-    <h2>Operator Sandbox Patch Next Scope Admission Readiness</h2>
-    <div class="task">
-      <span class="field"><strong>Message</strong>{escape(sandbox_patch_next_scope_admission_message)}</span>
-      <span class="field"><strong>Status</strong>{escape(sandbox_patch_next_scope_admission_status)}</span>
-      <span class="field"><strong>Next scope target</strong>next_scope_admission_packet</span>
-      <span class="field"><strong>Required before next scope admission</strong>{escape(sandbox_patch_next_scope_admission_required)}</span>
-      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_next_scope_admission_missing}</span>
-      <span class="field"><strong>Scope admitted</strong>{escape(str(sandbox_patch_scope_admitted).lower())}</span>
-      <span class="field"><strong>Execution allowed</strong>{escape(str(sandbox_patch_scope_execution_allowed).lower())}</span>
-      <span class="field"><strong>Authority promotion allowed</strong>{escape(str(sandbox_patch_scope_authority_promotion).lower())}</span>
-      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
-    </div>
-  </section>
+{sandbox_patch_readiness_compact_section}
+{sandbox_patch_readiness_sections}
   <section>
     <h2>Operator Handoff Summary</h2>
     <div class="task">

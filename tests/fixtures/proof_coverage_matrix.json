@@ -783,6 +783,13 @@
       ]
     },
     {
+      "action_id": "publish_axiomworld_world_state_kernel_mvp",
+      "status": "closed",
+      "surfaces": [
+        "axiomworld_kernel_mvp"
+      ]
+    },
+    {
       "action_id": "publish_capability_forge_candidate_contract",
       "status": "closed",
       "surfaces": [
@@ -1476,7 +1483,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 137,
+      "action_proof": 138,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 57,
@@ -1484,7 +1491,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 194,
+      "audit_chain": 195,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -1492,21 +1499,21 @@
     "by_coverage_state": {
       "proven": 81,
       "unproven": 0,
-      "witnessed": 116
+      "witnessed": 117
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 57,
-      "request_proof": 138
+      "request_proof": 139
     },
-    "surface_count": 197
+    "surface_count": 198
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 197,
+      "strong": 198,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -1517,9 +1524,9 @@
     "by_coverage_state": {
       "proven": 292,
       "unproven": 0,
-      "witnessed": 161
+      "witnessed": 163
     },
-    "route_count": 453,
+    "route_count": 455,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1640,6 +1647,16 @@
         "coverage_state": "witnessed",
         "route": "/api/v1/audit/verify",
         "surface_id": "audit_chain_api"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/axiomworld/events",
+        "surface_id": "axiomworld_kernel_mvp"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/axiomworld/health",
+        "surface_id": "axiomworld_kernel_mvp"
       },
       {
         "coverage_state": "proven",
@@ -9935,6 +9952,87 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "docs/16_world_state_plane.md",
+        "gateway/axiomworld_kernel.py",
+        "gateway/axiomworld_generic_event_adapter.py",
+        "gateway/axiomworld_api.py",
+        "gateway/server.py",
+        "gateway/world_state.py",
+        "tests/test_gateway/test_axiomworld_kernel.py",
+        "tests/test_gateway/test_axiomworld_generic_event_adapter.py",
+        "tests/test_gateway/test_axiomworld_api.py"
+      ],
+      "notes": "AxiomWorld MVP routes admit evidence-backed symbols, claims, action proposals, simulation labels, projection filters, and append-only receipts through a bounded gateway adapter while preserving conflicts and denying simulation-as-reality promotion.",
+      "representative_paths": [
+        "/api/v1/axiomworld/events",
+        "/api/v1/axiomworld/health",
+        "AxiomWorldKernel.observe_event",
+        "AxiomWorldKernel.propose_claim",
+        "AxiomWorldKernel.propose_action",
+        "AxiomWorldKernel.simulate_action",
+        "AxiomWorldGenericEventAdapter.ingest"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "axiomworld_action_lifecycle_gates_risk_and_reversibility": [
+          "axiomworld_action_lifecycle_gates_risk_and_reversibility",
+          "axiomworld_generic_event_adapter_gates_high_risk_actions"
+        ],
+        "axiomworld_claims_without_evidence_remain_hypotheses": [
+          "axiomworld_claim_without_evidence_stays_hypothesis"
+        ],
+        "axiomworld_conflicts_preserved_as_open_contradictions": [
+          "axiomworld_preserves_conflicting_claims_as_open_contradiction",
+          "axiomworld_generic_event_adapter_preserves_conflicting_claims_across_ingests"
+        ],
+        "axiomworld_event_ingest_returns_receipts_and_projection": [
+          "axiomworld_generic_event_adapter_ingests_symbol_claim_action_and_projection",
+          "axiomworld_ingest_route_returns_projection_receipts_and_state"
+        ],
+        "axiomworld_evidence_required_for_symbol_admission": [
+          "axiomworld_observes_symbol_with_evidence_and_receipt",
+          "axiomworld_generic_event_adapter_rejects_missing_evidence_before_admission"
+        ],
+        "axiomworld_gateway_factory_registers_routes": [
+          "gateway_factory_registers_axiomworld_routes"
+        ],
+        "axiomworld_identity_collision_quarantined": [
+          "axiomworld_quarantines_identity_collision_without_second_symbol"
+        ],
+        "axiomworld_ingest_validation_errors_bounded": [
+          "axiomworld_ingest_route_bounds_validation_errors"
+        ],
+        "axiomworld_public_projection_redacts_private_scope": [
+          "axiomworld_public_projection_redacts_private_scope",
+          "axiomworld_generic_event_adapter_public_projection_redacts_private_symbol"
+        ],
+        "axiomworld_simulation_cannot_validate_without_real_evidence": [
+          "axiomworld_simulation_cannot_validate_without_real_evidence"
+        ],
+        "axiomworld_simulation_does_not_mutate_world_state": [
+          "axiomworld_simulated_action_does_not_mutate_world_state"
+        ]
+      },
+      "runtime_witnesses": [
+        "axiomworld_evidence_required_for_symbol_admission",
+        "axiomworld_identity_collision_quarantined",
+        "axiomworld_claims_without_evidence_remain_hypotheses",
+        "axiomworld_conflicts_preserved_as_open_contradictions",
+        "axiomworld_public_projection_redacts_private_scope",
+        "axiomworld_action_lifecycle_gates_risk_and_reversibility",
+        "axiomworld_simulation_cannot_validate_without_real_evidence",
+        "axiomworld_simulation_does_not_mutate_world_state",
+        "axiomworld_event_ingest_returns_receipts_and_projection",
+        "axiomworld_ingest_validation_errors_bounded",
+        "axiomworld_gateway_factory_registers_routes"
+      ],
+      "surface_id": "axiomworld_kernel_mvp"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
         "docs/62_governed_operational_intelligence.md",
         "gateway/capability_forge.py",
         "schemas/capability_candidate.schema.json",
@@ -15682,8 +15780,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1985,
-    "runtime_witness_count": 1985,
+    "exact_test_anchor_count": 1996,
+    "runtime_witness_count": 1996,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -23154,6 +23252,81 @@
         "exact_test_anchor_count": 11,
         "runtime_witness_count": 11,
         "surface_id": "governed_operational_intelligence",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_axiomworld_kernel.py::test_axiomworld_observes_symbol_with_evidence_and_receipt"
+            ],
+            "witness": "axiomworld_evidence_required_for_symbol_admission"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_axiomworld_kernel.py::test_axiomworld_quarantines_identity_collision_without_second_symbol"
+            ],
+            "witness": "axiomworld_identity_collision_quarantined"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_axiomworld_kernel.py::test_axiomworld_claim_without_evidence_stays_hypothesis"
+            ],
+            "witness": "axiomworld_claims_without_evidence_remain_hypotheses"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_axiomworld_kernel.py::test_axiomworld_preserves_conflicting_claims_as_open_contradiction"
+            ],
+            "witness": "axiomworld_conflicts_preserved_as_open_contradictions"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_axiomworld_kernel.py::test_axiomworld_public_projection_redacts_private_scope"
+            ],
+            "witness": "axiomworld_public_projection_redacts_private_scope"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_axiomworld_kernel.py::test_axiomworld_action_lifecycle_gates_risk_and_reversibility"
+            ],
+            "witness": "axiomworld_action_lifecycle_gates_risk_and_reversibility"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_axiomworld_kernel.py::test_axiomworld_simulation_cannot_validate_without_real_evidence"
+            ],
+            "witness": "axiomworld_simulation_cannot_validate_without_real_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_axiomworld_kernel.py::test_axiomworld_simulated_action_does_not_mutate_world_state"
+            ],
+            "witness": "axiomworld_simulation_does_not_mutate_world_state"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_axiomworld_api.py::test_axiomworld_ingest_route_returns_projection_receipts_and_state"
+            ],
+            "witness": "axiomworld_event_ingest_returns_receipts_and_projection"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_axiomworld_api.py::test_axiomworld_ingest_route_bounds_validation_errors"
+            ],
+            "witness": "axiomworld_ingest_validation_errors_bounded"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_axiomworld_api.py::test_gateway_factory_registers_axiomworld_routes"
+            ],
+            "witness": "axiomworld_gateway_factory_registers_routes"
+          }
+        ],
+        "exact_test_anchor_count": 11,
+        "runtime_witness_count": 11,
+        "surface_id": "axiomworld_kernel_mvp",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

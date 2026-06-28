@@ -19,13 +19,13 @@
     "proof_matrix": "docs/40_proof_coverage_matrix.md"
   },
   "summary": {
-    "route_family_count": 79,
-    "declared_route_count": 453,
+    "route_family_count": 80,
+    "declared_route_count": 455,
     "selected_component_bound_count": 13,
-    "platform_family_classified_count": 66,
-    "promotion_blocked_count": 66,
-    "proof_binding_gap_count": 64,
-    "route_binding_gap_count": 66,
+    "platform_family_classified_count": 67,
+    "promotion_blocked_count": 67,
+    "proof_binding_gap_count": 65,
+    "route_binding_gap_count": 67,
     "generic_connector_boundary_count": 1,
     "live_action_enabled_count": 0,
     "terminal_closure_claim_count": 0
@@ -564,6 +564,56 @@
       "declared_route_count": 1,
       "sample_routes": [
         "/runtime/self/capability-improvement-portfolio"
+      ],
+      "promotion_blockers": [
+        "missing_selected_component_route_binding",
+        "missing_lifecycle_transition_receipt",
+        "missing_authority_upgrade_witness",
+        "missing_component_proof_surface_binding"
+      ],
+      "required_next_evidence": [
+        "component_route_binding_receipt",
+        "component_proof_surface_binding",
+        "component_lifecycle_transition_receipt",
+        "authority_upgrade_witness",
+        "operator_approval_if_external_effect"
+      ],
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "ownership_is_not_execution_authority": true,
+      "can_enable_live_action": false,
+      "notes": "Route family remains platform-classified and needs proof-surface binding before ownership promotion."
+    },
+    {
+      "surface_id": "axiomworld_kernel_mvp",
+      "binding_level": "platform_family_classified",
+      "readiness_state": "blocked_needs_proof_binding",
+      "component_lane": "runtime_core",
+      "component_ids": [
+        "agentic_service_harness"
+      ],
+      "selected_bound_component_ids": [],
+      "candidate_proof_bound_component_ids": [],
+      "component_route_binding_states": [
+        {
+          "component_id": "agentic_service_harness",
+          "binding_state": "unbound",
+          "proof_surface_present_in_route_binding": false,
+          "route_binding_is_bound": false
+        }
+      ],
+      "declared_route_count": 2,
+      "sample_routes": [
+        "/api/v1/axiomworld/events",
+        "/api/v1/axiomworld/health"
       ],
       "promotion_blockers": [
         "missing_selected_component_route_binding",

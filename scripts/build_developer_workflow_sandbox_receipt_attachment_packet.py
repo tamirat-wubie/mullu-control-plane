@@ -209,7 +209,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             sandbox_receipt_bundle_path=sandbox_receipt_bundle_path,
         )
         output_path = write_developer_workflow_sandbox_receipt_attachment_packet(packet, Path(args.output))
-        validation = validate_developer_workflow_sandbox_receipt_attachment_packet(packet_path=output_path)
+        validation = validate_developer_workflow_sandbox_receipt_attachment_packet(
+            packet_path=output_path,
+            sandbox_to_pr_packet_path=sandbox_to_pr_packet_path,
+            sandbox_receipt_bundle_path=sandbox_receipt_bundle_path,
+        )
     except ValueError as exc:
         print(f"DEVELOPER WORKFLOW SANDBOX RECEIPT ATTACHMENT PACKET BUILD INVALID error={exc}")
         return 2

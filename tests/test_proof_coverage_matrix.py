@@ -103,6 +103,36 @@ def test_local_assurance_refresh_surface_covers_blocked_evidence_refresh() -> No
     assert closure_actions["publish_local_assurance_refresh_contract"]["status"] == "closed"
 
 
+def test_axiomworld_kernel_mvp_surface_covers_gateway_routes() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    route_surfaces = {
+        record["route"]: record["surface_id"]
+        for record in matrix["route_coverage"]["routes"]
+    }
+    surface = surfaces["axiomworld_kernel_mvp"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert "/api/v1/axiomworld/events" in surface["representative_paths"]
+    assert "/api/v1/axiomworld/health" in surface["representative_paths"]
+    assert "gateway/axiomworld_kernel.py" in surface["evidence_files"]
+    assert "gateway/axiomworld_api.py" in surface["evidence_files"]
+    assert route_surfaces["/api/v1/axiomworld/events"] == "axiomworld_kernel_mvp"
+    assert route_surfaces["/api/v1/axiomworld/health"] == "axiomworld_kernel_mvp"
+    assert "axiomworld_evidence_required_for_symbol_admission" in witnesses
+    assert "axiomworld_simulation_does_not_mutate_world_state" in witnesses
+    assert "axiomworld_gateway_factory_registers_routes" in witnesses
+    assert witness_surfaces["axiomworld_kernel_mvp"]["exact_test_anchor_count"] == 11
+    assert witness_surfaces["axiomworld_kernel_mvp"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_axiomworld_world_state_kernel_mvp"]["status"] == "closed"
+
+
 def test_evidence_quality_report_tracks_witness_strength_gaps() -> None:
     matrix = _load_fixture()
     evidence_quality = matrix["evidence_quality"]
