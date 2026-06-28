@@ -728,6 +728,13 @@ prerequisites, missing prerequisite count, CI-observation denial, GitHub polling
 denial, check-update denial, ready-for-review denial, and no-effect posture. It
 is a PR CI readiness projection only and does not poll GitHub, update checks,
 mark a pull request ready for review, or perform external effects.
+The sandbox patch merge readiness field is
+`operator_sandbox_patch_merge_readiness_summary`, anchored to the documented
+`sandbox_patch_receipt` merge readiness path. It reports merge status, merge
+target, prerequisites, missing prerequisite count, merge denial, branch-write
+denial, GitHub-call denial, and no-effect posture. It is a merge readiness
+projection only and does not merge, write a branch, call GitHub, or perform
+external effects.
 The operator handoff field is `operator_handoff_summary`, composed from
 `workflow_monitor.metadata.developer_workflow_milestone_summary` and
 `workflow_monitor.metadata.operator_decision_summary`. It gives a future

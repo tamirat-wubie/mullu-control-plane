@@ -1646,6 +1646,9 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Operator Sandbox Patch PR CI Readiness" in response.text
     assert "PR CI readiness blocked until PR creation evidence" in response.text
     assert "blocked_until_pr_creation" in response.text
+    assert "Operator Sandbox Patch Merge Readiness" in response.text
+    assert "Merge readiness blocked until CI pass" in response.text
+    assert "blocked_until_ci_pass" in response.text
     assert "Operator Handoff Summary" in response.text
     assert "Handoff ready for local resume" in response.text
     assert "external_pr_creation, branch_push, merge, deployment, connector_write, real_world_effect" in response.text
@@ -2599,6 +2602,27 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
             "PR CI readiness blocked until PR creation evidence and CI observation authority are complete"
         ),
     }
+    assert receipt["operator_sandbox_patch_merge_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_merge_readiness.foundation",
+        "merge_status": "blocked_until_ci_pass",
+        "merge_target": "protected_branch_merge",
+        "required_before_merge": [
+            "github_pull_request_created",
+            "ci_checks_passed",
+            "review_approval_recorded",
+            "rollback_plan_verified",
+            "merge_approval_recorded",
+        ],
+        "missing_prerequisite_count": 5,
+        "merge_performed": False,
+        "merge_allowed": False,
+        "branch_write_allowed": False,
+        "github_call_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Merge readiness blocked until CI pass, review approval, rollback, and merge approval evidence are complete"
+        ),
+    }
     assert receipt["operator_handoff_summary"] == {
         "summary_id": "operator_handoff.foundation",
         "handoff_status": "ready_for_local_resume",
@@ -3038,6 +3062,10 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
     assert (
         receipt["source_refs"]["operator_sandbox_patch_pr_ci_readiness_summary"]
         == "docs/21_workflow_runtime.md sandbox_patch_receipt PR CI readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_merge_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt merge readiness"
     )
     assert (
         receipt["source_refs"]["operator_handoff_summary"]
