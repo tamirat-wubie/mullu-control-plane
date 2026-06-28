@@ -418,6 +418,50 @@ def _validate_terminal_closure_generic_continuation_rejection_semantics(
             payload,
             (
                 "continuation_rejection",
+                "command_preview_decision_contract_evidence",
+                "source_decision_contract_binding_id",
+            ),
+            _get_nested(source_decision_contract, ("binding_id",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            (
+                "continuation_rejection",
+                "command_preview_decision_contract_evidence",
+                "source_decision_contract_ref",
+            ),
+            EXPECTED_SOURCE_DECISION_CONTRACT_REF,
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            (
+                "continuation_rejection",
+                "command_preview_decision_contract_evidence",
+                "requires_command_preview_operator_approval_gate_evidence",
+            ),
+            True,
+            errors,
+            label,
+        )
+        for evidence_key in COMMAND_PREVIEW_DECISION_CONTRACT_EVIDENCE_KEYS:
+            _require_equal(
+                payload,
+                ("continuation_rejection", "command_preview_decision_contract_evidence", evidence_key),
+                _get_nested(
+                    source_decision_contract,
+                    ("decision_contract", "command_preview_approval_gate_evidence", evidence_key),
+                ),
+                errors,
+                label,
+            )
+        _require_equal(
+            payload,
+            (
+                "continuation_rejection",
                 "actual_diff_decision_contract_evidence",
                 "requires_actual_diff_operator_approval_gate_evidence",
             ),
