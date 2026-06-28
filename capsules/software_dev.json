@@ -5,6 +5,7 @@
   "ontology_refs": ["ontologies/software_dev/governed_loop.json"],
   "capability_refs": [
     "software_dev.repo_map.read",
+    "software_dev.github_actions_failure.diagnose_read_only",
     "software_dev.context_bundle.build",
     "software_dev.gate_plan.select",
     "software_dev.change.run",

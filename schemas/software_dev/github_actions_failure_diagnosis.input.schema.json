@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:software-dev:github-actions-failure-diagnosis-input:1",
+  "title": "Software Dev GitHub Actions Failure Diagnosis Input",
+  "description": "Governed read-only request for GitHub Actions failure diagnosis. The request may read workflow run, job, and bounded failed-job log evidence but cannot grant write, rerun, cancel, dispatch, or comment authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_id",
+    "request_id",
+    "repository_ref",
+    "workflow_run_id",
+    "workspace_ref",
+    "requested_evidence_kinds",
+    "max_failed_job_logs",
+    "metadata"
+  ],
+  "properties": {
+    "capability_id": {
+      "const": "software_dev.github_actions_failure.diagnose_read_only"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workflow_run_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "workspace_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requested_evidence_kinds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": ["workflow_run", "jobs", "failed_job_logs"]
+      }
+    },
+    "max_failed_job_logs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "write_authority_granted": {
+      "const": false
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

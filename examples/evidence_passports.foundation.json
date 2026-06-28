@@ -8589,6 +8589,98 @@
     {
       "approval": {
         "approval_refs": [],
+        "approval_required": false,
+        "approval_state": "not_required",
+        "approved": false,
+        "missing_approval": false
+      },
+      "blocked": {
+        "blocked_action_count": 10,
+        "blocked_actions": [
+          "workflow_rerun_triggered",
+          "workflow_cancelled",
+          "workflow_dispatched",
+          "github_comment_posted",
+          "repository_mutated",
+          "connector_call_without_lease",
+          "claim_success_without_terminal_certificate",
+          "claim_production_ready",
+          "live_action_enablement",
+          "claim_autonomous_live_action"
+        ],
+        "blocked_by_gate_ids": [
+          "gate.connector.lease",
+          "gate.production.evidence"
+        ]
+      },
+      "capability_id": "software_dev.github_actions_failure.diagnose_read_only",
+      "capability_name": "Diagnose GitHub Actions failure read-only",
+      "continuation": {
+        "continuation_mode": "live_action_disabled",
+        "live_action_disabled": true,
+        "safe_for_live_action": false,
+        "safe_to_continue": true
+      },
+      "current_unlock_level": "C3",
+      "evidence_exists": {
+        "present_evidence_count": 2,
+        "present_evidence_refs": [
+          "capability_registry:software_dev.github_actions_failure.diagnose_read_only",
+          "capability_certification:certified"
+        ]
+      },
+      "evidence_passport_id": "evidence_passport.software_dev.github_actions_failure.diagnose_read_only.foundation.v1",
+      "evidence_passport_is_not_execution_authority": true,
+      "family": "software_dev",
+      "missing_evidence": [
+        "workflow_run_hash",
+        "workflow_jobs_hash",
+        "failed_job_log_digest",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "connector_lease_receipt",
+        "production_evidence_receipt"
+      ],
+      "next_evidence_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "outcome": "AwaitingEvidence",
+      "proof_state": "Unknown",
+      "replay": {
+        "missing_replay_evidence": true,
+        "replay_refs": [],
+        "replay_required": true,
+        "replayable": false
+      },
+      "required_evidence": [
+        "workflow_run_hash",
+        "workflow_jobs_hash",
+        "failed_job_log_digest",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "connector_lease_receipt",
+        "production_evidence_receipt"
+      ],
+      "rollback": {
+        "can_compensate": false,
+        "can_rollback": true,
+        "compensation_capability": "",
+        "rollback_capability": "",
+        "rollback_evidence_missing": false,
+        "rollback_or_compensation_available": true,
+        "rollback_status": "not_required"
+      }
+    },
+    {
+      "approval": {
+        "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
@@ -9563,9 +9655,9 @@
   },
   "summary": {
     "approval_required_count": 24,
-    "blocked_action_count": 841,
-    "capability_count": 101,
-    "evidence_passport_count": 101,
+    "blocked_action_count": 851,
+    "capability_count": 102,
+    "evidence_passport_count": 102,
     "family_counts": {
       "agentic_control": 17,
       "browser": 6,
@@ -9581,12 +9673,12 @@
       "personal_assistant": 12,
       "phone": 5,
       "physical": 2,
-      "software_dev": 6,
+      "software_dev": 7,
       "voice": 6
     },
-    "missing_evidence_count": 99,
+    "missing_evidence_count": 100,
     "outcome_counts": {
-      "AwaitingEvidence": 100,
+      "AwaitingEvidence": 101,
       "BudgetExhausted": 0,
       "GovernanceBlocked": 0,
       "ImpossibleProved": 0,
@@ -9598,12 +9690,12 @@
       "BudgetUnknown": 0,
       "Fail": 0,
       "Pass": 1,
-      "Unknown": 100
+      "Unknown": 101
     },
     "replayable_count": 0,
-    "rollback_ready_count": 89,
+    "rollback_ready_count": 90,
     "safe_for_live_action_count": 1,
-    "safe_to_continue_count": 101
+    "safe_to_continue_count": 102
   },
   "validators": [
     {

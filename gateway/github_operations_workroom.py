@@ -46,8 +46,10 @@ from mcoi_runtime.contracts.universal_capability_fabric import (
 
 
 GITHUB_PR_SAFETY_CAPABILITY_ID = "github.pr_safety_review.read_only.v1"
+GITHUB_ACTIONS_FAILURE_CAPABILITY_ID = "github.actions_failure_diagnosis.read_only.v1"
 GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID = "connector.github.read"
 GITHUB_PR_SAFETY_INTENT = "REVIEW_PR_MERGE_SAFETY"
+GITHUB_ACTIONS_FAILURE_INTENT = "DIAGNOSE_GITHUB_ACTIONS_FAILURE"
 GITHUB_WORKROOM_SURFACE = "github_operations_workroom"
 
 _REQUIRED_EVIDENCE = (
@@ -62,6 +64,13 @@ _BLOCKED_ACTIONS = (
     "delete_branch_without_explicit_approval",
     "post_github_comment_without_write_admission",
 )
+_ACTIONS_FAILURE_BLOCKED_ACTIONS = (
+    "rerun_workflow_without_explicit_approval",
+    "cancel_workflow_without_explicit_approval",
+    "dispatch_workflow_without_explicit_approval",
+    "post_github_comment_without_write_admission",
+    "mutate_repository_without_write_admission",
+)
 _ALLOWED_TOOLS = (
     "github.read.pull_request",
     "github.read.diff",
@@ -72,6 +81,7 @@ _LIVE_READ_ALLOWED_TOOLS = ("connector_worker.github_read",)
 _LIVE_READ_ALLOWED_NETWORKS = ("api.github.com",)
 _LIVE_READ_SECRET_SCOPE = "oauth:github.read"
 _SUPPORTED_LIVE_EVIDENCE_KINDS = ("pull_request", "diff", "checks", "changed_files")
+_SUPPORTED_ACTIONS_FAILURE_EVIDENCE_KINDS = ("workflow_run", "jobs", "failed_job_logs")
 _EFFECT_BOUNDARY = {
     "execution_allowed": False,
     "live_connector_execution_allowed": False,
@@ -243,6 +253,107 @@ class GitHubReadOnlyEvidenceAdmission(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class GitHubActionsFailureEvidenceAdmissionRequest(ContractRecord):
+    """Admission request for read-only GitHub Actions failure evidence."""
+
+    actor_id: str
+    workspace_id: str
+    repo: str
+    workflow_run_id: int
+    requested_evidence_kinds: tuple[str, ...]
+    requested_at: str
+    surface_event_id: str
+    authority_ref: str = "policy.github.actions_failure.live_read_only"
+    max_failed_job_logs: int = 3
+
+    def __post_init__(self) -> None:
+        for field_name in ("actor_id", "workspace_id", "repo", "surface_event_id", "authority_ref"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if not isinstance(self.workflow_run_id, int) or isinstance(self.workflow_run_id, bool):
+            raise ValueError("workflow_run_id must be an integer")
+        if self.workflow_run_id < 1:
+            raise ValueError("workflow_run_id must be greater than zero")
+        if not isinstance(self.requested_evidence_kinds, tuple) or not self.requested_evidence_kinds:
+            raise ValueError("requested_evidence_kinds must contain at least one evidence kind")
+        for index, evidence_kind in enumerate(self.requested_evidence_kinds):
+            normalized_kind = require_non_empty_text(evidence_kind, f"requested_evidence_kinds[{index}]")
+            if normalized_kind not in _SUPPORTED_ACTIONS_FAILURE_EVIDENCE_KINDS:
+                raise ValueError(f"unsupported GitHub Actions evidence kind: {normalized_kind}")
+        if not isinstance(self.max_failed_job_logs, int) or isinstance(self.max_failed_job_logs, bool):
+            raise ValueError("max_failed_job_logs must be an integer")
+        if not 0 <= self.max_failed_job_logs <= 10:
+            raise ValueError("max_failed_job_logs must be between 0 and 10")
+        object.__setattr__(self, "requested_at", require_datetime_text(self.requested_at, "requested_at"))
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubActionsFailureEvidenceAdmission(ContractRecord):
+    """Admission decision for read-only GitHub Actions failure evidence."""
+
+    admission_id: str
+    capability_id: str
+    actor_id: str
+    workspace_id: str
+    repo: str
+    workflow_run_id: int
+    requested_evidence_kinds: tuple[str, ...]
+    planned_evidence_refs: tuple[str, ...]
+    allowed_tools: tuple[str, ...]
+    allowed_networks: tuple[str, ...]
+    required_secret_scope: str
+    blocked_actions: tuple[str, ...]
+    authority_ref: str
+    policy_decision: str
+    solver_outcome: str
+    live_connector_read_admitted: bool
+    live_connector_call_performed: bool
+    write_authority_granted: bool
+    max_failed_job_logs: int
+    admitted_at: str
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "admission_id",
+            "capability_id",
+            "actor_id",
+            "workspace_id",
+            "repo",
+            "required_secret_scope",
+            "authority_ref",
+            "policy_decision",
+            "solver_outcome",
+        ):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if self.capability_id != GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID:
+            raise ValueError("GitHub Actions evidence admission must use connector.github.read")
+        if not isinstance(self.workflow_run_id, int) or isinstance(self.workflow_run_id, bool):
+            raise ValueError("workflow_run_id must be an integer")
+        if self.workflow_run_id < 1:
+            raise ValueError("workflow_run_id must be greater than zero")
+        for field_name in ("requested_evidence_kinds", "planned_evidence_refs", "allowed_tools", "allowed_networks"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple) or not values:
+                raise ValueError(f"{field_name} must contain at least one item")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if not isinstance(self.blocked_actions, tuple) or not self.blocked_actions:
+            raise ValueError("blocked_actions must contain at least one item")
+        for index, action in enumerate(self.blocked_actions):
+            require_non_empty_text(action, f"blocked_actions[{index}]")
+        if self.live_connector_read_admitted is not True:
+            raise ValueError("live_connector_read_admitted must be true")
+        if self.live_connector_call_performed is not False:
+            raise ValueError("admission must not claim a live connector call was performed")
+        if self.write_authority_granted is not False:
+            raise ValueError("GitHub Actions evidence admission cannot grant write authority")
+        if not isinstance(self.max_failed_job_logs, int) or isinstance(self.max_failed_job_logs, bool):
+            raise ValueError("max_failed_job_logs must be an integer")
+        if not 0 <= self.max_failed_job_logs <= 10:
+            raise ValueError("max_failed_job_logs must be between 0 and 10")
+        object.__setattr__(self, "admitted_at", require_datetime_text(self.admitted_at, "admitted_at"))
+
+
+@dataclass(frozen=True, slots=True)
 class GitHubReadOnlyEvidenceFetchResult(ContractRecord):
     """Bounded result from an admitted read-only GitHub evidence fetch."""
 
@@ -293,6 +404,62 @@ class GitHubReadOnlyEvidenceFetchResult(ContractRecord):
             raise ValueError("live_connector_call_performed must be true for fetch results")
         if self.write_authority_granted is not False:
             raise ValueError("GitHub read-only fetch cannot grant write authority")
+        if not isinstance(self.partial_failure_reasons, tuple):
+            raise ValueError("partial_failure_reasons must be a tuple")
+        for index, reason in enumerate(self.partial_failure_reasons):
+            require_non_empty_text(reason, f"partial_failure_reasons[{index}]")
+        object.__setattr__(self, "fetched_at", require_datetime_text(self.fetched_at, "fetched_at"))
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubActionsFailureEvidenceFetchResult(ContractRecord):
+    """Bounded read-only result from GitHub Actions failure evidence collection."""
+
+    fetch_id: str
+    admission_id: str
+    capability_id: str
+    repo: str
+    workflow_run_id: int
+    fetched_evidence_kinds: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    payload_hashes: Mapping[str, str]
+    observed_workflow_run: Mapping[str, Any]
+    observed_jobs: tuple[Mapping[str, Any], ...]
+    failed_log_summaries: tuple[Mapping[str, Any], ...]
+    blocked_actions: tuple[str, ...]
+    solver_outcome: str
+    live_connector_call_performed: bool
+    write_authority_granted: bool
+    fetched_at: str
+    partial_failure_reasons: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        for field_name in ("fetch_id", "admission_id", "capability_id", "repo", "solver_outcome"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if self.capability_id != GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID:
+            raise ValueError("GitHub Actions evidence fetch must use connector.github.read")
+        if not isinstance(self.workflow_run_id, int) or isinstance(self.workflow_run_id, bool):
+            raise ValueError("workflow_run_id must be an integer")
+        if self.workflow_run_id < 1:
+            raise ValueError("workflow_run_id must be greater than zero")
+        for field_name in ("fetched_evidence_kinds", "evidence_refs", "blocked_actions"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple) or not values:
+                raise ValueError(f"{field_name} must contain at least one item")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        object.__setattr__(self, "payload_hashes", dict(self.payload_hashes))
+        object.__setattr__(self, "observed_workflow_run", dict(self.observed_workflow_run))
+        if not isinstance(self.observed_jobs, tuple):
+            raise ValueError("observed_jobs must be a tuple")
+        object.__setattr__(self, "observed_jobs", tuple(dict(job) for job in self.observed_jobs))
+        if not isinstance(self.failed_log_summaries, tuple):
+            raise ValueError("failed_log_summaries must be a tuple")
+        object.__setattr__(self, "failed_log_summaries", tuple(dict(summary) for summary in self.failed_log_summaries))
+        if self.live_connector_call_performed is not True:
+            raise ValueError("live_connector_call_performed must be true for fetch results")
+        if self.write_authority_granted is not False:
+            raise ValueError("GitHub Actions evidence fetch cannot grant write authority")
         if not isinstance(self.partial_failure_reasons, tuple):
             raise ValueError("partial_failure_reasons must be a tuple")
         for index, reason in enumerate(self.partial_failure_reasons):
@@ -413,6 +580,89 @@ class GitHubReadOnlyEvidenceFetcher:
             partial_failure_reasons=tuple(partial_failures),
         )
 
+    def fetch_actions_failure(
+        self,
+        admission: GitHubActionsFailureEvidenceAdmission,
+        *,
+        clock: Callable[[], str],
+    ) -> GitHubActionsFailureEvidenceFetchResult:
+        """Fetch admitted GitHub Actions failure evidence with GET-only requests."""
+
+        _validate_actions_failure_fetch_admission(admission)
+        fetched_at = require_datetime_text(clock(), "fetched_at")
+        payload_hashes: dict[str, str] = {}
+        evidence_refs: list[str] = []
+        partial_failures: list[str] = []
+        observed_workflow_run: dict[str, Any] = {}
+        observed_jobs: tuple[Mapping[str, Any], ...] = ()
+        failed_log_summaries: list[Mapping[str, Any]] = []
+
+        if "workflow_run" in admission.requested_evidence_kinds:
+            try:
+                run_payload = self._get_json(f"/repos/{admission.repo}/actions/runs/{admission.workflow_run_id}")
+                payload_hashes["workflow_run"] = _payload_hash(run_payload)
+                evidence_refs.append(f"github-live-read://{admission.repo}/actions/runs/{admission.workflow_run_id}")
+                observed_workflow_run = _summarize_workflow_run(run_payload)
+            except (GitHubReadOnlyEvidenceFetchError, ValueError) as exc:
+                partial_failures.append(f"workflow_run:{exc}")
+
+        if "jobs" in admission.requested_evidence_kinds or "failed_job_logs" in admission.requested_evidence_kinds:
+            try:
+                jobs_payload = self._get_json(f"/repos/{admission.repo}/actions/runs/{admission.workflow_run_id}/jobs")
+                payload_hashes["jobs"] = _payload_hash(jobs_payload)
+                evidence_refs.append(f"github-live-read://{admission.repo}/actions/runs/{admission.workflow_run_id}/jobs")
+                observed_jobs = _summarize_workflow_jobs(jobs_payload)
+            except (GitHubReadOnlyEvidenceFetchError, ValueError) as exc:
+                partial_failures.append(f"jobs:{exc}")
+
+        if "failed_job_logs" in admission.requested_evidence_kinds and admission.max_failed_job_logs > 0:
+            failed_jobs = tuple(
+                job for job in observed_jobs if str(job.get("conclusion") or "") not in {"success", "skipped", "neutral", ""}
+            )
+            for job in failed_jobs[: admission.max_failed_job_logs]:
+                job_id = job.get("job_id")
+                try:
+                    if not isinstance(job_id, int):
+                        raise GitHubReadOnlyEvidenceFetchError("failed_job_missing_id")
+                    log_payload = self._get_text(f"/repos/{admission.repo}/actions/jobs/{job_id}/logs", accept="text/plain")
+                    log_digest = _text_hash(log_payload)
+                    payload_hashes[f"job_log:{job_id}"] = log_digest
+                    evidence_refs.append(f"github-live-read://{admission.repo}/actions/jobs/{job_id}/logs")
+                    failed_log_summaries.append(_summarize_failed_job_log(job=job, log_payload=log_payload, log_digest=log_digest))
+                except GitHubReadOnlyEvidenceFetchError as exc:
+                    partial_failures.append(f"failed_job_logs:{job_id}:{exc}")
+
+        if not evidence_refs:
+            raise GitHubReadOnlyEvidenceFetchError("no_actions_failure_evidence_collected")
+
+        fetch_hash = _stable_hash(
+            {
+                "admission_id": admission.admission_id,
+                "evidence_refs": tuple(evidence_refs),
+                "payload_hashes": payload_hashes,
+                "fetched_at": fetched_at,
+            }
+        )
+        return GitHubActionsFailureEvidenceFetchResult(
+            fetch_id=f"github-actions-failure-fetch:{fetch_hash}",
+            admission_id=admission.admission_id,
+            capability_id=admission.capability_id,
+            repo=admission.repo,
+            workflow_run_id=admission.workflow_run_id,
+            fetched_evidence_kinds=tuple(payload_hashes),
+            evidence_refs=tuple(evidence_refs),
+            payload_hashes=payload_hashes,
+            observed_workflow_run=observed_workflow_run,
+            observed_jobs=observed_jobs,
+            failed_log_summaries=tuple(failed_log_summaries),
+            blocked_actions=admission.blocked_actions,
+            solver_outcome="SolvedUnverified" if partial_failures else "SolvedVerified",
+            live_connector_call_performed=True,
+            write_authority_granted=False,
+            fetched_at=fetched_at,
+            partial_failure_reasons=tuple(partial_failures),
+        )
+
     def _get_json(self, path: str) -> Any:
         body = self._get_bytes(path, accept="application/vnd.github+json")
         try:
@@ -496,6 +746,49 @@ class GitHubPrSafetyJudgment(ContractRecord):
         if self.write_authority_granted is not False:
             raise ValueError("PR safety judgment cannot grant write authority")
         object.__setattr__(self, "judged_at", require_datetime_text(self.judged_at, "judged_at"))
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubActionsFailureDiagnosis(ContractRecord):
+    """Bounded diagnosis from read-only GitHub Actions evidence."""
+
+    diagnosis_id: str
+    repo: str
+    workflow_run_id: int
+    status: str
+    failure_summary: str
+    suspected_failed_jobs: tuple[str, ...]
+    reasons: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    blocked_actions: tuple[str, ...]
+    recommended_next_action: str
+    confidence: float
+    write_authority_granted: bool
+    diagnosed_at: str
+
+    def __post_init__(self) -> None:
+        for field_name in ("diagnosis_id", "repo", "status", "failure_summary", "recommended_next_action"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if self.status not in {"diagnosed", "needs_evidence", "not_failed"}:
+            raise ValueError("status must be diagnosed, needs_evidence, or not_failed")
+        if not isinstance(self.workflow_run_id, int) or isinstance(self.workflow_run_id, bool):
+            raise ValueError("workflow_run_id must be an integer")
+        if self.workflow_run_id < 1:
+            raise ValueError("workflow_run_id must be greater than zero")
+        for field_name in ("suspected_failed_jobs", "reasons", "evidence_refs", "blocked_actions"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple) or not values:
+                raise ValueError(f"{field_name} must contain at least one item")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if not isinstance(self.confidence, (int, float)) or isinstance(self.confidence, bool):
+            raise ValueError("confidence must be a number")
+        if not 0.0 <= float(self.confidence) <= 1.0:
+            raise ValueError("confidence must be between 0.0 and 1.0")
+        object.__setattr__(self, "confidence", float(self.confidence))
+        if self.write_authority_granted is not False:
+            raise ValueError("Actions failure diagnosis cannot grant write authority")
+        object.__setattr__(self, "diagnosed_at", require_datetime_text(self.diagnosed_at, "diagnosed_at"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -789,6 +1082,142 @@ def build_github_read_only_evidence_fetch_receipt(
     )
 
 
+def build_github_actions_failure_diagnosis_receipt(
+    result: GitHubActionsFailureEvidenceFetchResult,
+    *,
+    diagnosis: GitHubActionsFailureDiagnosis,
+    actor_id: str,
+    surface_event_id: str,
+    occurred_at: str,
+) -> CausalCapabilityReceipt:
+    """Emit a causal receipt for read-only GitHub Actions failure diagnosis."""
+
+    if not isinstance(result, GitHubActionsFailureEvidenceFetchResult):
+        raise ValueError("result must be a GitHubActionsFailureEvidenceFetchResult")
+    if not isinstance(diagnosis, GitHubActionsFailureDiagnosis):
+        raise ValueError("diagnosis must be a GitHubActionsFailureDiagnosis")
+    occurred_at = require_datetime_text(occurred_at, "occurred_at")
+    actor_id = require_non_empty_text(actor_id, "actor_id")
+    surface_event_id = require_non_empty_text(surface_event_id, "surface_event_id")
+    receipt_hash = _stable_hash(
+        {
+            "actor_id": actor_id,
+            "diagnosis_id": diagnosis.diagnosis_id,
+            "fetch_id": result.fetch_id,
+            "surface_event_id": surface_event_id,
+            "occurred_at": occurred_at,
+            "payload_hashes": result.payload_hashes,
+        }
+    )
+    verification_result = (
+        "Read-only Actions evidence collected with partial gaps."
+        if result.partial_failure_reasons
+        else "Read-only Actions evidence collected, hash-bound, and diagnosed."
+    )
+    return CausalCapabilityReceipt(
+        receipt_id=f"github-actions-failure-receipt:{receipt_hash}",
+        event_id=result.admission_id,
+        actor_id=actor_id,
+        surface=GITHUB_WORKROOM_SURFACE,
+        intent=GITHUB_ACTIONS_FAILURE_INTENT,
+        target_object=f"github_actions_run:{result.repo}#{result.workflow_run_id}",
+        risk_class=FabricRiskClass.CLASS_0_OBSERVE,
+        evidence_used=result.evidence_refs,
+        policy_decision=FabricPolicyDecision.ALLOW_READ_ONLY,
+        actions_taken=("performed_get_only_github_actions_reads", "hashed_payloads", "diagnosed_failed_run"),
+        actions_blocked=result.blocked_actions,
+        assumptions=(
+            "Access token scope is limited to oauth:github.read.",
+            "Diagnosis recommends next steps but does not rerun, cancel, dispatch, comment, or mutate repository state.",
+        ),
+        verification_result=verification_result,
+        final_judgment=diagnosis.failure_summary,
+        memory_update=FabricMemoryDecisionStatus.STORE,
+        timestamp=occurred_at,
+        partial_failure_reasons=result.partial_failure_reasons,
+    )
+
+
+def evaluate_github_actions_failure_diagnosis(
+    *,
+    fetch_result: GitHubActionsFailureEvidenceFetchResult,
+    clock: Callable[[], str],
+) -> GitHubActionsFailureDiagnosis:
+    """Evaluate read-only GitHub Actions evidence into a bounded diagnosis."""
+
+    if not isinstance(fetch_result, GitHubActionsFailureEvidenceFetchResult):
+        raise ValueError("fetch_result must be a GitHubActionsFailureEvidenceFetchResult")
+    diagnosed_at = require_datetime_text(clock(), "diagnosed_at")
+    reasons: list[str] = []
+    suspected_failed_jobs: list[str] = []
+    if "workflow_run" not in fetch_result.fetched_evidence_kinds or not fetch_result.observed_workflow_run:
+        reasons.append("missing_workflow_run")
+    if "jobs" not in fetch_result.fetched_evidence_kinds or not fetch_result.observed_jobs:
+        reasons.append("missing_jobs")
+    if fetch_result.partial_failure_reasons:
+        reasons.extend(f"partial_failure:{reason}" for reason in fetch_result.partial_failure_reasons)
+
+    run_conclusion = str(fetch_result.observed_workflow_run.get("conclusion") or "")
+    failed_jobs = tuple(
+        job for job in fetch_result.observed_jobs if str(job.get("conclusion") or "") not in {"success", "skipped", "neutral", ""}
+    )
+    for job in failed_jobs:
+        suspected_failed_jobs.append(str(job.get("name") or job.get("job_id") or "unknown_job"))
+    if run_conclusion and run_conclusion in {"success", "skipped", "neutral"} and not failed_jobs:
+        status = "not_failed"
+        failure_summary = "Workflow run is not currently failed based on read-only GitHub evidence."
+        recommended_next_action = "no_failure_patch_plan_required"
+        confidence = 0.72
+        reasons.append("workflow_run_not_failed")
+    elif reasons:
+        status = "needs_evidence"
+        failure_summary = "Actions failure diagnosis needs fresher or more complete run, job, or log evidence."
+        recommended_next_action = "collect_missing_or_fresher_actions_evidence"
+        confidence = 0.46
+    else:
+        status = "diagnosed"
+        if fetch_result.failed_log_summaries:
+            first_log = fetch_result.failed_log_summaries[0]
+            first_signal = str(first_log.get("first_failure_signal") or "failed job log captured")
+            failure_summary = f"Workflow failed in {', '.join(suspected_failed_jobs)}; first signal: {first_signal}"
+            reasons.append("failed_job_log_signal_available")
+            confidence = 0.78
+        else:
+            failure_summary = f"Workflow failed in {', '.join(suspected_failed_jobs)}; failed job logs were not collected."
+            reasons.append("failed_jobs_without_logs")
+            confidence = 0.62
+        recommended_next_action = "prepare_patch_plan_from_failed_job_signal_without_mutating_github"
+
+    if not suspected_failed_jobs:
+        suspected_failed_jobs.append("none")
+    if not reasons:
+        reasons.append("read_only_actions_evidence_evaluated")
+    diagnosis_hash = _stable_hash(
+        {
+            "fetch_id": fetch_result.fetch_id,
+            "status": status,
+            "reasons": tuple(reasons),
+            "suspected_failed_jobs": tuple(suspected_failed_jobs),
+            "diagnosed_at": diagnosed_at,
+        }
+    )
+    return GitHubActionsFailureDiagnosis(
+        diagnosis_id=f"github-actions-failure-diagnosis:{diagnosis_hash}",
+        repo=fetch_result.repo,
+        workflow_run_id=fetch_result.workflow_run_id,
+        status=status,
+        failure_summary=failure_summary,
+        suspected_failed_jobs=tuple(dict.fromkeys(suspected_failed_jobs)),
+        reasons=tuple(dict.fromkeys(reasons)),
+        evidence_refs=tuple(fetch_result.evidence_refs),
+        blocked_actions=fetch_result.blocked_actions,
+        recommended_next_action=recommended_next_action,
+        confidence=confidence,
+        write_authority_granted=False,
+        diagnosed_at=diagnosed_at,
+    )
+
+
 def build_pr_safety_projection_from_github_fetch_receipt(
     *,
     fetch_receipt: CausalCapabilityReceipt,
@@ -869,6 +1298,54 @@ def admit_github_read_only_evidence_collection(
         live_connector_read_admitted=True,
         live_connector_call_performed=False,
         write_authority_granted=False,
+        admitted_at=admitted_at,
+    )
+
+
+def admit_github_actions_failure_evidence_collection(
+    request: GitHubActionsFailureEvidenceAdmissionRequest,
+    *,
+    clock: Callable[[], str],
+) -> GitHubActionsFailureEvidenceAdmission:
+    """Admit a live read-only GitHub Actions failure evidence plan without execution."""
+
+    admitted_at = require_datetime_text(clock(), "admitted_at")
+    identity_hash = _stable_hash(
+        {
+            "actor_id": request.actor_id,
+            "repo": request.repo,
+            "workflow_run_id": request.workflow_run_id,
+            "requested_evidence_kinds": request.requested_evidence_kinds,
+            "requested_at": request.requested_at,
+            "surface_event_id": request.surface_event_id,
+            "workspace_id": request.workspace_id,
+            "max_failed_job_logs": request.max_failed_job_logs,
+        }
+    )
+    planned_refs = tuple(
+        f"github-live-read://{request.repo}/actions/runs/{request.workflow_run_id}/{kind}"
+        for kind in request.requested_evidence_kinds
+    )
+    return GitHubActionsFailureEvidenceAdmission(
+        admission_id=f"github-actions-failure-admission:{identity_hash}",
+        capability_id=GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID,
+        actor_id=request.actor_id,
+        workspace_id=request.workspace_id,
+        repo=request.repo,
+        workflow_run_id=request.workflow_run_id,
+        requested_evidence_kinds=request.requested_evidence_kinds,
+        planned_evidence_refs=planned_refs,
+        allowed_tools=_LIVE_READ_ALLOWED_TOOLS,
+        allowed_networks=_LIVE_READ_ALLOWED_NETWORKS,
+        required_secret_scope=_LIVE_READ_SECRET_SCOPE,
+        blocked_actions=_ACTIONS_FAILURE_BLOCKED_ACTIONS,
+        authority_ref=request.authority_ref,
+        policy_decision="allow_read_only_connector_lease",
+        solver_outcome="AwaitingEvidence",
+        live_connector_read_admitted=True,
+        live_connector_call_performed=False,
+        write_authority_granted=False,
+        max_failed_job_logs=request.max_failed_job_logs,
         admitted_at=admitted_at,
     )
 
@@ -1115,6 +1592,73 @@ def build_github_pr_safety_workroom_read_model(
     }
 
 
+def build_github_actions_failure_workroom_read_model(
+    *,
+    actor_id: str,
+    workspace_id: str,
+    repo: str,
+    workflow_run_id: int,
+    surface_event_id: str,
+    occurred_at: str,
+    clock: Callable[[], str],
+    requested_evidence_kinds: tuple[str, ...] = ("workflow_run", "jobs", "failed_job_logs"),
+) -> dict[str, Any]:
+    """Build the operator Workroom read model for Actions failure diagnosis."""
+
+    generated_at = require_datetime_text(clock(), "generated_at")
+    admission = admit_github_actions_failure_evidence_collection(
+        GitHubActionsFailureEvidenceAdmissionRequest(
+            actor_id=actor_id,
+            workspace_id=workspace_id,
+            repo=repo,
+            workflow_run_id=workflow_run_id,
+            requested_evidence_kinds=requested_evidence_kinds,
+            requested_at=occurred_at,
+            surface_event_id=surface_event_id,
+        ),
+        clock=clock,
+    )
+    passport = UniversalCapabilityPassport(
+        passport_id=GITHUB_ACTIONS_FAILURE_CAPABILITY_ID,
+        name="GitHub Actions Failure Diagnosis",
+        domain="software_governance",
+        inputs=("repo", "workflow_run_id", "actor_id", "requested_evidence_kinds"),
+        outputs=("failure_summary", "suspected_failed_jobs", "recommended_next_action", "receipt"),
+        required_evidence=("github_actions_workflow_run", "github_actions_jobs", "failed_job_log_digest"),
+        allowed_tools=("github.read.workflow_run", "github.read.workflow_jobs", "github.read.job_logs"),
+        blocked_actions=_ACTIONS_FAILURE_BLOCKED_ACTIONS,
+        risk_class=FabricRiskClass.CLASS_0_OBSERVE,
+        verification_rules=(
+            "no_failure_diagnosis_without_workflow_run_and_jobs",
+            "no_log_claim_without_hash_bound_log_digest",
+            "no_github_mutation_from_diagnosis",
+        ),
+        receipt_fields=("actor", "repo", "workflow_run", "evidence_used", "diagnosis", "actions_blocked"),
+        memory_policy="Store receipt metadata and bounded log signals only; do not store raw full job logs.",
+    )
+    return {
+        "schema_ref": "urn:mullusi:read-model:github-operations-actions-failure-workroom:1",
+        "generated_at": generated_at,
+        "capability_id": GITHUB_ACTIONS_FAILURE_CAPABILITY_ID,
+        "surface": GITHUB_WORKROOM_SURFACE,
+        "actor_id": require_non_empty_text(actor_id, "actor_id"),
+        "workspace_id": require_non_empty_text(workspace_id, "workspace_id"),
+        "repo": require_non_empty_text(repo, "repo"),
+        "workflow_run_id": workflow_run_id,
+        "status": "awaiting_evidence",
+        "outcome": "AwaitingEvidence",
+        "required_evidence": list(passport.required_evidence),
+        "allowed_tools": list(passport.allowed_tools),
+        "blocked_actions": list(_ACTIONS_FAILURE_BLOCKED_ACTIONS),
+        "live_read_admission": admission.to_json_dict(),
+        "passport": passport.to_json_dict(),
+        "effect_boundary": dict(_EFFECT_BOUNDARY),
+        "raw_tool_surface_exposed": False,
+        "governed": True,
+        "execution_allowed": False,
+    }
+
+
 def render_github_pr_safety_workroom_html(read_model: Mapping[str, Any]) -> str:
     """Render the browser-facing operator Workroom panel."""
 
@@ -1226,6 +1770,109 @@ liveReadForm.addEventListener("submit", async (event) => {{
 </html>"""
 
 
+def render_github_actions_failure_workroom_html(read_model: Mapping[str, Any]) -> str:
+    """Render the browser-facing Actions failure diagnosis panel."""
+
+    repo = _html(read_model.get("repo", ""))
+    workflow_run_id = _html(str(read_model.get("workflow_run_id", "")))
+    status = _html(read_model.get("status", "awaiting_evidence"))
+    outcome = _html(read_model.get("outcome", "AwaitingEvidence"))
+    blocked_actions = "".join(f"<li>{_html(action)}</li>" for action in read_model.get("blocked_actions", ()))
+    required_evidence = "".join(f"<li>{_html(item)}</li>" for item in read_model.get("required_evidence", ()))
+    github_call_allowed = str(read_model.get("effect_boundary", {}).get("github_call_allowed", False)).lower()
+    mutation_allowed = str(read_model.get("effect_boundary", {}).get("repository_mutation_allowed", False)).lower()
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullusi GitHub Actions Failure Diagnosis</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 2rem; color: #17202a; background: #f7f9fb; }}
+    main {{ max-width: 1080px; margin: 0 auto; }}
+    section, form {{ background: #fff; border: 1px solid #d8dee8; border-radius: 8px; padding: 1rem; margin: 1rem 0; }}
+    label {{ display: block; font-weight: 650; margin-top: .75rem; }}
+    input {{ width: 100%; box-sizing: border-box; margin-top: .25rem; padding: .55rem; border: 1px solid #aeb8c7; border-radius: 6px; }}
+    button {{ margin-top: .9rem; padding: .55rem .85rem; border: 1px solid #1f5f9f; border-radius: 6px; background: #1f5f9f; color: #fff; font-weight: 700; }}
+    pre {{ overflow: auto; background: #0f1720; color: #e8eef7; padding: .85rem; border-radius: 6px; min-height: 4rem; }}
+    dl {{ display: grid; grid-template-columns: 210px 1fr; gap: .5rem 1rem; }}
+    dt {{ font-weight: 700; }}
+    dd {{ margin: 0; }}
+    code {{ background: #eef2f6; padding: .15rem .35rem; border-radius: 4px; }}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mullusi GitHub Actions Failure Diagnosis</h1>
+  <section>
+    <dl>
+      <dt>Status</dt><dd><code>{status}</code></dd>
+      <dt>Outcome</dt><dd><code>{outcome}</code></dd>
+      <dt>Repository</dt><dd>{repo}</dd>
+      <dt>Workflow run</dt><dd>{workflow_run_id}</dd>
+      <dt>GitHub call allowed</dt><dd><code>{github_call_allowed}</code></dd>
+      <dt>Repository mutation allowed</dt><dd><code>{mutation_allowed}</code></dd>
+    </dl>
+  </section>
+  <form method="get" action="/operator/github-operations/actions-failure">
+    <label>Repository <input name="repo" value="{repo}"></label>
+    <label>Workflow run id <input name="workflow_run_id" value="{workflow_run_id}" inputmode="numeric"></label>
+    <button type="submit">Preview</button>
+  </form>
+  <form id="github-actions-read-form">
+    <label>GitHub read token <input id="github-actions-read-token" name="access_token" type="password" autocomplete="off"></label>
+    <input id="github-actions-repo" name="repo" type="hidden" value="{repo}">
+    <input id="github-actions-run" name="workflow_run_id" type="hidden" value="{workflow_run_id}">
+    <button type="submit">Diagnose Failure</button>
+  </form>
+  <section>
+    <h2>Diagnosis Result</h2>
+    <pre id="github-actions-read-result">Awaiting read-only Actions evidence execution.</pre>
+  </section>
+  <section>
+    <h2>Required Evidence</h2>
+    <ul>{required_evidence}</ul>
+  </section>
+  <section>
+    <h2>Blocked Actions</h2>
+    <ul>{blocked_actions}</ul>
+  </section>
+</main>
+<script>
+const actionsReadForm = document.getElementById("github-actions-read-form");
+const actionsReadResult = document.getElementById("github-actions-read-result");
+actionsReadForm.addEventListener("submit", async (event) => {{
+  event.preventDefault();
+  actionsReadResult.textContent = "Running read-only GitHub Actions failure diagnosis...";
+  const tokenInput = document.getElementById("github-actions-read-token");
+  const payload = {{
+    repo: document.getElementById("github-actions-repo").value,
+    workflow_run_id: Number(document.getElementById("github-actions-run").value),
+    requested_evidence_kinds: ["workflow_run", "jobs", "failed_job_logs"],
+    access_token: tokenInput.value
+  }};
+  tokenInput.value = "";
+  try {{
+    const response = await fetch("/operator/github-operations/actions-failure/read-evidence", {{
+      method: "POST",
+      headers: {{"Content-Type": "application/json"}},
+      body: JSON.stringify(payload)
+    }});
+    const result = await response.json();
+    actionsReadResult.textContent = JSON.stringify(result, null, 2);
+  }} catch (error) {{
+    actionsReadResult.textContent = JSON.stringify({{
+      governed: true,
+      error_code: "github_actions_failure_ui_failed",
+      error: String(error)
+    }}, null, 2);
+  }}
+}});
+</script>
+</body>
+</html>"""
+
+
 def _build_episode_steps(
     event: UniversalGovernedEvent,
     compilation: SymbolicEventCompilation,
@@ -1282,6 +1929,25 @@ def _text_hash(payload: str) -> str:
 def _validate_fetch_admission(admission: GitHubReadOnlyEvidenceAdmission) -> None:
     if not isinstance(admission, GitHubReadOnlyEvidenceAdmission):
         raise ValueError("admission must be a GitHubReadOnlyEvidenceAdmission")
+    if admission.capability_id != GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID:
+        raise ValueError("admission capability must be connector.github.read")
+    if admission.live_connector_read_admitted is not True:
+        raise ValueError("live connector read must be admitted before fetch")
+    if admission.live_connector_call_performed is not False:
+        raise ValueError("admission must not already claim connector execution")
+    if admission.write_authority_granted is not False:
+        raise ValueError("read-only fetch cannot use write authority")
+    if admission.allowed_tools != _LIVE_READ_ALLOWED_TOOLS:
+        raise ValueError("admission allowed tools do not match GitHub read-only worker")
+    if admission.allowed_networks != _LIVE_READ_ALLOWED_NETWORKS:
+        raise ValueError("admission allowed networks do not match GitHub read-only network")
+    if admission.required_secret_scope != _LIVE_READ_SECRET_SCOPE:
+        raise ValueError("admission secret scope does not match GitHub read-only scope")
+
+
+def _validate_actions_failure_fetch_admission(admission: GitHubActionsFailureEvidenceAdmission) -> None:
+    if not isinstance(admission, GitHubActionsFailureEvidenceAdmission):
+        raise ValueError("admission must be a GitHubActionsFailureEvidenceAdmission")
     if admission.capability_id != GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID:
         raise ValueError("admission capability must be connector.github.read")
     if admission.live_connector_read_admitted is not True:
@@ -1359,6 +2025,83 @@ def _summarize_checks(payload: Any) -> dict[str, Any]:
         "total_count": int(payload.get("total_count", len(check_runs))),
         "conclusion_counts": conclusion_counts,
         "status_counts": status_counts,
+    }
+
+
+def _summarize_workflow_run(payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, Mapping):
+        raise ValueError("workflow run response must be an object")
+    return {
+        "run_id": payload.get("id"),
+        "name": payload.get("name", ""),
+        "display_title": payload.get("display_title", ""),
+        "status": payload.get("status", ""),
+        "conclusion": payload.get("conclusion", ""),
+        "event": payload.get("event", ""),
+        "head_branch": payload.get("head_branch", ""),
+        "head_sha": payload.get("head_sha", ""),
+        "run_number": payload.get("run_number", 0),
+        "html_url": payload.get("html_url", ""),
+    }
+
+
+def _summarize_workflow_jobs(payload: Any) -> tuple[Mapping[str, Any], ...]:
+    if not isinstance(payload, Mapping):
+        raise ValueError("workflow jobs response must be an object")
+    jobs = payload.get("jobs", [])
+    if not isinstance(jobs, list):
+        raise ValueError("workflow jobs response jobs must be an array")
+    summaries: list[Mapping[str, Any]] = []
+    for index, item in enumerate(jobs):
+        if not isinstance(item, Mapping):
+            raise ValueError(f"workflow job entry {index} must be an object")
+        steps = item.get("steps", [])
+        failed_steps: list[str] = []
+        if isinstance(steps, list):
+            for step in steps:
+                if isinstance(step, Mapping) and str(step.get("conclusion") or "") not in {"success", "skipped", "neutral", ""}:
+                    failed_steps.append(str(step.get("name") or "unnamed_step"))
+        summaries.append(
+            {
+                "job_id": item.get("id"),
+                "name": item.get("name", ""),
+                "status": item.get("status", ""),
+                "conclusion": item.get("conclusion", ""),
+                "started_at": item.get("started_at", ""),
+                "completed_at": item.get("completed_at", ""),
+                "failed_steps": failed_steps,
+            }
+        )
+    return tuple(summaries)
+
+
+def _summarize_failed_job_log(*, job: Mapping[str, Any], log_payload: str, log_digest: str) -> Mapping[str, Any]:
+    if not log_digest.startswith("sha256:"):
+        raise ValueError("log_digest must use sha256: prefix")
+    candidate_lines: list[str] = []
+    for line in log_payload.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        lowered = stripped.lower()
+        if any(marker in lowered for marker in ("error", "failed", "failure", "exception", "traceback")):
+            candidate_lines.append(stripped[:240])
+        if len(candidate_lines) >= 5:
+            break
+    if not candidate_lines:
+        for line in log_payload.splitlines():
+            stripped = line.strip()
+            if stripped:
+                candidate_lines.append(stripped[:240])
+            if len(candidate_lines) >= 3:
+                break
+    return {
+        "job_id": job.get("job_id"),
+        "job_name": job.get("name", ""),
+        "log_digest": log_digest,
+        "first_failure_signal": candidate_lines[0] if candidate_lines else "no_bounded_failure_signal_found",
+        "bounded_failure_signals": candidate_lines,
+        "raw_log_persisted": False,
     }
 
 
