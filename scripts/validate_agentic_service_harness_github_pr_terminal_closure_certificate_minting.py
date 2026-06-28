@@ -158,6 +158,71 @@ ACTUAL_DIFF_DECISION_VALUE_RECORD_EVIDENCE_BINDINGS = (
     ("binds_merge_state", ("actual_diff_decision_value_request_evidence", "binds_merge_state")),
     ("binds_branch_deletion_state", ("actual_diff_decision_value_request_evidence", "binds_branch_deletion_state")),
 )
+COMMAND_PREVIEW_DECISION_VALUE_RECORD_EVIDENCE_BINDINGS = (
+    ("source_decision_value_record_id", ("record_id",)),
+    ("source_decision_value_record_ref", None),
+    ("source_request_id", ("command_preview_decision_value_request_evidence", "source_request_id")),
+    ("source_request_ref", ("source_request_ref",)),
+    ("source_request_status", ("source_request_status",)),
+    ("source_rejection_binding_id", ("command_preview_decision_value_request_evidence", "source_rejection_binding_id")),
+    ("source_rejection_witness_ref", ("command_preview_decision_value_request_evidence", "source_rejection_witness_ref")),
+    (
+        "source_decision_contract_binding_id",
+        ("command_preview_decision_value_request_evidence", "source_decision_contract_binding_id"),
+    ),
+    ("source_decision_contract_ref", ("command_preview_decision_value_request_evidence", "source_decision_contract_ref")),
+    ("operator_decision_ref", ("witness_ref",)),
+    ("allowed_decision_values", ("command_preview_decision_value_request_evidence", "allowed_decision_values")),
+    ("decision_value", ("decision_value",)),
+    ("operator_decision_gate_satisfied", ("operator_decision_gate_satisfied",)),
+    ("certificate_minting_decision", ("certificate_minting_decision",)),
+    ("operator_decision_value_collected", ("operator_decision_value_collected",)),
+    ("explicit_operator_decision_value_present", ("explicit_operator_decision_value_present",)),
+    (
+        "source_approval_gate_binding_id",
+        ("command_preview_decision_value_request_evidence", "source_approval_gate_binding_id"),
+    ),
+    ("source_approval_gate_ref", ("command_preview_decision_value_request_evidence", "source_approval_gate_ref")),
+    (
+        "command_preview_terminal_closure_certificate_witness_ref",
+        ("command_preview_decision_value_request_evidence", "command_preview_terminal_closure_certificate_witness_ref"),
+    ),
+    (
+        "command_preview_effect_reconciliation_witness_ref",
+        ("command_preview_decision_value_request_evidence", "command_preview_effect_reconciliation_witness_ref"),
+    ),
+    (
+        "command_preview_ci_gate_before_ready_for_review_witness_ref",
+        ("command_preview_decision_value_request_evidence", "command_preview_ci_gate_before_ready_for_review_witness_ref"),
+    ),
+    (
+        "command_preview_repository_effect_rollback_plan_witness_ref",
+        ("command_preview_decision_value_request_evidence", "command_preview_repository_effect_rollback_plan_witness_ref"),
+    ),
+    (
+        "command_preview_uao_admission_witness_ref",
+        ("command_preview_decision_value_request_evidence", "command_preview_uao_admission_witness_ref"),
+    ),
+    (
+        "command_preview_branch_write_binding_ref",
+        ("command_preview_decision_value_request_evidence", "command_preview_branch_write_binding_ref"),
+    ),
+    (
+        "command_preview_operator_response_binding_ref",
+        ("command_preview_decision_value_request_evidence", "command_preview_operator_response_binding_ref"),
+    ),
+    (
+        "command_preview_operator_response_witness_ref",
+        ("command_preview_decision_value_request_evidence", "command_preview_operator_response_witness_ref"),
+    ),
+    (
+        "command_preview_operator_approval_request_binding_ref",
+        ("command_preview_decision_value_request_evidence", "command_preview_operator_approval_request_binding_ref"),
+    ),
+    ("command_preview_ref", ("command_preview_decision_value_request_evidence", "command_preview_ref")),
+    ("redacted_command_preview", ("command_preview_decision_value_request_evidence", "redacted_command_preview")),
+    ("command_preview_bound", ("command_preview_decision_value_request_evidence", "command_preview_bound")),
+)
 REQUIRED_RECEIPT_REFS = {
     "github_pr_terminal_closure_certificate_minting_schema": (
         "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_minting.schema.json"
@@ -203,6 +268,8 @@ REQUIRED_TRUE_FLAGS = (
     "effect_reconciliation_match",
     "forbidden_effects_checked",
     "read_only_inputs",
+    "requires_command_preview_decision_value_record_evidence",
+    "requires_command_preview_decision_value_request_evidence",
     "requires_actual_diff_decision_value_record_evidence",
     "requires_actual_diff_decision_value_request_evidence",
     "operator_decision_value_collected",
@@ -459,6 +526,7 @@ def _validate_source_bindings(
             errors,
             "source_decision_record",
         )
+        _validate_command_preview_decision_value_record_evidence(payload, source_decision_record, errors, label)
         _validate_actual_diff_decision_value_record_evidence(payload, source_decision_record, errors, label)
         for source_path, target_path in (
             (("scope", "tenant_id"), ("scope", "tenant_id")),
@@ -536,6 +604,53 @@ def _validate_actual_diff_decision_value_record_evidence(
         _require_equal(
             payload,
             ("actual_diff_decision_value_record_evidence", evidence_key),
+            expected,
+            errors,
+            label,
+        )
+
+
+def _validate_command_preview_decision_value_record_evidence(
+    payload: Mapping[str, Any],
+    source_decision_record: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    evidence = _get_nested(payload, ("command_preview_decision_value_record_evidence",))
+    if not isinstance(evidence, Mapping):
+        errors.append(f"{label}: command_preview_decision_value_record_evidence must be an object")
+        return
+
+    _require_equal(
+        payload,
+        ("command_preview_decision_value_record_evidence", "requires_command_preview_decision_value_record_evidence"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_decision_value_record_evidence", "requires_command_preview_decision_value_request_evidence"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_decision_value_record_evidence", "source_decision_value_record_ref"),
+        _get_nested(payload, ("source_decision_value_record_ref",)),
+        errors,
+        label,
+    )
+    for evidence_key, source_path in COMMAND_PREVIEW_DECISION_VALUE_RECORD_EVIDENCE_BINDINGS:
+        expected = (
+            EXPECTED_SOURCE_DECISION_VALUE_RECORD_REF
+            if source_path is None
+            else _get_nested(source_decision_record, source_path)
+        )
+        _require_equal(
+            payload,
+            ("command_preview_decision_value_record_evidence", evidence_key),
             expected,
             errors,
             label,
