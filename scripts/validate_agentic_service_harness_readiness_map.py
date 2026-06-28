@@ -1553,10 +1553,20 @@ def _validate_github_pr_terminal_closure_ready(
             "missing ready row: GitHub PR operator approval request command-preview binding PR"
         )
 
+    pr_operator_response_command_preview_row = re.search(
+        r"^\| GitHub PR operator response command-preview binding PR \| READY \| .+agentic_service_harness_github_pr_operator_response_command_preview_binding.+operator response witness.+command-preview-bound approval request.+operator response.+command execution.+branch writes.+pull-request creation.+repository writes.+connector calls.+mutation routes.+receipt-store append.+secret material.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if pr_operator_response_command_preview_row is None:
+        errors.append(
+            "missing ready row: GitHub PR operator response command-preview binding PR"
+        )
+
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind operator response witness to command-preview approval",
+        "harness(pr): bind branch-write authority to command-preview response",
     )
     positions: list[int] = []
     for marker in sequence_markers:

@@ -263,6 +263,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-response-witness:1"
     },
     {
+      "path": "schemas/agentic_service_harness_github_pr_operator_response_command_preview_binding.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-operator-response-command-preview-binding",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-response-command-preview-binding:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.schema.json",
       "schema_id": "agentic-service-harness-github-pr-repository-effect-rollback-plan-witness",
       "surface": "runtime",
