@@ -470,6 +470,7 @@ class AutonomousRequestEpisodeSummaryView:
     stage_verification_bindings: tuple[Mapping[str, object], ...] = ()
     stage_policy_bindings: tuple[Mapping[str, object], ...] = ()
     stage_rollback_bindings: tuple[Mapping[str, object], ...] = ()
+    stage_dependency_bindings: tuple[Mapping[str, object], ...] = ()
 
     @staticmethod
     def from_receipt(
@@ -540,6 +541,16 @@ class AutonomousRequestEpisodeSummaryView:
                 for step in receipt.step_receipts
                 if step.plan_stage_id is not None
             ),
+            stage_dependency_bindings=tuple(
+                {
+                    "stage_id": step.plan_stage_id,
+                    "receipt_ref": step.receipt_ref,
+                    "predecessor_stage_ids": list(step.plan_predecessors),
+                    "dependency_status": _autonomous_request_dependency_status(step.structured_error_codes),
+                }
+                for step in receipt.step_receipts
+                if step.plan_stage_id is not None
+            ),
             rollback_ref=receipt.rollback_ref,
         )
 
@@ -549,6 +560,13 @@ def _autonomous_request_rollback_scope(action_class: str) -> str:
     if action_class == "execute_write":
         return "local_reversible"
     return "no_effect"
+
+
+def _autonomous_request_dependency_status(structured_error_codes: tuple[str, ...]) -> str:
+    """Classify whether a stage dependency chain admitted or blocked execution."""
+    if "dependency_blocked" in structured_error_codes:
+        return "blocked"
+    return "satisfied"
 
 
 # ---------------------------------------------------------------------------
