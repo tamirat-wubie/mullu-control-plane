@@ -89,9 +89,14 @@
           "category": "approval",
           "debt_id": "agentic_control.evidence.append.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -165,7 +170,7 @@
       "debt_severity": "high",
       "family": "agentic_control",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -558,9 +563,14 @@
           "category": "approval",
           "debt_id": "agentic_control.mission.define.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -633,7 +643,7 @@
       "debt_severity": "high",
       "family": "agentic_control",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -1652,9 +1662,14 @@
           "category": "approval",
           "debt_id": "browser.submit.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -1742,7 +1757,7 @@
       "debt_severity": "high",
       "family": "browser",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -1926,9 +1941,14 @@
           "category": "approval",
           "debt_id": "calendar.invite.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -2004,7 +2024,7 @@
       "debt_severity": "high",
       "family": "communication",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -2097,9 +2117,14 @@
           "category": "approval",
           "debt_id": "calendar.reschedule.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -2176,7 +2201,7 @@
       "debt_severity": "high",
       "family": "communication",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -2190,9 +2215,14 @@
           "category": "approval",
           "debt_id": "calendar.schedule.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -2268,7 +2298,7 @@
       "debt_severity": "high",
       "family": "communication",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -2360,9 +2390,14 @@
           "category": "approval",
           "debt_id": "computer.command.run.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -2447,7 +2482,7 @@
       "debt_severity": "high",
       "family": "computer",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -2666,9 +2701,14 @@
           "category": "approval",
           "debt_id": "connector.github.write.with_approval.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -2742,7 +2782,7 @@
       "debt_severity": "high",
       "family": "connector",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -2835,9 +2875,14 @@
           "category": "approval",
           "debt_id": "connector.google_drive.write.with_approval.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -2913,7 +2958,7 @@
       "debt_severity": "high",
       "family": "connector",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -3004,9 +3049,14 @@
           "category": "approval",
           "debt_id": "connector.postgres.write.with_approval.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -3080,7 +3130,7 @@
       "debt_severity": "high",
       "family": "connector",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -3402,9 +3452,14 @@
           "category": "approval",
           "debt_id": "deployment.witness.publish.with_approval.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -3479,7 +3534,7 @@
       "debt_severity": "high",
       "family": "deployment",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -4299,9 +4354,14 @@
           "category": "approval",
           "debt_id": "email.send.with_approval.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -4388,7 +4448,7 @@
       "debt_severity": "high",
       "family": "communication",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -4704,9 +4764,14 @@
           "category": "approval",
           "debt_id": "financial.refund.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -4793,7 +4858,7 @@
       "debt_severity": "high",
       "family": "financial",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -4807,9 +4872,14 @@
           "category": "approval",
           "debt_id": "financial.send_payment.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -4856,7 +4926,7 @@
       "debt_severity": "high",
       "family": "financial",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Needs approval"
     },
     {
@@ -5020,9 +5090,14 @@
           "category": "approval",
           "debt_id": "github.open_pull_request.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -5098,7 +5173,7 @@
       "debt_severity": "high",
       "family": "connector",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -5203,9 +5278,14 @@
           "category": "approval",
           "debt_id": "messaging.chat.send.with_approval.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -5292,7 +5372,7 @@
       "debt_severity": "high",
       "family": "messaging",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -5397,9 +5477,14 @@
           "category": "approval",
           "debt_id": "messaging.sms.send.with_approval.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -5486,7 +5571,7 @@
       "debt_severity": "high",
       "family": "messaging",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -6519,9 +6604,14 @@
           "category": "approval",
           "debt_id": "phone.call.place.with_approval.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -6597,7 +6687,7 @@
       "debt_severity": "high",
       "family": "phone",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -6689,9 +6779,14 @@
           "category": "approval",
           "debt_id": "phone.call.terminate.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -6778,7 +6873,7 @@
       "debt_severity": "high",
       "family": "phone",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -6871,9 +6966,14 @@
           "category": "approval",
           "debt_id": "phone.call.transfer.with_approval.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -6949,7 +7049,7 @@
       "debt_severity": "high",
       "family": "phone",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -6963,9 +7063,14 @@
           "category": "approval",
           "debt_id": "physical.sandbox_replay.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -7030,7 +7135,7 @@
       "debt_severity": "high",
       "family": "physical",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -7044,9 +7149,14 @@
           "category": "approval",
           "debt_id": "physical.unlock_door.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -7120,7 +7230,7 @@
       "debt_severity": "high",
       "family": "physical",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -7211,9 +7321,14 @@
           "category": "approval",
           "debt_id": "software_dev.change.run.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -7288,7 +7403,7 @@
       "debt_severity": "high",
       "family": "software_dev",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -7609,9 +7724,14 @@
           "category": "approval",
           "debt_id": "software_dev.pr_candidate.prepare.approval.missing_governed_approval",
           "description": "missing governed approval",
-          "fix": "collect governed approval receipt",
+          "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
           "missing_refs": [
-            "approval_evidence"
+            "gate.approval.required",
+            "approval_decision_receipt",
+            "approval_chain",
+            "approval_refs",
+            "actor_id",
+            "separation_of_duty"
           ],
           "severity": "high"
         },
@@ -7686,7 +7806,7 @@
       "debt_severity": "high",
       "family": "software_dev",
       "live_action_enabled": false,
-      "next_action": "collect governed approval receipt",
+      "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "operator_status": "Live action disabled"
     },
     {
@@ -8457,9 +8577,14 @@
       "debt_id": "agentic_control.evidence.append.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "agentic_control",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8469,9 +8594,14 @@
       "debt_id": "agentic_control.mission.define.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "agentic_control",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8481,9 +8611,14 @@
       "debt_id": "browser.submit.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "browser",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8493,9 +8628,14 @@
       "debt_id": "calendar.invite.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "communication",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8505,9 +8645,14 @@
       "debt_id": "calendar.reschedule.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "communication",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8517,9 +8662,14 @@
       "debt_id": "calendar.schedule.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "communication",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8529,9 +8679,14 @@
       "debt_id": "computer.command.run.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "computer",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8541,9 +8696,14 @@
       "debt_id": "connector.github.write.with_approval.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "connector",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8553,9 +8713,14 @@
       "debt_id": "connector.google_drive.write.with_approval.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "connector",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8565,9 +8730,14 @@
       "debt_id": "connector.postgres.write.with_approval.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "connector",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8577,9 +8747,14 @@
       "debt_id": "deployment.witness.publish.with_approval.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "deployment",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8589,9 +8764,14 @@
       "debt_id": "email.send.with_approval.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "communication",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8601,9 +8781,14 @@
       "debt_id": "financial.refund.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "financial",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8613,9 +8798,14 @@
       "debt_id": "financial.send_payment.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "financial",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8625,9 +8815,14 @@
       "debt_id": "github.open_pull_request.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "connector",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8637,9 +8832,14 @@
       "debt_id": "messaging.chat.send.with_approval.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "messaging",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8649,9 +8849,14 @@
       "debt_id": "messaging.sms.send.with_approval.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "messaging",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8661,9 +8866,14 @@
       "debt_id": "phone.call.place.with_approval.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "phone",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8673,9 +8883,14 @@
       "debt_id": "phone.call.terminate.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "phone",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8685,9 +8900,14 @@
       "debt_id": "phone.call.transfer.with_approval.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "phone",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8697,9 +8917,14 @@
       "debt_id": "physical.sandbox_replay.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "physical",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8709,9 +8934,14 @@
       "debt_id": "physical.unlock_door.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "physical",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8721,9 +8951,14 @@
       "debt_id": "software_dev.change.run.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "software_dev",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },
@@ -8733,9 +8968,14 @@
       "debt_id": "software_dev.pr_candidate.prepare.approval.missing_governed_approval",
       "description": "missing governed approval",
       "family": "software_dev",
-      "fix": "collect governed approval receipt",
+      "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
       "missing_refs": [
-        "approval_evidence"
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty"
       ],
       "severity": "high"
     },

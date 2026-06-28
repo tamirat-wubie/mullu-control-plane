@@ -356,7 +356,13 @@
         "approved",
         "approval_refs",
         "missing_approval",
-        "approval_state"
+        "approval_state",
+        "required_approval_gate_ids",
+        "required_approval_inputs",
+        "required_approval_receipts",
+        "approval_blocked_actions",
+        "missing_approval_refs",
+        "next_approval_action"
       ],
       "properties": {
         "approval_required": {
@@ -383,6 +389,26 @@
             "required_missing",
             "approved"
           ]
+        },
+        "required_approval_gate_ids": {
+          "$ref": "#/$defs/string_list"
+        },
+        "required_approval_inputs": {
+          "$ref": "#/$defs/string_list"
+        },
+        "required_approval_receipts": {
+          "$ref": "#/$defs/string_list"
+        },
+        "approval_blocked_actions": {
+          "$ref": "#/$defs/string_list"
+        },
+        "missing_approval_refs": {
+          "$ref": "#/$defs/string_list"
+        },
+        "next_approval_action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320
         }
       }
     },
