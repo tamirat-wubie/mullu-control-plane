@@ -2516,6 +2516,13 @@ def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[st
     external_handoff = receipt.get("external_handoff", {})
     if not isinstance(external_handoff, Mapping):
         external_handoff = {}
+    rollback = receipt.get("rollback", {})
+    if not isinstance(rollback, Mapping):
+        rollback = {}
+    rollback_commands = rollback.get("commands", ())
+    if not isinstance(rollback_commands, list):
+        rollback_commands = []
+    rollback_command_count = len([command for command in rollback_commands if str(command).strip()])
     first_next_evidence = next_evidence[0] if next_evidence else "none"
     return {
         "read_model_id": "operator_developer_workflow_status.read_model",
@@ -2535,6 +2542,8 @@ def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[st
             "local_candidate_ready": local_candidate.get("candidate_ready") is True,
             "pr_tool_admitted": local_candidate.get("pr_tool_admitted") is True,
             "external_approval_status": str(external_approval.get("status") or "pending"),
+            "rollback_required": rollback.get("required") is True,
+            "rollback_command_count": rollback_command_count,
             "command_preview_rendered": external_handoff.get("command_preview_rendered") is True,
             "execution_performed": False,
             "receipt_hash": str(receipt.get("receipt_hash") or ""),
@@ -4343,6 +4352,9 @@ def _developer_workflow_operator_receipt_projection(
         "external_approval_status": "pending",
         "local_candidate_ready": ready_for_external,
         "pr_tool_admitted": ready_for_external,
+        "rollback_required": True,
+        "rollback_command_preview": "external PR rollback command unavailable until generated operator receipt is loaded",
+        "rollback_command_count": 0,
         "command_preview_rendered": command_preview.get("ready") is True,
         "next_evidence": [
             str(item)
@@ -4377,6 +4389,16 @@ def _developer_workflow_operator_receipt_from_generated_receipt(
     local_candidate = receipt.get("local_pr_candidate", {})
     if not isinstance(local_candidate, Mapping):
         local_candidate = {}
+    rollback = receipt.get("rollback", {})
+    if not isinstance(rollback, Mapping):
+        rollback = {}
+    rollback_commands = rollback.get("commands", ())
+    if not isinstance(rollback_commands, list):
+        rollback_commands = []
+    rollback_command_preview = next(
+        (str(command) for command in rollback_commands if str(command).strip()),
+        "rollback command unavailable",
+    )
     next_evidence = receipt.get("next_evidence", ())
     if not isinstance(next_evidence, list):
         next_evidence = []
@@ -4392,6 +4414,9 @@ def _developer_workflow_operator_receipt_from_generated_receipt(
         "external_approval_status": str(external_approval.get("status") or "pending"),
         "local_candidate_ready": local_candidate.get("candidate_ready") is True,
         "pr_tool_admitted": local_candidate.get("pr_tool_admitted") is True,
+        "rollback_required": rollback.get("required") is True,
+        "rollback_command_preview": rollback_command_preview,
+        "rollback_command_count": len([command for command in rollback_commands if str(command).strip()]),
         "command_preview_rendered": external_handoff.get("command_preview_rendered") is True,
         "next_evidence": [str(item) for item in next_evidence if str(item).strip()][:8],
         "external_effects_allowed": False,
@@ -4413,6 +4438,8 @@ def _developer_workflow_operator_receipt_summary(receipt: Mapping[str, Any]) -> 
         "external_approval_status": str(receipt.get("external_approval_status") or "pending"),
         "local_candidate_ready": receipt.get("local_candidate_ready") is True,
         "pr_tool_admitted": receipt.get("pr_tool_admitted") is True,
+        "rollback_required": receipt.get("rollback_required") is True,
+        "rollback_command_count": int(receipt.get("rollback_command_count", 0) or 0),
         "command_preview_rendered": receipt.get("command_preview_rendered") is True,
         "next_evidence_count": len([item for item in next_evidence if str(item).strip()]),
         "execution_performed": False,

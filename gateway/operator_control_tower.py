@@ -4785,6 +4785,13 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     operator_receipt_tool_admitted = developer_workflow_operator_receipt.get("pr_tool_admitted") is True
     operator_receipt_external_ready = developer_workflow_operator_receipt.get("ready_for_external_pr_execution") is True
     operator_receipt_external_effects = developer_workflow_operator_receipt.get("external_effects_allowed") is True
+    operator_receipt_rollback_required = developer_workflow_operator_receipt.get("rollback_required") is True
+    operator_receipt_rollback_command = str(
+        developer_workflow_operator_receipt.get("rollback_command_preview") or "rollback command unavailable"
+    )
+    operator_receipt_rollback_count = int(
+        developer_workflow_operator_receipt.get("rollback_command_count", 0) or 0
+    )
     operator_receipt_next_evidence = developer_workflow_operator_receipt.get("next_evidence", ())
     if not isinstance(operator_receipt_next_evidence, list):
         operator_receipt_next_evidence = []
@@ -5746,6 +5753,9 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
       <span class="metric">PR tool admitted: {escape(str(operator_receipt_tool_admitted).lower())}</span>
       <span class="metric">External PR ready: {escape(str(operator_receipt_external_ready).lower())}</span>
       <span class="metric">Next unlock: {escape(operator_receipt_next_unlock)}</span>
+      <span class="metric">Rollback required: {escape(str(operator_receipt_rollback_required).lower())}</span>
+      <span class="metric">Rollback commands: {operator_receipt_rollback_count}</span>
+      <span class="metric">Rollback preview: {escape(operator_receipt_rollback_command)}</span>
       <span class="metric">Command preview: {escape(str(operator_receipt_preview).lower())}</span>
       <span class="metric">Execution performed: {escape(str(operator_receipt_execution).lower())}</span>
       <span class="metric">External effects allowed: {escape(str(operator_receipt_external_effects).lower())}</span>

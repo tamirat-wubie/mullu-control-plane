@@ -42,6 +42,8 @@
         "local_candidate_ready",
         "pr_tool_admitted",
         "external_approval_status",
+        "rollback_required",
+        "rollback_command_count",
         "command_preview_rendered",
         "execution_performed",
         "receipt_hash"
@@ -54,6 +56,8 @@
         "local_candidate_ready": {"type": "boolean"},
         "pr_tool_admitted": {"type": "boolean"},
         "external_approval_status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "rollback_required": {"type": "boolean"},
+        "rollback_command_count": {"type": "integer", "minimum": 0, "maximum": 16},
         "command_preview_rendered": {"type": "boolean"},
         "execution_performed": {"type": "boolean", "const": false},
         "receipt_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}

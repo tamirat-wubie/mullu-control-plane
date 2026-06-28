@@ -3664,12 +3664,19 @@ def test_operator_control_tower_read_model_surfaces_generated_operator_receipt(
     assert operator_receipt["local_candidate_ready"] is True
     assert operator_receipt["pr_tool_admitted"] is True
     assert operator_receipt["external_effects_allowed"] is False
+    assert operator_receipt["rollback_required"] is True
+    assert operator_receipt["rollback_command_count"] == 2
+    assert operator_receipt["rollback_command_preview"] == (
+        "git push origin --delete codex/developer-workflow-local-readiness"
+    )
     assert operator_receipt["execution_performed"] is False
     assert operator_receipt["command_preview_rendered"] is False
     assert operator_summary["readiness_status"] == "awaiting_external_pr_approval"
     assert operator_summary["external_approval_status"] == "pending"
     assert operator_summary["local_candidate_ready"] is True
     assert operator_summary["pr_tool_admitted"] is True
+    assert operator_summary["rollback_required"] is True
+    assert operator_summary["rollback_command_count"] == 2
     assert operator_summary["execution_performed"] is False
     assert operator_summary["external_effects_allowed"] is False
 
@@ -3694,6 +3701,9 @@ def test_operator_control_tower_html_action_banner_uses_generated_receipt(
     assert "external approval is pending" in response.text
     assert "External approval: pending" in response.text
     assert "PR tool admitted: true" in response.text
+    assert "Rollback required: true" in response.text
+    assert "Rollback commands: 2" in response.text
+    assert "Rollback preview: git push origin --delete codex/developer-workflow-local-readiness" in response.text
     assert "External effects allowed: false" in response.text
 
 
