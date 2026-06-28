@@ -5,6 +5,7 @@ uncollected, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: scripts.validate_agentic_service_harness_github_pr_uao_admission_witness.
 Invariants:
+  - UAO PR admission witness must consume command-preview branch-write evidence.
   - UAO PR admission witness must consume actual-diff branch-write evidence.
   - Missing UAO PR admission never grants branch or PR effects.
   - Remaining witnesses block PR admission.
@@ -26,6 +27,7 @@ def test_github_pr_uao_admission_witness_passes() -> None:
     assert validation.errors == ()
     assert validation.example_count == 1
     assert validation.source_branch_write_binding_ref == validator.EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF
+    assert validation.command_preview_branch_write_binding_ref == validator.EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF
     assert validation.actual_diff_branch_write_binding_ref == validator.EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF
 
 
@@ -33,8 +35,11 @@ def test_github_pr_uao_admission_witness_rejects_collected_authority() -> None:
     payload = validator.build_mutated_uao_admission_witness(
         authority_binding_collected=True,
         authority_granted=True,
+        uao_admission__requires_command_preview_branch_write_binding=False,
         uao_admission__requires_actual_diff_branch_write_binding=False,
         uao_admission__response_witness_satisfied=True,
+        uao_admission__command_preview_bound=False,
+        uao_admission__operator_response_bound=False,
         uao_admission__uao_pr_admission_collected=True,
         uao_admission__pr_creation_authorized_after_binding=True,
         authority_denials__authority_granted=True,
@@ -46,8 +51,11 @@ def test_github_pr_uao_admission_witness_rejects_collected_authority() -> None:
 
     assert "authority_binding_collected must be false" in serialized_errors
     assert "authority_granted must be false" in serialized_errors
+    assert "uao_admission.requires_command_preview_branch_write_binding must be true" in serialized_errors
     assert "uao_admission.requires_actual_diff_branch_write_binding must be true" in serialized_errors
     assert "uao_admission.response_witness_satisfied must be false" in serialized_errors
+    assert "uao_admission.command_preview_bound must be true" in serialized_errors
+    assert "uao_admission.operator_response_bound must be true" in serialized_errors
     assert "uao_admission.uao_pr_admission_collected must be false" in serialized_errors
     assert "uao_admission.pr_creation_authorized_after_binding must be false" in serialized_errors
     assert "authority_denials.authority_granted must be false" in serialized_errors
@@ -101,6 +109,30 @@ def test_github_pr_uao_admission_witness_rejects_actual_diff_branch_write_drift(
     assert "uao_admission.redacted_output_ref" in serialized_errors
 
 
+def test_github_pr_uao_admission_witness_rejects_command_preview_branch_write_drift() -> None:
+    payload = validator.build_mutated_uao_admission_witness(
+        uao_admission__command_preview_operator_response_binding_ref="examples/drifted-command-response.json",
+        uao_admission__command_preview_operator_response_witness_ref="examples/drifted-response.json",
+        uao_admission__command_preview_operator_approval_request_binding_ref="examples/drifted-command-approval.json",
+        uao_admission__command_preview_ref="examples/drifted-command-preview.json",
+        uao_admission__redacted_command_preview="gh pr create --body leaked",
+        uao_admission__argument_vector_template=["gh", "pr", "create"],
+        uao_admission__placeholder_refs=["placeholder://drifted"],
+    )
+
+    errors: list[str] = []
+    validator._validate_uao_admission_witness_semantics(payload, _source_branch_write_binding(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "uao_admission.command_preview_operator_response_binding_ref" in serialized_errors
+    assert "uao_admission.command_preview_operator_response_witness_ref" in serialized_errors
+    assert "uao_admission.command_preview_operator_approval_request_binding_ref" in serialized_errors
+    assert "uao_admission.command_preview_ref" in serialized_errors
+    assert "uao_admission.redacted_command_preview" in serialized_errors
+    assert "uao_admission.argument_vector_template" in serialized_errors
+    assert "uao_admission.placeholder_refs" in serialized_errors
+
+
 def test_github_pr_uao_admission_witness_rejects_witness_drift() -> None:
     payload = validator.build_mutated_uao_admission_witness(
         remaining_witnesses=[
@@ -150,6 +182,7 @@ def test_github_pr_uao_admission_witness_cli_writes_report(tmp_path: Path, capsy
     assert file_payload["ok"] is True
     assert stdout_payload["errors"] == []
     assert file_payload["source_branch_write_binding_ref"] == validator.EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF
+    assert file_payload["command_preview_branch_write_binding_ref"] == validator.EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF
     assert file_payload["actual_diff_branch_write_binding_ref"] == validator.EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF
 
 

@@ -551,8 +551,13 @@ REQUIRED_GITHUB_PR_BRANCH_WRITE_COMMAND_PREVIEW_RESPONSE_BINDING_TERMS = (
     "terminal closure remain blocked",
 )
 REQUIRED_GITHUB_PR_UAO_ACTUAL_DIFF_BRANCH_WRITE_BINDING_TERMS = (
-    "GitHub PR UAO admission actual-diff branch-write binding PR",
+    "GitHub PR UAO admission command-preview branch-write binding PR",
     "agentic_service_harness_github_pr_uao_admission_witness",
+    "command-preview branch-write authority binding",
+    "command-preview operator response binding",
+    "redacted command preview",
+    "argument vector template",
+    "placeholder refs",
     "actual-diff branch-write authority binding",
     "actual-diff operator response witness",
     "actual non-empty diff receipt ref",
@@ -1388,12 +1393,12 @@ def _validate_github_pr_uao_actual_diff_branch_write_binding_ready(
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| GitHub PR UAO admission actual-diff branch-write binding PR \| READY \| .+actual non-empty diff receipt ref.+terminal closure fail closed\. \|$",
+        r"^\| GitHub PR UAO admission command-preview branch-write binding PR \| READY \| .+command-preview branch-write authority binding.+actual non-empty diff receipt ref.+terminal closure fail closed\. \|$",
         map_text,
         re.MULTILINE,
     )
     if closure_row is None:
-        errors.append("missing ready row: GitHub PR UAO admission actual-diff branch-write binding PR")
+        errors.append("missing ready row: GitHub PR UAO admission command-preview branch-write binding PR")
 
 
 def _validate_github_pr_rollback_actual_diff_uao_binding_ready(
@@ -1606,7 +1611,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind UAO admission to command-preview branch-write",
+        "harness(pr): bind repository-effect rollback to command-preview UAO admission",
     )
     positions: list[int] = []
     for marker in sequence_markers:
