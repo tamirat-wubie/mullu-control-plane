@@ -2510,6 +2510,27 @@ def operator_control_tower_status_receipt(snapshot: OperatorControlTowerSnapshot
                 "PR CI readiness blocked until PR creation evidence and CI observation authority are complete"
             ),
         },
+        "operator_sandbox_patch_merge_readiness_summary": {
+            "summary_id": "operator_sandbox_patch_merge_readiness.foundation",
+            "merge_status": "blocked_until_ci_pass",
+            "merge_target": "protected_branch_merge",
+            "required_before_merge": [
+                "github_pull_request_created",
+                "ci_checks_passed",
+                "review_approval_recorded",
+                "rollback_plan_verified",
+                "merge_approval_recorded",
+            ],
+            "missing_prerequisite_count": 5,
+            "merge_performed": False,
+            "merge_allowed": False,
+            "branch_write_allowed": False,
+            "github_call_allowed": False,
+            "external_effects_allowed": False,
+            "operator_message": (
+                "Merge readiness blocked until CI pass, review approval, rollback, and merge approval evidence are complete"
+            ),
+        },
         "operator_handoff_summary": {
             "summary_id": "operator_handoff.foundation",
             "handoff_status": (
@@ -3486,6 +3507,9 @@ def operator_control_tower_status_receipt(snapshot: OperatorControlTowerSnapshot
             ),
             "operator_sandbox_patch_pr_ci_readiness_summary": (
                 "docs/21_workflow_runtime.md sandbox_patch_receipt PR CI readiness"
+            ),
+            "operator_sandbox_patch_merge_readiness_summary": (
+                "docs/21_workflow_runtime.md sandbox_patch_receipt merge readiness"
             ),
             "operator_handoff_summary": (
                 "workflow_monitor.metadata.developer_workflow_milestone_summary + "
@@ -4758,6 +4782,19 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     sandbox_patch_pr_ci_message = (
         "PR CI readiness blocked until PR creation evidence and CI observation authority are complete"
     )
+    sandbox_patch_merge_status = "blocked_until_ci_pass"
+    sandbox_patch_merge_required = (
+        "github_pull_request_created, ci_checks_passed, review_approval_recorded, "
+        "rollback_plan_verified, merge_approval_recorded"
+    )
+    sandbox_patch_merge_missing = 5
+    sandbox_patch_merge_performed = False
+    sandbox_patch_merge_allowed = False
+    sandbox_patch_branch_write = False
+    sandbox_patch_github_call = False
+    sandbox_patch_merge_message = (
+        "Merge readiness blocked until CI pass, review approval, rollback, and merge approval evidence are complete"
+    )
     operator_handoff_status = (
         "ready_for_local_resume" if friction_reduction_local_allowed else "blocked_pending_approval"
     )
@@ -5349,6 +5386,21 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
       <span class="field"><strong>GitHub poll allowed</strong>{escape(str(sandbox_patch_github_poll).lower())}</span>
       <span class="field"><strong>Check update allowed</strong>{escape(str(sandbox_patch_check_update).lower())}</span>
       <span class="field"><strong>Ready for review allowed</strong>{escape(str(sandbox_patch_ready_for_review).lower())}</span>
+      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
+    </div>
+  </section>
+  <section>
+    <h2>Operator Sandbox Patch Merge Readiness</h2>
+    <div class="task">
+      <span class="field"><strong>Message</strong>{escape(sandbox_patch_merge_message)}</span>
+      <span class="field"><strong>Status</strong>{escape(sandbox_patch_merge_status)}</span>
+      <span class="field"><strong>Merge target</strong>protected_branch_merge</span>
+      <span class="field"><strong>Required before merge</strong>{escape(sandbox_patch_merge_required)}</span>
+      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_merge_missing}</span>
+      <span class="field"><strong>Merge performed</strong>{escape(str(sandbox_patch_merge_performed).lower())}</span>
+      <span class="field"><strong>Merge allowed</strong>{escape(str(sandbox_patch_merge_allowed).lower())}</span>
+      <span class="field"><strong>Branch write allowed</strong>{escape(str(sandbox_patch_branch_write).lower())}</span>
+      <span class="field"><strong>GitHub call allowed</strong>{escape(str(sandbox_patch_github_call).lower())}</span>
       <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
     </div>
   </section>
