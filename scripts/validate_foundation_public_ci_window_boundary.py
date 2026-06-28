@@ -88,6 +88,8 @@ EXPECTED_RECEIPT_ROOT_KEYS = {
     "customer_access_claimed",
     "exposure_decision",
     "head_sha",
+    "merge_commit",
+    "merged_at",
     "opened_at",
     "production_deployment_claimed",
     "public_launch_claimed",
@@ -475,6 +477,20 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
             )
     if not _is_hex_sha(payload.get("head_sha")):
         findings.append(Finding("public_ci_window_receipt_head_sha_invalid", "head_sha must be a 40-character lowercase hex SHA"))
+    if status == "closed" and not _is_hex_sha(payload.get("merge_commit")):
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_merge_commit_invalid",
+                "closed receipts require a 40-character lowercase hex merge_commit",
+            )
+        )
+    if status == "bounded_public_awaiting_evidence" and payload.get("merge_commit") is not None:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_merge_commit_invalid",
+                "bounded public receipts must keep merge_commit null",
+            )
+        )
     pull_request_number = _pull_request_number(payload.get("pull_request"))
     if pull_request_number is None:
         findings.append(Finding("public_ci_window_receipt_pull_request_invalid", "pull_request must be a repository PR URL"))
@@ -527,6 +543,38 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
             Finding(
                 "public_ci_window_receipt_timestamp_order_invalid",
                 "closed_at must be greater than or equal to opened_at",
+            )
+        )
+
+    merged_at = payload.get("merged_at")
+    parsed_merged_at = None
+    if status == "closed" and not _is_non_empty_string(merged_at):
+        findings.append(Finding("public_ci_window_receipt_merged_at_invalid", "closed receipts require merged_at"))
+    if _is_non_empty_string(merged_at):
+        parsed_merged_at = _parse_utc_timestamp(merged_at)
+        if parsed_merged_at is None:
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_merged_at_invalid",
+                    "merged_at must be an ISO-8601 UTC timestamp ending in Z",
+                )
+            )
+    if status == "bounded_public_awaiting_evidence" and merged_at is not None:
+        findings.append(
+            Finding("public_ci_window_receipt_merged_at_invalid", "bounded public receipts must keep merged_at null")
+        )
+    if parsed_opened_at is not None and parsed_merged_at is not None and parsed_merged_at < parsed_opened_at:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_merge_timestamp_order_invalid",
+                "merged_at must be greater than or equal to opened_at",
+            )
+        )
+    if parsed_merged_at is not None and parsed_closed_at is not None and parsed_closed_at < parsed_merged_at:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_closure_merge_order_invalid",
+                "closed_at must be greater than or equal to merged_at",
             )
         )
 

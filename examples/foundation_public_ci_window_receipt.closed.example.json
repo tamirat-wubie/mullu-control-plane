@@ -5,6 +5,8 @@
   "customer_access_claimed": false,
   "exposure_decision": "The public window was used only for GitHub Actions evidence and PR verification. No public launch, customer access, production deployment, legal filing, fundraising readiness, or raw secret exposure was claimed.",
   "head_sha": "fc4977f2bcd16a76cd61c690c9dc6bf216a0629a",
+  "merge_commit": "8e0c7b6a9f4d3c2b1a0987654321fedcba987654",
+  "merged_at": "2026-06-26T11:14:02Z",
   "opened_at": "2026-06-26T10:51:56Z",
   "production_deployment_claimed": false,
   "public_launch_claimed": false,
