@@ -85,6 +85,8 @@ A public CI window receipt must include:
 | closed_at | Timestamp for private restoration, or null with bounded reason. |
 | branch | Branch or pull request being verified. |
 | head_sha | Commit SHA under CI verification. |
+| merge_commit | Merge commit SHA for a closed pull-request window, or null while bounded public evidence remains unresolved. |
+| merged_at | Pull request merge timestamp for a closed window, or null while bounded public evidence remains unresolved. |
 | workflow_run_urls | GitHub Actions runs observed during the window. |
 | validators | Local and remote validator commands with pass, fail, or AwaitingEvidence. |
 | exposure_decision | Why remaining public exposure is acceptable or why it was closed. |

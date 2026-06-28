@@ -216,6 +216,77 @@ def test_public_ci_window_receipt_rejects_closed_at_before_opened_at() -> None:
     assert all("2026-06-26T10:51:56Z" not in finding.message for finding in findings)
 
 
+def test_public_ci_window_closed_receipt_rejects_missing_merge_commit() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["merge_commit"] = None
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_merge_commit_invalid" for finding in findings)
+    assert any("closed receipts require a 40-character lowercase hex merge_commit" in finding.message for finding in findings)
+    assert all("fc4977f2bcd16a76cd61c690c9dc6bf216a0629a" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_invalid_merge_commit() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["merge_commit"] = "not-a-merge-sha"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_merge_commit_invalid" for finding in findings)
+    assert any("closed receipts require a 40-character lowercase hex merge_commit" in finding.message for finding in findings)
+    assert all("not-a-merge-sha" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_missing_merged_at() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["merged_at"] = None
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_merged_at_invalid" for finding in findings)
+    assert any("closed receipts require merged_at" in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_invalid_merged_at() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["merged_at"] = "2026-06-26 11:14:02"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_merged_at_invalid" for finding in findings)
+    assert any("merged_at must be an ISO-8601 UTC timestamp ending in Z" in finding.message for finding in findings)
+    assert all("2026-06-26 11:14:02" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_merged_at_before_opened_at() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["merged_at"] = "2026-06-26T10:50:00Z"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_merge_timestamp_order_invalid" for finding in findings)
+    assert any("merged_at must be greater than or equal to opened_at" in finding.message for finding in findings)
+    assert all("2026-06-26T10:50:00Z" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_closed_at_before_merged_at() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["closed_at"] = "2026-06-26T11:13:59Z"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_closure_merge_order_invalid" for finding in findings)
+    assert any("closed_at must be greater than or equal to merged_at" in finding.message for finding in findings)
+    assert all("2026-06-26T11:13:59Z" not in finding.message for finding in findings)
+
+
 def test_public_ci_window_receipt_rejects_window_id_date_mismatch() -> None:
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["window_id"] = "foundation_public_ci_window.20260625.pr2213"
@@ -361,6 +432,8 @@ def test_public_ci_window_receipt_allows_bounded_public_awaiting_evidence() -> N
     payload["status"] = "bounded_public_awaiting_evidence"
     payload["solver_outcome"] = "AwaitingEvidence"
     payload["closed_at"] = None
+    payload["merge_commit"] = None
+    payload["merged_at"] = None
     for validator in payload["validators"]:
         validator["state"] = "AwaitingEvidence"
 
@@ -369,7 +442,25 @@ def test_public_ci_window_receipt_allows_bounded_public_awaiting_evidence() -> N
     assert findings == []
     assert payload["status"] == "bounded_public_awaiting_evidence"
     assert payload["closed_at"] is None
+    assert payload["merge_commit"] is None
+    assert payload["merged_at"] is None
     assert all(validator["state"] == "AwaitingEvidence" for validator in payload["validators"])
+
+
+def test_public_ci_window_bounded_receipt_rejects_merge_evidence_claim() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["status"] = "bounded_public_awaiting_evidence"
+    payload["solver_outcome"] = "AwaitingEvidence"
+    payload["closed_at"] = None
+    for validator in payload["validators"]:
+        validator["state"] = "AwaitingEvidence"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_merge_commit_invalid" for finding in findings)
+    assert any(finding.rule_id == "public_ci_window_receipt_merged_at_invalid" for finding in findings)
+    assert all(payload["merge_commit"] not in finding.message for finding in findings)
 
 
 def test_public_ci_window_boundary_cli_passes(capsys) -> None:
