@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:pr-readiness-bundle:1",
+  "title": "PrReadinessBundle",
+  "description": "Projection-only end-to-end Developer Workflow PR readiness bundle.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundle_id",
+    "workflow_id",
+    "workflow_run_id",
+    "readiness_status",
+    "ready_for_external_pr_execution",
+    "preview_only",
+    "execution_performed",
+    "external_effects_allowed",
+    "pr_creation_allowed",
+    "branch_push_allowed",
+    "artifacts",
+    "next_evidence",
+    "rollback",
+    "operator_summary",
+    "source_refs",
+    "bundle_hash"
+  ],
+  "properties": {
+    "bundle_id": {"type": "string", "const": "pr_readiness_bundle.v1"},
+    "workflow_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+    "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "readiness_status": {
+      "type": "string",
+      "enum": [
+        "awaiting_sandbox_receipts",
+        "awaiting_operator_approval",
+        "awaiting_external_pr_approval",
+        "ready_for_external_pr_execution"
+      ]
+    },
+    "ready_for_external_pr_execution": {"type": "boolean"},
+    "preview_only": {"type": "boolean", "const": true},
+    "execution_performed": {"type": "boolean", "const": false},
+    "external_effects_allowed": {"type": "boolean"},
+    "pr_creation_allowed": {"type": "boolean"},
+    "branch_push_allowed": {"type": "boolean"},
+    "artifacts": {"$ref": "#/$defs/artifacts"},
+    "next_evidence": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 160}
+    },
+    "rollback": {"$ref": "#/$defs/rollback"},
+    "operator_summary": {"type": "string", "minLength": 1, "maxLength": 500},
+    "source_refs": {"$ref": "#/$defs/source_refs"},
+    "bundle_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "status", "ready", "hash"],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "status": {"type": "string", "minLength": 1, "maxLength": 160},
+        "ready": {"type": "boolean"},
+        "hash": {"type": "string", "pattern": "^$|^[a-f0-9]{64}$"}
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sandbox_receipts",
+        "approval_packet",
+        "local_candidate",
+        "pr_tool_admission",
+        "external_approval_witness",
+        "command_preview",
+        "metadata"
+      ],
+      "properties": {
+        "sandbox_receipts": {"$ref": "#/$defs/artifact"},
+        "approval_packet": {"$ref": "#/$defs/artifact"},
+        "local_candidate": {"$ref": "#/$defs/artifact"},
+        "pr_tool_admission": {"$ref": "#/$defs/artifact"},
+        "external_approval_witness": {"$ref": "#/$defs/artifact"},
+        "command_preview": {"$ref": "#/$defs/artifact"},
+        "metadata": {"$ref": "#/$defs/artifact"}
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "evidence_refs", "commands"],
+      "properties": {
+        "required": {"type": "boolean", "const": true},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 240}},
+        "commands": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 500}}
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bundle_builder"],
+      "properties": {
+        "sandbox_receipt_bundle_path": {"type": "string", "maxLength": 240},
+        "approval_packet_path": {"type": "string", "maxLength": 240},
+        "local_candidate_packet_path": {"type": "string", "maxLength": 240},
+        "pr_tool_admission_packet_path": {"type": "string", "maxLength": 240},
+        "external_approval_witness_path": {"type": "string", "maxLength": 240},
+        "command_preview_packet_path": {"type": "string", "maxLength": 240},
+        "metadata_packet_path": {"type": "string", "maxLength": 240},
+        "bundle_builder": {"type": "string", "const": "python scripts/build_pr_readiness_bundle.py"}
+      }
+    }
+  }
+}

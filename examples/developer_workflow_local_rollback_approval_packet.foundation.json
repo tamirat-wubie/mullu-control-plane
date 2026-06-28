@@ -1,0 +1,28 @@
+{
+  "approval_scope": "none",
+  "approval_status": "pending",
+  "authorized_artifacts": [],
+  "delete_execution_allowed": false,
+  "execution_boundary": "local_lab_only",
+  "external_effects_allowed": false,
+  "operator_approval": {
+    "approval_evidence_ref": "",
+    "approval_note": "Foundation Mode default: rollback deletion is not authorized until the operator approves selected local artifacts.",
+    "approval_status": "pending",
+    "approved_at": "",
+    "approved_by": ""
+  },
+  "packet_id": "developer_workflow_local_rollback_approval_packet.v1",
+  "packet_status": "awaiting_operator_approval",
+  "rollback_execution_performed": false,
+  "selected_artifact_count": 0,
+  "selected_artifact_ids": [],
+  "source_refs": {
+    "builder": "python scripts/build_developer_workflow_local_rollback_approval_packet.py",
+    "local_rollback_summary_packet": "examples/developer_workflow_local_rollback_summary_packet.foundation.json",
+    "validator": "python scripts/validate_developer_workflow_local_rollback_approval_packet.py"
+  },
+  "source_rollback_summary_path": "examples/developer_workflow_local_rollback_summary_packet.foundation.json",
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

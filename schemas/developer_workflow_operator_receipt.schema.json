@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:developer-workflow-operator-receipt:1",
+  "title": "DeveloperWorkflowOperatorReceipt",
+  "description": "Concise operator receipt for Developer Workflow v1 local sandbox-to-PR readiness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "workflow_id",
+    "workflow_run_id",
+    "solver_outcome",
+    "execution_boundary",
+    "execution_performed",
+    "readiness_status",
+    "sandbox_receipts",
+    "approvals",
+    "local_pr_candidate",
+    "external_handoff",
+    "next_evidence",
+    "rollback",
+    "source_refs",
+    "receipt_hash"
+  ],
+  "properties": {
+    "receipt_id": {"type": "string", "const": "developer_workflow_operator_receipt.v1"},
+    "workflow_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+    "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "solver_outcome": {"type": "string", "enum": ["AwaitingEvidence", "SolvedUnverified"]},
+    "execution_boundary": {"type": "string", "const": "local_lab_to_external_pr_preview"},
+    "execution_performed": {"type": "boolean", "const": false},
+    "readiness_status": {
+      "type": "string",
+      "enum": [
+        "awaiting_sandbox_receipts",
+        "awaiting_operator_approval",
+        "awaiting_external_pr_approval",
+        "ready_for_external_pr_execution"
+      ]
+    },
+    "sandbox_receipts": {"$ref": "#/$defs/sandbox_receipts"},
+    "approvals": {"$ref": "#/$defs/approvals"},
+    "local_pr_candidate": {"$ref": "#/$defs/local_pr_candidate"},
+    "external_handoff": {"$ref": "#/$defs/external_handoff"},
+    "next_evidence": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 160}
+    },
+    "rollback": {"$ref": "#/$defs/rollback"},
+    "source_refs": {"$ref": "#/$defs/source_refs"},
+    "receipt_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "sandbox_receipts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bundle_status", "completed_count", "required_count", "bundle_hash"],
+      "properties": {
+        "bundle_status": {"type": "string", "minLength": 1, "maxLength": 160},
+        "completed_count": {"type": "integer", "minimum": 0, "maximum": 4},
+        "required_count": {"type": "integer", "const": 4},
+        "bundle_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "approvals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pr_preparation", "external_pr_execution"],
+      "properties": {
+        "pr_preparation": {"$ref": "#/$defs/approval"},
+        "external_pr_execution": {"$ref": "#/$defs/approval"}
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "ready"],
+      "properties": {
+        "status": {"type": "string", "minLength": 1, "maxLength": 160},
+        "ready": {"type": "boolean"}
+      }
+    },
+    "local_pr_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_status", "candidate_ready", "pr_tool_admitted"],
+      "properties": {
+        "candidate_status": {"type": "string", "minLength": 1, "maxLength": 160},
+        "candidate_ready": {"type": "boolean"},
+        "pr_tool_admitted": {"type": "boolean"}
+      }
+    },
+    "external_handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ready_for_external_pr_execution",
+        "command_preview_rendered",
+        "external_effects_allowed",
+        "pr_creation_allowed",
+        "branch_push_allowed"
+      ],
+      "properties": {
+        "ready_for_external_pr_execution": {"type": "boolean"},
+        "command_preview_rendered": {"type": "boolean"},
+        "external_effects_allowed": {"type": "boolean"},
+        "pr_creation_allowed": {"type": "boolean"},
+        "branch_push_allowed": {"type": "boolean"}
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "evidence_refs", "commands"],
+      "properties": {
+        "required": {"type": "boolean", "const": true},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 240}},
+        "commands": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 500}}
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sandbox_receipt_bundle_path",
+        "approval_packet_path",
+        "local_candidate_packet_path",
+        "pr_tool_admission_packet_path",
+        "external_approval_witness_path",
+        "command_preview_packet_path",
+        "metadata_packet_path",
+        "pr_readiness_bundle_path",
+        "receipt_builder"
+      ],
+      "properties": {
+        "sandbox_receipt_bundle_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "approval_packet_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "local_candidate_packet_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "pr_tool_admission_packet_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "external_approval_witness_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "command_preview_packet_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "metadata_packet_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "pr_readiness_bundle_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "receipt_builder": {"type": "string", "const": "python scripts/build_developer_workflow_operator_receipt.py"}
+      }
+    }
+  }
+}

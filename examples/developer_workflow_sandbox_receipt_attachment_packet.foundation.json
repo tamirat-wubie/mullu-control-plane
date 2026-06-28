@@ -1,0 +1,124 @@
+{
+  "attachments": [
+    {
+      "action": "attach before state, after state, diff, command, and rollback receipt",
+      "bundle_receipt_status": "pending",
+      "evidence_refs": [],
+      "label": "Sandbox patch receipt",
+      "observed_inputs": {
+        "after_state_hash": "pending",
+        "before_state_hash": "pending",
+        "command": "pending",
+        "diff_hash": "pending",
+        "rollback_command": "pending"
+      },
+      "receipt_id": "sandbox_patch_receipt",
+      "required_inputs": [
+        "before_state_hash",
+        "after_state_hash",
+        "diff_hash",
+        "command",
+        "rollback_command",
+        "evidence_refs"
+      ],
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.sandbox_patch_receipt",
+      "stage": "write_files_in_sandbox",
+      "status": "awaiting_attachment"
+    },
+    {
+      "action": "attach bounded local test command receipt and observed result",
+      "bundle_receipt_status": "pending",
+      "evidence_refs": [],
+      "label": "Test gate receipt",
+      "observed_inputs": {
+        "after_state_hash": "pending",
+        "before_state_hash": "pending",
+        "command": "pending",
+        "diff_hash": "pending",
+        "rollback_command": "pending"
+      },
+      "receipt_id": "test_gate_receipt",
+      "required_inputs": [
+        "before_state_hash",
+        "after_state_hash",
+        "diff_hash",
+        "command",
+        "rollback_command",
+        "evidence_refs"
+      ],
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.test_gate_receipt",
+      "stage": "run_tests",
+      "status": "awaiting_attachment"
+    },
+    {
+      "action": "attach reviewed diff hash and reviewer evidence reference",
+      "bundle_receipt_status": "pending",
+      "evidence_refs": [],
+      "label": "Diff review receipt",
+      "observed_inputs": {
+        "after_state_hash": "pending",
+        "before_state_hash": "pending",
+        "command": "pending",
+        "diff_hash": "pending",
+        "rollback_command": "pending"
+      },
+      "receipt_id": "diff_review_receipt",
+      "required_inputs": [
+        "before_state_hash",
+        "after_state_hash",
+        "diff_hash",
+        "command",
+        "rollback_command",
+        "evidence_refs"
+      ],
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.diff_review_receipt",
+      "stage": "show_diff",
+      "status": "awaiting_attachment"
+    },
+    {
+      "action": "attach final local receipt summary and no-external-effect witness",
+      "bundle_receipt_status": "pending",
+      "evidence_refs": [],
+      "label": "Terminal receipt",
+      "observed_inputs": {
+        "after_state_hash": "pending",
+        "before_state_hash": "pending",
+        "command": "pending",
+        "diff_hash": "pending",
+        "rollback_command": "pending"
+      },
+      "receipt_id": "terminal_receipt",
+      "required_inputs": [
+        "before_state_hash",
+        "after_state_hash",
+        "diff_hash",
+        "command",
+        "rollback_command",
+        "evidence_refs"
+      ],
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.terminal_receipt",
+      "stage": "show_receipt",
+      "status": "awaiting_attachment"
+    }
+  ],
+  "completed_count": 0,
+  "execution_boundary": "local_lab_only",
+  "external_effects_allowed": false,
+  "next_attachment": {
+    "action": "attach before state, after state, diff, command, and rollback receipt",
+    "label": "Sandbox patch receipt",
+    "receipt_id": "sandbox_patch_receipt",
+    "status": "awaiting_attachment"
+  },
+  "packet_id": "developer_workflow_sandbox_receipt_attachment_packet.v1",
+  "packet_status": "awaiting_attachments",
+  "required_count": 4,
+  "source_refs": {
+    "builder": "python scripts/build_developer_workflow_sandbox_receipt_attachment_packet.py",
+    "sandbox_receipt_bundle": "examples/developer_workflow_sandbox_receipt_bundle.foundation.json",
+    "sandbox_to_pr_packet": "examples/sandbox_to_pr_preparation_packet.foundation.json",
+    "validator": "python scripts/validate_developer_workflow_sandbox_receipt_attachment_packet.py"
+  },
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

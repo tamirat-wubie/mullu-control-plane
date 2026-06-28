@@ -1,0 +1,47 @@
+{
+  "admission": {
+    "admission_packet_hash": "ccc2a3858c339cc0170f9de23ec63369d2cf50a12a256e839f95d716502de4bf",
+    "admission_status": "blocked_candidate_incomplete",
+    "branch_name": "codex/developer-workflow-local-candidate",
+    "candidate_title": "Prepare governed local Developer Workflow candidate",
+    "local_pr_tool_admitted": false,
+    "local_tool_actions_allowed": []
+  },
+  "approval_status": "pending",
+  "approved_external_effects": [],
+  "branch_push_allowed": false,
+  "execution_boundary": "external_repository_pr",
+  "execution_status": "awaiting_local_pr_tool_admission",
+  "external_effects_allowed": false,
+  "forbidden_without_approval": [
+    "push_branch",
+    "open_external_pr",
+    "merge",
+    "deploy",
+    "call_connector"
+  ],
+  "operator_approved_external_effects": false,
+  "pr_creation_allowed": false,
+  "required_before_execution": [
+    "local_pr_tool_admission",
+    "operator_external_pr_approval",
+    "rollback_plan",
+    "diff_and_test_receipts",
+    "workspace_boundary"
+  ],
+  "rollback": {
+    "branch_delete_command": "git push origin --delete <branch> after confirmed external PR rollback",
+    "evidence_refs": [],
+    "pr_close_command": "close external pull request through approved PR provider rollback path",
+    "required": true
+  },
+  "source_refs": {
+    "admission_packet_path": "examples/pr_tool_admission_packet.foundation.json",
+    "admission_packet_schema": "schemas/pr_tool_admission_packet.schema.json",
+    "witness_builder": "python scripts/build_external_pr_execution_approval_witness.py"
+  },
+  "witness_hash": "404b366b4ff5e13b6701c910c4a67aeb62c1bb777ba77c233ba13383153b2f95",
+  "witness_id": "external_pr_execution_approval_witness.v1",
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

@@ -1,0 +1,15 @@
+{
+  "receipts": {
+    "sandbox_patch_receipt": {
+      "after_state_hash": "sha256:after-sandbox-patch-example",
+      "before_state_hash": "sha256:before-sandbox-patch-example",
+      "command": "apply_patch",
+      "diff_hash": "sha256:sandbox-patch-diff-example",
+      "evidence_refs": [
+        "proof://developer-workflow-v1/sandbox-patch/example"
+      ],
+      "rollback_command": "git apply -R .change_assurance/sandbox_patch.diff"
+    }
+  },
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

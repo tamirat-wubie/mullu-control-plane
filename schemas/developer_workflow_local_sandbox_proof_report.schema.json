@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:developer-workflow-local-sandbox-proof-report:1",
+  "title": "DeveloperWorkflowLocalSandboxProofReport",
+  "description": "Projection-only report emitted by the Developer Workflow local sandbox proof runner.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ok",
+    "errors",
+    "evidence_path",
+    "bundle_path",
+    "attachment_packet_path",
+    "attachment_packet_status",
+    "next_attachment_id",
+    "bundle_status",
+    "completed_count",
+    "required_count",
+    "pr_readiness_bundle_path",
+    "operator_receipt_path",
+    "pr_readiness_status",
+    "ready_for_external_pr_execution",
+    "command_preview_rendered",
+    "execution_performed",
+    "control_tower_url",
+    "workflow_read_model_url",
+    "external_effects_allowed",
+    "generated_artifacts"
+  ],
+  "properties": {
+    "ok": {"type": "boolean"},
+    "errors": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 400}
+    },
+    "evidence_path": {"type": "string", "minLength": 1, "maxLength": 260},
+    "bundle_path": {"type": "string", "minLength": 1, "maxLength": 260},
+    "attachment_packet_path": {"type": "string", "minLength": 1, "maxLength": 260},
+    "attachment_packet_status": {
+      "type": "string",
+      "enum": ["unknown", "awaiting_attachments", "attachments_complete"]
+    },
+    "next_attachment_id": {"type": "string", "minLength": 1, "maxLength": 120},
+    "bundle_status": {
+      "type": "string",
+      "enum": ["unknown", "awaiting_receipts", "receipts_complete"]
+    },
+    "completed_count": {"type": "integer", "minimum": 0},
+    "required_count": {"type": "integer", "minimum": 0},
+    "pr_readiness_bundle_path": {"type": "string", "minLength": 1, "maxLength": 260},
+    "operator_receipt_path": {"type": "string", "minLength": 1, "maxLength": 260},
+    "pr_readiness_status": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "awaiting_sandbox_receipts",
+        "awaiting_operator_approval",
+        "awaiting_external_pr_approval",
+        "ready_for_external_pr_execution"
+      ]
+    },
+    "ready_for_external_pr_execution": {"type": "boolean"},
+    "command_preview_rendered": {"type": "boolean"},
+    "execution_performed": {"type": "boolean", "const": false},
+    "control_tower_url": {"type": "string", "minLength": 1, "maxLength": 260},
+    "workflow_read_model_url": {"type": "string", "minLength": 1, "maxLength": 260},
+    "external_effects_allowed": {"type": "boolean", "const": false},
+    "generated_artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sandbox_to_pr_packet": {"type": "string", "minLength": 1, "maxLength": 260},
+        "sandbox_receipt_attachment_packet": {"type": "string", "minLength": 1, "maxLength": 260},
+        "approval_packet": {"type": "string", "minLength": 1, "maxLength": 260},
+        "local_candidate": {"type": "string", "minLength": 1, "maxLength": 260},
+        "pr_tool_admission": {"type": "string", "minLength": 1, "maxLength": 260},
+        "external_approval_witness": {"type": "string", "minLength": 1, "maxLength": 260},
+        "command_preview": {"type": "string", "minLength": 1, "maxLength": 260},
+        "metadata": {"type": "string", "minLength": 1, "maxLength": 260},
+        "pr_readiness_bundle": {"type": "string", "minLength": 1, "maxLength": 260},
+        "operator_receipt": {"type": "string", "minLength": 1, "maxLength": 260}
+      }
+    }
+  }
+}

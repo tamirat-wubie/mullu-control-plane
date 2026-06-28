@@ -1,0 +1,69 @@
+{
+  "bundle_id": "developer_workflow_sandbox_receipt_bundle.v1",
+  "bundle_status": "awaiting_receipts",
+  "completed_count": 0,
+  "execution_boundary": "local_lab_only",
+  "external_effects_allowed": false,
+  "receipts": [
+    {
+      "after_state_hash": "pending",
+      "before_state_hash": "pending",
+      "command": "pending",
+      "diff_hash": "pending",
+      "evidence_refs": [],
+      "label": "Sandbox patch receipt",
+      "receipt_id": "sandbox_patch_receipt",
+      "required": true,
+      "rollback_command": "pending",
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.sandbox_patch_receipt",
+      "stage": "write_files_in_sandbox",
+      "status": "pending"
+    },
+    {
+      "after_state_hash": "pending",
+      "before_state_hash": "pending",
+      "command": "pending",
+      "diff_hash": "pending",
+      "evidence_refs": [],
+      "label": "Test gate receipt",
+      "receipt_id": "test_gate_receipt",
+      "required": true,
+      "rollback_command": "pending",
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.test_gate_receipt",
+      "stage": "run_tests",
+      "status": "pending"
+    },
+    {
+      "after_state_hash": "pending",
+      "before_state_hash": "pending",
+      "command": "pending",
+      "diff_hash": "pending",
+      "evidence_refs": [],
+      "label": "Diff review receipt",
+      "receipt_id": "diff_review_receipt",
+      "required": true,
+      "rollback_command": "pending",
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.diff_review_receipt",
+      "stage": "show_diff",
+      "status": "pending"
+    },
+    {
+      "after_state_hash": "pending",
+      "before_state_hash": "pending",
+      "command": "pending",
+      "diff_hash": "pending",
+      "evidence_refs": [],
+      "label": "Terminal receipt",
+      "receipt_id": "terminal_receipt",
+      "required": true,
+      "rollback_command": "pending",
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.terminal_receipt",
+      "stage": "show_receipt",
+      "status": "pending"
+    }
+  ],
+  "required_count": 4,
+  "rollback_default": true,
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

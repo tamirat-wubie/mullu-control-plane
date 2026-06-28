@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:developer-workflow-sandbox-receipt-attachment-packet:1",
+  "title": "DeveloperWorkflowSandboxReceiptAttachmentPacket",
+  "description": "Projection-only operator packet that states exactly which local evidence inputs must be attached for each Developer Workflow v1 sandbox receipt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "workflow_id",
+    "workflow_run_id",
+    "packet_status",
+    "execution_boundary",
+    "external_effects_allowed",
+    "required_count",
+    "completed_count",
+    "next_attachment",
+    "source_refs",
+    "attachments"
+  ],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "const": "developer_workflow_sandbox_receipt_attachment_packet.v1"
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "mullu_developer_workflow.v1"
+    },
+    "workflow_run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "packet_status": {
+      "type": "string",
+      "enum": ["awaiting_attachments", "attachments_complete"]
+    },
+    "execution_boundary": {
+      "type": "string",
+      "const": "local_lab_only"
+    },
+    "external_effects_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "required_count": {
+      "type": "integer",
+      "const": 4
+    },
+    "completed_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "next_attachment": {
+      "$ref": "#/$defs/next_attachment"
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sandbox_to_pr_packet", "sandbox_receipt_bundle", "builder", "validator"],
+      "properties": {
+        "sandbox_to_pr_packet": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "sandbox_receipt_bundle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "builder": {
+          "type": "string",
+          "const": "python scripts/build_developer_workflow_sandbox_receipt_attachment_packet.py"
+        },
+        "validator": {
+          "type": "string",
+          "const": "python scripts/validate_developer_workflow_sandbox_receipt_attachment_packet.py"
+        }
+      }
+    },
+    "attachments": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/attachment"
+      }
+    }
+  },
+  "$defs": {
+    "receipt_id": {
+      "type": "string",
+      "enum": [
+        "sandbox_patch_receipt",
+        "test_gate_receipt",
+        "diff_review_receipt",
+        "terminal_receipt"
+      ]
+    },
+    "attachment_status": {
+      "type": "string",
+      "enum": ["awaiting_attachment", "attached"]
+    },
+    "hash_or_pending": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "next_attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "label", "status", "action"],
+      "properties": {
+        "receipt_id": {
+          "oneOf": [
+            {"$ref": "#/$defs/receipt_id"},
+            {"type": "string", "const": "none"}
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "status": {
+          "oneOf": [
+            {"$ref": "#/$defs/attachment_status"},
+            {"type": "string", "const": "complete"}
+          ]
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      }
+    },
+    "attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "label",
+        "stage",
+        "status",
+        "action",
+        "source",
+        "bundle_receipt_status",
+        "required_inputs",
+        "observed_inputs",
+        "evidence_refs"
+      ],
+      "properties": {
+        "receipt_id": {"$ref": "#/$defs/receipt_id"},
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["write_files_in_sandbox", "run_tests", "show_diff", "show_receipt"]
+        },
+        "status": {"$ref": "#/$defs/attachment_status"},
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "source": {
+          "type": "string",
+          "pattern": "^workflow_monitor\\.metadata\\.developer_workflow_run\\.receipt_checklist\\.[a-z_]+$"
+        },
+        "bundle_receipt_status": {
+          "type": "string",
+          "enum": ["pending", "complete"]
+        },
+        "required_inputs": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "type": "string",
+            "enum": [
+              "before_state_hash",
+              "after_state_hash",
+              "diff_hash",
+              "command",
+              "rollback_command",
+              "evidence_refs"
+            ]
+          }
+        },
+        "observed_inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "before_state_hash",
+            "after_state_hash",
+            "diff_hash",
+            "command",
+            "rollback_command"
+          ],
+          "properties": {
+            "before_state_hash": {"$ref": "#/$defs/hash_or_pending"},
+            "after_state_hash": {"$ref": "#/$defs/hash_or_pending"},
+            "diff_hash": {"$ref": "#/$defs/hash_or_pending"},
+            "command": {"$ref": "#/$defs/hash_or_pending"},
+            "rollback_command": {"$ref": "#/$defs/hash_or_pending"}
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          }
+        }
+      }
+    }
+  }
+}

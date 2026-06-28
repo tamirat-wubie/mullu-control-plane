@@ -1,0 +1,27 @@
+{
+  "approval_packet_path": "examples/developer_workflow_local_rollback_approval_packet.foundation.json",
+  "approval_status": "pending",
+  "artifacts": [],
+  "delete_execution_allowed": false,
+  "executed_artifact_count": 0,
+  "execution_boundary": "local_lab_only",
+  "execution_mode": "dry_run",
+  "execution_status": "blocked_no_approval",
+  "external_effects_allowed": false,
+  "failed_artifact_count": 0,
+  "receipt_id": "developer_workflow_local_rollback_execution_receipt.v1",
+  "rollback_execution_performed": false,
+  "rollback_summary_path": "examples/developer_workflow_local_rollback_summary_packet.foundation.json",
+  "selected_artifact_count": 0,
+  "skipped_artifact_count": 0,
+  "source_refs": {
+    "approval_packet": "examples/developer_workflow_local_rollback_approval_packet.foundation.json",
+    "rollback_summary_packet": "examples/developer_workflow_local_rollback_summary_packet.foundation.json",
+    "runner": "python scripts/execute_developer_workflow_local_rollback.py",
+    "validator": "python scripts/validate_developer_workflow_local_rollback_execution_receipt.py"
+  },
+  "target_path_checks_performed": true,
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run",
+  "workspace_root": "."
+}

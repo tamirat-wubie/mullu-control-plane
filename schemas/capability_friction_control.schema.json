@@ -19,6 +19,7 @@
     "dangerous_zones",
     "capabilities",
     "developer_workflow_v1",
+    "sandbox_to_pr_now",
     "validators",
     "next_action"
   ],
@@ -110,9 +111,12 @@
     "developer_workflow_v1": {
       "$ref": "#/$defs/developer_workflow"
     },
+    "sandbox_to_pr_now": {
+      "$ref": "#/$defs/sandbox_to_pr_now"
+    },
     "validators": {
       "type": "array",
-      "minItems": 2,
+      "minItems": 4,
       "items": {
         "$ref": "#/$defs/validator_ref"
       }
@@ -407,6 +411,104 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 160
+        }
+      }
+    },
+    "sandbox_to_pr_now": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "blocker",
+        "next_action",
+        "next_evidence",
+        "policy_ready",
+        "workflow_ready",
+        "approval_required",
+        "rollback_default",
+        "receipt_source",
+        "packet_validator",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["awaiting_capability_policy", "awaiting_sandbox_receipts"]
+        },
+        "blocker": {
+          "type": "string",
+          "enum": ["capability_policy_incomplete", "sandbox_receipts_incomplete"]
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "next_evidence": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/sandbox_to_pr_evidence"
+          }
+        },
+        "policy_ready": {
+          "type": "boolean"
+        },
+        "workflow_ready": {
+          "type": "boolean"
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "rollback_default": {
+          "type": "boolean"
+        },
+        "receipt_source": {
+          "type": "string",
+          "const": "operator_control_tower.workflow_monitor.sandbox_to_pr_packet"
+        },
+        "packet_validator": {
+          "type": "string",
+          "const": "python scripts/validate_sandbox_to_pr_preparation_packet.py"
+        },
+        "external_effects_allowed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "sandbox_to_pr_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "label", "status", "action", "source"],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "enum": [
+            "sandbox_patch_receipt",
+            "test_gate_receipt",
+            "diff_review_receipt",
+            "terminal_receipt"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "status": {
+          "type": "string",
+          "const": "pending"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "source": {
+          "type": "string",
+          "pattern": "^workflow_monitor\\.metadata\\.developer_workflow_run\\.receipt_checklist\\.[a-z_]+$"
         }
       }
     },

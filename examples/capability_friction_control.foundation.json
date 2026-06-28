@@ -296,6 +296,48 @@
     "generate_schemas",
     "generate_validators"
   ],
+  "sandbox_to_pr_now": {
+    "approval_required": true,
+    "blocker": "sandbox_receipts_incomplete",
+    "external_effects_allowed": false,
+    "next_action": "attach sandbox patch, test, diff, and terminal receipts",
+    "next_evidence": [
+      {
+        "action": "attach before state, after state, diff, command, and rollback receipt",
+        "evidence_id": "sandbox_patch_receipt",
+        "label": "Sandbox patch receipt",
+        "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.sandbox_patch_receipt",
+        "status": "pending"
+      },
+      {
+        "action": "attach bounded local test command receipt and observed result",
+        "evidence_id": "test_gate_receipt",
+        "label": "Test gate receipt",
+        "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.test_gate_receipt",
+        "status": "pending"
+      },
+      {
+        "action": "attach reviewed diff hash and reviewer evidence reference",
+        "evidence_id": "diff_review_receipt",
+        "label": "Diff review receipt",
+        "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.diff_review_receipt",
+        "status": "pending"
+      },
+      {
+        "action": "attach final local receipt summary and no-external-effect witness",
+        "evidence_id": "terminal_receipt",
+        "label": "Terminal receipt",
+        "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.terminal_receipt",
+        "status": "pending"
+      }
+    ],
+    "packet_validator": "python scripts/validate_sandbox_to_pr_preparation_packet.py",
+    "policy_ready": true,
+    "receipt_source": "operator_control_tower.workflow_monitor.sandbox_to_pr_packet",
+    "rollback_default": true,
+    "status": "awaiting_sandbox_receipts",
+    "workflow_ready": true
+  },
   "schema_version": 1,
   "source_refs": {
     "capability_surface": "governed_capability_records",
@@ -380,9 +422,184 @@
       "validator_id": "capability_friction_control_validator"
     },
     {
+      "command": "python scripts/validate_sandbox_to_pr_preparation_packet.py",
+      "required_for_closure": true,
+      "validator_id": "sandbox_to_pr_preparation_packet_validator"
+    },
+    {
+      "command": "python scripts/validate_developer_workflow_sandbox_receipt_bundle.py",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_sandbox_receipt_bundle_validator"
+    },
+    {
+      "command": "python scripts/validate_developer_workflow_sandbox_receipt_attachment_packet.py",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_sandbox_receipt_attachment_packet_validator"
+    },
+    {
+      "command": "python scripts/validate_developer_workflow_local_sandbox_proof_report.py",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_local_sandbox_proof_report_validator"
+    },
+    {
+      "command": "python scripts/validate_developer_workflow_local_rollback_summary_packet.py",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_local_rollback_summary_packet_validator"
+    },
+    {
+      "command": "python scripts/validate_developer_workflow_local_rollback_approval_packet.py",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_local_rollback_approval_packet_validator"
+    },
+    {
+      "command": "python scripts/validate_developer_workflow_local_rollback_execution_receipt.py",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_local_rollback_execution_receipt_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_run_developer_workflow_local_rollback_flow.py -q",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_local_rollback_flow_tests"
+    },
+    {
+      "command": "python scripts/validate_pr_preparation_approval_packet.py",
+      "required_for_closure": true,
+      "validator_id": "pr_preparation_approval_packet_validator"
+    },
+    {
+      "command": "python scripts/validate_local_pr_candidate_packet.py",
+      "required_for_closure": true,
+      "validator_id": "local_pr_candidate_packet_validator"
+    },
+    {
+      "command": "python scripts/validate_pr_tool_admission_packet.py",
+      "required_for_closure": true,
+      "validator_id": "pr_tool_admission_packet_validator"
+    },
+    {
+      "command": "python scripts/validate_external_pr_execution_approval_witness.py",
+      "required_for_closure": true,
+      "validator_id": "external_pr_execution_approval_witness_validator"
+    },
+    {
+      "command": "python scripts/validate_pr_command_preview_packet.py",
+      "required_for_closure": true,
+      "validator_id": "pr_command_preview_packet_validator"
+    },
+    {
+      "command": "python scripts/validate_pr_metadata_packet.py",
+      "required_for_closure": true,
+      "validator_id": "pr_metadata_packet_validator"
+    },
+    {
+      "command": "python scripts/validate_pr_readiness_bundle.py",
+      "required_for_closure": true,
+      "validator_id": "pr_readiness_bundle_validator"
+    },
+    {
+      "command": "python scripts/build_developer_workflow_operator_receipt.py --json",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_operator_receipt_validator"
+    },
+    {
+      "command": "python scripts/validate_operator_control_tower_status_receipt.py",
+      "required_for_closure": true,
+      "validator_id": "operator_control_tower_status_receipt_validator"
+    },
+    {
       "command": "python -m pytest tests/test_validate_capability_friction_control.py -q",
       "required_for_closure": true,
       "validator_id": "capability_friction_control_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_sandbox_to_pr_preparation_packet.py -q",
+      "required_for_closure": true,
+      "validator_id": "sandbox_to_pr_preparation_packet_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_developer_workflow_sandbox_receipt_bundle.py -q",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_sandbox_receipt_bundle_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_build_developer_workflow_sandbox_receipt_attachment_packet.py tests/test_validate_developer_workflow_sandbox_receipt_attachment_packet.py -q",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_sandbox_receipt_attachment_packet_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_collect_developer_workflow_sandbox_receipt_evidence.py -q",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_sandbox_receipt_evidence_collector_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_run_developer_workflow_local_sandbox_proof.py -q",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_local_sandbox_proof_runner_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_developer_workflow_local_sandbox_proof_report.py -q",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_local_sandbox_proof_report_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_build_developer_workflow_local_rollback_summary_packet.py tests/test_validate_developer_workflow_local_rollback_summary_packet.py -q",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_local_rollback_summary_packet_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_build_developer_workflow_local_rollback_approval_packet.py tests/test_validate_developer_workflow_local_rollback_approval_packet.py -q",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_local_rollback_approval_packet_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_execute_developer_workflow_local_rollback.py tests/test_validate_developer_workflow_local_rollback_execution_receipt.py -q",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_local_rollback_execution_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_build_pr_preparation_approval_packet.py -q",
+      "required_for_closure": true,
+      "validator_id": "pr_preparation_approval_packet_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_build_local_pr_candidate_packet.py tests/test_validate_local_pr_candidate_packet.py -q",
+      "required_for_closure": true,
+      "validator_id": "local_pr_candidate_packet_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_build_pr_tool_admission_packet.py tests/test_validate_pr_tool_admission_packet.py -q",
+      "required_for_closure": true,
+      "validator_id": "pr_tool_admission_packet_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_build_external_pr_execution_approval_witness.py tests/test_validate_external_pr_execution_approval_witness.py -q",
+      "required_for_closure": true,
+      "validator_id": "external_pr_execution_approval_witness_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_build_pr_command_preview_packet.py tests/test_validate_pr_command_preview_packet.py -q",
+      "required_for_closure": true,
+      "validator_id": "pr_command_preview_packet_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_build_pr_metadata_packet.py tests/test_validate_pr_metadata_packet.py -q",
+      "required_for_closure": true,
+      "validator_id": "pr_metadata_packet_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_build_pr_readiness_bundle.py tests/test_validate_pr_readiness_bundle.py -q",
+      "required_for_closure": true,
+      "validator_id": "pr_readiness_bundle_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_build_developer_workflow_operator_receipt.py -q",
+      "required_for_closure": true,
+      "validator_id": "developer_workflow_operator_receipt_tests"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_operator_control_tower_status_receipt.py -q",
+      "required_for_closure": true,
+      "validator_id": "operator_control_tower_status_receipt_tests"
     }
   ]
 }

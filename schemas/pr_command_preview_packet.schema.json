@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:pr-command-preview-packet:1",
+  "title": "PrCommandPreviewPacket",
+  "description": "Non-executing command preview packet for external PR execution after approval witness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "workflow_id",
+    "workflow_run_id",
+    "preview_status",
+    "preview_only",
+    "execution_performed",
+    "execution_boundary",
+    "external_effects_allowed_by_witness",
+    "commands_rendered",
+    "blocked_reason",
+    "witness",
+    "command_preview",
+    "rollback_preview",
+    "source_refs",
+    "packet_hash"
+  ],
+  "properties": {
+    "packet_id": {"type": "string", "const": "pr_command_preview_packet.v1"},
+    "workflow_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+    "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "preview_status": {"type": "string", "enum": ["blocked", "commands_rendered"]},
+    "preview_only": {"type": "boolean", "const": true},
+    "execution_performed": {"type": "boolean", "const": false},
+    "execution_boundary": {"type": "string", "const": "external_repository_pr"},
+    "external_effects_allowed_by_witness": {"type": "boolean"},
+    "commands_rendered": {"type": "boolean"},
+    "blocked_reason": {"type": "string", "maxLength": 160},
+    "witness": {"$ref": "#/$defs/witness"},
+    "command_preview": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/command_preview_entry"}
+    },
+    "rollback_preview": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/$defs/rollback_preview_entry"}
+    },
+    "source_refs": {"$ref": "#/$defs/source_refs"},
+    "packet_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_status",
+        "execution_status",
+        "witness_hash",
+        "branch_name",
+        "candidate_title"
+      ],
+      "properties": {
+        "approval_status": {"type": "string", "enum": ["pending", "approved", "rejected", "deferred"]},
+        "execution_status": {
+          "type": "string",
+          "enum": ["awaiting_local_pr_tool_admission", "awaiting_operator_approval", "approved_for_external_pr_execution"]
+        },
+        "witness_hash": {"$ref": "#/$defs/hash"},
+        "branch_name": {
+          "type": "string",
+          "pattern": "^codex/[a-z0-9][a-z0-9._/-]{1,118}$"
+        },
+        "candidate_title": {"type": "string", "minLength": 1, "maxLength": 120}
+      }
+    },
+    "command_preview_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_id", "effect", "command"],
+      "properties": {
+        "command_id": {"type": "string", "enum": ["push_branch", "open_external_pr"]},
+        "effect": {"type": "string", "enum": ["push_branch", "open_external_pr"]},
+        "command": {"type": "string", "minLength": 1, "maxLength": 500}
+      }
+    },
+    "rollback_preview_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rollback_id", "command"],
+      "properties": {
+        "rollback_id": {"type": "string", "enum": ["delete_remote_branch", "close_external_pr"]},
+        "command": {"type": "string", "minLength": 1, "maxLength": 500}
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approval_witness_path", "approval_witness_schema", "preview_builder"],
+      "properties": {
+        "approval_witness_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "approval_witness_schema": {
+          "type": "string",
+          "const": "schemas/external_pr_execution_approval_witness.schema.json"
+        },
+        "preview_builder": {
+          "type": "string",
+          "const": "python scripts/build_pr_command_preview_packet.py"
+        }
+      }
+    }
+  }
+}

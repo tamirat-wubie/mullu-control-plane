@@ -39,6 +39,7 @@ from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "capability_friction_control.schema.json"
 DEFAULT_READ_MODEL = REPO_ROOT / "examples" / "capability_friction_control.foundation.json"
+DEFAULT_SANDBOX_TO_PR_PACKET = REPO_ROOT / "examples" / "sandbox_to_pr_preparation_packet.foundation.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "capability_friction_control_validation.json"
 EXPECTED_UNLOCK_LEVELS = tuple(f"L{index}" for index in range(10))
 EXPECTED_FRICTION_MODES = ("strict", "balanced", "fast")
@@ -52,7 +53,120 @@ EXPECTED_SOFTWARE_DEV_CAPABILITIES = {
 }
 REQUIRED_VALIDATOR_COMMANDS = {
     "capability_friction_control_validator": "python scripts/validate_capability_friction_control.py",
+    "sandbox_to_pr_preparation_packet_validator": "python scripts/validate_sandbox_to_pr_preparation_packet.py",
+    "developer_workflow_sandbox_receipt_bundle_validator": (
+        "python scripts/validate_developer_workflow_sandbox_receipt_bundle.py"
+    ),
+    "developer_workflow_sandbox_receipt_attachment_packet_validator": (
+        "python scripts/validate_developer_workflow_sandbox_receipt_attachment_packet.py"
+    ),
+    "developer_workflow_local_sandbox_proof_report_validator": (
+        "python scripts/validate_developer_workflow_local_sandbox_proof_report.py"
+    ),
+    "developer_workflow_local_rollback_summary_packet_validator": (
+        "python scripts/validate_developer_workflow_local_rollback_summary_packet.py"
+    ),
+    "developer_workflow_local_rollback_approval_packet_validator": (
+        "python scripts/validate_developer_workflow_local_rollback_approval_packet.py"
+    ),
+    "developer_workflow_local_rollback_execution_receipt_validator": (
+        "python scripts/validate_developer_workflow_local_rollback_execution_receipt.py"
+    ),
+    "developer_workflow_local_rollback_flow_tests": (
+        "python -m pytest tests/test_run_developer_workflow_local_rollback_flow.py -q"
+    ),
+    "pr_preparation_approval_packet_validator": (
+        "python scripts/validate_pr_preparation_approval_packet.py"
+    ),
+    "local_pr_candidate_packet_validator": (
+        "python scripts/validate_local_pr_candidate_packet.py"
+    ),
+    "pr_tool_admission_packet_validator": (
+        "python scripts/validate_pr_tool_admission_packet.py"
+    ),
+    "external_pr_execution_approval_witness_validator": (
+        "python scripts/validate_external_pr_execution_approval_witness.py"
+    ),
+    "pr_command_preview_packet_validator": (
+        "python scripts/validate_pr_command_preview_packet.py"
+    ),
+    "pr_metadata_packet_validator": (
+        "python scripts/validate_pr_metadata_packet.py"
+    ),
+    "pr_readiness_bundle_validator": (
+        "python scripts/validate_pr_readiness_bundle.py"
+    ),
+    "developer_workflow_operator_receipt_validator": (
+        "python scripts/build_developer_workflow_operator_receipt.py --json"
+    ),
+    "operator_control_tower_status_receipt_validator": (
+        "python scripts/validate_operator_control_tower_status_receipt.py"
+    ),
     "capability_friction_control_tests": "python -m pytest tests/test_validate_capability_friction_control.py -q",
+    "sandbox_to_pr_preparation_packet_tests": "python -m pytest tests/test_validate_sandbox_to_pr_preparation_packet.py -q",
+    "developer_workflow_sandbox_receipt_bundle_tests": (
+        "python -m pytest tests/test_validate_developer_workflow_sandbox_receipt_bundle.py -q"
+    ),
+    "developer_workflow_sandbox_receipt_attachment_packet_tests": (
+        "python -m pytest tests/test_build_developer_workflow_sandbox_receipt_attachment_packet.py tests/test_validate_developer_workflow_sandbox_receipt_attachment_packet.py -q"
+    ),
+    "developer_workflow_sandbox_receipt_evidence_collector_tests": (
+        "python -m pytest tests/test_collect_developer_workflow_sandbox_receipt_evidence.py -q"
+    ),
+    "developer_workflow_local_sandbox_proof_runner_tests": (
+        "python -m pytest tests/test_run_developer_workflow_local_sandbox_proof.py -q"
+    ),
+    "developer_workflow_local_sandbox_proof_report_tests": (
+        "python -m pytest tests/test_validate_developer_workflow_local_sandbox_proof_report.py -q"
+    ),
+    "developer_workflow_local_rollback_summary_packet_tests": (
+        "python -m pytest tests/test_build_developer_workflow_local_rollback_summary_packet.py tests/test_validate_developer_workflow_local_rollback_summary_packet.py -q"
+    ),
+    "developer_workflow_local_rollback_approval_packet_tests": (
+        "python -m pytest tests/test_build_developer_workflow_local_rollback_approval_packet.py tests/test_validate_developer_workflow_local_rollback_approval_packet.py -q"
+    ),
+    "developer_workflow_local_rollback_execution_tests": (
+        "python -m pytest tests/test_execute_developer_workflow_local_rollback.py tests/test_validate_developer_workflow_local_rollback_execution_receipt.py -q"
+    ),
+    "pr_preparation_approval_packet_tests": (
+        "python -m pytest tests/test_build_pr_preparation_approval_packet.py -q"
+    ),
+    "local_pr_candidate_packet_tests": (
+        "python -m pytest tests/test_build_local_pr_candidate_packet.py tests/test_validate_local_pr_candidate_packet.py -q"
+    ),
+    "pr_tool_admission_packet_tests": (
+        "python -m pytest tests/test_build_pr_tool_admission_packet.py tests/test_validate_pr_tool_admission_packet.py -q"
+    ),
+    "external_pr_execution_approval_witness_tests": (
+        "python -m pytest tests/test_build_external_pr_execution_approval_witness.py tests/test_validate_external_pr_execution_approval_witness.py -q"
+    ),
+    "pr_command_preview_packet_tests": (
+        "python -m pytest tests/test_build_pr_command_preview_packet.py tests/test_validate_pr_command_preview_packet.py -q"
+    ),
+    "pr_metadata_packet_tests": (
+        "python -m pytest tests/test_build_pr_metadata_packet.py tests/test_validate_pr_metadata_packet.py -q"
+    ),
+    "pr_readiness_bundle_tests": (
+        "python -m pytest tests/test_build_pr_readiness_bundle.py tests/test_validate_pr_readiness_bundle.py -q"
+    ),
+    "developer_workflow_operator_receipt_tests": (
+        "python -m pytest tests/test_build_developer_workflow_operator_receipt.py -q"
+    ),
+    "operator_control_tower_status_receipt_tests": (
+        "python -m pytest tests/test_validate_operator_control_tower_status_receipt.py -q"
+    ),
+}
+EXPECTED_SANDBOX_TO_PR_EVIDENCE_IDS = (
+    "sandbox_patch_receipt",
+    "test_gate_receipt",
+    "diff_review_receipt",
+    "terminal_receipt",
+)
+EXPECTED_SANDBOX_TO_PR_ACTIONS = {
+    "sandbox_patch_receipt": "attach before state, after state, diff, command, and rollback receipt",
+    "test_gate_receipt": "attach bounded local test command receipt and observed result",
+    "diff_review_receipt": "attach reviewed diff hash and reviewer evidence reference",
+    "terminal_receipt": "attach final local receipt summary and no-external-effect witness",
 }
 FORBIDDEN_CAPABILITY_FIELDS = {
     "extensions",
@@ -71,6 +185,7 @@ class CapabilityFrictionControlValidation:
     errors: tuple[str, ...]
     schema_path: str
     read_model_path: str
+    sandbox_to_pr_packet_path: str
     capability_count: int
     fast_mode_lab_ready_count: int
     developer_workflow_status: str
@@ -98,12 +213,14 @@ def validate_capability_friction_control(
     *,
     schema_path: Path = DEFAULT_SCHEMA,
     read_model_path: Path = DEFAULT_READ_MODEL,
+    sandbox_to_pr_packet_path: Path = DEFAULT_SANDBOX_TO_PR_PACKET,
 ) -> CapabilityFrictionControlValidation:
     """Validate the friction-control example against schema and runtime state."""
 
     errors: list[str] = []
     schema = _load_json_object(schema_path, "capability friction-control schema", errors)
     read_model = _load_json_object(read_model_path, "capability friction-control read model", errors)
+    sandbox_to_pr_packet = _load_json_object(sandbox_to_pr_packet_path, "sandbox-to-PR packet", errors)
     runtime_model = build_default_capability_friction_control_read_model() if not errors else {}
 
     if schema and read_model:
@@ -112,6 +229,14 @@ def validate_capability_friction_control(
             errors.append(f"{_path_label(read_model_path)}: example does not match runtime projection")
     if read_model:
         _validate_read_model(read_model, runtime_model, errors, _path_label(read_model_path))
+        if sandbox_to_pr_packet:
+            _validate_sandbox_to_pr_no_drift(
+                read_model,
+                sandbox_to_pr_packet,
+                errors,
+                _path_label(read_model_path),
+                _path_label(sandbox_to_pr_packet_path),
+            )
 
     summary = read_model.get("summary", {}) if isinstance(read_model, dict) else {}
     workflow = read_model.get("developer_workflow_v1", {}) if isinstance(read_model, dict) else {}
@@ -120,6 +245,7 @@ def validate_capability_friction_control(
         errors=tuple(errors),
         schema_path=_path_label(schema_path),
         read_model_path=_path_label(read_model_path),
+        sandbox_to_pr_packet_path=_path_label(sandbox_to_pr_packet_path),
         capability_count=int(summary.get("capability_count", 0)) if isinstance(summary, dict) else 0,
         fast_mode_lab_ready_count=int(summary.get("fast_mode_lab_ready_count", 0)) if isinstance(summary, dict) else 0,
         developer_workflow_status=str(workflow.get("status", "")) if isinstance(workflow, dict) else "",
@@ -173,6 +299,7 @@ def _validate_read_model(
     _validate_zones(read_model, errors, label)
     _validate_capabilities(read_model, errors, label)
     _validate_developer_workflow(read_model, errors, label)
+    _validate_sandbox_to_pr_now(read_model, errors, label)
     _validate_validators(read_model, errors, label)
     if runtime_model and read_model.get("summary") != runtime_model.get("summary"):
         errors.append(f"{label}: summary must match runtime projection")
@@ -287,6 +414,96 @@ def _validate_developer_workflow(read_model: Mapping[str, Any], errors: list[str
         errors.append(f"{label}: every developer workflow stage must require verification")
 
 
+def _validate_sandbox_to_pr_now(read_model: Mapping[str, Any], errors: list[str], label: str) -> None:
+    sandbox_to_pr = read_model.get("sandbox_to_pr_now")
+    if not isinstance(sandbox_to_pr, Mapping):
+        errors.append(f"{label}: sandbox_to_pr_now must be an object")
+        return
+    if sandbox_to_pr.get("external_effects_allowed") is not False:
+        errors.append(f"{label}: sandbox_to_pr_now.external_effects_allowed must be false")
+    if sandbox_to_pr.get("packet_validator") != "python scripts/validate_sandbox_to_pr_preparation_packet.py":
+        errors.append(f"{label}: sandbox_to_pr_now.packet_validator must reference packet validator")
+    if sandbox_to_pr.get("receipt_source") != "operator_control_tower.workflow_monitor.sandbox_to_pr_packet":
+        errors.append(f"{label}: sandbox_to_pr_now.receipt_source must reference control tower packet")
+    policy_ready = sandbox_to_pr.get("policy_ready") is True
+    workflow_ready = sandbox_to_pr.get("workflow_ready") is True
+    observed_blocker = str(sandbox_to_pr.get("blocker", ""))
+    observed_status = str(sandbox_to_pr.get("status", ""))
+    if not policy_ready or not workflow_ready:
+        expected_status = "awaiting_capability_policy"
+        expected_blocker = "capability_policy_incomplete"
+    else:
+        expected_status = "awaiting_sandbox_receipts"
+        expected_blocker = "sandbox_receipts_incomplete"
+    if observed_status != expected_status:
+        errors.append(f"{label}: sandbox_to_pr_now.status must be {expected_status!r}")
+    if observed_blocker != expected_blocker:
+        errors.append(f"{label}: sandbox_to_pr_now.blocker must be {expected_blocker!r}")
+    if policy_ready and sandbox_to_pr.get("approval_required") is not True:
+        errors.append(f"{label}: sandbox_to_pr_now approval must be required when policy is ready")
+    if policy_ready and sandbox_to_pr.get("rollback_default") is not True:
+        errors.append(f"{label}: sandbox_to_pr_now rollback_default must be true when policy is ready")
+    next_evidence = sandbox_to_pr.get("next_evidence")
+    if not isinstance(next_evidence, list):
+        errors.append(f"{label}: sandbox_to_pr_now.next_evidence must be a list")
+        return
+    observed_evidence_ids = tuple(
+        str(item.get("evidence_id", ""))
+        for item in next_evidence
+        if isinstance(item, Mapping)
+    )
+    if observed_evidence_ids != EXPECTED_SANDBOX_TO_PR_EVIDENCE_IDS:
+        errors.append(f"{label}: sandbox_to_pr_now.next_evidence must list canonical receipt evidence in order")
+    for evidence in next_evidence:
+        if not isinstance(evidence, Mapping):
+            errors.append(f"{label}: sandbox_to_pr_now.next_evidence entries must be objects")
+            continue
+        evidence_id = str(evidence.get("evidence_id", ""))
+        if evidence.get("status") != "pending":
+            errors.append(f"{label}: sandbox_to_pr_now.{evidence_id} status must be pending")
+        expected_action = EXPECTED_SANDBOX_TO_PR_ACTIONS.get(evidence_id)
+        if expected_action is None or evidence.get("action") != expected_action:
+            errors.append(f"{label}: sandbox_to_pr_now.{evidence_id} action must be canonical")
+        expected_source = f"workflow_monitor.metadata.developer_workflow_run.receipt_checklist.{evidence_id}"
+        if evidence.get("source") != expected_source:
+            errors.append(f"{label}: sandbox_to_pr_now.{evidence_id} source must be {expected_source!r}")
+
+
+def _validate_sandbox_to_pr_no_drift(
+    read_model: Mapping[str, Any],
+    sandbox_to_pr_packet: Mapping[str, Any],
+    errors: list[str],
+    read_model_label: str,
+    packet_label: str,
+) -> None:
+    sandbox_to_pr = read_model.get("sandbox_to_pr_now")
+    if not isinstance(sandbox_to_pr, Mapping):
+        return
+    friction_evidence = sandbox_to_pr.get("next_evidence")
+    packet_evidence = sandbox_to_pr_packet.get("next_evidence")
+    if not isinstance(friction_evidence, list) or not isinstance(packet_evidence, list):
+        errors.append(f"{read_model_label}: sandbox_to_pr_now.next_evidence cannot be compared with {packet_label}")
+        return
+    friction_signature = _evidence_signature(friction_evidence)
+    packet_signature = _evidence_signature(packet_evidence)
+    if friction_signature != packet_signature:
+        errors.append(f"{read_model_label}: sandbox_to_pr_now.next_evidence drifts from {packet_label}")
+
+
+def _evidence_signature(evidence_items: list[object]) -> tuple[tuple[str, str, str, str], ...]:
+    signature: list[tuple[str, str, str, str]] = []
+    for item in evidence_items:
+        if not isinstance(item, Mapping):
+            continue
+        signature.append((
+            str(item.get("evidence_id", "")),
+            str(item.get("label", "")),
+            str(item.get("action", "")),
+            str(item.get("source", "")),
+        ))
+    return tuple(signature)
+
+
 def _validate_validators(read_model: Mapping[str, Any], errors: list[str], label: str) -> None:
     validators = read_model.get("validators")
     if not isinstance(validators, list):
@@ -347,6 +564,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate capability friction-control read model.")
     parser.add_argument("--schema", default=str(DEFAULT_SCHEMA))
     parser.add_argument("--read-model", default=str(DEFAULT_READ_MODEL))
+    parser.add_argument("--sandbox-to-pr-packet", default=str(DEFAULT_SANDBOX_TO_PR_PACKET))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--refresh-example", action="store_true")
@@ -362,6 +580,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     validation = validate_capability_friction_control(
         schema_path=Path(args.schema),
         read_model_path=Path(args.read_model),
+        sandbox_to_pr_packet_path=Path(args.sandbox_to_pr_packet),
     )
     write_capability_friction_control_validation(validation, Path(args.output))
     if args.json:

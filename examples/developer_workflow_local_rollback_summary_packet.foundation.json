@@ -1,0 +1,110 @@
+{
+  "artifacts": [
+    {
+      "artifact_id": "approval_packet",
+      "artifact_status": "reported",
+      "path": ".change_assurance/pr_preparation_approval_packet.generated.json",
+      "required_confirmation": true,
+      "rollback_action": "delete_generated_artifact",
+      "rollback_command": "Remove-Item -LiteralPath '.change_assurance/pr_preparation_approval_packet.generated.json' -Force"
+    },
+    {
+      "artifact_id": "command_preview",
+      "artifact_status": "reported",
+      "path": ".change_assurance/pr_command_preview_packet.generated.json",
+      "required_confirmation": true,
+      "rollback_action": "delete_generated_artifact",
+      "rollback_command": "Remove-Item -LiteralPath '.change_assurance/pr_command_preview_packet.generated.json' -Force"
+    },
+    {
+      "artifact_id": "external_approval_witness",
+      "artifact_status": "reported",
+      "path": ".change_assurance/external_pr_execution_approval_witness.generated.json",
+      "required_confirmation": true,
+      "rollback_action": "delete_generated_artifact",
+      "rollback_command": "Remove-Item -LiteralPath '.change_assurance/external_pr_execution_approval_witness.generated.json' -Force"
+    },
+    {
+      "artifact_id": "local_candidate",
+      "artifact_status": "reported",
+      "path": ".change_assurance/local_pr_candidate_packet.generated.json",
+      "required_confirmation": true,
+      "rollback_action": "delete_generated_artifact",
+      "rollback_command": "Remove-Item -LiteralPath '.change_assurance/local_pr_candidate_packet.generated.json' -Force"
+    },
+    {
+      "artifact_id": "metadata",
+      "artifact_status": "reported",
+      "path": ".change_assurance/pr_metadata_packet.generated.json",
+      "required_confirmation": true,
+      "rollback_action": "delete_generated_artifact",
+      "rollback_command": "Remove-Item -LiteralPath '.change_assurance/pr_metadata_packet.generated.json' -Force"
+    },
+    {
+      "artifact_id": "operator_receipt",
+      "artifact_status": "reported",
+      "path": ".change_assurance/developer_workflow_operator_receipt.generated.json",
+      "required_confirmation": true,
+      "rollback_action": "delete_generated_artifact",
+      "rollback_command": "Remove-Item -LiteralPath '.change_assurance/developer_workflow_operator_receipt.generated.json' -Force"
+    },
+    {
+      "artifact_id": "pr_readiness_bundle",
+      "artifact_status": "reported",
+      "path": ".change_assurance/pr_readiness_bundle.generated.json",
+      "required_confirmation": true,
+      "rollback_action": "delete_generated_artifact",
+      "rollback_command": "Remove-Item -LiteralPath '.change_assurance/pr_readiness_bundle.generated.json' -Force"
+    },
+    {
+      "artifact_id": "pr_tool_admission",
+      "artifact_status": "reported",
+      "path": ".change_assurance/pr_tool_admission_packet.generated.json",
+      "required_confirmation": true,
+      "rollback_action": "delete_generated_artifact",
+      "rollback_command": "Remove-Item -LiteralPath '.change_assurance/pr_tool_admission_packet.generated.json' -Force"
+    },
+    {
+      "artifact_id": "sandbox_receipt_attachment_packet",
+      "artifact_status": "reported",
+      "path": ".change_assurance/developer_workflow_sandbox_receipt_attachment_packet.generated.json",
+      "required_confirmation": true,
+      "rollback_action": "delete_generated_artifact",
+      "rollback_command": "Remove-Item -LiteralPath '.change_assurance/developer_workflow_sandbox_receipt_attachment_packet.generated.json' -Force"
+    },
+    {
+      "artifact_id": "sandbox_to_pr_packet",
+      "artifact_status": "reported",
+      "path": ".change_assurance/sandbox_to_pr_preparation_packet.generated.json",
+      "required_confirmation": true,
+      "rollback_action": "delete_generated_artifact",
+      "rollback_command": "Remove-Item -LiteralPath '.change_assurance/sandbox_to_pr_preparation_packet.generated.json' -Force"
+    }
+  ],
+  "execution_boundary": "local_lab_only",
+  "external_effects_allowed": false,
+  "generated_artifact_count": 10,
+  "packet_id": "developer_workflow_local_rollback_summary_packet.v1",
+  "packet_status": "rollback_ready",
+  "rollback_command_preview": [
+    "Remove-Item -LiteralPath '.change_assurance/pr_preparation_approval_packet.generated.json' -Force",
+    "Remove-Item -LiteralPath '.change_assurance/pr_command_preview_packet.generated.json' -Force",
+    "Remove-Item -LiteralPath '.change_assurance/external_pr_execution_approval_witness.generated.json' -Force",
+    "Remove-Item -LiteralPath '.change_assurance/local_pr_candidate_packet.generated.json' -Force",
+    "Remove-Item -LiteralPath '.change_assurance/pr_metadata_packet.generated.json' -Force",
+    "Remove-Item -LiteralPath '.change_assurance/developer_workflow_operator_receipt.generated.json' -Force",
+    "Remove-Item -LiteralPath '.change_assurance/pr_readiness_bundle.generated.json' -Force",
+    "Remove-Item -LiteralPath '.change_assurance/pr_tool_admission_packet.generated.json' -Force",
+    "Remove-Item -LiteralPath '.change_assurance/developer_workflow_sandbox_receipt_attachment_packet.generated.json' -Force",
+    "Remove-Item -LiteralPath '.change_assurance/sandbox_to_pr_preparation_packet.generated.json' -Force"
+  ],
+  "rollback_execution_performed": false,
+  "source_refs": {
+    "builder": "python scripts/build_developer_workflow_local_rollback_summary_packet.py",
+    "local_sandbox_proof_report": "examples/developer_workflow_local_sandbox_proof_report.foundation.json",
+    "validator": "python scripts/validate_developer_workflow_local_rollback_summary_packet.py"
+  },
+  "source_report_path": "examples/developer_workflow_local_sandbox_proof_report.foundation.json",
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

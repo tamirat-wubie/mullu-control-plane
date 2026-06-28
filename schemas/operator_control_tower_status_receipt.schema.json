@@ -1,0 +1,3735 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:operator-control-tower-status-receipt:1",
+  "title": "OperatorControlTowerStatusReceipt",
+  "description": "Projection-only audit receipt for the current operator control tower dashboard focus and sandbox-to-PR next evidence state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_type",
+    "tower_id",
+    "tenant_id",
+    "generated_at",
+    "projection_only",
+    "external_effects_allowed",
+    "snapshot_hash",
+    "overall_health",
+    "missing_panel_count",
+    "degraded_panel_count",
+    "task",
+    "status",
+    "reason",
+    "next_unlock",
+    "action_needed",
+    "control_tower_headline_summary",
+    "local_lab_readiness_summary",
+    "local_resume_plan_summary",
+    "operator_action_card",
+    "next_action_summary",
+    "approval_readiness_summary",
+    "operator_decision_summary",
+    "friction_reduction_summary",
+    "safe_local_action_queue_summary",
+    "safe_automatic_action_candidates",
+    "dangerous_action_blocker_summary",
+    "dangerous_zone_blockers",
+    "lab_real_world_summary",
+    "approval_boundary_summary",
+    "rollback_control_summary",
+    "capability_registry_summary",
+    "friction_mode_summary",
+    "safe_vs_dangerous_summary",
+    "unlock_readiness_summary",
+    "control_system_summary",
+    "workflow_monitor_summary",
+    "sandbox_to_pr",
+    "sandbox_to_pr_summary",
+    "pr_readiness",
+    "pr_readiness_summary",
+    "evidence_progress_summary",
+    "developer_workflow_operator_receipt",
+    "developer_workflow_operator_receipt_summary",
+    "developer_workflow_readiness_summary",
+    "developer_workflow_milestone_summary",
+    "developer_workflow_completion_summary",
+    "operator_terminal_closure_summary",
+    "operator_resume_checkpoint_summary",
+    "operator_sandbox_milestone_summary",
+    "operator_sandbox_receipt_checklist_summary",
+    "operator_sandbox_patch_receipt_summary",
+    "operator_sandbox_patch_command_summary",
+    "operator_sandbox_patch_bundle_preview_summary",
+    "operator_sandbox_patch_validation_readiness_summary",
+    "operator_sandbox_patch_terminal_review_summary",
+    "operator_sandbox_patch_approval_readiness_summary",
+    "operator_sandbox_patch_pr_preparation_readiness_summary",
+    "operator_handoff_summary",
+    "operator_review_readiness_summary",
+    "operator_review_packet_summary",
+    "operator_blocker_summary",
+    "operator_packet_summary",
+    "operator_authority_summary",
+    "operator_risk_summary",
+    "operator_approval_packet_summary",
+    "operator_evidence_gap_summary",
+    "operator_rollback_gap_summary",
+    "operator_pr_gap_summary",
+    "operator_dashboard_summary",
+    "sandbox_receipt_bundle",
+    "sandbox_receipt_bundle_summary",
+    "sandbox_receipt_attachments",
+    "sandbox_receipt_attachment_readiness_summary",
+    "local_sandbox_proof_report",
+    "local_sandbox_proof_readiness_summary",
+    "local_rollback_summary_packet",
+    "local_rollback_approval_packet",
+    "local_rollback_execution_receipt",
+    "local_rollback_receipts_summary",
+    "local_rollback_flow_command",
+    "local_rollback_flow_readiness_summary",
+    "workflow_run",
+    "source_refs",
+    "receipt_hash",
+    "receipt_id"
+  ],
+  "properties": {
+    "receipt_type": {
+      "type": "string",
+      "const": "operator_control_tower_status_receipt.v1"
+    },
+    "tower_id": {"type": "string", "minLength": 1, "maxLength": 120},
+    "tenant_id": {"type": "string", "minLength": 1, "maxLength": 120},
+    "generated_at": {"type": "string", "minLength": 1, "maxLength": 80},
+    "projection_only": {"type": "boolean", "const": true},
+    "external_effects_allowed": {"type": "boolean", "const": false},
+    "snapshot_hash": {"$ref": "#/$defs/hash"},
+    "overall_health": {
+      "type": "string",
+      "enum": ["ok", "degraded", "missing"]
+    },
+    "missing_panel_count": {"type": "integer", "minimum": 0},
+    "degraded_panel_count": {"type": "integer", "minimum": 0},
+    "task": {"type": "string", "minLength": 1, "maxLength": 160},
+    "status": {"type": "string", "minLength": 1, "maxLength": 80},
+    "reason": {"type": "string", "maxLength": 320},
+    "next_unlock": {"type": "string", "maxLength": 120},
+    "action_needed": {"type": "string", "maxLength": 240},
+    "control_tower_headline_summary": {"$ref": "#/$defs/control_tower_headline_summary"},
+    "local_lab_readiness_summary": {"$ref": "#/$defs/local_lab_readiness_summary"},
+    "local_resume_plan_summary": {"$ref": "#/$defs/local_resume_plan_summary"},
+    "operator_action_card": {"$ref": "#/$defs/operator_action_card"},
+    "next_action_summary": {"$ref": "#/$defs/next_action_summary"},
+    "approval_readiness_summary": {"$ref": "#/$defs/approval_readiness_summary"},
+    "operator_decision_summary": {"$ref": "#/$defs/operator_decision_summary"},
+    "friction_reduction_summary": {"$ref": "#/$defs/friction_reduction_summary"},
+    "safe_local_action_queue_summary": {"$ref": "#/$defs/safe_local_action_queue_summary"},
+    "safe_automatic_action_candidates": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/safe_automatic_action_candidate"}
+    },
+    "dangerous_action_blocker_summary": {"$ref": "#/$defs/dangerous_action_blocker_summary"},
+    "dangerous_zone_blockers": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/dangerous_zone_blocker"}
+    },
+    "lab_real_world_summary": {"$ref": "#/$defs/lab_real_world_summary"},
+    "approval_boundary_summary": {"$ref": "#/$defs/approval_boundary_summary"},
+    "rollback_control_summary": {"$ref": "#/$defs/rollback_control_summary"},
+    "capability_registry_summary": {"$ref": "#/$defs/capability_registry_summary"},
+    "friction_mode_summary": {"$ref": "#/$defs/friction_mode_summary"},
+    "safe_vs_dangerous_summary": {"$ref": "#/$defs/safe_vs_dangerous_summary"},
+    "unlock_readiness_summary": {"$ref": "#/$defs/unlock_readiness_summary"},
+    "control_system_summary": {"$ref": "#/$defs/control_system_summary"},
+    "workflow_monitor_summary": {"$ref": "#/$defs/workflow_monitor_summary"},
+    "sandbox_to_pr": {"$ref": "#/$defs/sandbox_to_pr"},
+    "sandbox_to_pr_summary": {"$ref": "#/$defs/sandbox_to_pr_summary"},
+    "pr_readiness": {"$ref": "#/$defs/pr_readiness"},
+    "pr_readiness_summary": {"$ref": "#/$defs/pr_readiness_summary"},
+    "evidence_progress_summary": {"$ref": "#/$defs/evidence_progress_summary"},
+    "developer_workflow_operator_receipt": {"$ref": "#/$defs/developer_workflow_operator_receipt"},
+    "developer_workflow_operator_receipt_summary": {
+      "$ref": "#/$defs/developer_workflow_operator_receipt_summary"
+    },
+    "developer_workflow_readiness_summary": {"$ref": "#/$defs/developer_workflow_readiness_summary"},
+    "developer_workflow_milestone_summary": {"$ref": "#/$defs/developer_workflow_milestone_summary"},
+    "developer_workflow_completion_summary": {"$ref": "#/$defs/developer_workflow_completion_summary"},
+    "operator_terminal_closure_summary": {"$ref": "#/$defs/operator_terminal_closure_summary"},
+    "operator_resume_checkpoint_summary": {"$ref": "#/$defs/operator_resume_checkpoint_summary"},
+    "operator_sandbox_milestone_summary": {"$ref": "#/$defs/operator_sandbox_milestone_summary"},
+    "operator_sandbox_receipt_checklist_summary": {"$ref": "#/$defs/operator_sandbox_receipt_checklist_summary"},
+    "operator_sandbox_patch_receipt_summary": {"$ref": "#/$defs/operator_sandbox_patch_receipt_summary"},
+    "operator_sandbox_patch_command_summary": {"$ref": "#/$defs/operator_sandbox_patch_command_summary"},
+    "operator_sandbox_patch_bundle_preview_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_bundle_preview_summary"
+    },
+    "operator_sandbox_patch_validation_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_validation_readiness_summary"
+    },
+    "operator_sandbox_patch_terminal_review_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_terminal_review_summary"
+    },
+    "operator_sandbox_patch_approval_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_approval_readiness_summary"
+    },
+    "operator_sandbox_patch_pr_preparation_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_pr_preparation_readiness_summary"
+    },
+    "operator_handoff_summary": {"$ref": "#/$defs/operator_handoff_summary"},
+    "operator_review_readiness_summary": {"$ref": "#/$defs/operator_review_readiness_summary"},
+    "operator_review_packet_summary": {"$ref": "#/$defs/operator_review_packet_summary"},
+    "operator_blocker_summary": {"$ref": "#/$defs/operator_blocker_summary"},
+    "operator_packet_summary": {"$ref": "#/$defs/operator_packet_summary"},
+    "operator_authority_summary": {"$ref": "#/$defs/operator_authority_summary"},
+    "operator_risk_summary": {"$ref": "#/$defs/operator_risk_summary"},
+    "operator_approval_packet_summary": {"$ref": "#/$defs/operator_approval_packet_summary"},
+    "operator_evidence_gap_summary": {"$ref": "#/$defs/operator_evidence_gap_summary"},
+    "operator_rollback_gap_summary": {"$ref": "#/$defs/operator_rollback_gap_summary"},
+    "operator_pr_gap_summary": {"$ref": "#/$defs/operator_pr_gap_summary"},
+    "operator_dashboard_summary": {"$ref": "#/$defs/operator_dashboard_summary"},
+    "sandbox_receipt_bundle": {"$ref": "#/$defs/sandbox_receipt_bundle"},
+    "sandbox_receipt_bundle_summary": {"$ref": "#/$defs/sandbox_receipt_bundle_summary"},
+    "sandbox_receipt_attachments": {"$ref": "#/$defs/sandbox_receipt_attachments"},
+    "sandbox_receipt_attachment_readiness_summary": {
+      "$ref": "#/$defs/sandbox_receipt_attachment_readiness_summary"
+    },
+    "local_sandbox_proof_report": {"$ref": "#/$defs/local_sandbox_proof_report"},
+    "local_sandbox_proof_readiness_summary": {"$ref": "#/$defs/local_sandbox_proof_readiness_summary"},
+    "local_rollback_summary_packet": {"$ref": "#/$defs/local_rollback_summary_packet"},
+    "local_rollback_approval_packet": {"$ref": "#/$defs/local_rollback_approval_packet"},
+    "local_rollback_execution_receipt": {"$ref": "#/$defs/local_rollback_execution_receipt"},
+    "local_rollback_receipts_summary": {"$ref": "#/$defs/local_rollback_receipts_summary"},
+    "local_rollback_flow_command": {"$ref": "#/$defs/local_rollback_flow_command"},
+    "local_rollback_flow_readiness_summary": {"$ref": "#/$defs/local_rollback_flow_readiness_summary"},
+    "workflow_run": {"$ref": "#/$defs/workflow_run"},
+    "source_refs": {"$ref": "#/$defs/source_refs"},
+    "receipt_hash": {"$ref": "#/$defs/hash"},
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^operator-control-tower-status-[a-f0-9]{16}$"
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "stage_status": {
+      "type": "string",
+      "enum": ["pending", "complete"]
+    },
+    "sandbox_status": {
+      "type": "string",
+      "enum": [
+        "awaiting_receipts",
+        "awaiting_operator_approval",
+        "ready_to_prepare_pr",
+        "pr_candidate_ready",
+        "unknown"
+      ]
+    },
+    "blocker": {
+      "type": "string",
+      "enum": [
+        "capability_policy_incomplete",
+        "sandbox_receipts_incomplete",
+        "operator_approval_missing",
+        "pr_candidate_not_prepared",
+        "none",
+        "unknown"
+      ]
+    },
+    "control_tower_headline_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "task",
+        "status",
+        "headline_status",
+        "current_milestone",
+        "current_blocker",
+        "recommended_mode",
+        "safe_local_candidate_count",
+        "dangerous_blocker_count",
+        "local_continuation_allowed",
+        "approval_boundary",
+        "next_action",
+        "next_evidence_id",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "control_tower_headline.foundation"
+        },
+        "task": {"type": "string", "minLength": 1, "maxLength": 160},
+        "status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "headline_status": {
+          "type": "string",
+          "enum": ["local_lab_ready", "blocked"]
+        },
+        "current_milestone": {"type": "string", "minLength": 1, "maxLength": 120},
+        "current_blocker": {"$ref": "#/$defs/blocker"},
+        "recommended_mode": {
+          "type": "string",
+          "enum": ["strict", "balanced", "fast"]
+        },
+        "safe_local_candidate_count": {"type": "integer", "minimum": 0},
+        "dangerous_blocker_count": {"type": "integer", "minimum": 0},
+        "local_continuation_allowed": {"type": "boolean"},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "local_lab_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "readiness_status",
+        "lab_mode_allowed",
+        "local_continuation_allowed",
+        "safe_candidate_count",
+        "pending_evidence_count",
+        "next_evidence_id",
+        "rollback_receipt_available_count",
+        "rollback_receipt_required_count",
+        "rollback_ready",
+        "next_action",
+        "approval_boundary",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "local_lab_readiness.foundation"
+        },
+        "readiness_status": {
+          "type": "string",
+          "enum": ["awaiting_evidence", "ready_to_prepare"]
+        },
+        "lab_mode_allowed": {"type": "boolean"},
+        "local_continuation_allowed": {"type": "boolean"},
+        "safe_candidate_count": {"type": "integer", "minimum": 0},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "rollback_receipt_available_count": {"type": "integer", "minimum": 0},
+        "rollback_receipt_required_count": {"type": "integer", "minimum": 0},
+        "rollback_ready": {"type": "boolean"},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "local_resume_plan_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "resume_status",
+        "continue_allowed",
+        "recommended_mode",
+        "current_milestone",
+        "current_blocker",
+        "next_action",
+        "next_evidence_id",
+        "safe_candidate_count",
+        "pending_evidence_count",
+        "rollback_ready",
+        "approval_required_now",
+        "approval_boundary",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "local_resume_plan.foundation"
+        },
+        "resume_status": {
+          "type": "string",
+          "enum": ["ready_for_local_continuation", "blocked_pending_approval"]
+        },
+        "continue_allowed": {"type": "boolean"},
+        "recommended_mode": {
+          "type": "string",
+          "enum": ["strict", "balanced", "fast"]
+        },
+        "current_milestone": {"type": "string", "minLength": 1, "maxLength": 120},
+        "current_blocker": {"type": "string", "minLength": 1, "maxLength": 160},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "safe_candidate_count": {"type": "integer", "minimum": 0},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "rollback_ready": {"type": "boolean"},
+        "approval_required_now": {"type": "boolean"},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_action_card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "card_id",
+        "title",
+        "status",
+        "reason",
+        "primary_action",
+        "primary_href",
+        "focus_id",
+        "focus_label",
+        "focus_status",
+        "task_id",
+        "risk",
+        "execution_boundary",
+        "approval_required",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "card_id": {
+          "type": "string",
+          "const": "developer_workflow_next_action"
+        },
+        "title": {
+          "type": "string",
+          "const": "Next developer workflow action"
+        },
+        "status": {"$ref": "#/$defs/sandbox_status"},
+        "reason": {"$ref": "#/$defs/blocker"},
+        "primary_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "primary_href": {"type": "string", "minLength": 1, "maxLength": 240},
+        "focus_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "focus_label": {"type": "string", "minLength": 1, "maxLength": 160},
+        "focus_status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "task_id": {"type": "string", "maxLength": 120},
+        "risk": {
+          "type": "string",
+          "const": "low, local lab only"
+        },
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "approval_required": {"type": "boolean"},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "next_action_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "status",
+        "reason",
+        "primary_action",
+        "primary_href",
+        "focus_id",
+        "focus_label",
+        "focus_status",
+        "focus_source",
+        "required_evidence",
+        "required_evidence_count",
+        "approval_required",
+        "risk",
+        "operator_message",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "next_action.foundation"
+        },
+        "status": {"$ref": "#/$defs/sandbox_status"},
+        "reason": {"$ref": "#/$defs/blocker"},
+        "primary_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "primary_href": {"type": "string", "minLength": 1, "maxLength": 240},
+        "focus_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "focus_label": {"type": "string", "minLength": 1, "maxLength": 160},
+        "focus_status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "focus_source": {"type": "string", "maxLength": 240},
+        "required_evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "required_evidence_count": {"type": "integer", "minimum": 0},
+        "approval_required": {"type": "boolean"},
+        "risk": {
+          "type": "string",
+          "const": "low, local lab only"
+        },
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "approval_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "approval_required",
+        "operator_approval_status",
+        "approval_missing",
+        "current_blocker",
+        "approval_boundary",
+        "next_approval_action",
+        "approval_target_href",
+        "pr_candidate_status",
+        "ready_for_pr_candidate_preparation",
+        "external_pr_execution_allowed",
+        "operator_message",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "approval_readiness.foundation"
+        },
+        "approval_required": {"type": "boolean"},
+        "operator_approval_status": {"$ref": "#/$defs/stage_status"},
+        "approval_missing": {"type": "boolean"},
+        "current_blocker": {"$ref": "#/$defs/blocker"},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "next_approval_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "approval_target_href": {"type": "string", "minLength": 1, "maxLength": 240},
+        "pr_candidate_status": {"$ref": "#/$defs/stage_status"},
+        "ready_for_pr_candidate_preparation": {"type": "boolean"},
+        "external_pr_execution_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "operator_decision_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "decision_status",
+        "decision_kind",
+        "current_milestone",
+        "current_blocker",
+        "recommended_action",
+        "action_href",
+        "next_evidence_id",
+        "operator_review_required_now",
+        "operator_review_required_before_external_effect",
+        "approval_status",
+        "local_continuation_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_decision.foundation"
+        },
+        "decision_status": {"$ref": "#/$defs/sandbox_status"},
+        "decision_kind": {
+          "type": "string",
+          "enum": ["evidence_collection", "approval_request", "pr_preparation", "closed", "review"]
+        },
+        "current_milestone": {"type": "string", "minLength": 1, "maxLength": 120},
+        "current_blocker": {"$ref": "#/$defs/blocker"},
+        "recommended_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "action_href": {"type": "string", "minLength": 1, "maxLength": 240},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "operator_review_required_now": {"type": "boolean"},
+        "operator_review_required_before_external_effect": {"type": "boolean"},
+        "approval_status": {"$ref": "#/$defs/stage_status"},
+        "local_continuation_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "safe_automatic_action_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "zone",
+        "title",
+        "status",
+        "primary_action",
+        "primary_href",
+        "risk",
+        "execution_boundary",
+        "approval_required",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "candidate_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "zone": {"type": "string", "minLength": 1, "maxLength": 80},
+        "title": {"type": "string", "minLength": 1, "maxLength": 160},
+        "status": {"type": "string", "const": "candidate"},
+        "primary_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "primary_href": {"type": "string", "minLength": 1, "maxLength": 240},
+        "risk": {
+          "type": "string",
+          "const": "low, local lab only"
+        },
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "approval_required": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "friction_reduction_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "reduction_status",
+        "current_milestone",
+        "current_blocker",
+        "local_continuation_allowed",
+        "pending_evidence_count",
+        "next_evidence_id",
+        "approval_boundary",
+        "operator_review_required_now",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "friction_reduction.foundation"
+        },
+        "reduction_status": {
+          "type": "string",
+          "enum": ["local_continuation_ready", "awaiting_operator_review"]
+        },
+        "current_milestone": {"type": "string", "minLength": 1, "maxLength": 120},
+        "current_blocker": {"$ref": "#/$defs/blocker"},
+        "local_continuation_allowed": {"type": "boolean"},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "operator_review_required_now": {"type": "boolean"},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "safe_local_action_queue_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "queue_status",
+        "candidate_count",
+        "first_candidate_id",
+        "first_zone",
+        "first_action",
+        "recommended_mode",
+        "approval_required",
+        "local_execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "safe_local_action_queue.foundation"
+        },
+        "queue_status": {
+          "type": "string",
+          "enum": ["ready", "empty"]
+        },
+        "candidate_count": {"type": "integer", "minimum": 0},
+        "first_candidate_id": {"type": "string", "maxLength": 120},
+        "first_zone": {"type": "string", "maxLength": 80},
+        "first_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "recommended_mode": {
+          "type": "string",
+          "enum": ["strict", "balanced", "fast"]
+        },
+        "approval_required": {"type": "boolean", "const": false},
+        "local_execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "dangerous_zone_blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blocker_id",
+        "zone",
+        "title",
+        "status",
+        "reason",
+        "required_evidence",
+        "risk",
+        "execution_boundary",
+        "approval_required",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "blocker_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "zone": {"type": "string", "minLength": 1, "maxLength": 80},
+        "title": {"type": "string", "minLength": 1, "maxLength": 160},
+        "status": {"type": "string", "const": "blocked"},
+        "reason": {
+          "type": "string",
+          "const": "dangerous_zone_requires_explicit_approval"
+        },
+        "required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "risk": {
+          "type": "string",
+          "const": "high, real-world boundary"
+        },
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["real_world"]
+        },
+        "approval_required": {"type": "boolean", "const": true},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "dangerous_action_blocker_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "blocker_status",
+        "blocker_count",
+        "first_blocker_id",
+        "first_zone",
+        "first_reason",
+        "required_evidence",
+        "approval_required",
+        "rollback_required",
+        "real_world_execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "dangerous_action_blocker.foundation"
+        },
+        "blocker_status": {
+          "type": "string",
+          "enum": ["blocked", "clear"]
+        },
+        "blocker_count": {"type": "integer", "minimum": 0},
+        "first_blocker_id": {"type": "string", "maxLength": 120},
+        "first_zone": {"type": "string", "maxLength": 80},
+        "first_reason": {
+          "type": "string",
+          "enum": ["dangerous_zone_requires_explicit_approval"]
+        },
+        "required_evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "approval_required": {"type": "boolean"},
+        "rollback_required": {"type": "boolean"},
+        "real_world_execution_boundary": {
+          "type": "string",
+          "enum": ["real_world"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "safe_vs_dangerous_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "safe_candidate_count",
+        "dangerous_blocker_count",
+        "first_safe_zone",
+        "first_safe_action",
+        "first_dangerous_zone",
+        "first_dangerous_reason",
+        "operator_message",
+        "safe_execution_boundary",
+        "dangerous_execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "safe_vs_dangerous.local_lab"
+        },
+        "safe_candidate_count": {"type": "integer", "minimum": 0},
+        "dangerous_blocker_count": {"type": "integer", "minimum": 0},
+        "first_safe_zone": {"type": "string", "maxLength": 80},
+        "first_safe_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "first_dangerous_zone": {"type": "string", "maxLength": 80},
+        "first_dangerous_reason": {
+          "type": "string",
+          "const": "dangerous_zone_requires_explicit_approval"
+        },
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 240},
+        "safe_execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "dangerous_execution_boundary": {
+          "type": "string",
+          "enum": ["real_world"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "capability_registry_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "capability_count",
+        "preflight_ready_count",
+        "blocked_count",
+        "approval_required_count",
+        "pending_unlock_count",
+        "next_blocked_capability_id",
+        "next_blocked_reason",
+        "next_required_evidence",
+        "next_required_evidence_count",
+        "operator_message",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "capability_registry.foundation"
+        },
+        "capability_count": {"type": "integer", "minimum": 0},
+        "preflight_ready_count": {"type": "integer", "minimum": 0},
+        "blocked_count": {"type": "integer", "minimum": 0},
+        "approval_required_count": {"type": "integer", "minimum": 0},
+        "pending_unlock_count": {"type": "integer", "minimum": 0},
+        "next_blocked_capability_id": {"type": "string", "maxLength": 120},
+        "next_blocked_reason": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_required_evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "next_required_evidence_count": {"type": "integer", "minimum": 0},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "lab_real_world_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "lab_mode_allowed",
+        "lab_safe_candidate_count",
+        "fast_mode_lab_ready_count",
+        "real_world_effects_allowed",
+        "real_world_write_status",
+        "dangerous_blocker_count",
+        "dangerous_approval_required_count",
+        "operator_message",
+        "lab_execution_boundary",
+        "real_world_execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "lab_real_world.foundation"
+        },
+        "lab_mode_allowed": {"type": "boolean"},
+        "lab_safe_candidate_count": {"type": "integer", "minimum": 0},
+        "fast_mode_lab_ready_count": {"type": "integer", "minimum": 0},
+        "real_world_effects_allowed": {"type": "boolean", "const": false},
+        "real_world_write_status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "dangerous_blocker_count": {"type": "integer", "minimum": 0},
+        "dangerous_approval_required_count": {"type": "integer", "minimum": 0},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "lab_execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "real_world_execution_boundary": {
+          "type": "string",
+          "enum": ["real_world"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "approval_boundary_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "local_auto_candidate_count",
+        "approval_unlock_count",
+        "dangerous_approval_required_count",
+        "pr_approval_required",
+        "approval_boundary",
+        "next_approval_capability_id",
+        "operator_message",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "approval_boundary.foundation"
+        },
+        "local_auto_candidate_count": {"type": "integer", "minimum": 0},
+        "approval_unlock_count": {"type": "integer", "minimum": 0},
+        "dangerous_approval_required_count": {"type": "integer", "minimum": 0},
+        "pr_approval_required": {"type": "boolean"},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "next_approval_capability_id": {"type": "string", "maxLength": 120},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "rollback_control_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "rollback_default_count",
+        "rollback_required_count",
+        "capability_count",
+        "rollback_default_ready",
+        "sandbox_to_pr_policy_ready",
+        "rollback_policy",
+        "rollback_receipt_source",
+        "operator_message",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "rollback_control.foundation"
+        },
+        "rollback_default_count": {"type": "integer", "minimum": 0},
+        "rollback_required_count": {"type": "integer", "minimum": 0},
+        "capability_count": {"type": "integer", "minimum": 0},
+        "rollback_default_ready": {"type": "boolean"},
+        "sandbox_to_pr_policy_ready": {"type": "boolean"},
+        "rollback_policy": {"type": "string", "minLength": 1, "maxLength": 240},
+        "rollback_receipt_source": {"type": "string", "minLength": 1, "maxLength": 240},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "friction_mode_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "default_mode",
+        "foundation_recommended_mode",
+        "strict_allowed_count",
+        "strict_approval_required_count",
+        "strict_blocked_count",
+        "balanced_allowed_count",
+        "balanced_approval_required_count",
+        "balanced_blocked_count",
+        "fast_allowed_count",
+        "fast_approval_required_count",
+        "fast_blocked_count",
+        "operator_message",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "friction_mode.foundation"
+        },
+        "default_mode": {"type": "string", "enum": ["strict", "balanced", "fast"]},
+        "foundation_recommended_mode": {"type": "string", "enum": ["strict", "balanced", "fast"]},
+        "strict_allowed_count": {"type": "integer", "minimum": 0},
+        "strict_approval_required_count": {"type": "integer", "minimum": 0},
+        "strict_blocked_count": {"type": "integer", "minimum": 0},
+        "balanced_allowed_count": {"type": "integer", "minimum": 0},
+        "balanced_approval_required_count": {"type": "integer", "minimum": 0},
+        "balanced_blocked_count": {"type": "integer", "minimum": 0},
+        "fast_allowed_count": {"type": "integer", "minimum": 0},
+        "fast_approval_required_count": {"type": "integer", "minimum": 0},
+        "fast_blocked_count": {"type": "integer", "minimum": 0},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "unlock_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "pending_unlock_count",
+        "safe_candidate_count",
+        "dangerous_blocker_count",
+        "next_capability_id",
+        "next_unlock",
+        "next_required_evidence",
+        "next_required_evidence_count",
+        "safe_candidates_ready",
+        "dangerous_blockers_requiring_approval",
+        "operator_message",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "unlock_readiness.local_lab"
+        },
+        "pending_unlock_count": {"type": "integer", "minimum": 0},
+        "safe_candidate_count": {"type": "integer", "minimum": 0},
+        "dangerous_blocker_count": {"type": "integer", "minimum": 0},
+        "next_capability_id": {"type": "string", "maxLength": 120},
+        "next_unlock": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_required_evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "next_required_evidence_count": {"type": "integer", "minimum": 0},
+        "safe_candidates_ready": {"type": "integer", "minimum": 0},
+        "dangerous_blockers_requiring_approval": {"type": "integer", "minimum": 0},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "control_system_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "task",
+        "status",
+        "recommended_mode",
+        "lab_mode_allowed",
+        "capability_count",
+        "pending_unlock_count",
+        "safe_candidate_count",
+        "dangerous_blocker_count",
+        "next_capability_id",
+        "next_unlock",
+        "next_required_evidence",
+        "next_required_evidence_count",
+        "risk",
+        "action_needed",
+        "operator_message",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "control_system.foundation"
+        },
+        "task": {"type": "string", "minLength": 1, "maxLength": 160},
+        "status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "recommended_mode": {
+          "type": "string",
+          "enum": ["fast", "balanced", "strict"]
+        },
+        "lab_mode_allowed": {"type": "boolean"},
+        "capability_count": {"type": "integer", "minimum": 0},
+        "pending_unlock_count": {"type": "integer", "minimum": 0},
+        "safe_candidate_count": {"type": "integer", "minimum": 0},
+        "dangerous_blocker_count": {"type": "integer", "minimum": 0},
+        "next_capability_id": {"type": "string", "maxLength": 120},
+        "next_unlock": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_required_evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "next_required_evidence_count": {"type": "integer", "minimum": 0},
+        "risk": {
+          "type": "string",
+          "const": "low, local lab only"
+        },
+        "action_needed": {"type": "string", "minLength": 1, "maxLength": 240},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "workflow_monitor_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "monitor_status",
+        "current_task_id",
+        "current_task_count",
+        "plan_review_count",
+        "blocked_count",
+        "review_count",
+        "workflow_status",
+        "readiness_status",
+        "blocker",
+        "next_action",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "monitor_status": {
+          "type": "string",
+          "enum": ["monitoring", "review", "blocked"]
+        },
+        "current_task_id": {"type": "string", "maxLength": 120},
+        "current_task_count": {"type": "integer", "minimum": 0},
+        "plan_review_count": {"type": "integer", "minimum": 0},
+        "blocked_count": {"type": "integer", "minimum": 0},
+        "review_count": {"type": "integer", "minimum": 0},
+        "workflow_status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "readiness_status": {"$ref": "#/$defs/sandbox_status"},
+        "blocker": {"$ref": "#/$defs/blocker"},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "sandbox_to_pr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "blocker", "next_action", "focus"],
+      "properties": {
+        "status": {"$ref": "#/$defs/sandbox_status"},
+        "blocker": {"$ref": "#/$defs/blocker"},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "focus": {"$ref": "#/$defs/focus"}
+      }
+    },
+    "sandbox_to_pr_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "blocker",
+        "focus_id",
+        "focus_status",
+        "next_action",
+        "next_evidence_count",
+        "receipt_completed_count",
+        "receipt_required_count",
+        "operator_approval_status",
+        "pr_candidate_status",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "status": {"$ref": "#/$defs/sandbox_status"},
+        "blocker": {"$ref": "#/$defs/blocker"},
+        "focus_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "focus_status": {"type": "string", "enum": ["pending", "complete"]},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "next_evidence_count": {"type": "integer", "minimum": 0, "maximum": 8},
+        "receipt_completed_count": {"type": "integer", "minimum": 0},
+        "receipt_required_count": {"type": "integer", "minimum": 0},
+        "operator_approval_status": {"$ref": "#/$defs/stage_status"},
+        "pr_candidate_status": {"$ref": "#/$defs/stage_status"},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "pr_readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_id",
+        "readiness_status",
+        "ready_for_external_pr_execution",
+        "first_blocker",
+        "next_evidence"
+      ],
+      "properties": {
+        "bundle_id": {
+          "type": "string",
+          "const": "pr_readiness_bundle.v1"
+        },
+        "readiness_status": {
+          "type": "string",
+          "enum": [
+            "awaiting_sandbox_receipts",
+            "awaiting_operator_approval",
+            "awaiting_external_pr_approval",
+            "ready_for_external_pr_execution"
+          ]
+        },
+        "ready_for_external_pr_execution": {"type": "boolean"},
+        "first_blocker": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 160}
+        }
+      }
+    },
+    "pr_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readiness_status",
+        "ready_for_external_pr_execution",
+        "first_blocker",
+        "next_evidence_count",
+        "receipt_completed_count",
+        "receipt_required_count",
+        "preview_only",
+        "execution_performed",
+        "external_effects_allowed",
+        "pr_creation_allowed",
+        "branch_push_allowed"
+      ],
+      "properties": {
+        "readiness_status": {
+          "type": "string",
+          "enum": [
+            "awaiting_sandbox_receipts",
+            "awaiting_operator_approval",
+            "awaiting_external_pr_approval",
+            "ready_for_external_pr_execution"
+          ]
+        },
+        "ready_for_external_pr_execution": {"type": "boolean"},
+        "first_blocker": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_evidence_count": {"type": "integer", "minimum": 0, "maximum": 8},
+        "receipt_completed_count": {"type": "integer", "minimum": 0},
+        "receipt_required_count": {"type": "integer", "minimum": 0},
+        "preview_only": {"type": "boolean"},
+        "execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "pr_creation_allowed": {"type": "boolean", "const": false},
+        "branch_push_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "evidence_progress_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "status",
+        "completed_count",
+        "required_count",
+        "pending_count",
+        "next_evidence_id",
+        "next_action",
+        "blocker",
+        "sandbox_receipt_completed_count",
+        "sandbox_receipt_required_count",
+        "sandbox_bundle_completed_count",
+        "sandbox_bundle_required_count",
+        "rollback_receipt_available_count",
+        "rollback_receipt_required_count",
+        "pr_next_evidence_count",
+        "operator_message",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "evidence_progress.foundation"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["awaiting_evidence", "complete"]
+        },
+        "completed_count": {"type": "integer", "minimum": 0},
+        "required_count": {"type": "integer", "minimum": 0},
+        "pending_count": {"type": "integer", "minimum": 0},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "blocker": {"$ref": "#/$defs/blocker"},
+        "sandbox_receipt_completed_count": {"type": "integer", "minimum": 0},
+        "sandbox_receipt_required_count": {"type": "integer", "minimum": 0},
+        "sandbox_bundle_completed_count": {"type": "integer", "minimum": 0},
+        "sandbox_bundle_required_count": {"type": "integer", "minimum": 0},
+        "rollback_receipt_available_count": {"type": "integer", "minimum": 0},
+        "rollback_receipt_required_count": {"type": "integer", "minimum": 0},
+        "pr_next_evidence_count": {"type": "integer", "minimum": 0},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "sandbox_receipt_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "completed_count", "required_count", "receipts"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["not_attached", "awaiting_receipts", "receipts_complete", "unknown"]
+        },
+        "completed_count": {"type": "integer", "minimum": 0},
+        "required_count": {"type": "integer", "minimum": 0},
+        "receipts": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"$ref": "#/$defs/bundle_receipt"}
+        }
+      }
+    },
+    "sandbox_receipt_bundle_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "completed_count",
+        "required_count",
+        "receipt_count",
+        "next_receipt_id",
+        "next_receipt_status",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["not_attached", "awaiting_receipts", "receipts_complete", "unknown"]
+        },
+        "completed_count": {"type": "integer", "minimum": 0},
+        "required_count": {"type": "integer", "minimum": 0},
+        "receipt_count": {"type": "integer", "minimum": 0, "maximum": 8},
+        "next_receipt_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_receipt_status": {
+          "type": "string",
+          "enum": ["pending", "complete"]
+        },
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "sandbox_receipt_attachments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packet_id",
+        "packet_status",
+        "external_effects_allowed",
+        "completed_count",
+        "required_count",
+        "next_attachment",
+        "attachments"
+      ],
+      "properties": {
+        "packet_id": {
+          "type": "string",
+          "const": "developer_workflow_sandbox_receipt_attachment_packet.v1"
+        },
+        "packet_status": {
+          "type": "string",
+          "enum": ["awaiting_attachments", "attachments_complete"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "completed_count": {"type": "integer", "minimum": 0},
+        "required_count": {"type": "integer", "minimum": 0},
+        "next_attachment": {"$ref": "#/$defs/next_attachment"},
+        "attachments": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"$ref": "#/$defs/attachment"}
+        }
+      }
+    },
+    "sandbox_receipt_attachment_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packet_status",
+        "completed_count",
+        "required_count",
+        "next_receipt_id",
+        "next_label",
+        "next_status",
+        "next_action",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "packet_status": {
+          "type": "string",
+          "enum": ["awaiting_attachments", "attachments_complete"]
+        },
+        "completed_count": {"type": "integer", "minimum": 0},
+        "required_count": {"type": "integer", "minimum": 0},
+        "next_receipt_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_label": {"type": "string", "minLength": 1, "maxLength": 160},
+        "next_status": {
+          "type": "string",
+          "enum": ["awaiting_attachment", "attached", "complete"]
+        },
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "local_sandbox_proof_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "ok",
+        "bundle_status",
+        "attachment_packet_status",
+        "next_attachment_id",
+        "pr_readiness_status",
+        "completed_count",
+        "required_count",
+        "execution_performed",
+        "external_effects_allowed",
+        "generated_artifacts"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["not_attached", "attached"]
+        },
+        "ok": {"type": "boolean"},
+        "bundle_status": {
+          "type": "string",
+          "enum": ["unknown", "awaiting_receipts", "receipts_complete"]
+        },
+        "attachment_packet_status": {
+          "type": "string",
+          "enum": ["unknown", "awaiting_attachments", "attachments_complete"]
+        },
+        "next_attachment_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "pr_readiness_status": {
+          "type": "string",
+          "enum": [
+            "unknown",
+            "awaiting_sandbox_receipts",
+            "awaiting_operator_approval",
+            "awaiting_external_pr_approval",
+            "ready_for_external_pr_execution"
+          ]
+        },
+        "completed_count": {"type": "integer", "minimum": 0},
+        "required_count": {"type": "integer", "minimum": 0},
+        "execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "generated_artifacts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 260
+          }
+        }
+      }
+    },
+    "local_sandbox_proof_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proof_status",
+        "ok",
+        "bundle_status",
+        "attachment_packet_status",
+        "next_attachment_id",
+        "pr_readiness_status",
+        "completed_count",
+        "required_count",
+        "execution_performed",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "proof_status": {
+          "type": "string",
+          "enum": ["not_attached", "attached"]
+        },
+        "ok": {"type": "boolean"},
+        "bundle_status": {
+          "type": "string",
+          "enum": ["unknown", "awaiting_receipts", "receipts_complete"]
+        },
+        "attachment_packet_status": {
+          "type": "string",
+          "enum": ["unknown", "awaiting_attachments", "attachments_complete"]
+        },
+        "next_attachment_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "pr_readiness_status": {
+          "type": "string",
+          "enum": [
+            "unknown",
+            "awaiting_sandbox_receipts",
+            "awaiting_operator_approval",
+            "awaiting_external_pr_approval",
+            "ready_for_external_pr_execution"
+          ]
+        },
+        "completed_count": {"type": "integer", "minimum": 0},
+        "required_count": {"type": "integer", "minimum": 0},
+        "execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "developer_workflow_operator_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "schema_ref",
+        "solver_outcome",
+        "readiness_status",
+        "execution_performed",
+        "ready_for_external_pr_execution",
+        "command_preview_rendered",
+        "next_evidence",
+        "receipt_hash"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "const": "developer_workflow_operator_receipt.v1"
+        },
+        "schema_ref": {
+          "type": "string",
+          "const": "schemas/developer_workflow_operator_receipt.schema.json"
+        },
+        "solver_outcome": {"type": "string", "enum": ["AwaitingEvidence", "SolvedUnverified"]},
+        "readiness_status": {
+          "type": "string",
+          "enum": [
+            "awaiting_sandbox_receipts",
+            "awaiting_operator_approval",
+            "awaiting_external_pr_approval",
+            "ready_for_external_pr_execution"
+          ]
+        },
+        "execution_performed": {"type": "boolean", "const": false},
+        "ready_for_external_pr_execution": {"type": "boolean"},
+        "command_preview_rendered": {"type": "boolean"},
+        "next_evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 160}
+        },
+        "receipt_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "developer_workflow_operator_receipt_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "solver_outcome",
+        "readiness_status",
+        "ready_for_external_pr_execution",
+        "command_preview_rendered",
+        "next_evidence_count",
+        "execution_performed",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "solver_outcome": {"type": "string", "enum": ["AwaitingEvidence", "SolvedUnverified"]},
+        "readiness_status": {
+          "type": "string",
+          "enum": [
+            "awaiting_sandbox_receipts",
+            "awaiting_operator_approval",
+            "awaiting_external_pr_approval",
+            "ready_for_external_pr_execution"
+          ]
+        },
+        "ready_for_external_pr_execution": {"type": "boolean"},
+        "command_preview_rendered": {"type": "boolean"},
+        "next_evidence_count": {"type": "integer", "minimum": 0, "maximum": 8},
+        "execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "developer_workflow_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workflow_status",
+        "current_task_id",
+        "readiness_status",
+        "packet_status",
+        "blocker",
+        "receipt_completed_count",
+        "receipt_required_count",
+        "checklist_completed_required_count",
+        "checklist_required_count",
+        "operator_approval_status",
+        "pr_candidate_status",
+        "rollback_receipt_status",
+        "next_action",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "workflow_status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "current_task_id": {"type": "string", "maxLength": 120},
+        "readiness_status": {"$ref": "#/$defs/sandbox_status"},
+        "packet_status": {"$ref": "#/$defs/sandbox_status"},
+        "blocker": {"$ref": "#/$defs/blocker"},
+        "receipt_completed_count": {"type": "integer", "minimum": 0},
+        "receipt_required_count": {"type": "integer", "minimum": 0},
+        "checklist_completed_required_count": {"type": "integer", "minimum": 0},
+        "checklist_required_count": {"type": "integer", "minimum": 0},
+        "operator_approval_status": {"$ref": "#/$defs/stage_status"},
+        "pr_candidate_status": {"$ref": "#/$defs/stage_status"},
+        "rollback_receipt_status": {
+          "type": "string",
+          "enum": ["available", "not_recorded", ""]
+        },
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "developer_workflow_milestone_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "workflow_status",
+        "readiness_status",
+        "current_task_id",
+        "current_milestone",
+        "blocker",
+        "next_action",
+        "receipt_completed_count",
+        "receipt_required_count",
+        "operator_approval_status",
+        "pr_candidate_status",
+        "operator_message",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "developer_workflow_milestone.foundation"
+        },
+        "workflow_status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "readiness_status": {"$ref": "#/$defs/sandbox_status"},
+        "current_task_id": {"type": "string", "maxLength": 120},
+        "current_milestone": {
+          "type": "string",
+          "enum": [
+            "collect_sandbox_receipts",
+            "request_operator_approval",
+            "prepare_pr_candidate",
+            "closed",
+            "review"
+          ]
+        },
+        "blocker": {"$ref": "#/$defs/blocker"},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "receipt_completed_count": {"type": "integer", "minimum": 0},
+        "receipt_required_count": {"type": "integer", "minimum": 0},
+        "operator_approval_status": {"$ref": "#/$defs/stage_status"},
+        "pr_candidate_status": {"$ref": "#/$defs/stage_status"},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "developer_workflow_completion_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "workflow_status",
+        "completion_status",
+        "current_milestone",
+        "current_blocker",
+        "completed_evidence_count",
+        "required_evidence_count",
+        "pending_evidence_count",
+        "progress_percent",
+        "next_closure_condition",
+        "terminal_closure_ready",
+        "pr_creation_allowed",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "developer_workflow_completion.foundation"
+        },
+        "workflow_status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "completion_status": {
+          "type": "string",
+          "enum": [
+            "awaiting_evidence",
+            "ready_for_operator_approval",
+            "ready_for_external_pr_approval"
+          ]
+        },
+        "current_milestone": {
+          "type": "string",
+          "enum": [
+            "collect_sandbox_receipts",
+            "request_operator_approval",
+            "prepare_pr_candidate",
+            "closed",
+            "review"
+          ]
+        },
+        "current_blocker": {"$ref": "#/$defs/blocker"},
+        "completed_evidence_count": {"type": "integer", "minimum": 0},
+        "required_evidence_count": {"type": "integer", "minimum": 0},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "progress_percent": {"type": "integer", "minimum": 0, "maximum": 100},
+        "next_closure_condition": {"type": "string", "minLength": 1, "maxLength": 240},
+        "terminal_closure_ready": {"type": "boolean", "const": false},
+        "pr_creation_allowed": {"type": "boolean", "const": false},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_terminal_closure_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "terminal_status",
+        "closure_ready",
+        "workflow_status",
+        "completion_status",
+        "current_blocker",
+        "pending_evidence_count",
+        "review_ready",
+        "approval_status",
+        "rollback_ready",
+        "pr_creation_allowed",
+        "branch_push_allowed",
+        "next_closure_condition",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_terminal_closure.foundation"
+        },
+        "terminal_status": {
+          "type": "string",
+          "enum": ["AwaitingEvidence", "ready_for_terminal_review"]
+        },
+        "closure_ready": {"type": "boolean", "const": false},
+        "workflow_status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "completion_status": {
+          "type": "string",
+          "enum": [
+            "awaiting_evidence",
+            "ready_for_operator_approval",
+            "ready_for_external_pr_approval"
+          ]
+        },
+        "current_blocker": {"$ref": "#/$defs/blocker"},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "review_ready": {"type": "boolean"},
+        "approval_status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "deferred"]
+        },
+        "rollback_ready": {"type": "boolean"},
+        "pr_creation_allowed": {"type": "boolean", "const": false},
+        "branch_push_allowed": {"type": "boolean", "const": false},
+        "next_closure_condition": {"type": "string", "minLength": 1, "maxLength": 240},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_resume_checkpoint_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "checkpoint_status",
+        "resume_allowed",
+        "terminal_status",
+        "recommended_mode",
+        "current_milestone",
+        "current_blocker",
+        "next_action",
+        "next_evidence_id",
+        "pending_evidence_count",
+        "rollback_ready",
+        "approval_required_now",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_resume_checkpoint.foundation"
+        },
+        "checkpoint_status": {
+          "type": "string",
+          "enum": ["ready_for_local_resume", "blocked_pending_approval"]
+        },
+        "resume_allowed": {"type": "boolean"},
+        "terminal_status": {
+          "type": "string",
+          "enum": ["AwaitingEvidence", "ready_for_terminal_review"]
+        },
+        "recommended_mode": {
+          "type": "string",
+          "enum": ["strict", "balanced", "fast"]
+        },
+        "current_milestone": {"type": "string", "minLength": 1, "maxLength": 120},
+        "current_blocker": {"type": "string", "minLength": 1, "maxLength": 160},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "rollback_ready": {"type": "boolean"},
+        "approval_required_now": {"type": "boolean"},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_milestone_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "milestone_status",
+        "milestone",
+        "next_evidence_id",
+        "next_action",
+        "completed_evidence_count",
+        "required_evidence_count",
+        "pending_evidence_count",
+        "required_receipts",
+        "write_authority_granted",
+        "pr_creation_allowed",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_milestone.foundation"
+        },
+        "milestone_status": {
+          "type": "string",
+          "enum": ["awaiting_receipts", "ready_for_review"]
+        },
+        "milestone": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "completed_evidence_count": {"type": "integer", "minimum": 0},
+        "required_evidence_count": {"type": "integer", "minimum": 0},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "required_receipts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "write_authority_granted": {"type": "boolean", "const": false},
+        "pr_creation_allowed": {"type": "boolean", "const": false},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_receipt_checklist_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "checklist_status",
+        "next_receipt_id",
+        "next_receipt_action",
+        "completed_receipt_count",
+        "required_receipt_count",
+        "pending_receipt_count",
+        "receipt_sequence",
+        "terminal_review_allowed",
+        "write_authority_granted",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_receipt_checklist.foundation"
+        },
+        "checklist_status": {
+          "type": "string",
+          "enum": ["incomplete", "complete"]
+        },
+        "next_receipt_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_receipt_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "completed_receipt_count": {"type": "integer", "minimum": 0},
+        "required_receipt_count": {"type": "integer", "minimum": 0},
+        "pending_receipt_count": {"type": "integer", "minimum": 0},
+        "receipt_sequence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "terminal_review_allowed": {"type": "boolean"},
+        "write_authority_granted": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_receipt_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "receipt_id",
+        "receipt_status",
+        "required_parts",
+        "next_action",
+        "rollback_required",
+        "dry_run_required",
+        "write_authority_granted",
+        "attachment_allowed",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_receipt.foundation"
+        },
+        "receipt_id": {
+          "type": "string",
+          "const": "sandbox_patch_receipt"
+        },
+        "receipt_status": {
+          "type": "string",
+          "enum": ["awaiting_attachment", "attached", "missing", "complete"]
+        },
+        "required_parts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "rollback_required": {"type": "boolean", "const": true},
+        "dry_run_required": {"type": "boolean", "const": true},
+        "write_authority_granted": {"type": "boolean", "const": false},
+        "attachment_allowed": {"type": "boolean", "const": false},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_command_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "command_status",
+        "receipt_id",
+        "command",
+        "expected_inputs",
+        "expected_output",
+        "execution_performed",
+        "attachment_performed",
+        "write_authority_granted",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_command.foundation"
+        },
+        "command_status": {
+          "type": "string",
+          "enum": ["preview_only"]
+        },
+        "receipt_id": {
+          "type": "string",
+          "const": "sandbox_patch_receipt"
+        },
+        "command": {"type": "string", "minLength": 1, "maxLength": 640},
+        "expected_inputs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 180}
+        },
+        "expected_output": {"type": "string", "minLength": 1, "maxLength": 180},
+        "execution_performed": {"type": "boolean", "const": false},
+        "attachment_performed": {"type": "boolean", "const": false},
+        "write_authority_granted": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_bundle_preview_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "bundle_status",
+        "bundle_path",
+        "included_receipt_ids",
+        "validation_command",
+        "bundle_generation_performed",
+        "validation_performed",
+        "attachment_performed",
+        "write_authority_granted",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_bundle_preview.foundation"
+        },
+        "bundle_status": {
+          "type": "string",
+          "enum": ["preview_only"]
+        },
+        "bundle_path": {"type": "string", "minLength": 1, "maxLength": 180},
+        "included_receipt_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "validation_command": {"type": "string", "minLength": 1, "maxLength": 360},
+        "bundle_generation_performed": {"type": "boolean", "const": false},
+        "validation_performed": {"type": "boolean", "const": false},
+        "attachment_performed": {"type": "boolean", "const": false},
+        "write_authority_granted": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_validation_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "validation_status",
+        "bundle_path",
+        "validator_command",
+        "required_before_validation",
+        "missing_prerequisite_count",
+        "validation_performed",
+        "terminal_review_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_validation_readiness.foundation"
+        },
+        "validation_status": {
+          "type": "string",
+          "enum": ["blocked_missing_bundle", "ready"]
+        },
+        "bundle_path": {"type": "string", "minLength": 1, "maxLength": 180},
+        "validator_command": {"type": "string", "minLength": 1, "maxLength": 360},
+        "required_before_validation": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "validation_performed": {"type": "boolean", "const": false},
+        "terminal_review_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_terminal_review_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "review_status",
+        "review_target",
+        "required_before_review",
+        "missing_prerequisite_count",
+        "review_command",
+        "review_performed",
+        "approval_request_allowed",
+        "pr_creation_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_terminal_review.foundation"
+        },
+        "review_status": {
+          "type": "string",
+          "enum": ["blocked_until_validation", "ready"]
+        },
+        "review_target": {
+          "type": "string",
+          "const": "sandbox_patch_receipt"
+        },
+        "required_before_review": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "review_command": {"type": "string", "minLength": 1, "maxLength": 360},
+        "review_performed": {"type": "boolean", "const": false},
+        "approval_request_allowed": {"type": "boolean", "const": false},
+        "pr_creation_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_approval_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "approval_status",
+        "approval_target",
+        "required_before_approval",
+        "missing_prerequisite_count",
+        "approval_request_allowed",
+        "approval_request_performed",
+        "pr_preparation_allowed",
+        "pr_creation_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_approval_readiness.foundation"
+        },
+        "approval_status": {
+          "type": "string",
+          "enum": ["blocked_until_terminal_review", "ready"]
+        },
+        "approval_target": {
+          "type": "string",
+          "const": "sandbox_patch_receipt"
+        },
+        "required_before_approval": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "approval_request_allowed": {"type": "boolean", "const": false},
+        "approval_request_performed": {"type": "boolean", "const": false},
+        "pr_preparation_allowed": {"type": "boolean", "const": false},
+        "pr_creation_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_pr_preparation_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "preparation_status",
+        "preparation_target",
+        "required_before_preparation",
+        "missing_prerequisite_count",
+        "preparation_performed",
+        "pr_preparation_allowed",
+        "branch_push_allowed",
+        "pr_creation_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_pr_preparation_readiness.foundation"
+        },
+        "preparation_status": {
+          "type": "string",
+          "enum": ["blocked_until_approval", "ready"]
+        },
+        "preparation_target": {
+          "type": "string",
+          "const": "local_pr_candidate_packet"
+        },
+        "required_before_preparation": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "preparation_performed": {"type": "boolean", "const": false},
+        "pr_preparation_allowed": {"type": "boolean", "const": false},
+        "branch_push_allowed": {"type": "boolean", "const": false},
+        "pr_creation_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_handoff_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "handoff_status",
+        "task",
+        "current_milestone",
+        "current_blocker",
+        "next_action",
+        "next_evidence_id",
+        "pending_evidence_count",
+        "approval_boundary",
+        "recommended_mode",
+        "local_resume_allowed",
+        "forbidden_effects",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_handoff.foundation"
+        },
+        "handoff_status": {
+          "type": "string",
+          "enum": ["ready_for_local_resume", "blocked_pending_approval"]
+        },
+        "task": {"type": "string", "minLength": 1, "maxLength": 160},
+        "current_milestone": {
+          "type": "string",
+          "enum": [
+            "collect_sandbox_receipts",
+            "request_operator_approval",
+            "prepare_pr_candidate",
+            "closed",
+            "review"
+          ]
+        },
+        "current_blocker": {"$ref": "#/$defs/blocker"},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "recommended_mode": {
+          "type": "string",
+          "enum": ["strict", "balanced", "fast"]
+        },
+        "local_resume_allowed": {"type": "boolean"},
+        "forbidden_effects": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "type": "string",
+            "enum": [
+              "external_pr_creation",
+              "branch_push",
+              "merge",
+              "deployment",
+              "connector_write",
+              "real_world_effect"
+            ]
+          }
+        },
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_review_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "review_status",
+        "review_ready",
+        "review_blocker",
+        "required_evidence_count",
+        "completed_evidence_count",
+        "pending_evidence_count",
+        "next_evidence_id",
+        "next_review_action",
+        "approval_boundary",
+        "pr_creation_allowed",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_review_readiness.foundation"
+        },
+        "review_status": {
+          "type": "string",
+          "enum": ["awaiting_evidence", "ready_for_review"]
+        },
+        "review_ready": {"type": "boolean"},
+        "review_blocker": {"$ref": "#/$defs/blocker"},
+        "required_evidence_count": {"type": "integer", "minimum": 0},
+        "completed_evidence_count": {"type": "integer", "minimum": 0},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_review_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "pr_creation_allowed": {"type": "boolean", "const": false},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_review_packet_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "packet_status",
+        "review_ready",
+        "review_blocker",
+        "completed_evidence_count",
+        "required_evidence_count",
+        "pending_evidence_count",
+        "next_evidence_id",
+        "next_packet_action",
+        "approval_boundary",
+        "approval_required_now",
+        "pr_creation_allowed",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_review_packet.foundation"
+        },
+        "packet_status": {
+          "type": "string",
+          "enum": ["awaiting_evidence", "ready_for_review"]
+        },
+        "review_ready": {"type": "boolean"},
+        "review_blocker": {"$ref": "#/$defs/blocker"},
+        "completed_evidence_count": {"type": "integer", "minimum": 0},
+        "required_evidence_count": {"type": "integer", "minimum": 0},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_packet_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "approval_required_now": {"type": "boolean"},
+        "pr_creation_allowed": {"type": "boolean", "const": false},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_blocker_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "blocker_status",
+        "active_blocker",
+        "blocker_class",
+        "clearing_action",
+        "next_evidence_id",
+        "pending_evidence_count",
+        "approval_required_now",
+        "approval_boundary",
+        "local_resume_allowed",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_blocker.foundation"
+        },
+        "blocker_status": {
+          "type": "string",
+          "enum": ["blocked", "clear"]
+        },
+        "active_blocker": {"$ref": "#/$defs/blocker"},
+        "blocker_class": {
+          "type": "string",
+          "enum": ["local_evidence", "approval_boundary"]
+        },
+        "clearing_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "approval_required_now": {"type": "boolean"},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "local_resume_allowed": {"type": "boolean"},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_packet_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "packet_status",
+        "sandbox_receipt_status",
+        "attachment_status",
+        "local_proof_status",
+        "rollback_receipt_status",
+        "pr_readiness_status",
+        "completed_packet_count",
+        "required_packet_count",
+        "next_packet",
+        "next_packet_action",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_packet.foundation"
+        },
+        "packet_status": {
+          "type": "string",
+          "enum": ["awaiting_packets", "packets_ready"]
+        },
+        "sandbox_receipt_status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "attachment_status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "local_proof_status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "rollback_receipt_status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "pr_readiness_status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "completed_packet_count": {"type": "integer", "minimum": 0},
+        "required_packet_count": {"type": "integer", "minimum": 1},
+        "next_packet": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_packet_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_authority_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "authority_status",
+        "local_prepare_allowed",
+        "review_allowed",
+        "approval_required_now",
+        "approval_boundary",
+        "pr_creation_allowed",
+        "branch_push_allowed",
+        "connector_write_allowed",
+        "real_world_effects_allowed",
+        "forbidden_effect_count",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_authority.foundation"
+        },
+        "authority_status": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "local_prepare_allowed": {"type": "boolean"},
+        "review_allowed": {"type": "boolean"},
+        "approval_required_now": {"type": "boolean"},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "pr_creation_allowed": {"type": "boolean", "const": false},
+        "branch_push_allowed": {"type": "boolean", "const": false},
+        "connector_write_allowed": {"type": "boolean", "const": false},
+        "real_world_effects_allowed": {"type": "boolean", "const": false},
+        "forbidden_effect_count": {"type": "integer", "const": 4},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_risk_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "risk_status",
+        "risk_level",
+        "risk_driver",
+        "risk_scope",
+        "safe_candidate_count",
+        "dangerous_blocker_count",
+        "pending_evidence_count",
+        "approval_boundary",
+        "rollback_ready",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_risk.foundation"
+        },
+        "risk_status": {
+          "type": "string",
+          "enum": ["low_local_lab"]
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": ["low"]
+        },
+        "risk_driver": {"$ref": "#/$defs/blocker"},
+        "risk_scope": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "safe_candidate_count": {"type": "integer", "minimum": 0},
+        "dangerous_blocker_count": {"type": "integer", "minimum": 0},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "approval_boundary": {
+          "type": "string",
+          "enum": ["before_pr_or_real_world_effect"]
+        },
+        "rollback_ready": {"type": "boolean"},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_approval_packet_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "packet_status",
+        "approval_required",
+        "approval_status",
+        "approval_missing",
+        "current_blocker",
+        "completed_evidence_count",
+        "required_evidence_count",
+        "pending_evidence_count",
+        "next_evidence_id",
+        "next_approval_action",
+        "approval_target_href",
+        "ready_for_pr_candidate_preparation",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_approval_packet.foundation"
+        },
+        "packet_status": {
+          "type": "string",
+          "enum": ["awaiting_evidence", "ready_for_approval"]
+        },
+        "approval_required": {"type": "boolean"},
+        "approval_status": {"$ref": "#/$defs/stage_status"},
+        "approval_missing": {"type": "boolean"},
+        "current_blocker": {"$ref": "#/$defs/blocker"},
+        "completed_evidence_count": {"type": "integer", "minimum": 0},
+        "required_evidence_count": {"type": "integer", "minimum": 0},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_approval_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "approval_target_href": {"type": "string", "minLength": 1, "maxLength": 240},
+        "ready_for_pr_candidate_preparation": {"type": "boolean"},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_evidence_gap_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "gap_status",
+        "gap_class",
+        "completed_evidence_count",
+        "required_evidence_count",
+        "pending_evidence_count",
+        "next_evidence_id",
+        "next_gap_action",
+        "approval_blocked",
+        "local_continuation_allowed",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_evidence_gap.foundation"
+        },
+        "gap_status": {
+          "type": "string",
+          "enum": ["evidence_incomplete", "closed"]
+        },
+        "gap_class": {
+          "type": "string",
+          "enum": ["local_receipts"]
+        },
+        "completed_evidence_count": {"type": "integer", "minimum": 0},
+        "required_evidence_count": {"type": "integer", "minimum": 0},
+        "pending_evidence_count": {"type": "integer", "minimum": 0},
+        "next_evidence_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_gap_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "approval_blocked": {"type": "boolean"},
+        "local_continuation_allowed": {"type": "boolean"},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_rollback_gap_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "gap_status",
+        "readiness_verdict",
+        "command_status",
+        "selected_artifact_count",
+        "receipt_available_count",
+        "receipt_required_count",
+        "next_rollback_action",
+        "dry_run_required",
+        "execution_requires_execute_flag",
+        "rollback_ready",
+        "approval_status",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_rollback_gap.foundation"
+        },
+        "gap_status": {
+          "type": "string",
+          "enum": ["rollback_receipts_incomplete", "ready"]
+        },
+        "readiness_verdict": {
+          "type": "string",
+          "enum": ["awaiting_selection", "ready"]
+        },
+        "command_status": {
+          "type": "string",
+          "enum": ["awaiting_selection", "ready"]
+        },
+        "selected_artifact_count": {"type": "integer", "minimum": 0},
+        "receipt_available_count": {"type": "integer", "minimum": 0},
+        "receipt_required_count": {"type": "integer", "minimum": 0},
+        "next_rollback_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "dry_run_required": {"type": "boolean"},
+        "execution_requires_execute_flag": {"type": "boolean"},
+        "rollback_ready": {"type": "boolean"},
+        "approval_status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "deferred"]
+        },
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_pr_gap_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "gap_status",
+        "first_blocker",
+        "ready_for_external_pr_execution",
+        "next_evidence_count",
+        "receipt_completed_count",
+        "receipt_required_count",
+        "preview_only",
+        "pr_creation_allowed",
+        "branch_push_allowed",
+        "execution_performed",
+        "execution_boundary",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_pr_gap.foundation"
+        },
+        "gap_status": {
+          "type": "string",
+          "enum": ["awaiting_sandbox_receipts", "ready_for_external_pr_execution"]
+        },
+        "first_blocker": {"type": "string", "minLength": 1, "maxLength": 120},
+        "ready_for_external_pr_execution": {"type": "boolean"},
+        "next_evidence_count": {"type": "integer", "minimum": 0},
+        "receipt_completed_count": {"type": "integer", "minimum": 0},
+        "receipt_required_count": {"type": "integer", "minimum": 0},
+        "preview_only": {"type": "boolean"},
+        "pr_creation_allowed": {"type": "boolean", "const": false},
+        "branch_push_allowed": {"type": "boolean", "const": false},
+        "execution_performed": {"type": "boolean", "const": false},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_dashboard_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "task",
+        "status",
+        "current_milestone",
+        "blocker",
+        "next_action",
+        "recommended_mode",
+        "receipt_completed_count",
+        "receipt_required_count",
+        "pending_unlock_count",
+        "safe_candidate_count",
+        "dangerous_blocker_count",
+        "next_unlock",
+        "action_needed",
+        "risk",
+        "operator_message",
+        "execution_boundary",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_dashboard.foundation"
+        },
+        "task": {"type": "string", "minLength": 1, "maxLength": 160},
+        "status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "current_milestone": {
+          "type": "string",
+          "enum": [
+            "collect_sandbox_receipts",
+            "request_operator_approval",
+            "prepare_pr_candidate",
+            "closed",
+            "review"
+          ]
+        },
+        "blocker": {"$ref": "#/$defs/blocker"},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "recommended_mode": {
+          "type": "string",
+          "enum": ["fast", "balanced", "strict"]
+        },
+        "receipt_completed_count": {"type": "integer", "minimum": 0},
+        "receipt_required_count": {"type": "integer", "minimum": 0},
+        "pending_unlock_count": {"type": "integer", "minimum": 0},
+        "safe_candidate_count": {"type": "integer", "minimum": 0},
+        "dangerous_blocker_count": {"type": "integer", "minimum": 0},
+        "next_unlock": {"type": "string", "minLength": 1, "maxLength": 120},
+        "action_needed": {"type": "string", "minLength": 1, "maxLength": 240},
+        "risk": {
+          "type": "string",
+          "const": "low, local lab only"
+        },
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320},
+        "execution_boundary": {
+          "type": "string",
+          "enum": ["local_lab_only"]
+        },
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "local_rollback_summary_packet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "packet_status",
+        "generated_artifact_count",
+        "rollback_execution_performed",
+        "external_effects_allowed",
+        "artifacts"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["not_attached", "attached"]
+        },
+        "packet_status": {
+          "type": "string",
+          "enum": ["rollback_ready", "rollback_unavailable"]
+        },
+        "generated_artifact_count": {"type": "integer", "minimum": 0},
+        "rollback_execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "artifacts": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"$ref": "#/$defs/rollback_artifact"}
+        }
+      }
+    },
+    "rollback_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "path", "rollback_command", "required_confirmation"],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "path": {"type": "string", "minLength": 1, "maxLength": 260},
+        "rollback_command": {"type": "string", "minLength": 1, "maxLength": 520},
+        "required_confirmation": {"type": "boolean", "const": true}
+      }
+    },
+    "local_rollback_approval_packet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "packet_status",
+        "approval_status",
+        "approval_scope",
+        "selected_artifact_count",
+        "delete_execution_allowed",
+        "rollback_execution_performed",
+        "external_effects_allowed",
+        "authorized_artifacts"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["not_attached", "attached"]
+        },
+        "packet_status": {
+          "type": "string",
+          "enum": ["awaiting_operator_approval", "approval_recorded", "approval_rejected", "approval_deferred"]
+        },
+        "approval_status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "deferred"]
+        },
+        "approval_scope": {
+          "type": "string",
+          "enum": ["none", "selected_artifacts", "all_generated_artifacts"]
+        },
+        "selected_artifact_count": {"type": "integer", "minimum": 0},
+        "delete_execution_allowed": {"type": "boolean"},
+        "rollback_execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "authorized_artifacts": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"$ref": "#/$defs/rollback_approval_artifact"}
+        }
+      }
+    },
+    "rollback_approval_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "path",
+        "rollback_command",
+        "approval_status",
+        "execution_allowed",
+        "required_confirmation"
+      ],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "path": {"type": "string", "minLength": 1, "maxLength": 260},
+        "rollback_command": {"type": "string", "minLength": 1, "maxLength": 520},
+        "approval_status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "deferred"]
+        },
+        "execution_allowed": {"type": "boolean"},
+        "required_confirmation": {"type": "boolean", "const": true}
+      }
+    },
+    "local_rollback_execution_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "execution_status",
+        "execution_mode",
+        "rollback_execution_performed",
+        "external_effects_allowed",
+        "target_path_checks_performed",
+        "selected_artifact_count",
+        "executed_artifact_count",
+        "skipped_artifact_count",
+        "failed_artifact_count",
+        "artifacts"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["not_attached", "attached"]
+        },
+        "execution_status": {
+          "type": "string",
+          "enum": [
+            "blocked_no_approval",
+            "dry_run_ready",
+            "rollback_executed",
+            "rollback_noop",
+            "rollback_partial",
+            "rollback_failed"
+          ]
+        },
+        "execution_mode": {
+          "type": "string",
+          "enum": ["dry_run", "execute"]
+        },
+        "rollback_execution_performed": {"type": "boolean"},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "target_path_checks_performed": {"type": "boolean"},
+        "selected_artifact_count": {"type": "integer", "minimum": 0},
+        "executed_artifact_count": {"type": "integer", "minimum": 0},
+        "skipped_artifact_count": {"type": "integer", "minimum": 0},
+        "failed_artifact_count": {"type": "integer", "minimum": 0},
+        "artifacts": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"$ref": "#/$defs/rollback_execution_artifact"}
+        }
+      }
+    },
+    "rollback_execution_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "path",
+        "resolved_path",
+        "action_status",
+        "path_within_workspace",
+        "pre_exists",
+        "post_exists",
+        "error_message"
+      ],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "path": {"type": "string", "minLength": 1, "maxLength": 360},
+        "resolved_path": {"type": "string", "minLength": 1, "maxLength": 520},
+        "action_status": {
+          "type": "string",
+          "enum": ["would_delete", "deleted", "missing_before", "skipped", "boundary_blocked", "failed"]
+        },
+        "path_within_workspace": {"type": "boolean"},
+        "pre_exists": {"type": "boolean"},
+        "post_exists": {"type": "boolean"},
+        "error_message": {"type": "string", "maxLength": 320}
+      }
+    },
+    "local_rollback_receipts_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_status",
+        "approval_status",
+        "execution_status",
+        "execution_mode",
+        "generated_artifact_count",
+        "selected_artifact_count",
+        "attached_receipt_count",
+        "required_receipt_count",
+        "delete_execution_allowed",
+        "rollback_execution_performed",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "summary_status": {
+          "type": "string",
+          "enum": ["not_attached", "attached"]
+        },
+        "approval_status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "deferred"]
+        },
+        "execution_status": {
+          "type": "string",
+          "enum": [
+            "blocked_no_approval",
+            "dry_run_ready",
+            "rollback_executed",
+            "rollback_noop",
+            "rollback_partial",
+            "rollback_failed"
+          ]
+        },
+        "execution_mode": {
+          "type": "string",
+          "enum": ["dry_run", "execute"]
+        },
+        "generated_artifact_count": {"type": "integer", "minimum": 0},
+        "selected_artifact_count": {"type": "integer", "minimum": 0},
+        "attached_receipt_count": {"type": "integer", "minimum": 0, "maximum": 3},
+        "required_receipt_count": {"type": "integer", "const": 3},
+        "delete_execution_allowed": {"type": "boolean"},
+        "rollback_execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "local_rollback_flow_command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "action_label",
+        "next_action",
+        "command",
+        "execute_command",
+        "selected_artifact_ids",
+        "rollback_summary_path",
+        "approval_packet_path",
+        "dry_run_receipt_path",
+        "execution_receipt_path",
+        "rollback_summary_href",
+        "approval_packet_href",
+        "dry_run_receipt_href",
+        "execution_receipt_href",
+        "receipt_availability",
+        "readiness_verdict",
+        "dry_run_required",
+        "execution_requires_execute_flag",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["ready", "awaiting_selection"]
+        },
+        "action_label": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "command": {"type": "string", "minLength": 1, "maxLength": 1200},
+        "execute_command": {"type": "string", "minLength": 1, "maxLength": 1220},
+        "selected_artifact_ids": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "rollback_summary_path": {"type": "string", "minLength": 1, "maxLength": 260},
+        "approval_packet_path": {"type": "string", "minLength": 1, "maxLength": 260},
+        "dry_run_receipt_path": {"type": "string", "minLength": 1, "maxLength": 260},
+        "execution_receipt_path": {"type": "string", "minLength": 1, "maxLength": 260},
+        "rollback_summary_href": {"type": "string", "minLength": 1, "maxLength": 180},
+        "approval_packet_href": {"type": "string", "minLength": 1, "maxLength": 180},
+        "dry_run_receipt_href": {"type": "string", "minLength": 1, "maxLength": 180},
+        "execution_receipt_href": {"type": "string", "minLength": 1, "maxLength": 180},
+        "receipt_availability": {"$ref": "#/$defs/local_rollback_receipt_availability"},
+        "readiness_verdict": {"$ref": "#/$defs/local_rollback_readiness_verdict"},
+        "dry_run_required": {"type": "boolean", "const": true},
+        "execution_requires_execute_flag": {"type": "boolean", "const": true},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "local_rollback_flow_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "readiness_verdict",
+        "command_status",
+        "selected_artifact_count",
+        "receipt_available_count",
+        "receipt_required_count",
+        "next_action",
+        "dry_run_required",
+        "execution_requires_execute_flag",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "readiness_verdict": {"$ref": "#/$defs/local_rollback_readiness_verdict"},
+        "command_status": {
+          "type": "string",
+          "enum": ["ready", "awaiting_selection"]
+        },
+        "selected_artifact_count": {"type": "integer", "minimum": 0},
+        "receipt_available_count": {"type": "integer", "minimum": 0},
+        "receipt_required_count": {"type": "integer", "minimum": 1},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "dry_run_required": {"type": "boolean", "const": true},
+        "execution_requires_execute_flag": {"type": "boolean", "const": true},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "local_rollback_receipt_availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "approval",
+        "execution",
+        "available_count",
+        "required_count"
+      ],
+      "properties": {
+        "summary": {"$ref": "#/$defs/receipt_availability_status"},
+        "approval": {"$ref": "#/$defs/receipt_availability_status"},
+        "execution": {"$ref": "#/$defs/receipt_availability_status"},
+        "available_count": {"type": "integer", "minimum": 0, "maximum": 3},
+        "required_count": {"type": "integer", "const": 3}
+      }
+    },
+    "receipt_availability_status": {
+      "type": "string",
+      "enum": ["available", "unavailable"]
+    },
+    "local_rollback_readiness_verdict": {
+      "type": "string",
+      "enum": [
+        "awaiting_selection",
+        "awaiting_summary_receipt",
+        "awaiting_approval_receipt",
+        "ready_for_dry_run"
+      ]
+    },
+    "bundle_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "label", "status", "stage", "required", "source", "evidence_refs"],
+      "properties": {
+        "receipt_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "label": {"type": "string", "minLength": 1, "maxLength": 120},
+        "status": {"$ref": "#/$defs/stage_status"},
+        "stage": {"type": "string", "minLength": 1, "maxLength": 120},
+        "required": {"type": "boolean"},
+        "source": {"type": "string", "minLength": 1, "maxLength": 180},
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1, "maxLength": 240}
+        }
+      }
+    },
+    "next_attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "label", "status", "action"],
+      "properties": {
+        "receipt_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "label": {"type": "string", "minLength": 1, "maxLength": 120},
+        "status": {
+          "type": "string",
+          "enum": ["awaiting_attachment", "complete"]
+        },
+        "action": {"type": "string", "minLength": 1, "maxLength": 240}
+      }
+    },
+    "attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "label", "status", "stage", "action", "source", "evidence_refs"],
+      "properties": {
+        "receipt_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "label": {"type": "string", "minLength": 1, "maxLength": 120},
+        "status": {
+          "type": "string",
+          "enum": ["awaiting_attachment", "attached"]
+        },
+        "stage": {"type": "string", "minLength": 1, "maxLength": 120},
+        "action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "source": {"type": "string", "minLength": 1, "maxLength": 180},
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1, "maxLength": 240}
+        }
+      }
+    },
+    "focus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "focus_id",
+        "label",
+        "status",
+        "action",
+        "source",
+        "next_action",
+        "blocker"
+      ],
+      "properties": {
+        "focus_id": {
+          "type": "string",
+          "enum": [
+            "sandbox_patch_receipt",
+            "test_gate_receipt",
+            "diff_review_receipt",
+            "terminal_receipt",
+            "capability_passports",
+            "operator_approval",
+            "pr_candidate",
+            "none"
+          ]
+        },
+        "label": {"type": "string", "minLength": 1, "maxLength": 120},
+        "status": {"$ref": "#/$defs/stage_status"},
+        "action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "source": {"type": "string", "maxLength": 180},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+        "blocker": {"$ref": "#/$defs/blocker"}
+      }
+    },
+    "workflow_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "current_task_id",
+        "receipt_checklist_required_count",
+        "receipt_checklist_completed_required_count",
+        "rollback_receipt_status"
+      ],
+      "properties": {
+        "status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "current_task_id": {"type": "string", "maxLength": 120},
+        "receipt_checklist_required_count": {"type": "integer", "minimum": 0},
+        "receipt_checklist_completed_required_count": {"type": "integer", "minimum": 0},
+        "rollback_receipt_status": {
+          "type": "string",
+          "enum": ["available", "not_recorded", ""]
+        }
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshot",
+        "capability_panel",
+        "control_tower_headline_summary",
+        "local_lab_readiness_summary",
+        "local_resume_plan_summary",
+        "operator_action_card",
+        "next_action_summary",
+        "approval_readiness_summary",
+        "operator_decision_summary",
+        "friction_reduction_summary",
+        "safe_local_action_queue_summary",
+        "safe_automatic_action_candidates",
+        "dangerous_action_blocker_summary",
+        "dangerous_zone_blockers",
+        "lab_real_world_summary",
+        "approval_boundary_summary",
+        "rollback_control_summary",
+        "capability_registry_summary",
+        "friction_mode_summary",
+        "safe_vs_dangerous_summary",
+        "unlock_readiness_summary",
+        "control_system_summary",
+        "workflow_monitor_summary",
+        "workflow_panel",
+        "focus",
+        "sandbox_to_pr_summary",
+        "sandbox_receipt_bundle_summary",
+        "sandbox_receipt_attachments",
+        "sandbox_receipt_attachment_readiness_summary",
+        "local_sandbox_proof_report",
+        "local_sandbox_proof_readiness_summary",
+        "local_rollback_summary_packet",
+        "local_rollback_approval_packet",
+        "local_rollback_execution_receipt",
+        "local_rollback_receipts_summary",
+        "local_rollback_flow_command",
+        "local_rollback_flow_readiness_summary",
+        "pr_readiness",
+        "pr_readiness_summary",
+        "evidence_progress_summary",
+        "developer_workflow_operator_receipt",
+        "developer_workflow_operator_receipt_summary",
+        "developer_workflow_readiness_summary",
+        "developer_workflow_milestone_summary",
+        "developer_workflow_completion_summary",
+        "operator_terminal_closure_summary",
+        "operator_resume_checkpoint_summary",
+        "operator_sandbox_milestone_summary",
+        "operator_sandbox_receipt_checklist_summary",
+        "operator_sandbox_patch_receipt_summary",
+        "operator_sandbox_patch_command_summary",
+        "operator_sandbox_patch_bundle_preview_summary",
+        "operator_sandbox_patch_validation_readiness_summary",
+        "operator_sandbox_patch_terminal_review_summary",
+        "operator_sandbox_patch_approval_readiness_summary",
+        "operator_sandbox_patch_pr_preparation_readiness_summary",
+        "operator_handoff_summary",
+        "operator_review_readiness_summary",
+        "operator_review_packet_summary",
+        "operator_blocker_summary",
+        "operator_packet_summary",
+        "operator_authority_summary",
+        "operator_risk_summary",
+        "operator_approval_packet_summary",
+        "operator_evidence_gap_summary",
+        "operator_rollback_gap_summary",
+        "operator_pr_gap_summary",
+        "operator_dashboard_summary"
+      ],
+      "properties": {
+        "snapshot": {"type": "string", "const": "operator_control_tower_snapshot"},
+        "capability_panel": {
+          "type": "string",
+          "const": "capability_health.metadata.developer_workflow_summary"
+        },
+        "control_tower_headline_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.control_system_summary + workflow_monitor.metadata.friction_reduction_summary"
+        },
+        "local_lab_readiness_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.evidence_progress_summary + workflow_monitor.metadata.local_rollback_flow_readiness_summary"
+        },
+        "local_resume_plan_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.operator_decision_summary + workflow_monitor.metadata.evidence_progress_summary"
+        },
+        "operator_action_card": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.operator_action_card"
+        },
+        "next_action_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.next_action_summary"
+        },
+        "approval_readiness_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.approval_readiness_summary"
+        },
+        "operator_decision_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.operator_decision_summary"
+        },
+        "friction_reduction_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.friction_reduction_summary"
+        },
+        "safe_local_action_queue_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.safe_local_action_queue_summary"
+        },
+        "safe_automatic_action_candidates": {
+          "type": "string",
+          "const": "capability_health.metadata.safe_automatic_action_candidates"
+        },
+        "dangerous_action_blocker_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.dangerous_action_blocker_summary"
+        },
+        "dangerous_zone_blockers": {
+          "type": "string",
+          "const": "capability_health.metadata.dangerous_zone_blockers"
+        },
+        "lab_real_world_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.lab_real_world_summary"
+        },
+        "approval_boundary_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.approval_boundary_summary"
+        },
+        "rollback_control_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.rollback_control_summary"
+        },
+        "capability_registry_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.capability_registry_summary"
+        },
+        "friction_mode_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.friction_mode_summary"
+        },
+        "safe_vs_dangerous_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.safe_vs_dangerous_summary"
+        },
+        "unlock_readiness_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.unlock_readiness_summary"
+        },
+        "control_system_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.control_system_summary"
+        },
+        "workflow_monitor_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.workflow_monitor_summary"
+        },
+        "workflow_panel": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.sandbox_to_pr_packet"
+        },
+        "focus": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.sandbox_to_pr_focus"
+        },
+        "sandbox_to_pr_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.sandbox_to_pr_summary"
+        },
+        "sandbox_receipt_bundle_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.sandbox_receipt_bundle_summary"
+        },
+        "sandbox_receipt_attachments": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.sandbox_receipt_attachment_packet"
+        },
+        "sandbox_receipt_attachment_readiness_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.sandbox_receipt_attachment_readiness_summary"
+        },
+        "local_sandbox_proof_report": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.local_sandbox_proof_report"
+        },
+        "local_sandbox_proof_readiness_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.local_sandbox_proof_readiness_summary"
+        },
+        "local_rollback_summary_packet": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.local_rollback_summary_packet"
+        },
+        "local_rollback_approval_packet": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.local_rollback_approval_packet"
+        },
+        "local_rollback_execution_receipt": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.local_rollback_execution_receipt"
+        },
+        "local_rollback_receipts_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.local_rollback_receipts_summary"
+        },
+        "local_rollback_flow_command": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.local_rollback_flow_command"
+        },
+        "local_rollback_flow_readiness_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.local_rollback_flow_readiness_summary"
+        },
+        "pr_readiness": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.pr_readiness_bundle"
+        },
+        "pr_readiness_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.pr_readiness_summary"
+        },
+        "evidence_progress_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.evidence_progress_summary"
+        },
+        "developer_workflow_operator_receipt": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.developer_workflow_operator_receipt"
+        },
+        "developer_workflow_operator_receipt_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.developer_workflow_operator_receipt_summary"
+        },
+        "developer_workflow_readiness_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.developer_workflow_readiness_summary"
+        },
+        "developer_workflow_milestone_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.developer_workflow_milestone_summary"
+        },
+        "developer_workflow_completion_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.developer_workflow_milestone_summary + workflow_monitor.metadata.evidence_progress_summary"
+        },
+        "operator_terminal_closure_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.developer_workflow_milestone_summary + workflow_monitor.metadata.evidence_progress_summary"
+        },
+        "operator_resume_checkpoint_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.friction_reduction_summary + workflow_monitor.metadata.operator_decision_summary"
+        },
+        "operator_sandbox_milestone_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.developer_workflow_milestone_summary + workflow_monitor.metadata.evidence_progress_summary"
+        },
+        "operator_sandbox_receipt_checklist_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.evidence_progress_summary + workflow_monitor.metadata.sandbox_receipt_attachment_readiness_summary"
+        },
+        "operator_sandbox_patch_receipt_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.sandbox_receipt_attachment_readiness_summary + workflow_monitor.metadata.evidence_progress_summary"
+        },
+        "operator_sandbox_patch_command_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt collection command"
+        },
+        "operator_sandbox_patch_bundle_preview_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt bundle validation"
+        },
+        "operator_sandbox_patch_validation_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt validation readiness"
+        },
+        "operator_sandbox_patch_terminal_review_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt terminal review readiness"
+        },
+        "operator_sandbox_patch_approval_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt approval readiness"
+        },
+        "operator_sandbox_patch_pr_preparation_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt PR preparation readiness"
+        },
+        "operator_handoff_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.developer_workflow_milestone_summary + workflow_monitor.metadata.operator_decision_summary"
+        },
+        "operator_review_readiness_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.evidence_progress_summary + workflow_monitor.metadata.approval_readiness_summary"
+        },
+        "operator_review_packet_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.approval_readiness_summary + workflow_monitor.metadata.evidence_progress_summary"
+        },
+        "operator_blocker_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.developer_workflow_milestone_summary + workflow_monitor.metadata.evidence_progress_summary"
+        },
+        "operator_packet_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.sandbox_receipt_bundle_summary + workflow_monitor.metadata.local_rollback_receipts_summary"
+        },
+        "operator_authority_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.approval_readiness_summary + capability_health.metadata.lab_real_world_summary"
+        },
+        "operator_risk_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.dangerous_action_blocker_summary + workflow_monitor.metadata.evidence_progress_summary"
+        },
+        "operator_approval_packet_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.approval_readiness_summary + workflow_monitor.metadata.evidence_progress_summary"
+        },
+        "operator_evidence_gap_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.evidence_progress_summary + workflow_monitor.metadata.friction_reduction_summary"
+        },
+        "operator_rollback_gap_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.local_rollback_flow_readiness_summary + workflow_monitor.metadata.local_rollback_receipts_summary"
+        },
+        "operator_pr_gap_summary": {
+          "type": "string",
+          "const": "workflow_monitor.metadata.pr_readiness_summary + workflow_monitor.metadata.pr_readiness_bundle"
+        },
+        "operator_dashboard_summary": {
+          "type": "string",
+          "const": "capability_health.metadata.control_system_summary + workflow_monitor.metadata.developer_workflow_milestone_summary"
+        }
+      }
+    }
+  }
+}

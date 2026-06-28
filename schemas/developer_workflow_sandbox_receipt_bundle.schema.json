@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:developer-workflow-sandbox-receipt-bundle:1",
+  "title": "DeveloperWorkflowSandboxReceiptBundle",
+  "description": "Read-only local lab receipt bundle for Developer Workflow v1 sandbox patch, test, diff, and terminal evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundle_id",
+    "workflow_id",
+    "workflow_run_id",
+    "bundle_status",
+    "execution_boundary",
+    "external_effects_allowed",
+    "rollback_default",
+    "required_count",
+    "completed_count",
+    "receipts"
+  ],
+  "properties": {
+    "bundle_id": {
+      "type": "string",
+      "const": "developer_workflow_sandbox_receipt_bundle.v1"
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "mullu_developer_workflow.v1"
+    },
+    "workflow_run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "bundle_status": {
+      "type": "string",
+      "enum": ["awaiting_receipts", "receipts_complete"]
+    },
+    "execution_boundary": {
+      "type": "string",
+      "const": "local_lab_only"
+    },
+    "external_effects_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "rollback_default": {
+      "type": "boolean",
+      "const": true
+    },
+    "required_count": {
+      "type": "integer",
+      "const": 4
+    },
+    "completed_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "receipts": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/sandbox_receipt"
+      }
+    }
+  },
+  "$defs": {
+    "receipt_id": {
+      "type": "string",
+      "enum": [
+        "sandbox_patch_receipt",
+        "test_gate_receipt",
+        "diff_review_receipt",
+        "terminal_receipt"
+      ]
+    },
+    "receipt_status": {
+      "type": "string",
+      "enum": ["pending", "complete"]
+    },
+    "sandbox_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "label",
+        "status",
+        "stage",
+        "required",
+        "source",
+        "evidence_refs",
+        "before_state_hash",
+        "after_state_hash",
+        "diff_hash",
+        "rollback_command",
+        "command"
+      ],
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/receipt_id"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "status": {
+          "$ref": "#/$defs/receipt_status"
+        },
+        "stage": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "required": {
+          "type": "boolean",
+          "const": true
+        },
+        "source": {
+          "type": "string",
+          "pattern": "^workflow_monitor\\.metadata\\.developer_workflow_run\\.receipt_checklist\\.[a-z_]+$"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 180
+          }
+        },
+        "before_state_hash": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "after_state_hash": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "diff_hash": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "rollback_command": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      }
+    }
+  }
+}

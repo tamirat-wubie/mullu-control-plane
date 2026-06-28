@@ -35,6 +35,14 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.validate_agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness import (  # noqa: E402
     DEFAULT_EXAMPLES as DEFAULT_SOURCE_CI_GATE_WITNESS_EXAMPLES,
     DEFAULT_SCHEMA as DEFAULT_SOURCE_CI_GATE_WITNESS_SCHEMA,
+    EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+    EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+    EXPECTED_REDACTED_OUTPUT_REF,
+    EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+    EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+    EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+    EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+    EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
     validate_agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness,
 )
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
@@ -111,6 +119,7 @@ REQUIRED_TRUE_FLAGS = (
     "planning_only",
     "read_only",
     "report_is_not_terminal_closure",
+    "requires_actual_diff_ci_gate_before_ready_for_review_witness",
     "ci_gate_before_ready_for_review_required",
     "effect_reconciliation_required",
     "reconciles_branch_state",
@@ -264,6 +273,76 @@ def _validate_effect_reconciliation_witness_semantics(
     )
     _require_equal(
         payload,
+        ("effect_reconciliation", "requires_actual_diff_ci_gate_before_ready_for_review_witness"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("effect_reconciliation", "actual_diff_ci_gate_before_ready_for_review_witness_ref"),
+        EXPECTED_SOURCE_CI_GATE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("effect_reconciliation", "actual_diff_repository_effect_rollback_plan_witness_ref"),
+        EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("effect_reconciliation", "actual_diff_uao_admission_witness_ref"),
+        EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("effect_reconciliation", "actual_diff_branch_write_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("effect_reconciliation", "actual_diff_operator_response_witness_ref"),
+        EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("effect_reconciliation", "actual_diff_approval_request_binding_ref"),
+        EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("effect_reconciliation", "actual_non_empty_diff_receipt_ref"),
+        EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("effect_reconciliation", "redacted_diff_bundle_ref"),
+        EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("effect_reconciliation", "redacted_output_ref"),
+        EXPECTED_REDACTED_OUTPUT_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
         ("effect_reconciliation", "required_witness_kind"),
         "effect_reconciliation",
         errors,
@@ -285,6 +364,7 @@ def _validate_effect_reconciliation_witness_semantics(
     )
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
     if source_ci_gate_witness:
+        source_ci_gate = _mapping(_get_nested(source_ci_gate_witness, ("ci_gate",)))
         _require_equal(
             payload,
             ("scope", "repository_slug"),
@@ -296,6 +376,76 @@ def _validate_effect_reconciliation_witness_semantics(
             payload,
             ("scope", "repository_connection_id"),
             _get_nested(source_ci_gate_witness, ("scope", "repository_connection_id")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("effect_reconciliation", "actual_diff_repository_effect_rollback_plan_witness_ref"),
+            source_ci_gate.get("actual_diff_repository_effect_rollback_plan_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("effect_reconciliation", "actual_diff_uao_admission_witness_ref"),
+            source_ci_gate.get("actual_diff_uao_admission_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("effect_reconciliation", "actual_diff_branch_write_binding_ref"),
+            source_ci_gate.get("actual_diff_branch_write_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("effect_reconciliation", "actual_diff_operator_response_witness_ref"),
+            source_ci_gate.get("actual_diff_operator_response_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("effect_reconciliation", "actual_diff_approval_request_binding_ref"),
+            source_ci_gate.get("actual_diff_approval_request_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("effect_reconciliation", "actual_non_empty_diff_receipt_ref"),
+            source_ci_gate.get("actual_non_empty_diff_receipt_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("effect_reconciliation", "changed_file_refs"),
+            source_ci_gate.get("changed_file_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("effect_reconciliation", "diff_refs"),
+            source_ci_gate.get("diff_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("effect_reconciliation", "redacted_diff_bundle_ref"),
+            source_ci_gate.get("redacted_diff_bundle_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("effect_reconciliation", "redacted_output_ref"),
+            source_ci_gate.get("redacted_output_ref"),
             errors,
             label,
         )
@@ -356,6 +506,10 @@ def _get_nested(payload: Mapping[str, Any], path: tuple[str, ...]) -> Any:
             return None
         current = current.get(part)
     return current
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
 
 
 def _walk_leaves(value: Any, path: tuple[str, ...] = ()) -> list[tuple[tuple[str, ...], Any]]:

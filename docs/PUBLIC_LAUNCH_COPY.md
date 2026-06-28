@@ -1,7 +1,7 @@
 # Public Launch Copy
 
-Purpose: provide mission-first public copy for Mullu Govern as the governed AI-action infrastructure product by Mullusi.
-Governance scope: homepage hero, mission statement, problem framing, product surfaces, trust language, AGI/ASI fear response, and launch constraints.
+Purpose: provide mission-first public copy for Mullu Govern as the governed symbolic intelligence action infrastructure product by Mullusi.
+Governance scope: homepage hero, mission statement, problem framing, product surfaces, trust language, advanced-capability fear response, and launch constraints.
 Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_MISSION_STATEMENT.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`.
 Invariants: use `Mullu Govern` as the public product name; use `Mullu` as the suite/family name; use `Mullusi` as the company and governance authority; public copy must explain mission before technical proof; public launch remains blocked until clearance and readiness gates close.
 
@@ -27,9 +27,9 @@ Technical terms such as symbolic execution, proof stamps, runtime conformance, d
 ```text
 Mullu Govern, by Mullusi
 
-Make AI action governable.
+Make symbolic intelligence action governable.
 
-Mullu Govern is governance infrastructure for AI systems that need policy checks,
+Mullu Govern is governance infrastructure for symbolic intelligence systems that need policy checks,
 approval gates, budget limits, evidence, receipts, audit trails, and rollback
 before important actions run.
 ```
@@ -37,21 +37,21 @@ before important actions run.
 ## Mission Statement
 
 ```text
-Mullusi exists to make powerful AI systems safe enough to trust.
+Mullusi exists to make powerful symbolic intelligence systems safe enough to trust.
 
-As AI moves from answering questions to taking actions, organizations need more
-than intelligence. They need control, proof, approval, budget limits, audit
+As symbolic intelligence moves from answering questions to taking actions, organizations need more
+than model capability. They need control, proof, approval, budget limits, audit
 trails, rollback paths, and clear responsibility.
 
-Mullu Govern turns AI-driven work into governed proposals and proof-backed
-outcomes. The goal is accountable automation: useful AI action that can be
+Mullu Govern turns symbolic work into governed proposals and proof-backed
+outcomes. The goal is accountable automation: useful symbolic intelligence action that can be
 limited, reviewed, approved, blocked, and audited.
 ```
 
 ## Problem Statement
 
 ```text
-AI systems are becoming capable of acting across tools, files, APIs, workflows,
+Symbolic intelligence systems are becoming capable of acting across tools, files, APIs, workflows,
 messages, budgets, and business processes. Without governance, that creates a
 simple risk: nobody can confidently answer what the system did, why it did it,
 who approved it, what evidence supported it, or how to stop and recover when a
@@ -61,7 +61,7 @@ boundary is crossed.
 ## Solution Statement
 
 ```text
-Mullu Govern places a control plane around consequential AI work. Before action,
+Mullu Govern places a control plane around consequential symbolic work. Before action,
 the system checks authority, policy, budget, evidence, risk, and approval. If a
 step is blocked, it records why. If a step is allowed, it emits receipts and
 keeps the result auditable.
@@ -80,21 +80,21 @@ which constraints applied, what evidence closed the task, which receipts were
 emitted, and what rollback path exists if the result must be reviewed or undone.
 ```
 
-## AGI/ASI Fear Response
+## Advanced Capability Fear Response
 
 ```text
 Mullu Govern is not built to unleash unchecked machine autonomy.
 
-It is built to limit, verify, and govern AI-driven action with human approval,
+It is built to limit, verify, and govern symbolic intelligence action with human approval,
 policy checks, budget boundaries, evidence, receipts, and rollback paths.
 ```
 
-Use this framing when a public surface mentions advanced AI, agentic systems, AGI, or ASI fear. Do not claim that Mullu Govern creates AGI, prevents every AI risk, guarantees safety, or certifies deployment readiness.
+Use this framing when a public surface mentions advanced symbolic systems or speculative general capability. Do not claim that Mullu Govern creates general symbolic intelligence, prevents every automation risk, guarantees safety, or certifies deployment readiness.
 
 ## Short Product Description
 
 ```text
-Mullu Govern helps people and organizations turn AI-driven goals into governed
+Mullu Govern helps people and organizations turn symbolic goals into governed
 work. It routes consequential actions through explicit authority, policy gates,
 budgets, evidence, approval, receipts, and bounded capability surfaces before
 execution.
@@ -103,7 +103,7 @@ execution.
 ## Longer Product Description
 
 ```text
-Mullu Govern is the governed execution product by Mullusi for AI-assisted work:
+Mullu Govern is the governed execution product by Mullusi for symbolic work:
 approvals, budgets, audit trails, lineage, deployment controls, policy
 enforcement, skill boundaries, and proof-backed actions.
 
@@ -116,7 +116,7 @@ trusted outcome.
 
 | Surface | Public copy |
 | --- | --- |
-| Mullu Govern | Governable AI action across workflows, approvals, budgets, traces, audit, lineage, deployment controls, and proof-backed outcomes |
+| Mullu Govern | Governable symbolic intelligence action across workflows, approvals, budgets, traces, audit, lineage, deployment controls, and proof-backed outcomes |
 | Mullu Proof | Evidence, receipts, proof stamps, lineage packages, and compliance exports |
 | Mullu Ledger | Budgets, spend limits, payment states, settlements, and financial audit evidence |
 | Mullu Inspect | Symbolic browser inspection and evidence capture |
@@ -128,10 +128,10 @@ trusted outcome.
 ## Market Role
 
 ```text
-Mullu Govern is a trust layer for AI actions.
+Mullu Govern is a trust layer for symbolic intelligence actions.
 
 It does not compete mainly as a foundation model or chatbot. It sits around
-AI-driven work so that organizations can limit authority, inspect evidence,
+symbolic work so that organizations can limit authority, inspect evidence,
 require approval, enforce budget and policy, and export proof.
 ```
 
@@ -173,8 +173,8 @@ formation, legal claims, or patent filing.
 This copy may claim:
 
 ```text
-mission: make AI action governable, auditable, and accountable
-product direction: governed AI-action infrastructure
+mission: make symbolic intelligence action governable, auditable, and accountable
+product direction: governed symbolic intelligence action infrastructure
 control model: policy, approval, budget, evidence, receipt, audit, rollback
 current posture: Foundation Mode, local proof first
 ```
@@ -189,8 +189,8 @@ production runtime health
 live endpoint readiness
 legal or company readiness
 patent protection
-AGI or ASI creation
-complete AI safety guarantee
+speculative general-capability creation
+complete symbolic intelligence safety guarantee
 live payment execution
 live email delivery
 ```

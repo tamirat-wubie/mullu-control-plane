@@ -17,7 +17,7 @@ Invariants:
 from __future__ import annotations
 
 from html import escape
-from typing import Any
+from typing import Any, Mapping
 from urllib.parse import urlencode
 
 from gateway.autonomous_capability_upgrade import (
@@ -123,6 +123,7 @@ def build_capability_friction_control_read_model(
         "dangerous_zones": summary["dangerous_zones"],
         "capabilities": [_friction_control_capability_card(item) for item in capabilities],
         "developer_workflow_v1": summary["developer_workflow_v1"],
+        "sandbox_to_pr_now": summary["sandbox_to_pr_now"],
         "validators": [
             {
                 "validator_id": "capability_friction_control_validator",
@@ -130,8 +131,183 @@ def build_capability_friction_control_read_model(
                 "required_for_closure": True,
             },
             {
+                "validator_id": "sandbox_to_pr_preparation_packet_validator",
+                "command": "python scripts/validate_sandbox_to_pr_preparation_packet.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_sandbox_receipt_bundle_validator",
+                "command": "python scripts/validate_developer_workflow_sandbox_receipt_bundle.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_sandbox_receipt_attachment_packet_validator",
+                "command": "python scripts/validate_developer_workflow_sandbox_receipt_attachment_packet.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_local_sandbox_proof_report_validator",
+                "command": "python scripts/validate_developer_workflow_local_sandbox_proof_report.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_local_rollback_summary_packet_validator",
+                "command": "python scripts/validate_developer_workflow_local_rollback_summary_packet.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_local_rollback_approval_packet_validator",
+                "command": "python scripts/validate_developer_workflow_local_rollback_approval_packet.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_local_rollback_execution_receipt_validator",
+                "command": "python scripts/validate_developer_workflow_local_rollback_execution_receipt.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_local_rollback_flow_tests",
+                "command": "python -m pytest tests/test_run_developer_workflow_local_rollback_flow.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "pr_preparation_approval_packet_validator",
+                "command": "python scripts/validate_pr_preparation_approval_packet.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "local_pr_candidate_packet_validator",
+                "command": "python scripts/validate_local_pr_candidate_packet.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "pr_tool_admission_packet_validator",
+                "command": "python scripts/validate_pr_tool_admission_packet.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "external_pr_execution_approval_witness_validator",
+                "command": "python scripts/validate_external_pr_execution_approval_witness.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "pr_command_preview_packet_validator",
+                "command": "python scripts/validate_pr_command_preview_packet.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "pr_metadata_packet_validator",
+                "command": "python scripts/validate_pr_metadata_packet.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "pr_readiness_bundle_validator",
+                "command": "python scripts/validate_pr_readiness_bundle.py",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_operator_receipt_validator",
+                "command": "python scripts/build_developer_workflow_operator_receipt.py --json",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "operator_control_tower_status_receipt_validator",
+                "command": "python scripts/validate_operator_control_tower_status_receipt.py",
+                "required_for_closure": True,
+            },
+            {
                 "validator_id": "capability_friction_control_tests",
                 "command": "python -m pytest tests/test_validate_capability_friction_control.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "sandbox_to_pr_preparation_packet_tests",
+                "command": "python -m pytest tests/test_validate_sandbox_to_pr_preparation_packet.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_sandbox_receipt_bundle_tests",
+                "command": "python -m pytest tests/test_validate_developer_workflow_sandbox_receipt_bundle.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_sandbox_receipt_attachment_packet_tests",
+                "command": "python -m pytest tests/test_build_developer_workflow_sandbox_receipt_attachment_packet.py tests/test_validate_developer_workflow_sandbox_receipt_attachment_packet.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_sandbox_receipt_evidence_collector_tests",
+                "command": "python -m pytest tests/test_collect_developer_workflow_sandbox_receipt_evidence.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_local_sandbox_proof_runner_tests",
+                "command": "python -m pytest tests/test_run_developer_workflow_local_sandbox_proof.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_local_sandbox_proof_report_tests",
+                "command": "python -m pytest tests/test_validate_developer_workflow_local_sandbox_proof_report.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_local_rollback_summary_packet_tests",
+                "command": "python -m pytest tests/test_build_developer_workflow_local_rollback_summary_packet.py tests/test_validate_developer_workflow_local_rollback_summary_packet.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_local_rollback_approval_packet_tests",
+                "command": "python -m pytest tests/test_build_developer_workflow_local_rollback_approval_packet.py tests/test_validate_developer_workflow_local_rollback_approval_packet.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_local_rollback_execution_tests",
+                "command": "python -m pytest tests/test_execute_developer_workflow_local_rollback.py tests/test_validate_developer_workflow_local_rollback_execution_receipt.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "pr_preparation_approval_packet_tests",
+                "command": "python -m pytest tests/test_build_pr_preparation_approval_packet.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "local_pr_candidate_packet_tests",
+                "command": "python -m pytest tests/test_build_local_pr_candidate_packet.py tests/test_validate_local_pr_candidate_packet.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "pr_tool_admission_packet_tests",
+                "command": "python -m pytest tests/test_build_pr_tool_admission_packet.py tests/test_validate_pr_tool_admission_packet.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "external_pr_execution_approval_witness_tests",
+                "command": "python -m pytest tests/test_build_external_pr_execution_approval_witness.py tests/test_validate_external_pr_execution_approval_witness.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "pr_command_preview_packet_tests",
+                "command": "python -m pytest tests/test_build_pr_command_preview_packet.py tests/test_validate_pr_command_preview_packet.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "pr_metadata_packet_tests",
+                "command": "python -m pytest tests/test_build_pr_metadata_packet.py tests/test_validate_pr_metadata_packet.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "pr_readiness_bundle_tests",
+                "command": "python -m pytest tests/test_build_pr_readiness_bundle.py tests/test_validate_pr_readiness_bundle.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "developer_workflow_operator_receipt_tests",
+                "command": "python -m pytest tests/test_build_developer_workflow_operator_receipt.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "operator_control_tower_status_receipt_tests",
+                "command": "python -m pytest tests/test_validate_operator_control_tower_status_receipt.py -q",
                 "required_for_closure": True,
             },
         ],
@@ -143,6 +319,7 @@ def build_developer_workflow_v1_run_read_model(
     *,
     capability_admission_gate: Any | None = None,
     software_receipt_store: Any | None = None,
+    sandbox_receipt_bundle: Mapping[str, Any] | None = None,
     tenant_id: str = "operator",
     actor_id: str = "codex-local-operator",
     domain: str = "software_dev",
@@ -165,7 +342,10 @@ def build_developer_workflow_v1_run_read_model(
     if not isinstance(workflow, dict):
         workflow = {}
     task_specs = _developer_workflow_task_specs(workflow)
-    receipt_binding = _software_receipt_binding(software_receipt_store)
+    receipt_binding = _software_receipt_binding(
+        software_receipt_store,
+        sandbox_receipt_bundle=sandbox_receipt_bundle,
+    )
     workflow_run_id = "workflow-run-mullu-developer-workflow-v1-foundation"
     run = WorkflowOrchestrator().start_run(
         workflow_id="mullu_developer_workflow.v1",
@@ -347,6 +527,7 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
     """Render a compact read-only HTML operator console."""
     friction_control = read_model.get("friction_control", {})
     developer_workflow = friction_control.get("developer_workflow_v1", {}) if isinstance(friction_control, dict) else {}
+    sandbox_to_pr_now = friction_control.get("sandbox_to_pr_now", {}) if isinstance(friction_control, dict) else {}
     domain_filter = str(read_model.get("domain_filter", ""))
     risk_filter = str(read_model.get("risk_level_filter", ""))
     friction_href = "/operator/capabilities/friction-control/read-model"
@@ -384,6 +565,19 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
         "</tr>"
         for item in read_model.get("admission_audits", ())
     )
+    next_evidence = sandbox_to_pr_now.get("next_evidence", ()) if isinstance(sandbox_to_pr_now, dict) else ()
+    next_evidence_rows = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(item.get('label', '')))}</td>"
+        f"<td>{escape(str(item.get('status', '')))}</td>"
+        f"<td>{escape(str(item.get('action', '')))}</td>"
+        f"<td>{escape(str(item.get('source', '')))}</td>"
+        "</tr>"
+        for item in next_evidence
+        if isinstance(item, dict)
+    )
+    if not next_evidence_rows:
+        next_evidence_rows = '<tr><td colspan="4">No next evidence reported</td></tr>'
     portfolio = read_model.get("improvement_portfolio", {})
     portfolio_href = escape(str(portfolio.get("href", CAPABILITY_IMPROVEMENT_PORTFOLIO_HREF)))
     portfolio_schema = escape(str(portfolio.get("schema_ref", CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF)))
@@ -440,7 +634,14 @@ def render_operator_capability_console(read_model: dict[str, Any]) -> str:
     <span class="metric">Real-world writes: {escape(str(friction_control.get("real_world_write_status", "")))}</span>
     <span class="metric">Workflow: {escape(str(developer_workflow.get("status", "")))}</span>
     <span class="metric">Approval: {escape(str(developer_workflow.get("approval_boundary", "")))}</span>
+    <span class="metric">PR blocker: {escape(str(sandbox_to_pr_now.get("blocker", "")))}</span>
+    <span class="metric">PR status: {escape(str(sandbox_to_pr_now.get("status", "")))}</span>
+    <span class="metric">PR next: {escape(str(sandbox_to_pr_now.get("next_action", "")))}</span>
     <a href="{friction_href_html}">friction read model</a>
+    <table>
+      <thead><tr><th>Next evidence</th><th>Status</th><th>Action</th><th>Source</th></tr></thead>
+      <tbody>{next_evidence_rows}</tbody>
+    </table>
   </section>
   <nav>
     <a href="{portfolio_href}">Capability improvement portfolio</a>
@@ -668,6 +869,7 @@ def _friction_projection(item: dict[str, Any]) -> dict[str, Any]:
 
 def _friction_control_summary(capabilities: list[dict[str, Any]]) -> dict[str, Any]:
     developer_workflow = _developer_workflow_v1(capabilities)
+    sandbox_to_pr_now = _sandbox_to_pr_now(capabilities, developer_workflow)
     return {
         "surface": "capability_friction_control",
         "execution_authority_granted": False,
@@ -693,7 +895,83 @@ def _friction_control_summary(capabilities: list[dict[str, Any]]) -> dict[str, A
         "fast_mode_lab_ready_count": sum(1 for item in capabilities if item.get("fast_mode_admission") == "allowed_lab"),
         "real_world_write_status": "blocked_until_production_witness",
         "developer_workflow_v1": developer_workflow,
+        "sandbox_to_pr_now": sandbox_to_pr_now,
     }
+
+
+def _sandbox_to_pr_now(
+    capabilities: list[dict[str, Any]],
+    developer_workflow: dict[str, Any],
+) -> dict[str, Any]:
+    by_id = {str(item.get("capability_id")): item for item in capabilities}
+    change_capability = by_id.get("software_dev.change.run", {})
+    pr_capability = by_id.get("software_dev.pr_candidate.prepare", {})
+    policy_ready = (
+        bool(change_capability)
+        and bool(pr_capability)
+        and change_capability.get("rollback_default") is True
+        and pr_capability.get("requires_approval") is True
+    )
+    workflow_ready = developer_workflow.get("status") == "preflight_ready"
+    if not workflow_ready:
+        status = "awaiting_capability_policy"
+        blocker = "capability_policy_incomplete"
+        next_action = "register missing software_dev capabilities"
+    elif not policy_ready:
+        status = "awaiting_capability_policy"
+        blocker = "capability_policy_incomplete"
+        next_action = "repair sandbox change and PR capability policy"
+    else:
+        status = "awaiting_sandbox_receipts"
+        blocker = "sandbox_receipts_incomplete"
+        next_action = "attach sandbox patch, test, diff, and terminal receipts"
+    return {
+        "status": status,
+        "blocker": blocker,
+        "next_action": next_action,
+        "next_evidence": sandbox_to_pr_next_evidence(status="pending"),
+        "policy_ready": policy_ready,
+        "workflow_ready": workflow_ready,
+        "approval_required": bool(pr_capability) and pr_capability.get("requires_approval") is True,
+        "rollback_default": bool(change_capability) and change_capability.get("rollback_default") is True,
+        "receipt_source": "operator_control_tower.workflow_monitor.sandbox_to_pr_packet",
+        "packet_validator": "python scripts/validate_sandbox_to_pr_preparation_packet.py",
+        "external_effects_allowed": False,
+    }
+
+
+def sandbox_to_pr_next_evidence(*, status: str) -> list[dict[str, str]]:
+    """Return canonical sandbox-to-PR receipt evidence records."""
+    return [
+        {
+            "evidence_id": "sandbox_patch_receipt",
+            "label": "Sandbox patch receipt",
+            "status": status,
+            "action": "attach before state, after state, diff, command, and rollback receipt",
+            "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.sandbox_patch_receipt",
+        },
+        {
+            "evidence_id": "test_gate_receipt",
+            "label": "Test gate receipt",
+            "status": status,
+            "action": "attach bounded local test command receipt and observed result",
+            "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.test_gate_receipt",
+        },
+        {
+            "evidence_id": "diff_review_receipt",
+            "label": "Diff review receipt",
+            "status": status,
+            "action": "attach reviewed diff hash and reviewer evidence reference",
+            "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.diff_review_receipt",
+        },
+        {
+            "evidence_id": "terminal_receipt",
+            "label": "Terminal receipt",
+            "status": status,
+            "action": "attach final local receipt summary and no-external-effect witness",
+            "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.terminal_receipt",
+        },
+    ]
 
 
 def _developer_workflow_v1(capabilities: list[dict[str, Any]]) -> dict[str, Any]:
@@ -836,31 +1114,47 @@ def _committable_foundation_stages(
     for stage_id in _committable_foundation_stage_ids(workflow):
         committed.append((stage_id, (f"capability_friction_control:{stage_id}",)))
     stage_evidence = receipt_binding.get("stage_evidence", {}) if isinstance(receipt_binding, dict) else {}
-    if _stage_receipts_available(stage_evidence, "patch_applied"):
-        committed.append(("sandbox_change", tuple(stage_evidence["patch_applied"])))
-    if _stage_receipts_available(stage_evidence, "gate_evaluated"):
-        evidence_refs = tuple(stage_evidence["gate_evaluated"])
-        committed.append(("test_run", evidence_refs))
-        committed.append(("diff_review", evidence_refs))
-    if _stage_receipts_available(stage_evidence, "terminal_closed"):
-        committed.append(("receipt_review", tuple(stage_evidence["terminal_closed"])))
+    patch_refs = _stage_receipts(stage_evidence, "sandbox_patch_receipt", "patch_applied")
+    if patch_refs:
+        committed.append(("sandbox_change", patch_refs))
+    test_refs = _stage_receipts(stage_evidence, "test_gate_receipt", "gate_evaluated")
+    if test_refs:
+        committed.append(("test_run", test_refs))
+    diff_refs = _stage_receipts(stage_evidence, "diff_review_receipt", "gate_evaluated")
+    if diff_refs:
+        committed.append(("diff_review", diff_refs))
+    terminal_refs = _stage_receipts(stage_evidence, "terminal_receipt", "terminal_closed")
+    if terminal_refs:
+        committed.append(("receipt_review", terminal_refs))
     return tuple(committed)
 
 
-def _stage_receipts_available(stage_evidence: Any, stage: str) -> bool:
+def _stage_receipts(stage_evidence: Any, *keys: str) -> tuple[str, ...]:
     if not isinstance(stage_evidence, dict):
-        return False
-    refs = stage_evidence.get(stage, ())
-    return isinstance(refs, (list, tuple)) and bool(refs)
+        return ()
+    for key in keys:
+        refs = stage_evidence.get(key, ())
+        if isinstance(refs, (list, tuple)) and refs:
+            return tuple(str(ref) for ref in refs if str(ref).strip())
+    return ()
 
 
-def _software_receipt_binding(software_receipt_store: Any | None) -> dict[str, Any]:
+def _software_receipt_binding(
+    software_receipt_store: Any | None,
+    *,
+    sandbox_receipt_bundle: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    bundle_stage_evidence = _sandbox_receipt_bundle_stage_evidence(sandbox_receipt_bundle)
     if software_receipt_store is None:
+        if bundle_stage_evidence:
+            return _bundle_software_receipt_binding(sandbox_receipt_bundle, bundle_stage_evidence)
         return _empty_software_receipt_binding("store_unavailable")
     try:
         summary = software_receipt_store.summary()
         receipts = software_receipt_store.list_receipts(limit=50)
     except Exception:
+        if bundle_stage_evidence:
+            return _bundle_software_receipt_binding(sandbox_receipt_bundle, bundle_stage_evidence)
         return _empty_software_receipt_binding("store_read_failed")
     stage_evidence: dict[str, list[str]] = {}
     for receipt in receipts:
@@ -868,6 +1162,8 @@ def _software_receipt_binding(software_receipt_store: Any | None) -> dict[str, A
         receipt_id = str(getattr(receipt, "receipt_id", ""))
         if stage and receipt_id:
             stage_evidence.setdefault(stage, []).append(f"software-change-receipt:{receipt_id}")
+    for stage, refs in bundle_stage_evidence.items():
+        stage_evidence.setdefault(stage, []).extend(refs)
     return {
         "enabled": True,
         "binding_status": "bound",
@@ -880,7 +1176,108 @@ def _software_receipt_binding(software_receipt_store: Any | None) -> dict[str, A
         "latest_stage": str(summary.get("latest_stage") or ""),
         "requires_operator_review": summary.get("requires_operator_review") is True,
         "stage_evidence": stage_evidence,
+        "sandbox_receipt_bundle_status": _sandbox_receipt_bundle_status(sandbox_receipt_bundle),
+        "sandbox_receipt_bundle_completed_count": _sandbox_receipt_bundle_completed_count(sandbox_receipt_bundle),
+        "sandbox_receipt_bundle_required_count": _sandbox_receipt_bundle_required_count(sandbox_receipt_bundle),
+        "sandbox_receipt_bundle_receipts": _sandbox_receipt_bundle_receipts(sandbox_receipt_bundle),
     }
+
+
+def _bundle_software_receipt_binding(
+    sandbox_receipt_bundle: Mapping[str, Any] | None,
+    stage_evidence: dict[str, list[str]],
+) -> dict[str, Any]:
+    completed_count = _sandbox_receipt_bundle_completed_count(sandbox_receipt_bundle)
+    latest_stage = ""
+    for key in ("terminal_receipt", "diff_review_receipt", "test_gate_receipt", "sandbox_patch_receipt"):
+        if key in stage_evidence:
+            latest_stage = key
+            break
+    return {
+        "enabled": True,
+        "binding_status": "bundle_bound",
+        "total_receipts": completed_count,
+        "request_count": completed_count,
+        "terminal_request_count": 1 if latest_stage == "terminal_receipt" else 0,
+        "open_request_count": 0,
+        "latest_receipt_id": latest_stage,
+        "latest_request_id": str(sandbox_receipt_bundle.get("workflow_run_id") or "") if sandbox_receipt_bundle else "",
+        "latest_stage": latest_stage,
+        "requires_operator_review": False,
+        "stage_evidence": stage_evidence,
+        "sandbox_receipt_bundle_status": _sandbox_receipt_bundle_status(sandbox_receipt_bundle),
+        "sandbox_receipt_bundle_completed_count": completed_count,
+        "sandbox_receipt_bundle_required_count": _sandbox_receipt_bundle_required_count(sandbox_receipt_bundle),
+        "sandbox_receipt_bundle_receipts": _sandbox_receipt_bundle_receipts(sandbox_receipt_bundle),
+    }
+
+
+def _sandbox_receipt_bundle_stage_evidence(
+    sandbox_receipt_bundle: Mapping[str, Any] | None,
+) -> dict[str, list[str]]:
+    if not isinstance(sandbox_receipt_bundle, Mapping):
+        return {}
+    receipts = sandbox_receipt_bundle.get("receipts", ())
+    if not isinstance(receipts, list):
+        return {}
+    stage_evidence: dict[str, list[str]] = {}
+    for receipt in receipts:
+        if not isinstance(receipt, Mapping) or receipt.get("status") != "complete":
+            continue
+        receipt_id = str(receipt.get("receipt_id") or "")
+        evidence_refs = [
+            str(ref)
+            for ref in receipt.get("evidence_refs", ())
+            if str(ref).strip()
+        ]
+        if receipt_id and evidence_refs:
+            stage_evidence[receipt_id] = evidence_refs
+    return stage_evidence
+
+
+def _sandbox_receipt_bundle_status(sandbox_receipt_bundle: Mapping[str, Any] | None) -> str:
+    if not isinstance(sandbox_receipt_bundle, Mapping):
+        return "not_attached"
+    return str(sandbox_receipt_bundle.get("bundle_status") or "unknown")
+
+
+def _sandbox_receipt_bundle_completed_count(sandbox_receipt_bundle: Mapping[str, Any] | None) -> int:
+    if not isinstance(sandbox_receipt_bundle, Mapping):
+        return 0
+    return int(sandbox_receipt_bundle.get("completed_count", 0) or 0)
+
+
+def _sandbox_receipt_bundle_required_count(sandbox_receipt_bundle: Mapping[str, Any] | None) -> int:
+    if not isinstance(sandbox_receipt_bundle, Mapping):
+        return 0
+    return int(sandbox_receipt_bundle.get("required_count", 0) or 0)
+
+
+def _sandbox_receipt_bundle_receipts(sandbox_receipt_bundle: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    if not isinstance(sandbox_receipt_bundle, Mapping):
+        return []
+    receipts = sandbox_receipt_bundle.get("receipts", ())
+    if not isinstance(receipts, list):
+        return []
+    rows: list[dict[str, Any]] = []
+    for receipt in receipts:
+        if not isinstance(receipt, Mapping):
+            continue
+        evidence_refs = [
+            str(ref)
+            for ref in receipt.get("evidence_refs", ())
+            if str(ref).strip()
+        ]
+        rows.append({
+            "receipt_id": str(receipt.get("receipt_id") or ""),
+            "label": str(receipt.get("label") or ""),
+            "status": str(receipt.get("status") or ""),
+            "stage": str(receipt.get("stage") or ""),
+            "required": receipt.get("required") is True,
+            "source": str(receipt.get("source") or ""),
+            "evidence_refs": evidence_refs,
+        })
+    return rows
 
 
 def _empty_software_receipt_binding(status: str) -> dict[str, Any]:
@@ -895,6 +1292,10 @@ def _empty_software_receipt_binding(status: str) -> dict[str, Any]:
         "latest_request_id": "",
         "latest_stage": "",
         "stage_evidence": {},
+        "sandbox_receipt_bundle_status": "not_attached",
+        "sandbox_receipt_bundle_completed_count": 0,
+        "sandbox_receipt_bundle_required_count": 0,
+        "sandbox_receipt_bundle_receipts": [],
     }
 
 

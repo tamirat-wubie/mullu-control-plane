@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:sandbox-to-pr-preparation-packet:1",
+  "title": "SandboxToPrPreparationPacket",
+  "description": "Read-only operator packet that composes capability policy, sandbox receipts, rollback status, approval state, and PR-candidate state for local lab Developer Workflow v1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "status",
+    "blocker",
+    "next_action",
+    "next_evidence",
+    "external_effects_allowed",
+    "execution_boundary",
+    "policy",
+    "receipts",
+    "receipt_bundle_ref",
+    "approval",
+    "pr_candidate",
+    "required_evidence"
+  ],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "const": "sandbox_to_pr_preparation_packet.v1"
+    },
+    "status": {
+      "$ref": "#/$defs/readiness_status"
+    },
+    "blocker": {
+      "type": "string",
+      "enum": [
+        "capability_policy_incomplete",
+        "sandbox_receipts_incomplete",
+        "operator_approval_missing",
+        "pr_candidate_not_prepared",
+        "none"
+      ]
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "next_evidence": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/next_evidence_record"
+      }
+    },
+    "external_effects_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "execution_boundary": {
+      "type": "string",
+      "const": "local_lab_only"
+    },
+    "policy": {
+      "$ref": "#/$defs/policy"
+    },
+    "receipts": {
+      "$ref": "#/$defs/receipts"
+    },
+    "receipt_bundle_ref": {
+      "$ref": "#/$defs/receipt_bundle_ref"
+    },
+    "approval": {
+      "$ref": "#/$defs/approval"
+    },
+    "pr_candidate": {
+      "$ref": "#/$defs/pr_candidate"
+    },
+    "required_evidence": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/evidence_record"
+      }
+    }
+  },
+  "$defs": {
+    "readiness_status": {
+      "type": "string",
+      "enum": [
+        "awaiting_receipts",
+        "awaiting_operator_approval",
+        "ready_to_prepare_pr",
+        "pr_candidate_ready",
+        "unknown"
+      ]
+    },
+    "stage_status": {
+      "type": "string",
+      "enum": ["pending", "complete"]
+    },
+    "capability_id": {
+      "type": "string",
+      "pattern": "^software_dev\\.[a-z0-9_]+\\.[a-z0-9_]+$"
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ready",
+        "change_capability_id",
+        "pr_capability_id",
+        "rollback_default",
+        "approval_required"
+      ],
+      "properties": {
+        "ready": {
+          "type": "boolean"
+        },
+        "change_capability_id": {
+          "type": "string",
+          "const": "software_dev.change.run"
+        },
+        "pr_capability_id": {
+          "type": "string",
+          "const": "software_dev.pr_candidate.prepare"
+        },
+        "rollback_default": {
+          "type": "boolean"
+        },
+        "approval_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "receipts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ready",
+        "completed_count",
+        "required_count",
+        "rollback_receipt_status"
+      ],
+      "properties": {
+        "ready": {
+          "type": "boolean"
+        },
+        "completed_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "required_count": {
+          "type": "integer",
+          "const": 4
+        },
+        "rollback_receipt_status": {
+          "type": "string",
+          "enum": ["available", "not_recorded"]
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "status"],
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "status": {
+          "$ref": "#/$defs/stage_status"
+        }
+      }
+    },
+    "receipt_bundle_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_ref", "example_path", "validator", "builder"],
+      "properties": {
+        "schema_ref": {
+          "type": "string",
+          "const": "schemas/developer_workflow_sandbox_receipt_bundle.schema.json"
+        },
+        "example_path": {
+          "type": "string",
+          "const": "examples/developer_workflow_sandbox_receipt_bundle.foundation.json"
+        },
+        "validator": {
+          "type": "string",
+          "const": "python scripts/validate_developer_workflow_sandbox_receipt_bundle.py"
+        },
+        "builder": {
+          "type": "string",
+          "const": "python scripts/build_developer_workflow_sandbox_receipt_bundle.py"
+        }
+      }
+    },
+    "pr_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "prepared"],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/stage_status"
+        },
+        "prepared": {
+          "type": "boolean"
+        }
+      }
+    },
+    "evidence_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "status", "source"],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "enum": [
+            "capability_passports",
+            "sandbox_receipts",
+            "operator_approval",
+            "pr_candidate"
+          ]
+        },
+        "status": {
+          "$ref": "#/$defs/stage_status"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 180
+        }
+      }
+    },
+    "next_evidence_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "label", "status", "action", "source"],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "enum": [
+            "sandbox_patch_receipt",
+            "test_gate_receipt",
+            "diff_review_receipt",
+            "terminal_receipt"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "status": {
+          "$ref": "#/$defs/stage_status"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "source": {
+          "type": "string",
+          "pattern": "^workflow_monitor\\.metadata\\.developer_workflow_run\\.receipt_checklist\\.[a-z_]+$"
+        }
+      }
+    }
+  }
+}
