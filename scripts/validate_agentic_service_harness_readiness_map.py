@@ -686,11 +686,13 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
     "command-preview operator approval gate evidence",
     "source approval gate binding id/ref",
-    "GitHub PR terminal closure generic continuation rejection actual-diff decision contract binding PR",
+    "GitHub PR terminal closure generic continuation rejection command-preview decision contract binding PR",
     "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
+    "command-preview decision contract evidence",
+    "command-preview operator approval gate evidence",
     "actual-diff decision contract evidence",
     "source decision contract binding id/ref",
-    "actual-diff-bound generic rejection evidence",
+    "command-preview-bound generic rejection evidence",
     "GitHub PR terminal closure operator decision value request actual-diff generic rejection binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
     "actual-diff-bound decision value request evidence",
@@ -1530,13 +1532,13 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     generic_rejection_row = re.search(
-        r"^\| GitHub PR terminal closure generic continuation rejection actual-diff decision contract binding PR \| READY \| .+actual-diff decision contract evidence.+source decision contract binding id/ref.+Generic continuation remains rejected.+terminal closure authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure generic continuation rejection command-preview decision contract binding PR \| READY \| .+command-preview decision contract evidence.+actual-diff decision contract evidence.+source decision contract binding id/ref.+redacted command preview.+Generic continuation remains rejected.+terminal closure authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if generic_rejection_row is None:
         errors.append(
-            "missing ready row: GitHub PR terminal closure generic continuation rejection actual-diff decision contract binding PR"
+            "missing ready row: GitHub PR terminal closure generic continuation rejection command-preview decision contract binding PR"
         )
 
     decision_value_request_row = re.search(
@@ -1642,7 +1644,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure generic continuation rejection to command-preview decision contract",
+        "harness(pr): bind terminal closure operator decision value request to command-preview generic rejection",
     )
     positions: list[int] = []
     for marker in sequence_markers:

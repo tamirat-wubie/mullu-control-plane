@@ -76,6 +76,41 @@ def test_github_pr_terminal_closure_generic_continuation_rejection_rejects_sourc
     assert len(errors) >= 3
 
 
+def test_github_pr_terminal_closure_generic_continuation_rejection_rejects_command_preview_decision_contract_drift() -> None:
+    payload = validator.build_mutated_generic_continuation_rejection(
+        continuation_rejection__command_preview_decision_contract_evidence__source_decision_contract_binding_id="other_binding",
+        continuation_rejection__command_preview_decision_contract_evidence__source_decision_contract_ref="examples/other-contract.json",
+        continuation_rejection__command_preview_decision_contract_evidence__operator_decision_ref="approval://other",
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_terminal_closure_certificate_witness_ref="examples/other-certificate.json",
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_effect_reconciliation_witness_ref="examples/other-effect.json",
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_operator_response_binding_ref="examples/other-response-binding.json",
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_operator_response_witness_ref="examples/other-response.json",
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_operator_approval_request_binding_ref="examples/other-approval.json",
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_ref="examples/other-command-preview.json",
+        continuation_rejection__command_preview_decision_contract_evidence__redacted_command_preview="gh pr merge --delete-branch",
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_bound=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_generic_continuation_rejection_semantics(
+        payload, _source_contract(), errors, "mutated"
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_decision_contract_evidence.source_decision_contract_binding_id expected" in serialized_errors
+    assert "command_preview_decision_contract_evidence.source_decision_contract_ref expected" in serialized_errors
+    assert "command_preview_decision_contract_evidence.operator_decision_ref expected" in serialized_errors
+    assert "command_preview_decision_contract_evidence.command_preview_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "command_preview_decision_contract_evidence.command_preview_effect_reconciliation_witness_ref expected" in serialized_errors
+    assert "command_preview_decision_contract_evidence.command_preview_operator_response_binding_ref expected" in serialized_errors
+    assert "command_preview_decision_contract_evidence.command_preview_operator_response_witness_ref expected" in serialized_errors
+    assert "command_preview_decision_contract_evidence.command_preview_operator_approval_request_binding_ref expected" in serialized_errors
+    assert "command_preview_decision_contract_evidence.command_preview_ref expected" in serialized_errors
+    assert "command_preview_decision_contract_evidence.redacted_command_preview expected" in serialized_errors
+    assert "command_preview_decision_contract_evidence.command_preview_bound expected" in serialized_errors
+    assert "command_preview_decision_contract_evidence.command_preview_bound must be true" in serialized_errors
+
+
 def test_github_pr_terminal_closure_generic_continuation_rejection_rejects_actual_diff_decision_contract_drift() -> None:
     payload = validator.build_mutated_generic_continuation_rejection(
         continuation_rejection__actual_diff_decision_contract_evidence__source_decision_contract_binding_id="other_binding",
