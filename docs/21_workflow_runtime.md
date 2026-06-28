@@ -712,6 +712,21 @@ preparation status, preparation target, prerequisites, missing prerequisite
 count, preparation denial, branch-push denial, PR-creation denial, and no-effect
 posture. It is a PR preparation readiness projection only and does not prepare a
 pull request, push a branch, create a pull request, or perform external effects.
+The sandbox patch PR creation readiness field is
+`operator_sandbox_patch_pr_creation_readiness_summary`, anchored to the
+documented `sandbox_patch_receipt` PR creation readiness path. It reports
+creation status, creation target, prerequisites, missing prerequisite count,
+creation denial, branch-push denial, PR-creation denial, connector-call denial,
+and no-effect posture. It is a PR creation readiness projection only and does
+not push a branch, call a connector, create a pull request, or perform external
+effects.
+The sandbox patch PR CI readiness field is
+`operator_sandbox_patch_pr_ci_readiness_summary`, anchored to the documented
+`sandbox_patch_receipt` PR CI readiness path. It reports CI status, CI target,
+prerequisites, missing prerequisite count, CI-observation denial, GitHub polling
+denial, check-update denial, ready-for-review denial, and no-effect posture. It
+is a PR CI readiness projection only and does not poll GitHub, update checks,
+mark a pull request ready for review, or perform external effects.
 The operator handoff field is `operator_handoff_summary`, composed from
 `workflow_monitor.metadata.developer_workflow_milestone_summary` and
 `workflow_monitor.metadata.operator_decision_summary`. It gives a future

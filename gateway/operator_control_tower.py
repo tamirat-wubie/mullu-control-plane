@@ -2468,6 +2468,48 @@ def operator_control_tower_status_receipt(snapshot: OperatorControlTowerSnapshot
                 "PR preparation blocked until sandbox patch approval is recorded with validated evidence"
             ),
         },
+        "operator_sandbox_patch_pr_creation_readiness_summary": {
+            "summary_id": "operator_sandbox_patch_pr_creation_readiness.foundation",
+            "creation_status": "blocked_until_pr_preparation",
+            "creation_target": "github_pull_request",
+            "required_before_creation": [
+                "local_pr_candidate_packet_prepared",
+                "local_pr_candidate_packet_validated",
+                "external_pr_execution_approval_recorded",
+                "branch_push_authority_bound",
+                "github_pr_admission_passed",
+            ],
+            "missing_prerequisite_count": 5,
+            "creation_performed": False,
+            "branch_push_allowed": False,
+            "pr_creation_allowed": False,
+            "connector_call_allowed": False,
+            "external_effects_allowed": False,
+            "operator_message": (
+                "PR creation blocked until local PR preparation and external PR approval evidence are complete"
+            ),
+        },
+        "operator_sandbox_patch_pr_ci_readiness_summary": {
+            "summary_id": "operator_sandbox_patch_pr_ci_readiness.foundation",
+            "ci_status": "blocked_until_pr_creation",
+            "ci_target": "github_pr_ci_checks",
+            "required_before_ci": [
+                "github_pull_request_created",
+                "pr_metadata_packet_recorded",
+                "ci_gate_before_ready_for_review_witness_bound",
+                "github_check_read_authority_bound",
+                "pr_effect_reconciliation_pending",
+            ],
+            "missing_prerequisite_count": 5,
+            "ci_observation_performed": False,
+            "github_poll_allowed": False,
+            "check_update_allowed": False,
+            "ready_for_review_allowed": False,
+            "external_effects_allowed": False,
+            "operator_message": (
+                "PR CI readiness blocked until PR creation evidence and CI observation authority are complete"
+            ),
+        },
         "operator_handoff_summary": {
             "summary_id": "operator_handoff.foundation",
             "handoff_status": (
@@ -3438,6 +3480,12 @@ def operator_control_tower_status_receipt(snapshot: OperatorControlTowerSnapshot
             ),
             "operator_sandbox_patch_pr_preparation_readiness_summary": (
                 "docs/21_workflow_runtime.md sandbox_patch_receipt PR preparation readiness"
+            ),
+            "operator_sandbox_patch_pr_creation_readiness_summary": (
+                "docs/21_workflow_runtime.md sandbox_patch_receipt PR creation readiness"
+            ),
+            "operator_sandbox_patch_pr_ci_readiness_summary": (
+                "docs/21_workflow_runtime.md sandbox_patch_receipt PR CI readiness"
             ),
             "operator_handoff_summary": (
                 "workflow_monitor.metadata.developer_workflow_milestone_summary + "
@@ -4684,6 +4732,32 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     sandbox_patch_pr_preparation_message = (
         "PR preparation blocked until sandbox patch approval is recorded with validated evidence"
     )
+    sandbox_patch_pr_creation_status = "blocked_until_pr_preparation"
+    sandbox_patch_pr_creation_required = (
+        "local_pr_candidate_packet_prepared, local_pr_candidate_packet_validated, "
+        "external_pr_execution_approval_recorded, branch_push_authority_bound, "
+        "github_pr_admission_passed"
+    )
+    sandbox_patch_pr_creation_missing = 5
+    sandbox_patch_pr_creation_performed = False
+    sandbox_patch_connector_call = False
+    sandbox_patch_pr_creation_message = (
+        "PR creation blocked until local PR preparation and external PR approval evidence are complete"
+    )
+    sandbox_patch_pr_ci_status = "blocked_until_pr_creation"
+    sandbox_patch_pr_ci_required = (
+        "github_pull_request_created, pr_metadata_packet_recorded, "
+        "ci_gate_before_ready_for_review_witness_bound, "
+        "github_check_read_authority_bound, pr_effect_reconciliation_pending"
+    )
+    sandbox_patch_pr_ci_missing = 5
+    sandbox_patch_pr_ci_observation = False
+    sandbox_patch_github_poll = False
+    sandbox_patch_check_update = False
+    sandbox_patch_ready_for_review = False
+    sandbox_patch_pr_ci_message = (
+        "PR CI readiness blocked until PR creation evidence and CI observation authority are complete"
+    )
     operator_handoff_status = (
         "ready_for_local_resume" if friction_reduction_local_allowed else "blocked_pending_approval"
     )
@@ -5245,6 +5319,36 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
       <span class="field"><strong>PR preparation allowed</strong>{escape(str(sandbox_patch_pr_preparation).lower())}</span>
       <span class="field"><strong>Branch push allowed</strong>{escape(str(sandbox_patch_branch_push).lower())}</span>
       <span class="field"><strong>PR creation allowed</strong>{escape(str(sandbox_patch_terminal_review_pr).lower())}</span>
+      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
+    </div>
+  </section>
+  <section>
+    <h2>Operator Sandbox Patch PR Creation Readiness</h2>
+    <div class="task">
+      <span class="field"><strong>Message</strong>{escape(sandbox_patch_pr_creation_message)}</span>
+      <span class="field"><strong>Status</strong>{escape(sandbox_patch_pr_creation_status)}</span>
+      <span class="field"><strong>Creation target</strong>github_pull_request</span>
+      <span class="field"><strong>Required before creation</strong>{escape(sandbox_patch_pr_creation_required)}</span>
+      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_pr_creation_missing}</span>
+      <span class="field"><strong>Creation performed</strong>{escape(str(sandbox_patch_pr_creation_performed).lower())}</span>
+      <span class="field"><strong>Branch push allowed</strong>{escape(str(sandbox_patch_branch_push).lower())}</span>
+      <span class="field"><strong>PR creation allowed</strong>{escape(str(sandbox_patch_terminal_review_pr).lower())}</span>
+      <span class="field"><strong>Connector call allowed</strong>{escape(str(sandbox_patch_connector_call).lower())}</span>
+      <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
+    </div>
+  </section>
+  <section>
+    <h2>Operator Sandbox Patch PR CI Readiness</h2>
+    <div class="task">
+      <span class="field"><strong>Message</strong>{escape(sandbox_patch_pr_ci_message)}</span>
+      <span class="field"><strong>Status</strong>{escape(sandbox_patch_pr_ci_status)}</span>
+      <span class="field"><strong>CI target</strong>github_pr_ci_checks</span>
+      <span class="field"><strong>Required before CI</strong>{escape(sandbox_patch_pr_ci_required)}</span>
+      <span class="field"><strong>Missing prerequisites</strong>{sandbox_patch_pr_ci_missing}</span>
+      <span class="field"><strong>CI observation performed</strong>{escape(str(sandbox_patch_pr_ci_observation).lower())}</span>
+      <span class="field"><strong>GitHub poll allowed</strong>{escape(str(sandbox_patch_github_poll).lower())}</span>
+      <span class="field"><strong>Check update allowed</strong>{escape(str(sandbox_patch_check_update).lower())}</span>
+      <span class="field"><strong>Ready for review allowed</strong>{escape(str(sandbox_patch_ready_for_review).lower())}</span>
       <span class="field"><strong>External effects allowed</strong>{escape(str(sandbox_patch_external_effects).lower())}</span>
     </div>
   </section>

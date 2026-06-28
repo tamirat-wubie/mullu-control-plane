@@ -1640,6 +1640,12 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Operator Sandbox Patch PR Preparation Readiness" in response.text
     assert "PR preparation blocked until sandbox patch approval is recorded" in response.text
     assert "blocked_until_approval" in response.text
+    assert "Operator Sandbox Patch PR Creation Readiness" in response.text
+    assert "PR creation blocked until local PR preparation" in response.text
+    assert "blocked_until_pr_preparation" in response.text
+    assert "Operator Sandbox Patch PR CI Readiness" in response.text
+    assert "PR CI readiness blocked until PR creation evidence" in response.text
+    assert "blocked_until_pr_creation" in response.text
     assert "Operator Handoff Summary" in response.text
     assert "Handoff ready for local resume" in response.text
     assert "external_pr_creation, branch_push, merge, deployment, connector_write, real_world_effect" in response.text
@@ -2551,6 +2557,48 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
             "PR preparation blocked until sandbox patch approval is recorded with validated evidence"
         ),
     }
+    assert receipt["operator_sandbox_patch_pr_creation_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_pr_creation_readiness.foundation",
+        "creation_status": "blocked_until_pr_preparation",
+        "creation_target": "github_pull_request",
+        "required_before_creation": [
+            "local_pr_candidate_packet_prepared",
+            "local_pr_candidate_packet_validated",
+            "external_pr_execution_approval_recorded",
+            "branch_push_authority_bound",
+            "github_pr_admission_passed",
+        ],
+        "missing_prerequisite_count": 5,
+        "creation_performed": False,
+        "branch_push_allowed": False,
+        "pr_creation_allowed": False,
+        "connector_call_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "PR creation blocked until local PR preparation and external PR approval evidence are complete"
+        ),
+    }
+    assert receipt["operator_sandbox_patch_pr_ci_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_pr_ci_readiness.foundation",
+        "ci_status": "blocked_until_pr_creation",
+        "ci_target": "github_pr_ci_checks",
+        "required_before_ci": [
+            "github_pull_request_created",
+            "pr_metadata_packet_recorded",
+            "ci_gate_before_ready_for_review_witness_bound",
+            "github_check_read_authority_bound",
+            "pr_effect_reconciliation_pending",
+        ],
+        "missing_prerequisite_count": 5,
+        "ci_observation_performed": False,
+        "github_poll_allowed": False,
+        "check_update_allowed": False,
+        "ready_for_review_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "PR CI readiness blocked until PR creation evidence and CI observation authority are complete"
+        ),
+    }
     assert receipt["operator_handoff_summary"] == {
         "summary_id": "operator_handoff.foundation",
         "handoff_status": "ready_for_local_resume",
@@ -2982,6 +3030,14 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
     assert (
         receipt["source_refs"]["operator_sandbox_patch_pr_preparation_readiness_summary"]
         == "docs/21_workflow_runtime.md sandbox_patch_receipt PR preparation readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_pr_creation_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt PR creation readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_pr_ci_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt PR CI readiness"
     )
     assert (
         receipt["source_refs"]["operator_handoff_summary"]
