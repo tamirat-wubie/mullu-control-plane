@@ -105,3 +105,39 @@ def test_attachment_packet_builder_cli_writes_json(tmp_path: Path, capsys) -> No
     assert exit_code == 0
     assert output_path.exists()
     assert "developer_workflow_sandbox_receipt_attachment_packet.v1" in captured.out
+
+
+def test_attachment_packet_builder_cli_validates_custom_bundle_path(tmp_path: Path, capsys) -> None:
+    sandbox_to_pr_path = ROOT / "examples" / "sandbox_to_pr_preparation_packet.foundation.json"
+    bundle = _fixture("developer_workflow_sandbox_receipt_bundle.foundation.json")
+    first_receipt = bundle["receipts"][0]  # type: ignore[index]
+    first_receipt["status"] = "complete"
+    first_receipt["before_state_hash"] = "sha256:before-sandbox-patch"
+    first_receipt["after_state_hash"] = "sha256:after-sandbox-patch"
+    first_receipt["diff_hash"] = "sha256:diff-sandbox-patch"
+    first_receipt["command"] = "apply_patch"
+    first_receipt["rollback_command"] = "git apply -R .change_assurance/sandbox_patch.diff"
+    first_receipt["evidence_refs"] = ["proof://developer-workflow-v1/sandbox-patch/custom"]
+    bundle["completed_count"] = 1
+    bundle["bundle_status"] = "awaiting_receipts"
+    bundle_path = tmp_path / "custom-bundle.json"
+    bundle_path.write_text(json.dumps(bundle, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output_path = tmp_path / "attachment-packet.json"
+
+    exit_code = main([
+        "--sandbox-to-pr-packet",
+        str(sandbox_to_pr_path),
+        "--sandbox-receipt-bundle",
+        str(bundle_path),
+        "--output",
+        str(output_path),
+        "--json",
+    ])
+    captured = capsys.readouterr()
+    packet = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert packet["completed_count"] == 1
+    assert packet["attachments"][0]["status"] == "attached"
+    assert packet["next_attachment"]["receipt_id"] == "test_gate_receipt"
+    assert str(bundle_path.name) in captured.out
