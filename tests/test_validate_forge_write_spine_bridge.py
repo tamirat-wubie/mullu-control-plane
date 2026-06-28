@@ -49,6 +49,7 @@ def test_forge_write_spine_bridge_validates_and_writes_report(tmp_path: Path) ->
     payload = _default_payload()
     assert payload["application_mode"] == "reference_contract_only"
     assert payload["state_write_runtime_registered"] is False
+    assert payload["service_contract_refs"]["signed_state_write_certificate_schema"] == "schemas/forge_signed_state_write_certificate.schema.json"  # type: ignore[index]
     assert payload["service_boundary"]["production_authorized"] is False  # type: ignore[index]
 
 
@@ -90,14 +91,29 @@ def test_forge_write_spine_bridge_rejects_certificate_field_drift(tmp_path: Path
     assert isinstance(certificate, dict)
     required_fields = certificate["required_fields"]
     assert isinstance(required_fields, list)
-    required_fields.remove("nonce")
+    required_fields.remove("certificate_hash")
 
     validation = validate_forge_write_spine_bridge(bridge_path=_write_payload(tmp_path, payload))
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
 
     assert validation.ok is False
     assert "certificate_contract.required_fields must preserve canonical field order" in serialized_errors
-    assert "certificate_contract must bind nonce and signature" in serialized_errors
+    assert "certificate_contract must bind nonce, signature, and certificate hash" in serialized_errors
+
+
+def test_forge_write_spine_bridge_rejects_service_contract_ref_drift(tmp_path: Path) -> None:
+    payload = _default_payload()
+    refs = payload["service_contract_refs"]
+    assert isinstance(refs, dict)
+    refs["signed_state_write_certificate_schema"] = "schemas/forge_write_spine_bridge.schema.json"
+    refs["application_mode"] = "runtime_registration"
+
+    validation = validate_forge_write_spine_bridge(bridge_path=_write_payload(tmp_path, payload))
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "service_contract_refs.signed_state_write_certificate_schema" in serialized_errors
+    assert "service_contract_refs.application_mode must remain reference_contract_only" in serialized_errors
 
 
 def test_forge_write_spine_bridge_rejects_service_boundary_overclaim(tmp_path: Path) -> None:
