@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-status-ledger:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Value Binding Record Verifier Execution Decision Value Record Value Explicit Decision Value Ref Status Ledger",
+  "description": "No-effect compact ledger summarizing required explicit decision value refs as missing and unbound.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "explicit_decision_value_ref_status_ledger_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_explicit_decision_value_ref_preflight_id",
+    "explicit_decision_value_ref_status_ledger_state",
+    "decision",
+    "outcome",
+    "required_ref_status_count",
+    "required_ref_status_ids",
+    "required_ref_statuses",
+    "receipt",
+    "effect_boundary",
+    "private_payload_policy",
+    "summary",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "explicit_decision_value_ref_status_ledger_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_status_ledger_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "governed": {
+      "const": true
+    },
+    "source_projection": {
+      "const": "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_preflight"
+    },
+    "source_explicit_decision_value_ref_preflight_id": {
+      "$ref": "#/$defs/non_empty_text"
+    },
+    "explicit_decision_value_ref_status_ledger_state": {
+      "const": "required_explicit_decision_value_refs_missing_unbound"
+    },
+    "decision": {
+      "const": "blocked"
+    },
+    "outcome": {
+      "const": "AwaitingEvidence"
+    },
+    "required_ref_status_count": {
+      "const": 4
+    },
+    "required_ref_status_ids": {
+      "$ref": "#/$defs/string_array"
+    },
+    "required_ref_statuses": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/ref_status"
+      }
+    },
+    "receipt": {
+      "type": "object"
+    },
+    "effect_boundary": {
+      "$ref": "#/$defs/effect_boundary"
+    },
+    "private_payload_policy": {
+      "$ref": "#/$defs/private_payload_policy"
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "assurance": {
+      "$ref": "#/$defs/assurance"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    }
+  },
+  "$defs": {
+    "non_empty_text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/non_empty_text"
+      }
+    },
+    "ref_name": {
+      "enum": [
+        "operator_decision_value_ref",
+        "operator_identity_ref",
+        "operator_signature_ref",
+        "operator_reapproval_decision_receipt_ref"
+      ]
+    },
+    "ref_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_ref_status_id",
+        "ref_name",
+        "source_explicit_decision_value_ref_preflight_id",
+        "source_preflight_item_ids",
+        "source_preflight_item_count",
+        "observed_slot_count",
+        "required",
+        "status",
+        "missing",
+        "present",
+        "bound",
+        "validated",
+        "grants_authority",
+        "grants_verifier_execution",
+        "present_count",
+        "bound_count",
+        "validated_count",
+        "authority_grant_count",
+        "verifier_execution_grant_count",
+        "operator_value_record_created",
+        "verifier_execution_allowed",
+        "authority_granted",
+        "blocking_reason"
+      ],
+      "properties": {
+        "required_ref_status_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_status_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "ref_name": {
+          "$ref": "#/$defs/ref_name"
+        },
+        "source_explicit_decision_value_ref_preflight_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "source_preflight_item_ids": {
+          "$ref": "#/$defs/string_array"
+        },
+        "source_preflight_item_count": {
+          "const": 20
+        },
+        "observed_slot_count": {
+          "const": 20
+        },
+        "required": {
+          "const": true
+        },
+        "status": {
+          "const": "missing_unbound"
+        },
+        "missing": {
+          "const": true
+        },
+        "present": {
+          "const": false
+        },
+        "bound": {
+          "const": false
+        },
+        "validated": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        },
+        "grants_verifier_execution": {
+          "const": false
+        },
+        "present_count": {
+          "const": 0
+        },
+        "bound_count": {
+          "const": 0
+        },
+        "validated_count": {
+          "const": 0
+        },
+        "authority_grant_count": {
+          "const": 0
+        },
+        "verifier_execution_grant_count": {
+          "const": 0
+        },
+        "operator_value_record_created": {
+          "const": false
+        },
+        "verifier_execution_allowed": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        },
+        "blocking_reason": {
+          "$ref": "#/$defs/non_empty_text"
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "required_value_refs_declared": {
+          "const": true
+        },
+        "required_value_refs_absent": {
+          "const": true
+        },
+        "explicit_decision_value_ref_status_ledger_satisfied": {
+          "const": false
+        },
+        "explicit_decision_value_ref_preflight_satisfied": {
+          "const": false
+        },
+        "explicit_decision_value_refs_present": {
+          "const": false
+        },
+        "explicit_operator_decision_value_bound": {
+          "const": false
+        },
+        "operator_decision_value_present": {
+          "const": false
+        },
+        "operator_value_record_created": {
+          "const": false
+        },
+        "verifier_execution_allowed": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        },
+        "live_connector_execution_allowed": {
+          "const": false
+        },
+        "connector_mutation_allowed": {
+          "const": false
+        },
+        "memory_write_allowed": {
+          "const": false
+        },
+        "deployment_mutation_allowed": {
+          "const": false
+        },
+        "nested_mind_live_activation_allowed": {
+          "const": false
+        },
+        "public_readiness_claim_allowed": {
+          "const": false
+        }
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "raw_private_payload_serialized": {
+          "const": false
+        },
+        "secret_values_serialized": {
+          "const": false
+        },
+        "explicit_decision_value_ref_status_projection": {
+          "const": "missing_ref_status_only"
+        },
+        "operator_decision_value_projection": {
+          "const": "absent"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "required_ref_status_count": {
+          "const": 4
+        },
+        "required_ref_missing_count": {
+          "const": 4
+        },
+        "required_ref_present_count": {
+          "const": 0
+        },
+        "required_ref_bound_count": {
+          "const": 0
+        },
+        "required_ref_validated_count": {
+          "const": 0
+        },
+        "source_preflight_item_count": {
+          "const": 80
+        },
+        "observed_slot_count": {
+          "const": 80
+        },
+        "operator_value_record_creation_count": {
+          "const": 0
+        },
+        "verifier_execution_allowed_count": {
+          "const": 0
+        },
+        "authority_grant_count": {
+          "const": 0
+        }
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "outcome": {
+          "const": "AwaitingEvidence"
+        },
+        "required_value_refs_missing": {
+          "const": true
+        },
+        "explicit_decision_value_ref_status_ledger_satisfied": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "runtime_boundary": {
+          "const": "required_explicit_decision_value_refs_missing_unbound"
+        },
+        "status_ledger_only": {
+          "const": true
+        },
+        "authority_granted": {
+          "const": false
+        }
+      }
+    }
+  }
+}
