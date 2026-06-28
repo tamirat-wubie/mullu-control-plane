@@ -19,10 +19,13 @@
       "execution_scope_hash",
       "issued_at",
       "expires_at",
+      "development_only",
+      "certificate_profile",
       "key_id",
       "trust_epoch",
       "nonce",
-      "signature"
+      "signature",
+      "certificate_hash"
     ]
   },
   "deployment_boundary": {
@@ -55,6 +58,12 @@
     "signed_rpc": true,
     "transport_confidentiality": false
   },
+  "service_contract_refs": {
+    "application_mode": "reference_contract_only",
+    "lineage_receipt_attestation_schema": "schemas/forge_lineage_receipt_attestation.schema.json",
+    "service_write_spine_result_schema": "schemas/forge_service_write_spine_result.schema.json",
+    "signed_state_write_certificate_schema": "schemas/forge_signed_state_write_certificate.schema.json"
+  },
   "source_repository": {
     "observed_commit": "876c865",
     "production_state_changing": "NO_GO",
@@ -81,9 +90,24 @@
       "workspace_surface": "gateway/distributed_lease_boundary.py"
     },
     {
-      "forge_surface": "signed Phi_gov state-write certificate",
+      "forge_surface": "write-spine bridge reference contract",
       "status": "reference_only",
       "workspace_surface": "schemas/forge_write_spine_bridge.schema.json"
+    },
+    {
+      "forge_surface": "signed Phi_gov state-write certificate",
+      "status": "reference_only",
+      "workspace_surface": "schemas/forge_signed_state_write_certificate.schema.json"
+    },
+    {
+      "forge_surface": "attested H_lineage receipt contract",
+      "status": "reference_only",
+      "workspace_surface": "schemas/forge_lineage_receipt_attestation.schema.json"
+    },
+    {
+      "forge_surface": "service-separated write-spine result",
+      "status": "reference_only",
+      "workspace_surface": "schemas/forge_service_write_spine_result.schema.json"
     },
     {
       "forge_surface": "attested H_lineage authorization receipt",

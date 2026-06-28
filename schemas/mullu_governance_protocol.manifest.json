@@ -1139,6 +1139,12 @@
       "urn": "urn:mullusi:schema:federated-control-snapshot:1"
     },
     {
+      "path": "schemas/forge_lineage_receipt_attestation.schema.json",
+      "schema_id": "forge-lineage-receipt-attestation",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-lineage-receipt-attestation:1"
+    },
+    {
       "path": "schemas/forge_live_runtime_readiness_gate.schema.json",
       "schema_id": "forge-live-runtime-readiness-gate",
       "surface": "governance",
@@ -1221,6 +1227,18 @@
       "schema_id": "forge-live-runtime-operator-evidence-acceptance-handoff-packet",
       "surface": "governance",
       "urn": "urn:mullusi:schema:forge-live-runtime-operator-evidence-acceptance-handoff-packet:1"
+    },
+    {
+      "path": "schemas/forge_service_write_spine_result.schema.json",
+      "schema_id": "forge-service-write-spine-result",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-service-write-spine-result:1"
+    },
+    {
+      "path": "schemas/forge_signed_state_write_certificate.schema.json",
+      "schema_id": "forge-signed-state-write-certificate",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-signed-state-write-certificate:1"
     },
     {
       "path": "schemas/forge_state_write_admission_packet.schema.json",

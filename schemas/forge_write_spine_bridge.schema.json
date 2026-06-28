@@ -15,6 +15,7 @@
     "state_write_runtime_registered",
     "write_spine",
     "certificate_contract",
+    "service_contract_refs",
     "service_boundary",
     "workspace_mapping",
     "required_invariants",
@@ -53,6 +54,9 @@
     },
     "certificate_contract": {
       "$ref": "#/$defs/certificate_contract"
+    },
+    "service_contract_refs": {
+      "$ref": "#/$defs/service_contract_refs"
     },
     "service_boundary": {
       "$ref": "#/$defs/service_boundary"
@@ -227,12 +231,40 @@
         },
         "required_fields": {
           "type": "array",
-          "minItems": 18,
-          "maxItems": 18,
+          "minItems": 21,
+          "maxItems": 21,
           "items": {
             "type": "string"
           },
           "uniqueItems": true
+        }
+      }
+    },
+    "service_contract_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signed_state_write_certificate_schema",
+        "lineage_receipt_attestation_schema",
+        "service_write_spine_result_schema",
+        "application_mode"
+      ],
+      "properties": {
+        "signed_state_write_certificate_schema": {
+          "type": "string",
+          "const": "schemas/forge_signed_state_write_certificate.schema.json"
+        },
+        "lineage_receipt_attestation_schema": {
+          "type": "string",
+          "const": "schemas/forge_lineage_receipt_attestation.schema.json"
+        },
+        "service_write_spine_result_schema": {
+          "type": "string",
+          "const": "schemas/forge_service_write_spine_result.schema.json"
+        },
+        "application_mode": {
+          "type": "string",
+          "const": "reference_contract_only"
         }
       }
     },

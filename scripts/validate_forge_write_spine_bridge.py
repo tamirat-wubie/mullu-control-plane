@@ -56,10 +56,13 @@ EXPECTED_CERTIFICATE_FIELDS = (
     "execution_scope_hash",
     "issued_at",
     "expires_at",
+    "development_only",
+    "certificate_profile",
     "key_id",
     "trust_epoch",
     "nonce",
     "signature",
+    "certificate_hash",
 )
 REQUIRED_INVARIANTS = (
     "conditional_decision_required",
@@ -77,6 +80,9 @@ REQUIRED_MAPPING_SURFACES = (
     "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
     "gateway/distributed_lease_boundary.py",
     "schemas/forge_write_spine_bridge.schema.json",
+    "schemas/forge_signed_state_write_certificate.schema.json",
+    "schemas/forge_lineage_receipt_attestation.schema.json",
+    "schemas/forge_service_write_spine_result.schema.json",
     "mcoi/mcoi_runtime/contracts/receipt_signing.py",
     "gateway/command_spine.py",
     "docs/FOUNDATION_MODE.md",
@@ -116,6 +122,7 @@ def validate_forge_write_spine_bridge(
         _validate_reference_boundary(bridge, errors, _path_label(bridge_path))
         _validate_stage_order(bridge, errors, _path_label(bridge_path))
         _validate_certificate_contract(bridge, errors, _path_label(bridge_path))
+        _validate_service_contract_refs(bridge, errors, _path_label(bridge_path))
         _validate_service_boundary(bridge, errors, _path_label(bridge_path))
         _validate_workspace_mapping(bridge, errors, _path_label(bridge_path))
         _validate_required_invariants(bridge, errors, _path_label(bridge_path))
@@ -205,8 +212,29 @@ def _validate_certificate_contract(bridge: Mapping[str, Any], errors: list[str],
         errors.append(f"{label}: certificate_contract.development_only must remain true")
     if "decision_receipt_hash" not in observed or "delta_hash" not in observed:
         errors.append(f"{label}: certificate_contract must bind decision receipt and delta hash")
-    if "nonce" not in observed or "signature" not in observed:
-        errors.append(f"{label}: certificate_contract must bind nonce and signature")
+    if "nonce" not in observed or "signature" not in observed or "certificate_hash" not in observed:
+        errors.append(f"{label}: certificate_contract must bind nonce, signature, and certificate hash")
+    if "development_only" not in observed or "certificate_profile" not in observed:
+        errors.append(f"{label}: certificate_contract must bind development-only profile")
+
+
+def _validate_service_contract_refs(bridge: Mapping[str, Any], errors: list[str], label: str) -> None:
+    refs = bridge.get("service_contract_refs")
+    if not isinstance(refs, Mapping):
+        errors.append(f"{label}: service_contract_refs must be an object")
+        return
+    expected_refs = {
+        "signed_state_write_certificate_schema": "schemas/forge_signed_state_write_certificate.schema.json",
+        "lineage_receipt_attestation_schema": "schemas/forge_lineage_receipt_attestation.schema.json",
+        "service_write_spine_result_schema": "schemas/forge_service_write_spine_result.schema.json",
+    }
+    for key, expected_path in expected_refs.items():
+        if refs.get(key) != expected_path:
+            errors.append(f"{label}: service_contract_refs.{key} must be {expected_path}")
+        if not (REPO_ROOT / expected_path).is_file():
+            errors.append(f"{label}: service contract schema missing at {expected_path}")
+    if refs.get("application_mode") != "reference_contract_only":
+        errors.append(f"{label}: service_contract_refs.application_mode must remain reference_contract_only")
 
 
 def _validate_service_boundary(bridge: Mapping[str, Any], errors: list[str], label: str) -> None:

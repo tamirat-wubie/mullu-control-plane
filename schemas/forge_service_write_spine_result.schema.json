@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:forge-service-write-spine-result:1",
+  "$comment": "Purpose: reference-only result contract for the mullu-forge-runtime-v0.1.0-dev3 service-separated safe-write demo. Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]. Invariants: development profile, service separation, cryptographic signing, no transport confidentiality claim, and no production authorization.",
+  "title": "ForgeServiceWriteSpineResult",
+  "description": "Development-only service-separated write-spine result contract proving signed PhiGov and H_lineage boundaries without granting production authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runtime_profile",
+    "runtime_version",
+    "production_authorized",
+    "service_separated",
+    "transport_confidentiality",
+    "decision",
+    "safe_write",
+    "live_mesh",
+    "lineage_event_count",
+    "service_public_key_hashes",
+    "phigov_trust_root_hash"
+  ],
+  "properties": {
+    "runtime_profile": { "type": "string", "const": "development_service_separated" },
+    "runtime_version": { "type": "string", "const": "0.1.0-dev3" },
+    "production_authorized": { "type": "boolean", "const": false },
+    "service_separated": { "type": "boolean", "const": true },
+    "transport_confidentiality": { "type": "boolean", "const": false },
+    "decision": { "type": "object" },
+    "safe_write": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "operation_id",
+        "transition_id",
+        "mesh_id",
+        "status",
+        "authorization_attestation_hash",
+        "completion_attestation_hash",
+        "lineage_finalized",
+        "service_separated",
+        "cryptographically_signed",
+        "production_authorized"
+      ],
+      "properties": {
+        "operation_id": { "type": "string", "minLength": 1 },
+        "transition_id": { "type": "string", "minLength": 1 },
+        "mesh_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "const": "committed" },
+        "authorization_attestation_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "completion_attestation_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "lineage_finalized": { "type": "boolean", "const": true },
+        "service_separated": { "type": "boolean", "const": true },
+        "cryptographically_signed": { "type": "boolean", "const": true },
+        "production_authorized": { "type": "boolean", "const": false }
+      }
+    },
+    "live_mesh": { "type": "object" },
+    "lineage_event_count": { "type": "integer", "const": 2 },
+    "service_public_key_hashes": {
+      "type": "object",
+      "minProperties": 3,
+      "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+    },
+    "phigov_trust_root_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}
