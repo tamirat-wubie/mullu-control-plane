@@ -154,6 +154,59 @@ def test_github_pr_terminal_closure_operator_decision_value_record_rejects_actua
     assert "actual_diff_decision_value_request_evidence.redacted_output_ref expected" in serialized_errors
 
 
+def test_github_pr_terminal_closure_operator_decision_value_record_rejects_command_preview_request_drift(
+    tmp_path: Path,
+) -> None:
+    payload = build_mutated_operator_decision_value_record(
+        command_preview_decision_value_request_evidence__source_request_id="other-request",
+        command_preview_decision_value_request_evidence__source_request_ref="examples/other-request.json",
+        command_preview_decision_value_request_evidence__source_request_status="other-status",
+        command_preview_decision_value_request_evidence__source_rejection_binding_id="other-rejection",
+        command_preview_decision_value_request_evidence__operator_decision_ref="approval://other",
+        command_preview_decision_value_request_evidence__allowed_decision_values=["approve"],
+        command_preview_decision_value_request_evidence__command_preview_terminal_closure_certificate_witness_ref="examples/other-certificate.json",
+        command_preview_decision_value_request_evidence__command_preview_operator_response_binding_ref="examples/other-response-binding.json",
+        command_preview_decision_value_request_evidence__command_preview_operator_response_witness_ref="examples/other-response.json",
+        command_preview_decision_value_request_evidence__command_preview_operator_approval_request_binding_ref="examples/other-approval.json",
+        command_preview_decision_value_request_evidence__command_preview_ref="examples/other-command-preview.json",
+        command_preview_decision_value_request_evidence__redacted_command_preview="gh pr create --body raw",
+        command_preview_decision_value_request_evidence__command_preview_bound=False,
+    )
+    path = _write_payload(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record(
+        example_paths=(path,)
+    )
+    serialized_errors = "\n".join(validation.errors)
+
+    assert validation.ok is False
+    assert "command_preview_decision_value_request_evidence.source_request_id expected" in serialized_errors
+    assert "command_preview_decision_value_request_evidence.source_request_ref expected" in serialized_errors
+    assert "command_preview_decision_value_request_evidence.source_request_status expected" in serialized_errors
+    assert "command_preview_decision_value_request_evidence.source_rejection_binding_id expected" in serialized_errors
+    assert "command_preview_decision_value_request_evidence.operator_decision_ref expected" in serialized_errors
+    assert "command_preview_decision_value_request_evidence.allowed_decision_values expected" in serialized_errors
+    assert (
+        "command_preview_decision_value_request_evidence.command_preview_terminal_closure_certificate_witness_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_decision_value_request_evidence.command_preview_operator_response_binding_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_decision_value_request_evidence.command_preview_operator_response_witness_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_decision_value_request_evidence.command_preview_operator_approval_request_binding_ref expected"
+        in serialized_errors
+    )
+    assert "command_preview_decision_value_request_evidence.command_preview_ref expected" in serialized_errors
+    assert "command_preview_decision_value_request_evidence.redacted_command_preview expected" in serialized_errors
+    assert "command_preview_decision_value_request_evidence.command_preview_bound expected" in serialized_errors
+
+
 def test_github_pr_terminal_closure_operator_decision_value_record_rejects_mutation_route(
     tmp_path: Path,
 ) -> None:

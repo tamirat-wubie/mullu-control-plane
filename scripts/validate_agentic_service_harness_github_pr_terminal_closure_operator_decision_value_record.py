@@ -63,6 +63,33 @@ EXPECTED_RECORD_ID = (
 )
 EXPECTED_DECISION_VALUE = "approve_terminal_certificate"
 EXPECTED_CERTIFICATE_MINTING_DECISION = "approved_for_next_minting_step"
+COMMAND_PREVIEW_DECISION_VALUE_REQUEST_EVIDENCE_KEYS = (
+    "source_rejection_binding_id",
+    "source_rejection_witness_ref",
+    "source_decision_contract_binding_id",
+    "source_decision_contract_ref",
+    "operator_decision_ref",
+    "requires_command_preview_generic_rejection_evidence",
+    "generic_continuation_rejected",
+    "operator_decision_value_present",
+    "accepted_as_operator_approval",
+    "terminal_closure_certificate_minted",
+    "terminal_closure_authorized",
+    "source_approval_gate_binding_id",
+    "source_approval_gate_ref",
+    "command_preview_terminal_closure_certificate_witness_ref",
+    "command_preview_effect_reconciliation_witness_ref",
+    "command_preview_ci_gate_before_ready_for_review_witness_ref",
+    "command_preview_repository_effect_rollback_plan_witness_ref",
+    "command_preview_uao_admission_witness_ref",
+    "command_preview_branch_write_binding_ref",
+    "command_preview_operator_response_binding_ref",
+    "command_preview_operator_response_witness_ref",
+    "command_preview_operator_approval_request_binding_ref",
+    "command_preview_ref",
+    "redacted_command_preview",
+    "command_preview_bound",
+)
 ACTUAL_DIFF_DECISION_VALUE_REQUEST_EVIDENCE_KEYS = (
     "source_rejection_binding_id",
     "source_rejection_witness_ref",
@@ -154,6 +181,8 @@ REQUIRED_TRUE_FLAGS = (
     "source_request_validated",
     "decision_value_matches_allowed_values",
     "scope_matches_request",
+    "requires_command_preview_decision_value_request_evidence",
+    "requires_command_preview_generic_rejection_evidence",
     "requires_actual_diff_decision_value_request_evidence",
     "requires_actual_diff_generic_rejection_evidence",
     "generic_continuation_rejected",
@@ -325,6 +354,63 @@ def _validate_source_request_binding(
         errors.append(f"{label}: source allowed decision values mismatch")
     if payload.get("decision_value") not in allowed_values:
         errors.append(f"{label}: decision_value is not allowed by source request")
+    _require_equal(
+        payload,
+        ("command_preview_decision_value_request_evidence", "source_request_id"),
+        _get_nested(source_request, ("request_id",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_decision_value_request_evidence", "source_request_ref"),
+        EXPECTED_SOURCE_REQUEST_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_decision_value_request_evidence", "source_request_status"),
+        _get_nested(source_request, ("request_status",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_decision_value_request_evidence", "allowed_decision_values"),
+        list(allowed_values),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_decision_value_request_evidence", "requires_command_preview_decision_value_request_evidence"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_decision_value_request_evidence", "operator_decision_value_collected"),
+        _get_nested(source_request, ("operator_decision_value_collected",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_decision_value_request_evidence", "explicit_operator_decision_value_present"),
+        _get_nested(source_request, ("explicit_operator_decision_value_present",)),
+        errors,
+        label,
+    )
+    for evidence_key in COMMAND_PREVIEW_DECISION_VALUE_REQUEST_EVIDENCE_KEYS:
+        _require_equal(
+            payload,
+            ("command_preview_decision_value_request_evidence", evidence_key),
+            _get_nested(source_request, ("command_preview_generic_rejection_evidence", evidence_key)),
+            errors,
+            label,
+        )
     _require_equal(
         payload,
         ("actual_diff_decision_value_request_evidence", "source_request_id"),
