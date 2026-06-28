@@ -622,8 +622,16 @@ REQUIRED_GITHUB_PR_CI_GATE_TERMS = (
     "no branch, PR, ready-for-review, repository, connector, network, mutation-route, receipt-store, secret, destructive, or terminal authority",
 )
 REQUIRED_GITHUB_PR_EFFECT_RECONCILIATION_TERMS = (
-    "GitHub PR effect reconciliation actual-diff CI gate binding PR",
+    "GitHub PR effect reconciliation command-preview CI gate binding PR",
     "agentic_service_harness_github_pr_effect_reconciliation_witness",
+    "command-preview CI gate before ready-for-review witness",
+    "command-preview repository-effect rollback witness",
+    "command-preview UAO admission witness",
+    "command-preview branch-write binding",
+    "command-preview operator response binding",
+    "redacted command preview",
+    "argument vector template",
+    "placeholder refs",
     "actual-diff CI gate before ready-for-review witness",
     "actual-diff repository-effect rollback witness",
     "actual-diff UAO admission witness",
@@ -1445,12 +1453,12 @@ def _validate_github_pr_effect_reconciliation_ready(
     errors: list[str],
 ) -> None:
     witness_row = re.search(
-        r"^\| GitHub PR effect reconciliation actual-diff CI gate binding PR \| READY \| .+actual-diff CI gate before ready-for-review witness.+effect reconciliation remains AwaitingEvidence.+terminal authority is granted\. \|$",
+        r"^\| GitHub PR effect reconciliation command-preview CI gate binding PR \| READY \| .+command-preview CI gate before ready-for-review witness.+actual-diff CI gate before ready-for-review witness.+effect reconciliation remains AwaitingEvidence.+terminal authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if witness_row is None:
-        errors.append("missing ready row: GitHub PR effect reconciliation actual-diff CI gate binding PR")
+        errors.append("missing ready row: GitHub PR effect reconciliation command-preview CI gate binding PR")
 
     contract_row = re.search(
         r"^\| GitHub PR effect reconciliation evidence contract PR \| READY \| .+read-only GitHub PR state observation.+terminal authority is granted\. \|$",
@@ -1624,7 +1632,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind effect reconciliation to command-preview CI gate",
+        "harness(pr): bind terminal closure certificate to command-preview effect reconciliation",
     )
     positions: list[int] = []
     for marker in sequence_markers:
