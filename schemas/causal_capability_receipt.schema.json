@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:causal-capability-receipt:1",
+  "title": "Causal Capability Receipt",
+  "description": "Causal proof-of-work receipt for one governed universal event episode.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "event_id",
+    "actor_id",
+    "surface",
+    "intent",
+    "target_object",
+    "risk_class",
+    "evidence_used",
+    "policy_decision",
+    "actions_taken",
+    "actions_blocked",
+    "assumptions",
+    "verification_result",
+    "final_judgment",
+    "memory_update",
+    "timestamp",
+    "partial_failure_reasons"
+  ],
+  "properties": {
+    "receipt_id": { "$ref": "#/$defs/identifier" },
+    "event_id": { "$ref": "#/$defs/identifier" },
+    "actor_id": { "$ref": "#/$defs/identifier" },
+    "surface": { "$ref": "#/$defs/identifier" },
+    "intent": { "$ref": "#/$defs/identifier" },
+    "target_object": { "type": "string", "minLength": 1, "maxLength": 320 },
+    "risk_class": { "$ref": "#/$defs/risk_class" },
+    "evidence_used": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ref" },
+      "uniqueItems": true
+    },
+    "policy_decision": { "$ref": "#/$defs/policy_decision" },
+    "actions_taken": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/identifier" },
+      "uniqueItems": true
+    },
+    "actions_blocked": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/identifier" },
+      "uniqueItems": true
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 320 },
+      "uniqueItems": true
+    },
+    "verification_result": { "type": "string", "minLength": 1, "maxLength": 320 },
+    "final_judgment": { "type": "string", "minLength": 1, "maxLength": 480 },
+    "memory_update": {
+      "type": "string",
+      "enum": ["not_required", "store", "block", "defer"]
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "partial_failure_reasons": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 320 },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 220,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 320,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#@+-]*$"
+    },
+    "risk_class": {
+      "type": "string",
+      "enum": [
+        "class_0_observe",
+        "class_1_prepare",
+        "class_2_reversible",
+        "class_3_sensitive",
+        "class_4_external_obligation",
+        "class_5_blocked"
+      ]
+    },
+    "policy_decision": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "allow_read_only",
+        "allow_draft_only",
+        "require_approval",
+        "block",
+        "escalate"
+      ]
+    }
+  }
+}

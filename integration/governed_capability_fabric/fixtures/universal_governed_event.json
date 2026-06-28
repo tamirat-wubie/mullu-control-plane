@@ -1,0 +1,26 @@
+{
+  "event_id": "event:github-pr-42-review",
+  "surface_event_id": "github-pr-42-comment-1",
+  "actor_id": "actor:tamirat",
+  "workspace_id": "workspace:mullusi-control-plane",
+  "surface": "github",
+  "channel_id": "repo:mullusi-control-plane",
+  "intent": "github.pr.review_merge_safety",
+  "target_object": "github pull request 42",
+  "requested_action": "inspect_and_recommend",
+  "context_refs": [
+    "ctx.pr_diff",
+    "ctx.ci_status",
+    "ctx.policy_match"
+  ],
+  "risk_class": "class_1_prepare",
+  "authority_ref": "authority://actor:tamirat/repo:mullusi-control-plane/read",
+  "occurred_at": "2026-06-28T12:00:00+00:00",
+  "trace_ref": "trace:github-pr-42-review",
+  "idempotency_key": "ueid:26cecb9c7162523e6057332f4c5ec577a79898f10e1fc326a577ca25d7e5d071",
+  "metadata": {
+    "surface_adapter_action": "normalize_only",
+    "external_content_is_evidence_only": true
+  },
+  "extensions": {}
+}

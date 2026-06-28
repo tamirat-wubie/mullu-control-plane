@@ -143,6 +143,21 @@ from gateway.governed_operations import (
     default_loop_registry,
     receipt_from_projection,
 )
+from gateway.github_operations_workroom import (
+    GitHubReadOnlyEvidenceFetchError,
+    GitHubReadOnlyEvidenceFetcher,
+    GitHubReadOnlyEvidenceAdmissionRequest,
+    GitHubPrSafetyWorkroomRequest,
+    admit_github_read_only_evidence_collection,
+    build_github_read_only_evidence_fetch_receipt,
+    build_github_pr_safety_workroom_projection,
+    build_github_pr_safety_workroom_read_model,
+    build_pr_safety_projection_from_github_fetch_receipt,
+    evaluate_github_pr_safety_judgment,
+    persist_github_read_only_evidence_receipt_bundle,
+    read_github_read_only_evidence_receipt_bundle,
+    render_github_pr_safety_workroom_html,
+)
 from gateway.mcp_capabilities import register_mcp_capabilities
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, build_mcp_gateway_import_from_env
 from gateway.observability import GatewayObservabilityRecorder
@@ -669,6 +684,57 @@ class GatewayPersonalAssistantGitHubCodexPreviewRequest(BaseModel):
     requested_instruction_goal: str = "prepare the next safe Codex instruction"
 
 
+class GatewayGitHubPrSafetyWorkroomPreviewRequest(BaseModel):
+    """Stateless governed GitHub Operations Workroom PR safety preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    actor_id: str = "operator:gateway"
+    workspace_id: str = "workspace:mullusi-control-plane"
+    repo: str = "tamirat-wubie/mullu-control-plane"
+    pull_request_number: int
+    surface_event_id: str = ""
+    occurred_at: str = ""
+    evidence_refs: list[str] = Field(default_factory=list)
+    channel_id: str = ""
+    trace_ref: str = ""
+    authority_ref: str = "policy.github.pr_review.local_read_only"
+    assumptions: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class GatewayGitHubReadOnlyEvidenceAdmissionPreviewRequest(BaseModel):
+    """Stateless live read-only GitHub evidence admission preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    actor_id: str = "operator:gateway"
+    workspace_id: str = "workspace:mullusi-control-plane"
+    repo: str = "tamirat-wubie/mullu-control-plane"
+    pull_request_number: int
+    requested_evidence_kinds: list[str] = Field(default_factory=lambda: ["pull_request", "diff", "checks", "changed_files"])
+    requested_at: str = ""
+    surface_event_id: str = ""
+    authority_ref: str = "policy.github.pr_review.live_read_only"
+
+
+class GatewayGitHubReadOnlyEvidenceExecutionRequest(BaseModel):
+    """Execute admitted read-only GitHub evidence collection from operator token."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    actor_id: str = "operator:gateway"
+    workspace_id: str = "workspace:mullusi-control-plane"
+    repo: str = "tamirat-wubie/mullu-control-plane"
+    pull_request_number: int
+    requested_evidence_kinds: list[str] = Field(default_factory=lambda: ["pull_request", "diff", "checks", "changed_files"])
+    requested_at: str = ""
+    surface_event_id: str = ""
+    authority_ref: str = "policy.github.pr_review.live_read_only"
+    access_token: str = Field(repr=False)
+    timeout_seconds: float = 10.0
+
+
 class GatewayPersonalAssistantResearchSourceSummary(BaseModel):
     """Bounded public-source metadata for research preview."""
 
@@ -1176,7 +1242,6 @@ def _gateway_personal_assistant_send_write_eligibility_preflight(
         approval_scope=approval_scope,
         draft=draft,
     )
-    draft_payload = _pydantic_payload(draft)
     reference_values = {
         "draft_ref": draft.draft_ref,
         "approval_proposal_ref": approval_proposal_ref,
@@ -9738,6 +9803,331 @@ def create_gateway_app(
         except (RuntimeError, ValueError) as exc:
             raise HTTPException(400, detail=str(exc)) from exc
 
+    @app.get("/operator/github-operations/pr-safety/read-model")
+    def operator_github_operations_pr_safety_read_model(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        pull_request_number: int = 1,
+        evidence_refs: str = "",
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = (
+                surface_event_id
+                or f"operator-github-pr-safety:{repo}#{pull_request_number}:{now}"
+            )
+            return build_github_pr_safety_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                pull_request_number=pull_request_number,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                evidence_refs=_parse_github_workroom_evidence_refs(evidence_refs),
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+
+    @app.get("/operator/github-operations/pr-safety", response_class=HTMLResponse)
+    def operator_github_operations_pr_safety_panel(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        pull_request_number: int = 1,
+        evidence_refs: str = "",
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = (
+                surface_event_id
+                or f"operator-github-pr-safety:{repo}#{pull_request_number}:{now}"
+            )
+            read_model = build_github_pr_safety_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                pull_request_number=pull_request_number,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                evidence_refs=_parse_github_workroom_evidence_refs(evidence_refs),
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return HTMLResponse(render_github_pr_safety_workroom_html(read_model))
+
+    @app.post("/operator/github-operations/pr-safety/read-admission/preview")
+    def operator_github_operations_pr_safety_read_admission_preview(
+        request: Request,
+        req: GatewayGitHubReadOnlyEvidenceAdmissionPreviewRequest,
+    ):
+        _require_authority_operator(request)
+        try:
+            now = req.requested_at or _clock()
+            surface_event_id = (
+                req.surface_event_id
+                or f"operator-github-read-admission:{req.repo}#{req.pull_request_number}:{now}"
+            )
+            admission_request = GitHubReadOnlyEvidenceAdmissionRequest(
+                actor_id=req.actor_id,
+                workspace_id=req.workspace_id,
+                repo=req.repo,
+                pull_request_number=req.pull_request_number,
+                requested_evidence_kinds=tuple(req.requested_evidence_kinds),
+                requested_at=now,
+                surface_event_id=surface_event_id,
+                authority_ref=req.authority_ref,
+            )
+            admission = admit_github_read_only_evidence_collection(
+                admission_request,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid GitHub read-only evidence admission preview",
+                    "error_code": "invalid_github_read_only_evidence_admission_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "github_read_only_evidence_admission": admission.to_json_dict(),
+            "outcome": "AwaitingEvidence",
+            "governed": True,
+            "execution_allowed": False,
+            "live_connector_call_performed": False,
+            "write_authority_granted": False,
+        }
+
+    @app.post("/operator/github-operations/pr-safety/read-evidence")
+    def operator_github_operations_pr_safety_read_evidence(
+        request: Request,
+        req: GatewayGitHubReadOnlyEvidenceExecutionRequest,
+    ):
+        _require_authority_operator(request)
+        try:
+            now = req.requested_at or _clock()
+            surface_event_id = (
+                req.surface_event_id
+                or f"operator-github-read-evidence:{req.repo}#{req.pull_request_number}:{now}"
+            )
+            admission = admit_github_read_only_evidence_collection(
+                GitHubReadOnlyEvidenceAdmissionRequest(
+                    actor_id=req.actor_id,
+                    workspace_id=req.workspace_id,
+                    repo=req.repo,
+                    pull_request_number=req.pull_request_number,
+                    requested_evidence_kinds=tuple(req.requested_evidence_kinds),
+                    requested_at=now,
+                    surface_event_id=surface_event_id,
+                    authority_ref=req.authority_ref,
+                ),
+                clock=lambda: now,
+            )
+            fetch_result = GitHubReadOnlyEvidenceFetcher(
+                access_token=req.access_token,
+                timeout_seconds=req.timeout_seconds,
+            ).fetch(admission, clock=lambda: now)
+            fetch_receipt = build_github_read_only_evidence_fetch_receipt(
+                fetch_result,
+                actor_id=req.actor_id,
+                surface_event_id=surface_event_id,
+                occurred_at=now,
+            )
+            pr_safety_projection = build_pr_safety_projection_from_github_fetch_receipt(
+                fetch_receipt=fetch_receipt,
+                actor_id=req.actor_id,
+                workspace_id=req.workspace_id,
+                repo=req.repo,
+                pull_request_number=req.pull_request_number,
+                surface_event_id=f"{surface_event_id}:pr-safety",
+                occurred_at=now,
+                clock=lambda: now,
+            )
+            pr_safety_judgment = evaluate_github_pr_safety_judgment(
+                fetch_result=fetch_result,
+                fetch_receipt=fetch_receipt,
+                clock=lambda: now,
+            )
+            receipt_storage = persist_github_read_only_evidence_receipt_bundle(
+                receipt_store_root=Path(
+                    os.environ.get(
+                        "MULLU_GITHUB_WORKROOM_RECEIPT_DIR",
+                        ".tmp/github-operations-workroom/receipts",
+                    )
+                ),
+                admission=admission,
+                fetch_result=fetch_result,
+                fetch_receipt=fetch_receipt,
+                pr_safety_projection=pr_safety_projection,
+                pr_safety_judgment=pr_safety_judgment,
+                stored_at=now,
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid GitHub read-only evidence execution",
+                    "error_code": "invalid_github_read_only_evidence_execution",
+                    "governed": True,
+                },
+            ) from exc
+        except GitHubReadOnlyEvidenceFetchError as exc:
+            raise HTTPException(
+                502,
+                detail={
+                    "error": "GitHub read-only evidence execution failed",
+                    "error_code": str(exc),
+                    "governed": True,
+                    "actions_blocked": [
+                        "merge_pull_request_without_explicit_approval",
+                        "deploy_release_without_release_witness",
+                        "delete_branch_without_explicit_approval",
+                        "post_github_comment_without_write_admission",
+                    ],
+                },
+            ) from exc
+
+        return {
+            "github_read_only_evidence_admission": admission.to_json_dict(),
+            "github_read_only_evidence_fetch_result": fetch_result.to_json_dict(),
+            "github_read_only_evidence_receipt": fetch_receipt.to_json_dict(),
+            "github_read_only_evidence_receipt_storage": receipt_storage.to_json_dict(),
+            "github_pr_safety_projection": pr_safety_projection.to_json_dict(),
+            "github_pr_safety_judgment": pr_safety_judgment.to_json_dict(),
+            "outcome": fetch_result.solver_outcome,
+            "governed": True,
+            "execution_allowed": True,
+            "live_connector_call_performed": True,
+            "write_authority_granted": False,
+            "merge_authority_granted": False,
+            "effect_boundary": {
+                "execution_allowed": True,
+                "live_connector_execution_allowed": True,
+                "github_call_allowed": True,
+                "repository_read_allowed": True,
+                "repository_mutation_allowed": False,
+                "pull_request_mutation_allowed": False,
+                "branch_push_allowed": False,
+                "issue_creation_allowed": False,
+                "review_submission_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+        }
+
+    @app.get("/operator/github-operations/pr-safety/read-evidence/receipts/{receipt_filename}")
+    def operator_github_operations_pr_safety_read_evidence_receipt(
+        request: Request,
+        receipt_filename: str,
+    ):
+        _require_authority_operator(request)
+        try:
+            return read_github_read_only_evidence_receipt_bundle(
+                receipt_store_root=Path(
+                    os.environ.get(
+                        "MULLU_GITHUB_WORKROOM_RECEIPT_DIR",
+                        ".tmp/github-operations-workroom/receipts",
+                    )
+                ),
+                receipt_filename=receipt_filename,
+            )
+        except FileNotFoundError as exc:
+            raise HTTPException(
+                404,
+                detail={
+                    "error": "GitHub read-only evidence receipt not found",
+                    "error_code": "github_read_only_evidence_receipt_not_found",
+                    "governed": True,
+                },
+            ) from exc
+        except ValueError as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid GitHub read-only evidence receipt request",
+                    "error_code": "invalid_github_read_only_evidence_receipt_request",
+                    "governed": True,
+                },
+            ) from exc
+
+    @app.post("/operator/github-operations/pr-safety/preview")
+    def operator_github_operations_pr_safety_preview(
+        request: Request,
+        req: GatewayGitHubPrSafetyWorkroomPreviewRequest,
+    ):
+        _require_authority_operator(request)
+        try:
+            now = req.occurred_at or _clock()
+            surface_event_id = (
+                req.surface_event_id
+                or f"operator-github-pr-safety:{req.repo}#{req.pull_request_number}:{now}"
+            )
+            workroom_request = GitHubPrSafetyWorkroomRequest(
+                actor_id=req.actor_id,
+                workspace_id=req.workspace_id,
+                repo=req.repo,
+                pull_request_number=req.pull_request_number,
+                surface_event_id=surface_event_id,
+                occurred_at=now,
+                evidence_refs=tuple(req.evidence_refs),
+                channel_id=req.channel_id,
+                trace_ref=req.trace_ref,
+                authority_ref=req.authority_ref,
+                assumptions=tuple(req.assumptions)
+                or (
+                    "Evidence references are already authorized for this actor and workspace.",
+                    "This projection does not perform live GitHub reads or writes.",
+                ),
+                metadata=req.metadata,
+            )
+            projection = build_github_pr_safety_workroom_projection(
+                workroom_request,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid GitHub Operations Workroom PR safety preview",
+                    "error_code": "invalid_github_operations_pr_safety_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "github_operations_workroom_projection": projection.to_json_dict(),
+            "receipt": projection.receipt.to_json_dict(),
+            "outcome": "AwaitingEvidence",
+            "effect_boundary": {
+                "execution_allowed": False,
+                "live_connector_execution_allowed": False,
+                "github_call_allowed": False,
+                "repository_read_allowed": False,
+                "repository_mutation_allowed": False,
+                "pull_request_mutation_allowed": False,
+                "branch_push_allowed": False,
+                "issue_creation_allowed": False,
+                "review_submission_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+            "governed": True,
+            "execution_allowed": False,
+        }
+
     @app.get("/operator/capabilities", response_class=HTMLResponse)
     def operator_capabilities_console(
         request: Request,
@@ -10843,6 +11233,14 @@ def _bounded_read_model_limit(limit: int, *, maximum: int = 500) -> int:
 def _bounded_read_model_offset(offset: int) -> int:
     """Return a non-negative read-model offset."""
     return max(0, int(offset))
+
+
+def _parse_github_workroom_evidence_refs(evidence_refs: str) -> tuple[str, ...]:
+    """Parse comma or newline separated Workroom evidence references."""
+    if not evidence_refs:
+        return ()
+    normalized = evidence_refs.replace("\r", "\n").replace(",", "\n")
+    return tuple(ref.strip() for ref in normalized.split("\n") if ref.strip())
 
 
 def _read_model_page(items: tuple[Any, ...], *, limit: int, offset: int) -> tuple[tuple[Any, ...], dict[str, Any]]:

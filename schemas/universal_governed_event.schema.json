@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-governed-event:1",
+  "title": "Universal Governed Event",
+  "description": "Surface-neutral event contract before symbolic compilation, governance, capability routing, UAO, receipt, and memory gate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "surface_event_id",
+    "actor_id",
+    "workspace_id",
+    "surface",
+    "channel_id",
+    "intent",
+    "target_object",
+    "requested_action",
+    "context_refs",
+    "risk_class",
+    "authority_ref",
+    "occurred_at",
+    "trace_ref",
+    "idempotency_key",
+    "metadata",
+    "extensions"
+  ],
+  "properties": {
+    "event_id": { "$ref": "#/$defs/identifier" },
+    "surface_event_id": { "$ref": "#/$defs/identifier" },
+    "actor_id": { "$ref": "#/$defs/identifier" },
+    "workspace_id": { "$ref": "#/$defs/identifier" },
+    "surface": { "$ref": "#/$defs/identifier" },
+    "channel_id": { "type": "string", "maxLength": 220 },
+    "intent": { "$ref": "#/$defs/identifier" },
+    "target_object": { "type": "string", "minLength": 1, "maxLength": 320 },
+    "requested_action": { "$ref": "#/$defs/identifier" },
+    "context_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "risk_class": { "$ref": "#/$defs/risk_class" },
+    "authority_ref": { "$ref": "#/$defs/ref" },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "trace_ref": { "$ref": "#/$defs/ref" },
+    "idempotency_key": {
+      "type": "string",
+      "pattern": "^ueid:[0-9a-f]{64}$"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 220,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 320,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#@+-]*$"
+    },
+    "risk_class": {
+      "type": "string",
+      "enum": [
+        "class_0_observe",
+        "class_1_prepare",
+        "class_2_reversible",
+        "class_3_sensitive",
+        "class_4_external_obligation",
+        "class_5_blocked"
+      ]
+    }
+  }
+}

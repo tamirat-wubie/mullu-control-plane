@@ -1,0 +1,31 @@
+{
+  "receipt_id": "receipt:github-pr-42-review",
+  "event_id": "event:github-pr-42-review",
+  "actor_id": "actor:tamirat",
+  "surface": "github",
+  "intent": "github.pr.review_merge_safety",
+  "target_object": "github pull request 42",
+  "risk_class": "class_1_prepare",
+  "evidence_used": [
+    "ctx.pr_diff",
+    "ctx.ci_status",
+    "ctx.policy_match"
+  ],
+  "policy_decision": "allow_draft_only",
+  "actions_taken": [
+    "inspected_pr",
+    "prepared_recommendation"
+  ],
+  "actions_blocked": [
+    "merge_without_explicit_approval",
+    "deploy_without_release_witness"
+  ],
+  "assumptions": [
+    "no explicit merge approval was attached to the event"
+  ],
+  "verification_result": "read-only evidence reviewed; merge execution not attempted",
+  "final_judgment": "review may continue; merge remains blocked until approval and fresh evidence exist",
+  "memory_update": "not_required",
+  "timestamp": "2026-06-28T12:05:00+00:00",
+  "partial_failure_reasons": []
+}
