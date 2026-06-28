@@ -120,6 +120,8 @@ REQUIRED_TRUE_FLAGS = (
     "candidate_ready",
     "operator_decision_required",
     "operator_can_approve_terminal_certificate",
+    "requires_command_preview_terminal_closure_certificate_witness",
+    "command_preview_bound",
     "requires_actual_diff_terminal_closure_certificate_witness",
     "effect_reconciliation_collected",
     "binds_branch_state",
@@ -127,6 +129,21 @@ REQUIRED_TRUE_FLAGS = (
     "binds_check_state",
     "binds_merge_state",
     "binds_branch_deletion_state",
+)
+COMMAND_PREVIEW_CANDIDATE_EVIDENCE_KEYS = (
+    "requires_command_preview_terminal_closure_certificate_witness",
+    "command_preview_terminal_closure_certificate_witness_ref",
+    "command_preview_effect_reconciliation_witness_ref",
+    "command_preview_ci_gate_before_ready_for_review_witness_ref",
+    "command_preview_repository_effect_rollback_plan_witness_ref",
+    "command_preview_uao_admission_witness_ref",
+    "command_preview_branch_write_binding_ref",
+    "command_preview_operator_response_binding_ref",
+    "command_preview_operator_response_witness_ref",
+    "command_preview_operator_approval_request_binding_ref",
+    "command_preview_ref",
+    "redacted_command_preview",
+    "command_preview_bound",
 )
 ACTUAL_DIFF_CANDIDATE_EVIDENCE_KEYS = (
     "requires_actual_diff_terminal_closure_certificate_witness",
@@ -315,6 +332,14 @@ def _validate_terminal_closure_operator_approval_gate_semantics(
             errors,
             label,
         )
+        for key in COMMAND_PREVIEW_CANDIDATE_EVIDENCE_KEYS:
+            _require_equal(
+                payload,
+                ("approval_gate", "command_preview_candidate_evidence", key),
+                _get_nested(source_candidate, ("certificate_candidate", key)),
+                errors,
+                label,
+            )
         for key in ACTUAL_DIFF_CANDIDATE_EVIDENCE_KEYS:
             _require_equal(
                 payload,

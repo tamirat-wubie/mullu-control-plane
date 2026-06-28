@@ -105,6 +105,40 @@ def test_github_pr_terminal_closure_operator_approval_gate_rejects_actual_diff_c
     assert "approval_gate.actual_diff_candidate_evidence.redacted_output_ref expected" in serialized_errors
 
 
+def test_github_pr_terminal_closure_operator_approval_gate_rejects_command_preview_candidate_evidence_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_operator_approval_gate(
+        approval_gate__command_preview_candidate_evidence__requires_command_preview_terminal_closure_certificate_witness=False,
+        approval_gate__command_preview_candidate_evidence__command_preview_terminal_closure_certificate_witness_ref=(
+            "examples/other-terminal.json"
+        ),
+        approval_gate__command_preview_candidate_evidence__command_preview_effect_reconciliation_witness_ref=(
+            "examples/other-effect.json"
+        ),
+        approval_gate__command_preview_candidate_evidence__command_preview_operator_response_binding_ref=(
+            "examples/other-command-response.json"
+        ),
+        approval_gate__command_preview_candidate_evidence__command_preview_operator_approval_request_binding_ref=(
+            "examples/other-command-approval.json"
+        ),
+        approval_gate__command_preview_candidate_evidence__command_preview_ref="examples/other-command-preview.json",
+        approval_gate__command_preview_candidate_evidence__redacted_command_preview="gh pr create --body leaked",
+        approval_gate__command_preview_candidate_evidence__command_preview_bound=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_operator_approval_gate_semantics(payload, _source_candidate(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "approval_gate.command_preview_candidate_evidence.requires_command_preview_terminal_closure_certificate_witness must be true" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_effect_reconciliation_witness_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_operator_response_binding_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_operator_approval_request_binding_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.redacted_command_preview expected" in serialized_errors
+    assert "approval_gate.command_preview_candidate_evidence.command_preview_bound must be true" in serialized_errors
+
+
 def test_github_pr_terminal_closure_operator_approval_gate_rejects_mutation_authority() -> None:
     payload = validator.build_mutated_terminal_closure_operator_approval_gate(
         authority_granted=True,

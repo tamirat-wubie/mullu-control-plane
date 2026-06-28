@@ -680,7 +680,7 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "command-preview terminal closure certificate witness",
     "actual-diff terminal closure certificate witness",
     "actual-diff approval request binding",
-    "GitHub PR terminal closure operator approval gate actual-diff candidate binding PR",
+    "GitHub PR terminal closure operator approval gate command-preview candidate binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate",
     "GitHub PR terminal closure operator decision contract actual-diff approval gate binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
@@ -1512,12 +1512,12 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     approval_gate_row = re.search(
-        r"^\| GitHub PR terminal closure operator approval gate actual-diff candidate binding PR \| READY \| .+actual-diff terminal closure certificate witness.+Operator approval remains required and uncollected.+terminal closure remain blocked\. \|$",
+        r"^\| GitHub PR terminal closure operator approval gate command-preview candidate binding PR \| READY \| .+command-preview terminal closure certificate witness.+redacted command preview.+actual-diff terminal closure certificate witness.+Operator approval remains required and uncollected.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
     if approval_gate_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure operator approval gate actual-diff candidate binding PR")
+        errors.append("missing ready row: GitHub PR terminal closure operator approval gate command-preview candidate binding PR")
 
     decision_contract_row = re.search(
         r"^\| GitHub PR terminal closure operator decision contract actual-diff approval gate binding PR \| READY \| .+actual-diff operator approval gate evidence.+source approval gate binding id/ref.+Explicit operator decision remains uncollected.+terminal closure authority is granted\. \|$",
@@ -1642,7 +1642,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure operator approval gate to command-preview candidate",
+        "harness(pr): bind terminal closure operator decision contract to command-preview approval gate",
     )
     positions: list[int] = []
     for marker in sequence_markers:
