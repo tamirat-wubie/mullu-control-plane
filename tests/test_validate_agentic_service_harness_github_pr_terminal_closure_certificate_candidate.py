@@ -131,6 +131,48 @@ def test_github_pr_terminal_closure_certificate_candidate_rejects_actual_diff_te
     assert "certificate_candidate.redacted_output_ref expected" in serialized_errors
 
 
+def test_github_pr_terminal_closure_certificate_candidate_rejects_command_preview_certificate_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_candidate(
+        certificate_candidate__requires_command_preview_terminal_closure_certificate_witness=False,
+        certificate_candidate__command_preview_terminal_closure_certificate_witness_ref="examples/other-terminal.json",
+        certificate_candidate__command_preview_effect_reconciliation_witness_ref="examples/other-effect.json",
+        certificate_candidate__command_preview_ci_gate_before_ready_for_review_witness_ref="examples/other-ci.json",
+        certificate_candidate__command_preview_repository_effect_rollback_plan_witness_ref="examples/other-rollback.json",
+        certificate_candidate__command_preview_uao_admission_witness_ref="examples/other-uao.json",
+        certificate_candidate__command_preview_branch_write_binding_ref="examples/other-branch.json",
+        certificate_candidate__command_preview_operator_response_binding_ref="examples/other-command-response.json",
+        certificate_candidate__command_preview_operator_response_witness_ref="examples/other-response.json",
+        certificate_candidate__command_preview_operator_approval_request_binding_ref="examples/other-command-approval.json",
+        certificate_candidate__command_preview_ref="examples/other-command-preview.json",
+        certificate_candidate__redacted_command_preview="gh pr create --body leaked",
+        certificate_candidate__command_preview_bound=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_candidate_semantics(
+        payload,
+        _source_live_evidence(),
+        _source_terminal_witness(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "certificate_candidate.requires_command_preview_terminal_closure_certificate_witness must be true" in serialized_errors
+    assert "certificate_candidate.command_preview_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_effect_reconciliation_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_ci_gate_before_ready_for_review_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_repository_effect_rollback_plan_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_uao_admission_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_branch_write_binding_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_operator_response_binding_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_operator_response_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_operator_approval_request_binding_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_ref expected" in serialized_errors
+    assert "certificate_candidate.redacted_command_preview expected" in serialized_errors
+    assert "certificate_candidate.command_preview_bound must be true" in serialized_errors
+
+
 def test_github_pr_terminal_closure_certificate_candidate_rejects_mutation_authority() -> None:
     payload = validator.build_mutated_terminal_closure_certificate_candidate(
         authority_granted=True,

@@ -39,12 +39,16 @@ from scripts.validate_agentic_service_harness_github_pr_terminal_closure_certifi
     DEFAULT_EXAMPLES as DEFAULT_SOURCE_TERMINAL_WITNESS_EXAMPLES,
     DEFAULT_SCHEMA as DEFAULT_SOURCE_TERMINAL_WITNESS_SCHEMA,
     EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+    EXPECTED_COMMAND_PREVIEW,
     EXPECTED_REDACTED_DIFF_BUNDLE_REF,
     EXPECTED_REDACTED_OUTPUT_REF,
     EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
     EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+    EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+    EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
     EXPECTED_SOURCE_CI_GATE_WITNESS_REF,
     EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF,
+    EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
     EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
     EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
     EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
@@ -102,6 +106,22 @@ REQUIRED_RECEIPT_REFS = {
     "github_pr_terminal_closure_certificate_witness_example": (
         "examples/agentic_service_harness_github_pr_terminal_closure_certificate_witness.foundation.json"
     ),
+    "github_pr_operator_response_command_preview_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_response_command_preview_binding.schema.json"
+    ),
+    "github_pr_operator_response_command_preview_binding_example": (
+        EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF
+    ),
+    "github_pr_operator_approval_request_command_preview_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.schema.json"
+    ),
+    "github_pr_operator_approval_request_command_preview_binding_example": (
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF
+    ),
+    "github_pr_creation_command_preview_schema": (
+        "schemas/agentic_service_harness_github_pr_creation_command_preview.schema.json"
+    ),
+    "github_pr_creation_command_preview_example": EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
     "github_pr_effect_reconciliation_witness_schema": (
         "schemas/agentic_service_harness_github_pr_effect_reconciliation_witness.schema.json"
     ),
@@ -176,6 +196,8 @@ REQUIRED_TRUE_FLAGS = (
     "terminal_closure_certificate_candidate_ready",
     "read_only",
     "report_is_not_terminal_closure",
+    "requires_command_preview_terminal_closure_certificate_witness",
+    "command_preview_bound",
     "requires_actual_diff_terminal_closure_certificate_witness",
     "binds_branch_state",
     "binds_pull_request_state",
@@ -373,6 +395,83 @@ def _validate_terminal_closure_certificate_candidate_semantics(
     )
     _require_equal(
         payload,
+        ("certificate_candidate", "command_preview_terminal_closure_certificate_witness_ref"),
+        EXPECTED_SOURCE_TERMINAL_CLOSURE_CERTIFICATE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("certificate_candidate", "command_preview_effect_reconciliation_witness_ref"),
+        EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("certificate_candidate", "command_preview_ci_gate_before_ready_for_review_witness_ref"),
+        EXPECTED_SOURCE_CI_GATE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("certificate_candidate", "command_preview_repository_effect_rollback_plan_witness_ref"),
+        EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("certificate_candidate", "command_preview_uao_admission_witness_ref"),
+        EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("certificate_candidate", "command_preview_branch_write_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("certificate_candidate", "command_preview_operator_response_binding_ref"),
+        EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("certificate_candidate", "command_preview_operator_response_witness_ref"),
+        EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("certificate_candidate", "command_preview_operator_approval_request_binding_ref"),
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("certificate_candidate", "command_preview_ref"),
+        EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("certificate_candidate", "redacted_command_preview"),
+        EXPECTED_COMMAND_PREVIEW,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
         ("certificate_candidate", "required_certificate_result"),
         EXPECTED_CANDIDATE_STATUS,
         errors,
@@ -522,6 +621,17 @@ def _validate_terminal_closure_certificate_candidate_semantics(
             label,
         )
         for field_name in (
+            "command_preview_effect_reconciliation_witness_ref",
+            "command_preview_ci_gate_before_ready_for_review_witness_ref",
+            "command_preview_repository_effect_rollback_plan_witness_ref",
+            "command_preview_uao_admission_witness_ref",
+            "command_preview_branch_write_binding_ref",
+            "command_preview_operator_response_binding_ref",
+            "command_preview_operator_response_witness_ref",
+            "command_preview_operator_approval_request_binding_ref",
+            "command_preview_ref",
+            "redacted_command_preview",
+            "command_preview_bound",
             "actual_diff_effect_reconciliation_witness_ref",
             "actual_diff_ci_gate_before_ready_for_review_witness_ref",
             "actual_diff_repository_effect_rollback_plan_witness_ref",
