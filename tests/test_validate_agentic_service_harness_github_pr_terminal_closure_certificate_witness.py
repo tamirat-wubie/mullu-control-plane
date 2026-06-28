@@ -5,6 +5,8 @@ uncertified, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: scripts.validate_agentic_service_harness_github_pr_terminal_closure_certificate_witness.
 Invariants:
+  - Terminal closure certificate must consume command-preview effect reconciliation evidence.
+  - Terminal closure certificate must consume actual-diff effect reconciliation evidence.
   - Missing effect reconciliation never grants terminal closure.
   - Remaining witnesses are empty because this is the final certificate request.
   - Mutation routes and secret-like payloads fail closed.
@@ -26,6 +28,10 @@ def test_github_pr_terminal_closure_certificate_witness_passes() -> None:
     assert validation.example_count == 1
     assert validation.source_effect_reconciliation_witness_ref == validator.EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF
     assert (
+        validation.command_preview_effect_reconciliation_witness_ref
+        == validator.EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF
+    )
+    assert (
         validation.actual_diff_effect_reconciliation_witness_ref
         == validator.EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF
     )
@@ -36,6 +42,9 @@ def test_github_pr_terminal_closure_certificate_witness_rejects_collected_author
         terminal_closure_certificate_collected=True,
         authority_granted=True,
         terminal_closure_certificate__effect_reconciliation_collected=True,
+        terminal_closure_certificate__requires_command_preview_effect_reconciliation_witness=False,
+        terminal_closure_certificate__command_preview_bound=False,
+        terminal_closure_certificate__operator_response_bound=False,
         terminal_closure_certificate__requires_actual_diff_effect_reconciliation_witness=False,
         terminal_closure_certificate__terminal_closure_certificate_collected=True,
         terminal_closure_certificate__terminal_closure_authorized=True,
@@ -51,6 +60,12 @@ def test_github_pr_terminal_closure_certificate_witness_rejects_collected_author
     assert "terminal_closure_certificate_collected must be false" in serialized_errors
     assert "authority_granted must be false" in serialized_errors
     assert "terminal_closure_certificate.effect_reconciliation_collected must be false" in serialized_errors
+    assert (
+        "terminal_closure_certificate.requires_command_preview_effect_reconciliation_witness must be true"
+        in serialized_errors
+    )
+    assert "terminal_closure_certificate.command_preview_bound must be true" in serialized_errors
+    assert "terminal_closure_certificate.operator_response_bound must be true" in serialized_errors
     assert (
         "terminal_closure_certificate.requires_actual_diff_effect_reconciliation_witness must be true"
         in serialized_errors
@@ -107,6 +122,42 @@ def test_github_pr_terminal_closure_certificate_witness_rejects_remaining_witnes
     assert "remaining_witnesses must be empty after terminal closure certificate request" in serialized_errors
     assert len(errors) >= 1
     assert payload["remaining_witnesses"][0]["witness_kind"] == "terminal_closure_certificate"
+
+
+def test_github_pr_terminal_closure_certificate_witness_rejects_command_preview_effect_reconciliation_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_witness(
+        terminal_closure_certificate__command_preview_effect_reconciliation_witness_ref="examples/drift.json",
+        terminal_closure_certificate__command_preview_ci_gate_before_ready_for_review_witness_ref="examples/drift.json",
+        terminal_closure_certificate__command_preview_repository_effect_rollback_plan_witness_ref="examples/drift.json",
+        terminal_closure_certificate__command_preview_uao_admission_witness_ref="examples/drift.json",
+        terminal_closure_certificate__command_preview_branch_write_binding_ref="examples/drift.json",
+        terminal_closure_certificate__command_preview_operator_response_binding_ref="examples/drift.json",
+        terminal_closure_certificate__command_preview_operator_response_witness_ref="examples/drift.json",
+        terminal_closure_certificate__command_preview_operator_approval_request_binding_ref="examples/drift.json",
+        terminal_closure_certificate__command_preview_ref="examples/drift.json",
+        terminal_closure_certificate__redacted_command_preview="gh pr create --body leaked",
+        terminal_closure_certificate__argument_vector_template=["gh", "pr", "create"],
+        terminal_closure_certificate__placeholder_refs=["placeholder://drift"],
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_witness_semantics(
+        payload, _source_effect_reconciliation_witness(), errors, "mutated"
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "terminal_closure_certificate.command_preview_effect_reconciliation_witness_ref" in serialized_errors
+    assert "terminal_closure_certificate.command_preview_ci_gate_before_ready_for_review_witness_ref" in serialized_errors
+    assert "terminal_closure_certificate.command_preview_repository_effect_rollback_plan_witness_ref" in serialized_errors
+    assert "terminal_closure_certificate.command_preview_uao_admission_witness_ref" in serialized_errors
+    assert "terminal_closure_certificate.command_preview_branch_write_binding_ref" in serialized_errors
+    assert "terminal_closure_certificate.command_preview_operator_response_binding_ref" in serialized_errors
+    assert "terminal_closure_certificate.command_preview_operator_response_witness_ref" in serialized_errors
+    assert "terminal_closure_certificate.command_preview_operator_approval_request_binding_ref" in serialized_errors
+    assert "terminal_closure_certificate.command_preview_ref" in serialized_errors
+    assert "terminal_closure_certificate.redacted_command_preview" in serialized_errors
+    assert "terminal_closure_certificate.argument_vector_template" in serialized_errors
+    assert "terminal_closure_certificate.placeholder_refs" in serialized_errors
 
 
 def test_github_pr_terminal_closure_certificate_witness_rejects_actual_diff_effect_reconciliation_drift() -> None:
@@ -176,6 +227,10 @@ def test_github_pr_terminal_closure_certificate_witness_cli_writes_report(tmp_pa
     assert stdout_payload["errors"] == []
     assert (
         file_payload["source_effect_reconciliation_witness_ref"]
+        == validator.EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF
+    )
+    assert (
+        file_payload["command_preview_effect_reconciliation_witness_ref"]
         == validator.EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF
     )
     assert (
