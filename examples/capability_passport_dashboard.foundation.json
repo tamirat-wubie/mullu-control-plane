@@ -5,7 +5,7 @@
     "gate_registry_template_count": 12,
     "operator_view_hides_internal_gate_ids": true,
     "operator_view_hides_schema_refs": true,
-    "passport_count": 102,
+    "passport_count": 103,
     "required_gate_template_count": 12,
     "resolved_gate_template_count": 12,
     "unresolved_gate_count": 0,
@@ -227,7 +227,7 @@
         }
       },
       {
-        "capability_count": 7,
+        "capability_count": 8,
         "dominant_status": "Live action disabled",
         "family": "software_dev",
         "highest_unlock_level": "C4",
@@ -235,7 +235,7 @@
         "status_counts": {
           "Blocked": 0,
           "Evidence missing": 0,
-          "Live action disabled": 7,
+          "Live action disabled": 8,
           "Needs approval": 0,
           "Prepare-only": 0,
           "Ready": 0
@@ -1763,6 +1763,22 @@
           },
           {
             "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 10,
+            "capability_id": "software_dev.github_repo_status.summarize_read_only",
+            "capability_name": "Summarize GitHub repository status read-only",
+            "current_unlock_level": "C3",
+            "family": "software_dev",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
               "prepare_for_approval",
               "verify_evidence",
               "emit_receipt"
@@ -1921,7 +1937,7 @@
             "status": "Live action disabled"
           }
         ],
-        "count": 100,
+        "count": 101,
         "label": "Live action disabled"
       }
     ],
@@ -1957,7 +1973,7 @@
         "severity_rank": 4
       },
       {
-        "count": 100,
+        "count": 101,
         "label": "Live action disabled",
         "meaning": "Capability can be inspected or prepared, but live action remains disabled.",
         "severity_rank": 5
@@ -1970,15 +1986,15 @@
     "passport_set_id": "capability_passports.foundation.v1"
   },
   "summary": {
-    "attention_required_count": 101,
-    "capability_count": 102,
+    "attention_required_count": 102,
+    "capability_count": 103,
     "family_count": 16,
     "live_action_disabled": true,
     "ready_count": 1,
     "status_counts": {
       "Blocked": 0,
       "Evidence missing": 0,
-      "Live action disabled": 100,
+      "Live action disabled": 101,
       "Needs approval": 1,
       "Prepare-only": 0,
       "Ready": 1

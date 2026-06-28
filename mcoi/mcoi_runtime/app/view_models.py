@@ -473,6 +473,7 @@ class AutonomousRequestEpisodeSummaryView:
     stage_dependency_bindings: tuple[Mapping[str, object], ...] = ()
     stage_repair_bindings: tuple[Mapping[str, object], ...] = ()
     stage_error_bindings: tuple[Mapping[str, object], ...] = ()
+    stage_outcome_bindings: tuple[Mapping[str, object], ...] = ()
 
     @staticmethod
     def from_receipt(
@@ -579,6 +580,27 @@ class AutonomousRequestEpisodeSummaryView:
                 for step in receipt.step_receipts
                 if step.plan_stage_id is not None
             ),
+            stage_outcome_bindings=tuple(
+                {
+                    "stage_id": step.plan_stage_id,
+                    "receipt_ref": step.receipt_ref,
+                    "dispatched": step.dispatched,
+                    "validation_error": step.validation_error,
+                    "error_status": _autonomous_request_error_status(
+                        step.validation_error,
+                        step.structured_error_codes,
+                    ),
+                    "repair_status": _autonomous_request_repair_status(step.retry_count, step.validation_error),
+                    "outcome_status": _autonomous_request_outcome_status(
+                        step.dispatched,
+                        step.retry_count,
+                        step.validation_error,
+                        step.structured_error_codes,
+                    ),
+                }
+                for step in receipt.step_receipts
+                if step.plan_stage_id is not None
+            ),
             rollback_ref=receipt.rollback_ref,
         )
 
@@ -616,6 +638,24 @@ def _autonomous_request_error_status(
     if "dependency_blocked" in structured_error_codes:
         return "dependency_blocked"
     return "blocked"
+
+
+def _autonomous_request_outcome_status(
+    dispatched: bool,
+    retry_count: int,
+    validation_error: str | None,
+    structured_error_codes: tuple[str, ...],
+) -> str:
+    """Classify the settled per-stage outcome from dispatch, repair, and error evidence."""
+    if not dispatched:
+        return "skipped"
+    if retry_count > 0 and validation_error is not None:
+        return "repair_failed"
+    if retry_count > 0:
+        return "repaired"
+    if validation_error is not None or structured_error_codes:
+        return "blocked"
+    return "settled"
 
 
 # ---------------------------------------------------------------------------

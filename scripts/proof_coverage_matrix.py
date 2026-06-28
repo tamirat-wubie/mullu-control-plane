@@ -6047,6 +6047,87 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "axiomworld_kernel_mvp",
+            [
+                "/api/v1/axiomworld/events",
+                "/api/v1/axiomworld/health",
+                "AxiomWorldKernel.observe_event",
+                "AxiomWorldKernel.propose_claim",
+                "AxiomWorldKernel.propose_action",
+                "AxiomWorldKernel.simulate_action",
+                "AxiomWorldGenericEventAdapter.ingest",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "docs/16_world_state_plane.md",
+                "gateway/axiomworld_kernel.py",
+                "gateway/axiomworld_generic_event_adapter.py",
+                "gateway/axiomworld_api.py",
+                "gateway/server.py",
+                "gateway/world_state.py",
+                "tests/test_gateway/test_axiomworld_kernel.py",
+                "tests/test_gateway/test_axiomworld_generic_event_adapter.py",
+                "tests/test_gateway/test_axiomworld_api.py",
+            ],
+            "AxiomWorld MVP routes admit evidence-backed symbols, claims, action proposals, simulation labels, projection filters, and append-only receipts through a bounded gateway adapter while preserving conflicts and denying simulation-as-reality promotion.",
+            [
+                "axiomworld_evidence_required_for_symbol_admission",
+                "axiomworld_identity_collision_quarantined",
+                "axiomworld_claims_without_evidence_remain_hypotheses",
+                "axiomworld_conflicts_preserved_as_open_contradictions",
+                "axiomworld_public_projection_redacts_private_scope",
+                "axiomworld_action_lifecycle_gates_risk_and_reversibility",
+                "axiomworld_simulation_cannot_validate_without_real_evidence",
+                "axiomworld_simulation_does_not_mutate_world_state",
+                "axiomworld_event_ingest_returns_receipts_and_projection",
+                "axiomworld_ingest_validation_errors_bounded",
+                "axiomworld_gateway_factory_registers_routes",
+            ],
+            runtime_witness_anchor_aliases={
+                "axiomworld_evidence_required_for_symbol_admission": [
+                    "axiomworld_observes_symbol_with_evidence_and_receipt",
+                    "axiomworld_generic_event_adapter_rejects_missing_evidence_before_admission",
+                ],
+                "axiomworld_identity_collision_quarantined": [
+                    "axiomworld_quarantines_identity_collision_without_second_symbol",
+                ],
+                "axiomworld_claims_without_evidence_remain_hypotheses": [
+                    "axiomworld_claim_without_evidence_stays_hypothesis",
+                ],
+                "axiomworld_conflicts_preserved_as_open_contradictions": [
+                    "axiomworld_preserves_conflicting_claims_as_open_contradiction",
+                    "axiomworld_generic_event_adapter_preserves_conflicting_claims_across_ingests",
+                ],
+                "axiomworld_public_projection_redacts_private_scope": [
+                    "axiomworld_public_projection_redacts_private_scope",
+                    "axiomworld_generic_event_adapter_public_projection_redacts_private_symbol",
+                ],
+                "axiomworld_action_lifecycle_gates_risk_and_reversibility": [
+                    "axiomworld_action_lifecycle_gates_risk_and_reversibility",
+                    "axiomworld_generic_event_adapter_gates_high_risk_actions",
+                ],
+                "axiomworld_simulation_cannot_validate_without_real_evidence": [
+                    "axiomworld_simulation_cannot_validate_without_real_evidence",
+                ],
+                "axiomworld_simulation_does_not_mutate_world_state": [
+                    "axiomworld_simulated_action_does_not_mutate_world_state",
+                ],
+                "axiomworld_event_ingest_returns_receipts_and_projection": [
+                    "axiomworld_generic_event_adapter_ingests_symbol_claim_action_and_projection",
+                    "axiomworld_ingest_route_returns_projection_receipts_and_state",
+                ],
+                "axiomworld_ingest_validation_errors_bounded": [
+                    "axiomworld_ingest_route_bounds_validation_errors",
+                ],
+                "axiomworld_gateway_factory_registers_routes": [
+                    "gateway_factory_registers_axiomworld_routes",
+                ],
+            },
+        ),
+        _surface(
             "capability_forge",
             [
                 "CapabilityForge.create_candidate",
@@ -12401,6 +12482,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_policy_simulation_routes",
             "surfaces": ["governed_operational_intelligence"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_axiomworld_world_state_kernel_mvp",
+            "surfaces": ["axiomworld_kernel_mvp"],
             "status": "closed",
         },
         {

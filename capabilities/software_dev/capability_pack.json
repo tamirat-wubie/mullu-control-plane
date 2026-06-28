@@ -150,6 +150,87 @@
       }
     },
     {
+      "capability_id": "software_dev.github_repo_status.summarize_read_only",
+      "domain": "software_dev",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/software_dev/github_repo_status_summary.input.schema.json",
+      "output_schema_ref": "urn:mullusi:schema:github-repo-status-summary-receipt:1",
+      "effect_model": {
+        "expected_effects": ["github_repo_status_summary_emitted", "causal_receipt_emitted"],
+        "forbidden_effects": [
+          "issue_created",
+          "github_comment_posted",
+          "repository_mutated",
+          "workflow_dispatched",
+          "release_readiness_claimed"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["repository_metadata_hash", "recent_commits_hash", "open_pull_requests_hash", "workflow_runs_hash"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["developer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": ["api.github.com"],
+        "secret_scope": "oauth:github.read"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.05
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Summarize GitHub repository status read-only",
+        "risk_tier": "low",
+        "target_maturity": "C3",
+        "fixture_only": false,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 2,
+          "level_id": "L2",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate", "execution_receipt_gate"]
+        }
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["developer"],
+          "allowed_tools": ["connector_worker.github_read"],
+          "allowed_networks": ["api.github.com"],
+          "allowed_paths": [],
+          "forbidden_effects": [
+            "issue_created",
+            "github_comment_posted",
+            "repository_mutated",
+            "workflow_dispatched",
+            "release_readiness_claimed"
+          ],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
       "capability_id": "software_dev.context_bundle.build",
       "domain": "software_dev",
       "version": "0.1.0",

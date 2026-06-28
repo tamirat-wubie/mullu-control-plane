@@ -13,6 +13,7 @@
     "source_receipt_emitter_ref",
     "source_non_empty_diff_file_summary_receipt_ref",
     "source_terminal_closure_certificate_read_model_ref",
+    "command_preview_terminal_certificate_read_model_evidence",
     "scope",
     "preflight_contract",
     "approval_admission_gate",
@@ -52,6 +53,9 @@
     "source_terminal_closure_certificate_read_model_ref": {
       "type": "string",
       "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json"
+    },
+    "command_preview_terminal_certificate_read_model_evidence": {
+      "$ref": "#/$defs/command_preview_terminal_certificate_read_model_evidence"
     },
     "scope": {
       "$ref": "#/$defs/scope"
@@ -110,6 +114,64 @@
       "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/evidence_ref"
+      }
+    },
+    "command_preview_terminal_certificate_read_model_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_read_model_id",
+        "source_read_model_ref",
+        "source_minting_ref",
+        "source_certificate_id",
+        "source_command_preview_certificate_minting_required",
+        "source_command_preview_decision_value_record_required",
+        "command_preview_ref",
+        "redacted_command_preview",
+        "command_preview_bound",
+        "read_model_read_only",
+        "read_model_projection_only",
+        "read_model_reference_only",
+        "pull_request_creation_enabled",
+        "repository_write_enabled",
+        "terminal_certificate_minted_by_read_model",
+        "read_model_is_not_terminal_closure"
+      ],
+      "properties": {
+        "source_read_model_id": {
+          "type": "string",
+          "const": "agentic-service-harness-github-pr-terminal-closure-certificate-read-model"
+        },
+        "source_read_model_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json"
+        },
+        "source_minting_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_minting.foundation.json"
+        },
+        "source_certificate_id": {
+          "type": "string",
+          "const": "terminal-closure-certificate.github-pr-chain.foundation"
+        },
+        "source_command_preview_certificate_minting_required": { "type": "boolean", "const": true },
+        "source_command_preview_decision_value_record_required": { "type": "boolean", "const": true },
+        "command_preview_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json"
+        },
+        "redacted_command_preview": {
+          "type": "string",
+          "const": "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> --body-file <redacted-body-file-ref>"
+        },
+        "command_preview_bound": { "type": "boolean", "const": true },
+        "read_model_read_only": { "type": "boolean", "const": true },
+        "read_model_projection_only": { "type": "boolean", "const": true },
+        "read_model_reference_only": { "type": "boolean", "const": true },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "terminal_certificate_minted_by_read_model": { "type": "boolean", "const": false },
+        "read_model_is_not_terminal_closure": { "type": "boolean", "const": true }
       }
     },
     "scope": {

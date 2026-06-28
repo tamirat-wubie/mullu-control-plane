@@ -55,7 +55,7 @@ def test_capability_friction_control_validates_and_writes(tmp_path: Path) -> Non
     written_payload = json.loads(written_path.read_text(encoding="utf-8"))
 
     assert validation.ok is True
-    assert validation.capability_count == 7
+    assert validation.capability_count == 8
     assert validation.fast_mode_lab_ready_count == 2
     assert validation.developer_workflow_status == "preflight_ready"
     assert validation.errors == ()
@@ -70,7 +70,7 @@ def test_capability_friction_control_runtime_projection_is_bounded() -> None:
 
     assert read_model["read_model_is_not_execution_authority"] is True
     assert read_model["live_execution_enabled"] is False
-    assert read_model["summary"]["capability_count"] == 7
+    assert read_model["summary"]["capability_count"] == 8
     assert read_model["summary"]["real_world_mode_allowed_count"] == 0
     assert read_model["developer_workflow_v1"]["status"] == "preflight_ready"
     assert read_model["sandbox_to_pr_now"]["status"] == "awaiting_sandbox_receipts"

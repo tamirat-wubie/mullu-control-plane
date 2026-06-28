@@ -147,6 +147,36 @@
       "unlock_level": "L0"
     },
     {
+      "balanced_mode_admission": "allowed",
+      "blocked_action_count": 6,
+      "blocked_actions": [
+        "github_comment_posted",
+        "issue_created",
+        "real_world_production_execution",
+        "release_readiness_claimed",
+        "repository_mutated",
+        "workflow_dispatched"
+      ],
+      "capability_id": "software_dev.github_repo_status.summarize_read_only",
+      "domain": "software_dev",
+      "fast_mode_admission": "allowed_read_only",
+      "friction_status": "unlocked",
+      "lab_mode_allowed": true,
+      "maturity_level": "C3",
+      "next_unlock": "dry_run_receipt",
+      "operating_boundary": "lab",
+      "real_world_mode_allowed": false,
+      "required_before_unlock": [
+        "dry_run_receipt",
+        "production_witness"
+      ],
+      "risk_level": "low",
+      "rollback_default": true,
+      "strict_mode_admission": "allowed",
+      "unlock_label": "read-only",
+      "unlock_level": "L0"
+    },
+    {
       "balanced_mode_admission": "approval_required",
       "blocked_action_count": 5,
       "blocked_actions": [
@@ -376,17 +406,17 @@
   },
   "summary": {
     "approval_required_count": 2,
-    "capability_count": 7,
+    "capability_count": 8,
     "fast_mode_lab_ready_count": 2,
-    "lab_mode_allowed_count": 7,
+    "lab_mode_allowed_count": 8,
     "operating_boundary_counts": {
-      "lab": 7
+      "lab": 8
     },
     "real_world_mode_allowed_count": 0,
     "real_world_write_status": "blocked_until_production_witness",
     "sandbox_required_count": 2,
     "unlock_level_counts": {
-      "L0": 2,
+      "L0": 3,
       "L1": 2,
       "L2": 1,
       "L4": 1,

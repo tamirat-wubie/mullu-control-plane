@@ -31,6 +31,12 @@ from gateway.operator_capability_console import (  # noqa: E402
     build_developer_workflow_v1_run_read_model,
     build_operator_capability_read_model,
 )
+from gateway.operator_sandbox_patch_readiness import (  # noqa: E402
+    SANDBOX_PATCH_READINESS_REGISTRY,
+    sandbox_patch_readiness_compact_summary,
+    sandbox_patch_readiness_receipt_entries,
+    sandbox_patch_readiness_source_refs,
+)
 import gateway.server as server_module  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
 from mcoi_runtime.contracts.software_dev_loop import (  # noqa: E402
@@ -42,6 +48,9 @@ from mcoi_runtime.persistence.software_change_receipt_store import SoftwareChang
 WORKFLOW_RUN_SCHEMA_PATH = _ROOT / "schemas" / "workflow_run.schema.json"
 SANDBOX_TO_PR_PACKET_SCHEMA_PATH = _ROOT / "schemas" / "sandbox_to_pr_preparation_packet.schema.json"
 CONTROL_TOWER_STATUS_RECEIPT_SCHEMA_PATH = _ROOT / "schemas" / "operator_control_tower_status_receipt.schema.json"
+SANDBOX_PATCH_READINESS_COMPACT_SCHEMA_PATH = (
+    _ROOT / "schemas" / "operator_sandbox_patch_readiness_compact_read_model.schema.json"
+)
 
 
 class StubPlatform:
@@ -312,7 +321,7 @@ def test_operator_capability_read_model_projects_friction_controls_for_software_
     workflow = read_model["friction_control"]["developer_workflow_v1"]
     sandbox_to_pr = read_model["friction_control"]["sandbox_to_pr_now"]
 
-    assert read_model["capability_count"] == 7
+    assert read_model["capability_count"] == 8
     assert read_model["unlock_level_counts"]["L4"] == 1
     assert read_model["unlock_level_counts"]["L5"] == 1
     assert read_model["friction_control"]["fast_mode_lab_ready_count"] == 2
@@ -373,7 +382,7 @@ def test_operator_friction_control_endpoint_projects_developer_workflow() -> Non
     assert payload["live_execution_enabled"] is False
     assert payload["source_refs"]["capability_surface"] == "governed_capability_records"
     assert payload["source_refs"]["domain_filter"] == "software_dev"
-    assert payload["summary"]["capability_count"] == 7
+    assert payload["summary"]["capability_count"] == 8
     assert payload["summary"]["fast_mode_lab_ready_count"] == 2
     assert payload["summary"]["real_world_mode_allowed_count"] == 0
     assert workflow["workflow_id"] == "mullu_developer_workflow.v1"
@@ -588,7 +597,7 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert payload["overall_health"] == "missing"
     assert payload["missing_panel_count"] == payload["panel_count"] - 4
     assert capability_panel["source_surface"] == "capability_friction_control"
-    assert capability_panel["item_count"] == 7
+    assert capability_panel["item_count"] == 8
     assert capability_panel["blocked_count"] >= 1
     assert capability_panel["review_count"] >= 1
     assert capability_panel["metadata"]["safe_automatic_zone_count"] == 7
@@ -659,7 +668,7 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert rollback_control["external_effects_allowed"] is False
     registry_summary = capability_panel["metadata"]["capability_registry_summary"]
     assert registry_summary["summary_id"] == "capability_registry.foundation"
-    assert registry_summary["capability_count"] == 7
+    assert registry_summary["capability_count"] == 8
     assert registry_summary["blocked_count"] == capability_panel["blocked_count"]
     assert registry_summary["approval_required_count"] == capability_panel["review_count"]
     assert registry_summary["pending_unlock_count"] == len(unlock_queue)
@@ -704,7 +713,7 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert control_system["status"] == "preflight_ready"
     assert control_system["recommended_mode"] == "fast"
     assert control_system["lab_mode_allowed"] is True
-    assert control_system["capability_count"] == 7
+    assert control_system["capability_count"] == 8
     assert control_system["pending_unlock_count"] >= 1
     assert control_system["safe_candidate_count"] == 7
     assert control_system["dangerous_blocker_count"] == 7
@@ -716,7 +725,7 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert control_system["execution_boundary"] == "local_lab_only"
     assert control_system["external_effects_allowed"] is False
     assert capability_panel["metadata"]["next_unlock_queue_count"] >= 1
-    assert capability_panel["metadata"]["capability_passport_count"] == 7
+    assert capability_panel["metadata"]["capability_passport_count"] == 8
     pr_unlock = next(item for item in unlock_queue if item["capability_id"] == "software_dev.pr_candidate.prepare")
     assert pr_unlock["next_unlock"] == "approval"
     assert "approval" in pr_unlock["required_evidence"]
@@ -1628,6 +1637,10 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Operator Sandbox Patch Bundle Preview" in response.text
     assert "Sandbox patch bundle preview ready" in response.text
     assert "validate_developer_workflow_sandbox_receipt_bundle.py" in response.text
+    assert "Operator Sandbox Patch Readiness Summary" in response.text
+    assert "operator_sandbox_patch_validation_readiness_summary" in response.text
+    assert "Next evidence" in response.text
+    assert "sandbox_patch_receipt_bundle_generated" in response.text
     assert "Operator Sandbox Patch Validation Readiness" in response.text
     assert "Sandbox patch validation blocked until the collected bundle exists" in response.text
     assert "blocked_missing_bundle" in response.text
@@ -1778,6 +1791,47 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "/operator/receipts" in response.text
 
 
+def test_sandbox_patch_readiness_registry_preserves_no_effect_contract() -> None:
+    registry_keys = [summary_key for summary_key, _payload, _source_ref in SANDBOX_PATCH_READINESS_REGISTRY]
+    entries = sandbox_patch_readiness_receipt_entries()
+    source_refs = sandbox_patch_readiness_source_refs()
+    compact_summary = sandbox_patch_readiness_compact_summary()
+
+    assert registry_keys[0] == "operator_sandbox_patch_validation_readiness_summary"
+    assert registry_keys[-1] == "operator_sandbox_patch_next_scope_admission_readiness_summary"
+    assert len(registry_keys) == len(set(registry_keys)) == len(entries) == len(source_refs)
+    assert compact_summary["blocked_stage_summary_key"] == registry_keys[0]
+    assert compact_summary["blocked_stage_status"] == "blocked_missing_bundle"
+    assert compact_summary["next_evidence_id"] == "sandbox_patch_receipt_bundle_generated"
+    assert compact_summary["missing_prerequisite_count"] == 2
+    assert compact_summary["external_effects_allowed"] is False
+
+    for summary_key, payload, source_ref in SANDBOX_PATCH_READINESS_REGISTRY:
+        entry = entries[summary_key]
+        required_fields = [value for key, value in entry.items() if key.startswith("required_before_")]
+        no_effect_flags = {
+            key: value
+            for key, value in entry.items()
+            if key.endswith("_allowed")
+            or key.endswith("_performed")
+            or key.endswith("_started")
+            or key.endswith("_certified")
+            or key.endswith("_admitted")
+        }
+
+        assert entry == payload
+        assert source_refs[summary_key] == source_ref
+        assert source_ref.startswith("docs/21_workflow_runtime.md sandbox_patch_receipt ")
+        assert entry["external_effects_allowed"] is False
+        assert required_fields and entry["missing_prerequisite_count"] == len(required_fields[0])
+        assert no_effect_flags and all(value is False for value in no_effect_flags.values())
+
+    entries[registry_keys[0]]["required_before_validation"].append("mutated")
+    fresh_entries = sandbox_patch_readiness_receipt_entries()
+
+    assert "mutated" not in fresh_entries[registry_keys[0]]["required_before_validation"]
+
+
 def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
     gate = build_software_dev_capability_admission_gate(clock=_clock)
     app = create_gateway_app(
@@ -1813,6 +1867,7 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
     )
     assert receipt["workflow_monitor_summary"]["execution_boundary"] == "local_lab_only"
     assert receipt["workflow_monitor_summary"]["external_effects_allowed"] is False
+
     assert receipt["operator_action_card"]["card_id"] == "developer_workflow_next_action"
     assert receipt["control_tower_headline_summary"] == {
         "summary_id": "control_tower_headline.foundation",
@@ -2051,14 +2106,14 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
     assert receipt["rollback_control_summary"]["summary_id"] == "rollback_control.foundation"
     assert receipt["rollback_control_summary"]["rollback_default_count"] >= 1
     assert receipt["rollback_control_summary"]["rollback_required_count"] >= 1
-    assert receipt["rollback_control_summary"]["capability_count"] == 7
+    assert receipt["rollback_control_summary"]["capability_count"] == 8
     assert receipt["rollback_control_summary"]["rollback_default_ready"] is True
     assert receipt["rollback_control_summary"]["sandbox_to_pr_policy_ready"] is True
     assert "rollback execution remains receipt-bound" in receipt["rollback_control_summary"]["operator_message"]
     assert receipt["rollback_control_summary"]["execution_boundary"] == "local_lab_only"
     assert receipt["rollback_control_summary"]["external_effects_allowed"] is False
     assert receipt["capability_registry_summary"]["summary_id"] == "capability_registry.foundation"
-    assert receipt["capability_registry_summary"]["capability_count"] == 7
+    assert receipt["capability_registry_summary"]["capability_count"] == 8
     assert receipt["capability_registry_summary"]["blocked_count"] >= 1
     assert receipt["capability_registry_summary"]["approval_required_count"] >= 1
     assert receipt["capability_registry_summary"]["pending_unlock_count"] >= 1
@@ -2097,7 +2152,7 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
     assert receipt["control_system_summary"]["status"] == "preflight_ready"
     assert receipt["control_system_summary"]["recommended_mode"] == "fast"
     assert receipt["control_system_summary"]["lab_mode_allowed"] is True
-    assert receipt["control_system_summary"]["capability_count"] == 7
+    assert receipt["control_system_summary"]["capability_count"] == 8
     assert receipt["control_system_summary"]["pending_unlock_count"] >= 1
     assert receipt["control_system_summary"]["safe_candidate_count"] == 7
     assert receipt["control_system_summary"]["dangerous_blocker_count"] == 7
@@ -2506,6 +2561,24 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
         "operator_message": (
             "Sandbox patch bundle preview ready; bundle generation and validation not executed"
         ),
+    }
+    assert receipt["operator_sandbox_patch_readiness_compact_summary"] == {
+        "summary_id": "operator_sandbox_patch_readiness_compact.foundation",
+        "blocked_stage_summary_key": "operator_sandbox_patch_validation_readiness_summary",
+        "blocked_stage_summary_id": "operator_sandbox_patch_validation_readiness.foundation",
+        "blocked_stage_status": "blocked_missing_bundle",
+        "blocked_stage_target": "developer_workflow_sandbox_receipt_bundle.collected.json",
+        "next_evidence_id": "sandbox_patch_receipt_bundle_generated",
+        "missing_prerequisite_count": 2,
+        "required_before_unlock": [
+            "sandbox_patch_receipt_bundle_generated",
+            "sandbox_patch_receipt_attached",
+        ],
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Sandbox patch validation blocked until the collected bundle exists and receipt is attached"
+        ),
+        "source_ref": "docs/21_workflow_runtime.md sandbox_patch_receipt validation readiness",
     }
     assert receipt["operator_sandbox_patch_validation_readiness_summary"] == {
         "summary_id": "operator_sandbox_patch_validation_readiness.foundation",
@@ -3276,6 +3349,13 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
         == "docs/21_workflow_runtime.md sandbox_patch_receipt bundle validation"
     )
     assert (
+        receipt["source_refs"]["operator_sandbox_patch_readiness_compact_summary"]
+        == (
+            "gateway.operator_sandbox_patch_readiness.SANDBOX_PATCH_READINESS_REGISTRY "
+            "compact first-blocker projection"
+        )
+    )
+    assert (
         receipt["source_refs"]["operator_sandbox_patch_validation_readiness_summary"]
         == "docs/21_workflow_runtime.md sandbox_patch_receipt validation readiness"
     )
@@ -3427,6 +3507,31 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
             "workflow_monitor.metadata.developer_workflow_milestone_summary"
         )
     )
+
+
+def test_operator_control_tower_sandbox_patch_readiness_read_model_route() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/operator/control-tower/sandbox-patch-readiness/read-model")
+
+    assert response.status_code == 200
+    read_model = response.json()
+    schema = json.loads(SANDBOX_PATCH_READINESS_COMPACT_SCHEMA_PATH.read_text(encoding="utf-8"))
+    Draft202012Validator(schema).validate(read_model)
+    summary = read_model["summary"]
+    assert read_model["read_model_id"] == "operator_sandbox_patch_readiness_compact.read_model"
+    assert read_model["projection_only"] is True
+    assert read_model["external_effects_allowed"] is False
+    assert read_model["source_ref"] == (
+        "gateway.operator_sandbox_patch_readiness.SANDBOX_PATCH_READINESS_REGISTRY "
+        "compact first-blocker projection"
+    )
+    assert summary["blocked_stage_summary_key"] == "operator_sandbox_patch_validation_readiness_summary"
+    assert summary["blocked_stage_status"] == "blocked_missing_bundle"
+    assert summary["next_evidence_id"] == "sandbox_patch_receipt_bundle_generated"
+    assert summary["missing_prerequisite_count"] == 2
+    assert summary["external_effects_allowed"] is False
 
 
 def test_operator_control_tower_projects_rollback_receipt_visibility() -> None:

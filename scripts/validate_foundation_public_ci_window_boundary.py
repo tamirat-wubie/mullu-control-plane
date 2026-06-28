@@ -102,6 +102,8 @@ EXPECTED_RECEIPT_ROOT_KEYS = {
     "repo",
     "repo_visibility_after",
     "repo_visibility_before",
+    "repo_visibility_restored",
+    "repo_visibility_restored_at",
     "schema_version",
     "solver_outcome",
     "status",
@@ -112,7 +114,7 @@ EXPECTED_RECEIPT_ROOT_KEYS = {
 ALLOWED_RECEIPT_STATUSES = {"closed", "bounded_public_awaiting_evidence"}
 EXPECTED_VISIBILITY_BEFORE = "private"
 ALLOWED_VISIBILITY_AFTER_BY_STATUS = {
-    "closed": {"private", "private_or_bounded_public"},
+    "closed": {"private"},
     "bounded_public_awaiting_evidence": {"bounded_public", "private_or_bounded_public"},
 }
 EXPECTED_RECEIPT_WORKFLOW_RUN_COUNT = 2
@@ -469,6 +471,20 @@ def validate_window_receipt(payload: dict[str, Any], observed_at: datetime | Non
                 "repo_visibility_after must match the receipt status",
             )
         )
+    if status == "closed" and payload.get("repo_visibility_restored") is not True:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_visibility_restored_invalid",
+                "closed receipts must confirm private visibility restoration",
+            )
+        )
+    if status == "bounded_public_awaiting_evidence" and payload.get("repo_visibility_restored") is not False:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_visibility_restored_invalid",
+                "bounded public receipts must keep repo_visibility_restored false",
+            )
+        )
 
     required_text_fields = (
         "window_id",
@@ -604,6 +620,54 @@ def validate_window_receipt(payload: dict[str, Any], observed_at: datetime | Non
             Finding(
                 "public_ci_window_receipt_closure_merge_order_invalid",
                 "closed_at must be greater than or equal to merged_at",
+            )
+        )
+
+    repo_visibility_restored_at = payload.get("repo_visibility_restored_at")
+    parsed_repo_visibility_restored_at = None
+    if status == "closed" and not _is_non_empty_string(repo_visibility_restored_at):
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_visibility_restored_at_invalid",
+                "closed receipts require repo_visibility_restored_at",
+            )
+        )
+    if _is_non_empty_string(repo_visibility_restored_at):
+        parsed_repo_visibility_restored_at = _parse_utc_timestamp(repo_visibility_restored_at)
+        if parsed_repo_visibility_restored_at is None:
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_visibility_restored_at_invalid",
+                    "repo_visibility_restored_at must be an ISO-8601 UTC timestamp ending in Z",
+                )
+            )
+    if status == "bounded_public_awaiting_evidence" and repo_visibility_restored_at is not None:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_visibility_restored_at_invalid",
+                "bounded public receipts must keep repo_visibility_restored_at null",
+            )
+        )
+    if (
+        parsed_opened_at is not None
+        and parsed_repo_visibility_restored_at is not None
+        and parsed_repo_visibility_restored_at < parsed_opened_at
+    ):
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_visibility_restoration_order_invalid",
+                "repo_visibility_restored_at must be greater than or equal to opened_at",
+            )
+        )
+    if (
+        parsed_repo_visibility_restored_at is not None
+        and parsed_closed_at is not None
+        and parsed_closed_at < parsed_repo_visibility_restored_at
+    ):
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_visibility_restoration_closure_order_invalid",
+                "closed_at must be greater than or equal to repo_visibility_restored_at",
             )
         )
 

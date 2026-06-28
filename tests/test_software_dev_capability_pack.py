@@ -53,7 +53,7 @@ def test_software_dev_capability_entries_are_schema_valid() -> None:
     payload = _load_json(SOFTWARE_DEV_CAPABILITY_PACK_PATH)
     entries = payload["capabilities"]
 
-    assert len(entries) == 7
+    assert len(entries) == 8
     assert all(_validate_schema_instance(schema, entry) == [] for entry in entries)
     assert all(CapabilityRegistryEntry.from_mapping(entry).domain == "software_dev" for entry in entries)
 
@@ -63,7 +63,7 @@ def test_software_dev_input_schema_refs_are_materialized_and_strict() -> None:
     schema_refs = tuple(entry.input_schema_ref for entry in entries)
     output_refs = tuple(entry.output_schema_ref for entry in entries)
 
-    assert len(schema_refs) == 7
+    assert len(schema_refs) == 8
     assert all(ref.startswith("schemas/software_dev/") for ref in schema_refs)
     assert all((ROOT / ref).exists() for ref in schema_refs)
     assert all(ref.startswith("urn:mullusi:schema:") for ref in output_refs)
@@ -77,8 +77,8 @@ def test_software_dev_output_schema_refs_are_materialized_and_strict() -> None:
     output_refs = tuple(entry.output_schema_ref for entry in _software_dev_entries())
     schemas_by_id = _software_dev_output_schemas_by_id()
 
-    assert len(output_refs) == 7
-    assert len(schemas_by_id) == 7
+    assert len(output_refs) == 8
+    assert len(schemas_by_id) == 8
     assert set(output_refs) == set(schemas_by_id)
     for schema_id, schema in schemas_by_id.items():
         assert schema_id.startswith("urn:mullusi:schema:")
@@ -103,11 +103,13 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
     change_payload = deepcopy(payloads["schemas/software_dev/change_run.input.schema.json"])
     pr_payload = deepcopy(payloads["schemas/software_dev/pr_candidate.input.schema.json"])
     actions_payload = deepcopy(payloads["schemas/software_dev/github_actions_failure_diagnosis.input.schema.json"])
+    repo_status_payload = deepcopy(payloads["schemas/software_dev/github_repo_status_summary.input.schema.json"])
 
     context_payload["affected_files"] = ["../secrets.py"]
     change_payload["command_policy"]["network_allowed"] = True
     pr_payload["local_git_push_allowed"] = True
     actions_payload["write_authority_granted"] = True
+    repo_status_payload["write_authority_granted"] = True
 
     assert _validate_schema_instance(
         _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "context_bundle.input.schema.json"),
@@ -124,6 +126,10 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
     assert _validate_schema_instance(
         _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "github_actions_failure_diagnosis.input.schema.json"),
         actions_payload,
+    )
+    assert _validate_schema_instance(
+        _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "github_repo_status_summary.input.schema.json"),
+        repo_status_payload,
     )
 
 
@@ -146,11 +152,13 @@ def test_software_dev_output_schemas_reject_effect_overclaims() -> None:
     app_graph_payload = deepcopy(payloads["urn:mullusi:schema:app-task-graph:1"])
     pr_payload = deepcopy(payloads["urn:mullusi:schema:pr-candidate:1"])
     actions_payload = deepcopy(payloads["urn:mullusi:schema:github-actions-failure-diagnosis-receipt:1"])
+    repo_status_payload = deepcopy(payloads["urn:mullusi:schema:github-repo-status-summary-receipt:1"])
 
     repo_payload["files"] = ["C:\\secrets.py"]
     app_graph_payload["metadata"]["direct_deployment_allowed"] = True
     pr_payload["metadata"]["local_git_push_allowed"] = True
     actions_payload["write_authority_granted"] = True
+    repo_status_payload["policy_decision"] = "allow"
 
     assert _validate_schema_instance(schemas_by_id["urn:mullusi:schema:repo-map:1"], repo_payload)
     assert _validate_schema_instance(schemas_by_id["urn:mullusi:schema:app-task-graph:1"], app_graph_payload)
@@ -158,6 +166,10 @@ def test_software_dev_output_schemas_reject_effect_overclaims() -> None:
     assert _validate_schema_instance(
         schemas_by_id["urn:mullusi:schema:github-actions-failure-diagnosis-receipt:1"],
         actions_payload,
+    )
+    assert _validate_schema_instance(
+        schemas_by_id["urn:mullusi:schema:github-repo-status-summary-receipt:1"],
+        repo_status_payload,
     )
 
 
@@ -188,10 +200,10 @@ def test_software_dev_named_loader_installs_only_software_dev_domain() -> None:
     read_model = gate.read_model()
 
     assert capsule.domain == "software_dev"
-    assert len(entries) == 7
+    assert len(entries) == 8
     assert all(entry.domain == "software_dev" for entry in entries)
     assert read_model["capsule_count"] == 1
-    assert read_model["capability_count"] == 7
+    assert read_model["capability_count"] == 8
     assert read_model["domains"] == ({"domain": "software_dev", "capability_ids": tuple(sorted(capsule.capability_refs))},)
     assert read_model["capability_manifest_registry_configured"] is False
     assert read_model["capability_manifest_registry"]["manifest_count"] == 0
@@ -214,11 +226,11 @@ def test_software_dev_named_loader_projects_manifest_registry_when_configured() 
 
     assert read_model["capability_manifest_registry_configured"] is True
     assert read_model["capability_manifest_coverage_status"] == "complete"
-    assert read_model["capability_manifest_covered_count"] == 7
+    assert read_model["capability_manifest_covered_count"] == 8
     assert read_model["capability_manifest_missing_count"] == 0
-    assert len(read_model["capability_manifest_coverage"]) == 7
-    assert manifest_registry["manifest_count"] == 7
-    assert manifest_registry["admission_count"] == 7
+    assert len(read_model["capability_manifest_coverage"]) == 8
+    assert manifest_registry["manifest_count"] == 8
+    assert manifest_registry["admission_count"] == 8
     assert manifest_registry["capability_abi_coverage_status"] == "complete"
     assert set(manifest_registry["capability_ids"]) == {
         entry.capability_id for entry in load_software_dev_capability_entries()
@@ -233,7 +245,7 @@ def test_software_dev_pack_declares_reusable_unlock_ladder_profiles() -> None:
     expected_levels = _expected_unlock_levels()
     ladder_by_level = {level.level: level for level in default_capability_unlock_ladder()}
 
-    assert len(entries) == 7
+    assert len(entries) == 8
     assert set(expected_levels) == {entry["capability_id"] for entry in entries}
     for entry in entries:
         capability_id = entry["capability_id"]
@@ -253,7 +265,7 @@ def test_software_dev_manifests_declare_same_unlock_profiles_as_pack() -> None:
     }
     manifest_paths = tuple(sorted((ROOT / "capabilities" / "software_dev" / "manifests").glob("*.json")))
 
-    assert len(manifest_paths) == 7
+    assert len(manifest_paths) == 8
     assert set(pack_profiles) == set(_expected_unlock_levels())
     for manifest_path in manifest_paths:
         manifest = _load_json(manifest_path)
@@ -285,6 +297,10 @@ def test_software_dev_pack_installs_through_explicit_capability_fabric() -> None
         command_id="cmd-actions-failure",
         intent_name="software_dev.github_actions_failure.diagnose_read_only",
     )
+    repo_status_decision = gate.admit(
+        command_id="cmd-repo-status",
+        intent_name="software_dev.github_repo_status.summarize_read_only",
+    )
     change_decision = gate.admit(command_id="cmd-change", intent_name="software_dev.change.run")
     direct_deploy_decision = gate.admit(command_id="cmd-deploy", intent_name="software_dev.deploy.production")
 
@@ -292,10 +308,12 @@ def test_software_dev_pack_installs_through_explicit_capability_fabric() -> None
     assert repo_decision.capability_id == "software_dev.repo_map.read"
     assert actions_decision.status.value == "accepted"
     assert actions_decision.capability_id == "software_dev.github_actions_failure.diagnose_read_only"
+    assert repo_status_decision.status.value == "accepted"
+    assert repo_status_decision.capability_id == "software_dev.github_repo_status.summarize_read_only"
     assert change_decision.status.value == "accepted"
     assert change_decision.capability_id == "software_dev.change.run"
     assert direct_deploy_decision.status.value == "rejected"
-    assert read_model["capability_count"] == 7
+    assert read_model["capability_count"] == 8
     assert set(capabilities) == set(governed)
     assert read_model["domains"] == ({"domain": "software_dev", "capability_ids": tuple(sorted(capabilities))},)
 
@@ -305,6 +323,7 @@ def test_software_dev_governed_records_bind_read_and_effect_boundaries() -> None
     governed = {item["capability_id"]: item for item in gate.read_model()["governed_capability_records"]}
     repo_record = governed["software_dev.repo_map.read"]
     actions_record = governed["software_dev.github_actions_failure.diagnose_read_only"]
+    repo_status_record = governed["software_dev.github_repo_status.summarize_read_only"]
     change_record = governed["software_dev.change.run"]
     pr_record = governed["software_dev.pr_candidate.prepare"]
 
@@ -319,6 +338,12 @@ def test_software_dev_governed_records_bind_read_and_effect_boundaries() -> None
     assert actions_record["allowed_tools"] == ["connector_worker.github_read"]
     assert actions_record["allowed_networks"] == ["api.github.com"]
     assert "workflow_rerun_triggered" in actions_record["forbidden_effects"]
+    assert repo_status_record["read_only"] is True
+    assert repo_status_record["world_mutating"] is False
+    assert repo_status_record["requires_approval"] is False
+    assert repo_status_record["allowed_tools"] == ["connector_worker.github_read"]
+    assert repo_status_record["allowed_networks"] == ["api.github.com"]
+    assert "repository_mutated" in repo_status_record["forbidden_effects"]
     assert change_record["read_only"] is False
     assert change_record["world_mutating"] is True
     assert change_record["requires_approval"] is True
@@ -364,6 +389,7 @@ def _expected_unlock_levels() -> dict[str, int]:
     return {
         "software_dev.repo_map.read": 0,
         "software_dev.github_actions_failure.diagnose_read_only": 2,
+        "software_dev.github_repo_status.summarize_read_only": 2,
         "software_dev.context_bundle.build": 2,
         "software_dev.gate_plan.select": 2,
         "software_dev.change.run": 4,
@@ -404,6 +430,16 @@ def _representative_software_dev_schema_payloads() -> dict[str, dict]:
             "workspace_ref": "workspace:local-sandbox",
             "requested_evidence_kinds": ["workflow_run", "jobs", "failed_job_logs"],
             "max_failed_job_logs": 3,
+            "write_authority_granted": False,
+            "metadata": metadata,
+        },
+        "schemas/software_dev/github_repo_status_summary.input.schema.json": {
+            "capability_id": "software_dev.github_repo_status.summarize_read_only",
+            "request_id": "req-repo-status",
+            "repository_ref": "repo:mullu-control-plane",
+            "workspace_ref": "workspace:local-sandbox",
+            "requested_evidence_kinds": ["repository", "recent_commits", "open_pull_requests", "open_issues", "workflow_runs"],
+            "max_items_per_kind": 10,
             "write_authority_granted": False,
             "metadata": metadata,
         },
@@ -585,6 +621,30 @@ def _representative_software_dev_output_payloads() -> dict[str, dict]:
             "recommended_next_action": "prepare_patch_plan_from_failed_job_signal_without_mutating_github",
             "write_authority_granted": False,
             "metadata": metadata,
+        },
+        "urn:mullusi:schema:github-repo-status-summary-receipt:1": {
+            "receipt_id": "github-repo-status-receipt:abc123",
+            "event_id": "github-repo-status-admission:abc123",
+            "actor_id": "operator:tamirat",
+            "surface": "github_operations_workroom",
+            "intent": "SUMMARIZE_GITHUB_REPOSITORY_STATUS",
+            "target_object": "github_repository:tamiratl/mullu-control-plane",
+            "risk_class": "class_0_observe",
+            "evidence_used": ["github-live-read://tamiratl/mullu-control-plane/repository"],
+            "policy_decision": "allow_read_only",
+            "actions_taken": ["performed_get_only_github_repo_reads", "hashed_payloads", "summarized_repository_status"],
+            "actions_blocked": [
+                "create_issue_without_explicit_approval",
+                "post_github_comment_without_write_admission",
+                "mutate_repository_without_write_admission",
+            ],
+            "assumptions": ["Access token scope is limited to oauth:github.read."],
+            "verification_result": "Read-only repository status evidence collected, hash-bound, and summarized.",
+            "final_judgment": "Repository has 1 open pull requests, 1 open issues, and 1 recent commits in bounded read-only evidence.",
+            "memory_update": "store",
+            "timestamp": "2026-06-28T12:00:00+00:00",
+            "metadata": metadata,
+            "partial_failure_reasons": [],
         },
         "urn:mullusi:schema:code-context-bundle:1": {
             "bundle_id": "context:abc123",

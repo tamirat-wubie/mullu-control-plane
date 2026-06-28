@@ -167,11 +167,15 @@ Canonical local projection:
 gateway/github_operations_workroom.py
 ```
 
-The projection currently admits only `Class 1 — Prepare` PR safety work. It
-creates a `UniversalGovernedEvent`, symbolic compilation, authority resolution,
-risk policy result, capability passport, causal episode plan, receipt, and
-memory gate. It does not call GitHub, does not post comments, does not merge,
-does not deploy, and stores only receipt metadata.
+The projection currently admits bounded GitHub Operations Workroom paths for
+PR safety, Actions failure diagnosis, and repository status summary. The
+preview path creates a `UniversalGovernedEvent`, symbolic compilation,
+authority resolution, risk policy result, capability passport, causal episode
+plan, receipt, and memory gate. Live paths are constrained to GET-only GitHub
+reads, bounded evidence summaries, hashed payloads, and causal receipts. No
+path can post comments, create issues, merge, rerun workflows, dispatch
+workflows, mutate repositories, deploy, or claim release readiness without a
+separate write capability and explicit approval.
 
 Operator preview routes:
 
@@ -186,6 +190,10 @@ GET  /operator/github-operations/actions-failure/read-model
 GET  /operator/github-operations/actions-failure
 POST /operator/github-operations/actions-failure/read-admission/preview
 POST /operator/github-operations/actions-failure/read-evidence
+GET  /operator/github-operations/repo-status/read-model
+GET  /operator/github-operations/repo-status
+POST /operator/github-operations/repo-status/read-admission/preview
+POST /operator/github-operations/repo-status/read-evidence
 ```
 
 The GET read model powers the browser-facing Workroom panel. Missing evidence
@@ -286,6 +294,45 @@ The result is a read-only diagnosis receipt containing failure summary,
 suspected failed jobs, payload hashes, bounded log signals, recommended next
 action, and blocked actions. No endpoint in this path can rerun, cancel,
 dispatch, comment, push, merge, or deploy.
+
+## GitHub Repository Status Summary
+
+The repository status path is the third narrow Workroom capability. It is a
+`Class 0 - Observe` path for bounded repository overview, not release approval
+and not repository mutation.
+
+Allowed evidence:
+
+```text
+repository
+recent_commits
+open_pull_requests
+open_issues
+workflow_runs
+```
+
+The live execution route performs only GET requests against `api.github.com`,
+hashes each payload, and returns bounded summaries for repository metadata,
+recent commits, open pull requests, open issues, and recent workflow runs. The
+access token is accepted only for the request, is not returned, and the browser
+panel clears the password field after constructing the request.
+
+Blocked actions:
+
+```text
+create_issue_without_explicit_approval
+post_github_comment_without_write_admission
+mutate_repository_without_write_admission
+trigger_workflow_without_explicit_approval
+claim_release_ready_without_required_evidence
+```
+
+The result is a read-only repository status receipt containing evidence refs,
+payload hashes, partial failure reasons when GitHub evidence is incomplete,
+open PR and issue counts, recent commit count, workflow status counts, and a
+non-mutating final judgment. It can inform inspection, triage, or next planning
+work, but it cannot create issues, post comments, trigger workflows, push,
+merge, deploy, or certify release readiness.
 
 `evaluate_github_pr_safety_judgment` converts the read-only fetch result and
 fetch receipt into one bounded status:

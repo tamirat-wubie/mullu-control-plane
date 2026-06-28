@@ -47,9 +47,11 @@ from mcoi_runtime.contracts.universal_capability_fabric import (
 
 GITHUB_PR_SAFETY_CAPABILITY_ID = "github.pr_safety_review.read_only.v1"
 GITHUB_ACTIONS_FAILURE_CAPABILITY_ID = "github.actions_failure_diagnosis.read_only.v1"
+GITHUB_REPO_STATUS_CAPABILITY_ID = "github.repo_status_summary.read_only.v1"
 GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID = "connector.github.read"
 GITHUB_PR_SAFETY_INTENT = "REVIEW_PR_MERGE_SAFETY"
 GITHUB_ACTIONS_FAILURE_INTENT = "DIAGNOSE_GITHUB_ACTIONS_FAILURE"
+GITHUB_REPO_STATUS_INTENT = "SUMMARIZE_GITHUB_REPOSITORY_STATUS"
 GITHUB_WORKROOM_SURFACE = "github_operations_workroom"
 
 _REQUIRED_EVIDENCE = (
@@ -71,6 +73,13 @@ _ACTIONS_FAILURE_BLOCKED_ACTIONS = (
     "post_github_comment_without_write_admission",
     "mutate_repository_without_write_admission",
 )
+_REPO_STATUS_BLOCKED_ACTIONS = (
+    "create_issue_without_explicit_approval",
+    "post_github_comment_without_write_admission",
+    "mutate_repository_without_write_admission",
+    "trigger_workflow_without_explicit_approval",
+    "claim_release_ready_without_required_evidence",
+)
 _ALLOWED_TOOLS = (
     "github.read.pull_request",
     "github.read.diff",
@@ -82,6 +91,7 @@ _LIVE_READ_ALLOWED_NETWORKS = ("api.github.com",)
 _LIVE_READ_SECRET_SCOPE = "oauth:github.read"
 _SUPPORTED_LIVE_EVIDENCE_KINDS = ("pull_request", "diff", "checks", "changed_files")
 _SUPPORTED_ACTIONS_FAILURE_EVIDENCE_KINDS = ("workflow_run", "jobs", "failed_job_logs")
+_SUPPORTED_REPO_STATUS_EVIDENCE_KINDS = ("repository", "recent_commits", "open_pull_requests", "open_issues", "workflow_runs")
 _EFFECT_BOUNDARY = {
     "execution_allowed": False,
     "live_connector_execution_allowed": False,
@@ -354,6 +364,97 @@ class GitHubActionsFailureEvidenceAdmission(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class GitHubRepoStatusEvidenceAdmissionRequest(ContractRecord):
+    """Admission request for read-only GitHub repository status evidence."""
+
+    actor_id: str
+    workspace_id: str
+    repo: str
+    requested_evidence_kinds: tuple[str, ...]
+    requested_at: str
+    surface_event_id: str
+    authority_ref: str = "policy.github.repo_status.live_read_only"
+    max_items_per_kind: int = 10
+
+    def __post_init__(self) -> None:
+        for field_name in ("actor_id", "workspace_id", "repo", "surface_event_id", "authority_ref"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if not isinstance(self.requested_evidence_kinds, tuple) or not self.requested_evidence_kinds:
+            raise ValueError("requested_evidence_kinds must contain at least one evidence kind")
+        for index, evidence_kind in enumerate(self.requested_evidence_kinds):
+            normalized_kind = require_non_empty_text(evidence_kind, f"requested_evidence_kinds[{index}]")
+            if normalized_kind not in _SUPPORTED_REPO_STATUS_EVIDENCE_KINDS:
+                raise ValueError(f"unsupported GitHub repository status evidence kind: {normalized_kind}")
+        if not isinstance(self.max_items_per_kind, int) or isinstance(self.max_items_per_kind, bool):
+            raise ValueError("max_items_per_kind must be an integer")
+        if not 1 <= self.max_items_per_kind <= 30:
+            raise ValueError("max_items_per_kind must be between 1 and 30")
+        object.__setattr__(self, "requested_at", require_datetime_text(self.requested_at, "requested_at"))
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubRepoStatusEvidenceAdmission(ContractRecord):
+    """Admission decision for read-only GitHub repository status evidence."""
+
+    admission_id: str
+    capability_id: str
+    actor_id: str
+    workspace_id: str
+    repo: str
+    requested_evidence_kinds: tuple[str, ...]
+    planned_evidence_refs: tuple[str, ...]
+    allowed_tools: tuple[str, ...]
+    allowed_networks: tuple[str, ...]
+    required_secret_scope: str
+    blocked_actions: tuple[str, ...]
+    authority_ref: str
+    policy_decision: str
+    solver_outcome: str
+    live_connector_read_admitted: bool
+    live_connector_call_performed: bool
+    write_authority_granted: bool
+    max_items_per_kind: int
+    admitted_at: str
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "admission_id",
+            "capability_id",
+            "actor_id",
+            "workspace_id",
+            "repo",
+            "required_secret_scope",
+            "authority_ref",
+            "policy_decision",
+            "solver_outcome",
+        ):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if self.capability_id != GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID:
+            raise ValueError("GitHub repository status admission must use connector.github.read")
+        for field_name in ("requested_evidence_kinds", "planned_evidence_refs", "allowed_tools", "allowed_networks"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple) or not values:
+                raise ValueError(f"{field_name} must contain at least one item")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if not isinstance(self.blocked_actions, tuple) or not self.blocked_actions:
+            raise ValueError("blocked_actions must contain at least one item")
+        for index, action in enumerate(self.blocked_actions):
+            require_non_empty_text(action, f"blocked_actions[{index}]")
+        if self.live_connector_read_admitted is not True:
+            raise ValueError("live_connector_read_admitted must be true")
+        if self.live_connector_call_performed is not False:
+            raise ValueError("admission must not claim a live connector call was performed")
+        if self.write_authority_granted is not False:
+            raise ValueError("GitHub repository status admission cannot grant write authority")
+        if not isinstance(self.max_items_per_kind, int) or isinstance(self.max_items_per_kind, bool):
+            raise ValueError("max_items_per_kind must be an integer")
+        if not 1 <= self.max_items_per_kind <= 30:
+            raise ValueError("max_items_per_kind must be between 1 and 30")
+        object.__setattr__(self, "admitted_at", require_datetime_text(self.admitted_at, "admitted_at"))
+
+
+@dataclass(frozen=True, slots=True)
 class GitHubReadOnlyEvidenceFetchResult(ContractRecord):
     """Bounded result from an admitted read-only GitHub evidence fetch."""
 
@@ -460,6 +561,57 @@ class GitHubActionsFailureEvidenceFetchResult(ContractRecord):
             raise ValueError("live_connector_call_performed must be true for fetch results")
         if self.write_authority_granted is not False:
             raise ValueError("GitHub Actions evidence fetch cannot grant write authority")
+        if not isinstance(self.partial_failure_reasons, tuple):
+            raise ValueError("partial_failure_reasons must be a tuple")
+        for index, reason in enumerate(self.partial_failure_reasons):
+            require_non_empty_text(reason, f"partial_failure_reasons[{index}]")
+        object.__setattr__(self, "fetched_at", require_datetime_text(self.fetched_at, "fetched_at"))
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubRepoStatusEvidenceFetchResult(ContractRecord):
+    """Bounded read-only result from GitHub repository status evidence collection."""
+
+    fetch_id: str
+    admission_id: str
+    capability_id: str
+    repo: str
+    fetched_evidence_kinds: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    payload_hashes: Mapping[str, str]
+    repository_summary: Mapping[str, Any]
+    recent_commits: tuple[Mapping[str, Any], ...]
+    open_pull_requests: tuple[Mapping[str, Any], ...]
+    open_issues: tuple[Mapping[str, Any], ...]
+    workflow_runs: tuple[Mapping[str, Any], ...]
+    blocked_actions: tuple[str, ...]
+    solver_outcome: str
+    live_connector_call_performed: bool
+    write_authority_granted: bool
+    fetched_at: str
+    partial_failure_reasons: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        for field_name in ("fetch_id", "admission_id", "capability_id", "repo", "solver_outcome"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if self.capability_id != GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID:
+            raise ValueError("GitHub repository status fetch must use connector.github.read")
+        for field_name in ("fetched_evidence_kinds", "evidence_refs", "blocked_actions"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple) or not values:
+                raise ValueError(f"{field_name} must contain at least one item")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        object.__setattr__(self, "payload_hashes", dict(self.payload_hashes))
+        object.__setattr__(self, "repository_summary", dict(self.repository_summary))
+        object.__setattr__(self, "recent_commits", tuple(dict(item) for item in self.recent_commits))
+        object.__setattr__(self, "open_pull_requests", tuple(dict(item) for item in self.open_pull_requests))
+        object.__setattr__(self, "open_issues", tuple(dict(item) for item in self.open_issues))
+        object.__setattr__(self, "workflow_runs", tuple(dict(item) for item in self.workflow_runs))
+        if self.live_connector_call_performed is not True:
+            raise ValueError("live_connector_call_performed must be true for fetch results")
+        if self.write_authority_granted is not False:
+            raise ValueError("GitHub repository status fetch cannot grant write authority")
         if not isinstance(self.partial_failure_reasons, tuple):
             raise ValueError("partial_failure_reasons must be a tuple")
         for index, reason in enumerate(self.partial_failure_reasons):
@@ -655,6 +807,102 @@ class GitHubReadOnlyEvidenceFetcher:
             observed_workflow_run=observed_workflow_run,
             observed_jobs=observed_jobs,
             failed_log_summaries=tuple(failed_log_summaries),
+            blocked_actions=admission.blocked_actions,
+            solver_outcome="SolvedUnverified" if partial_failures else "SolvedVerified",
+            live_connector_call_performed=True,
+            write_authority_granted=False,
+            fetched_at=fetched_at,
+            partial_failure_reasons=tuple(partial_failures),
+        )
+
+    def fetch_repo_status(
+        self,
+        admission: GitHubRepoStatusEvidenceAdmission,
+        *,
+        clock: Callable[[], str],
+    ) -> GitHubRepoStatusEvidenceFetchResult:
+        """Fetch admitted GitHub repository status evidence with GET-only requests."""
+
+        _validate_repo_status_fetch_admission(admission)
+        fetched_at = require_datetime_text(clock(), "fetched_at")
+        payload_hashes: dict[str, str] = {}
+        evidence_refs: list[str] = []
+        partial_failures: list[str] = []
+        repository_summary: dict[str, Any] = {}
+        recent_commits: tuple[Mapping[str, Any], ...] = ()
+        open_pull_requests: tuple[Mapping[str, Any], ...] = ()
+        open_issues: tuple[Mapping[str, Any], ...] = ()
+        workflow_runs: tuple[Mapping[str, Any], ...] = ()
+
+        if "repository" in admission.requested_evidence_kinds:
+            try:
+                repo_payload = self._get_json(f"/repos/{admission.repo}")
+                payload_hashes["repository"] = _payload_hash(repo_payload)
+                evidence_refs.append(f"github-live-read://{admission.repo}/repository")
+                repository_summary = _summarize_repository(repo_payload)
+            except (GitHubReadOnlyEvidenceFetchError, ValueError) as exc:
+                partial_failures.append(f"repository:{exc}")
+
+        if "recent_commits" in admission.requested_evidence_kinds:
+            try:
+                commits_payload = self._get_json(f"/repos/{admission.repo}/commits")
+                payload_hashes["recent_commits"] = _payload_hash(commits_payload)
+                evidence_refs.append(f"github-live-read://{admission.repo}/commits")
+                recent_commits = _summarize_recent_commits(commits_payload, max_items=admission.max_items_per_kind)
+            except (GitHubReadOnlyEvidenceFetchError, ValueError) as exc:
+                partial_failures.append(f"recent_commits:{exc}")
+
+        if "open_pull_requests" in admission.requested_evidence_kinds:
+            try:
+                pulls_payload = self._get_json(f"/repos/{admission.repo}/pulls")
+                payload_hashes["open_pull_requests"] = _payload_hash(pulls_payload)
+                evidence_refs.append(f"github-live-read://{admission.repo}/pulls")
+                open_pull_requests = _summarize_open_pull_requests(pulls_payload, max_items=admission.max_items_per_kind)
+            except (GitHubReadOnlyEvidenceFetchError, ValueError) as exc:
+                partial_failures.append(f"open_pull_requests:{exc}")
+
+        if "open_issues" in admission.requested_evidence_kinds:
+            try:
+                issues_payload = self._get_json(f"/repos/{admission.repo}/issues")
+                payload_hashes["open_issues"] = _payload_hash(issues_payload)
+                evidence_refs.append(f"github-live-read://{admission.repo}/issues")
+                open_issues = _summarize_open_issues(issues_payload, max_items=admission.max_items_per_kind)
+            except (GitHubReadOnlyEvidenceFetchError, ValueError) as exc:
+                partial_failures.append(f"open_issues:{exc}")
+
+        if "workflow_runs" in admission.requested_evidence_kinds:
+            try:
+                runs_payload = self._get_json(f"/repos/{admission.repo}/actions/runs")
+                payload_hashes["workflow_runs"] = _payload_hash(runs_payload)
+                evidence_refs.append(f"github-live-read://{admission.repo}/actions/runs")
+                workflow_runs = _summarize_workflow_runs(runs_payload, max_items=admission.max_items_per_kind)
+            except (GitHubReadOnlyEvidenceFetchError, ValueError) as exc:
+                partial_failures.append(f"workflow_runs:{exc}")
+
+        if not evidence_refs:
+            raise GitHubReadOnlyEvidenceFetchError("no_repo_status_evidence_collected")
+
+        fetch_hash = _stable_hash(
+            {
+                "admission_id": admission.admission_id,
+                "evidence_refs": tuple(evidence_refs),
+                "payload_hashes": payload_hashes,
+                "fetched_at": fetched_at,
+            }
+        )
+        return GitHubRepoStatusEvidenceFetchResult(
+            fetch_id=f"github-repo-status-fetch:{fetch_hash}",
+            admission_id=admission.admission_id,
+            capability_id=admission.capability_id,
+            repo=admission.repo,
+            fetched_evidence_kinds=tuple(payload_hashes),
+            evidence_refs=tuple(evidence_refs),
+            payload_hashes=payload_hashes,
+            repository_summary=repository_summary,
+            recent_commits=recent_commits,
+            open_pull_requests=open_pull_requests,
+            open_issues=open_issues,
+            workflow_runs=workflow_runs,
             blocked_actions=admission.blocked_actions,
             solver_outcome="SolvedUnverified" if partial_failures else "SolvedVerified",
             live_connector_call_performed=True,
@@ -1218,6 +1466,211 @@ def evaluate_github_actions_failure_diagnosis(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class GitHubRepoStatusSummary(ContractRecord):
+    """Bounded repository status summary from read-only GitHub evidence."""
+
+    summary_id: str
+    repo: str
+    status: str
+    summary: str
+    signals: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    blocked_actions: tuple[str, ...]
+    recommended_next_action: str
+    confidence: float
+    write_authority_granted: bool
+    summarized_at: str
+
+    def __post_init__(self) -> None:
+        for field_name in ("summary_id", "repo", "status", "summary", "recommended_next_action"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if self.status not in {"summarized", "needs_evidence", "attention_required"}:
+            raise ValueError("status must be summarized, needs_evidence, or attention_required")
+        for field_name in ("signals", "evidence_refs", "blocked_actions"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple) or not values:
+                raise ValueError(f"{field_name} must contain at least one item")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if not isinstance(self.confidence, (int, float)) or isinstance(self.confidence, bool):
+            raise ValueError("confidence must be a number")
+        if not 0.0 <= float(self.confidence) <= 1.0:
+            raise ValueError("confidence must be between 0.0 and 1.0")
+        object.__setattr__(self, "confidence", float(self.confidence))
+        if self.write_authority_granted is not False:
+            raise ValueError("repository status summary cannot grant write authority")
+        object.__setattr__(self, "summarized_at", require_datetime_text(self.summarized_at, "summarized_at"))
+
+
+def admit_github_repo_status_evidence_collection(
+    request: GitHubRepoStatusEvidenceAdmissionRequest,
+    *,
+    clock: Callable[[], str],
+) -> GitHubRepoStatusEvidenceAdmission:
+    """Admit a live read-only GitHub repository status evidence plan without execution."""
+
+    admitted_at = require_datetime_text(clock(), "admitted_at")
+    identity_hash = _stable_hash(
+        {
+            "actor_id": request.actor_id,
+            "repo": request.repo,
+            "requested_evidence_kinds": request.requested_evidence_kinds,
+            "requested_at": request.requested_at,
+            "surface_event_id": request.surface_event_id,
+            "workspace_id": request.workspace_id,
+            "max_items_per_kind": request.max_items_per_kind,
+        }
+    )
+    planned_refs = tuple(f"github-live-read://{request.repo}/status/{kind}" for kind in request.requested_evidence_kinds)
+    return GitHubRepoStatusEvidenceAdmission(
+        admission_id=f"github-repo-status-admission:{identity_hash}",
+        capability_id=GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID,
+        actor_id=request.actor_id,
+        workspace_id=request.workspace_id,
+        repo=request.repo,
+        requested_evidence_kinds=request.requested_evidence_kinds,
+        planned_evidence_refs=planned_refs,
+        allowed_tools=_LIVE_READ_ALLOWED_TOOLS,
+        allowed_networks=_LIVE_READ_ALLOWED_NETWORKS,
+        required_secret_scope=_LIVE_READ_SECRET_SCOPE,
+        blocked_actions=_REPO_STATUS_BLOCKED_ACTIONS,
+        authority_ref=request.authority_ref,
+        policy_decision="allow_read_only_connector_lease",
+        solver_outcome="AwaitingEvidence",
+        live_connector_read_admitted=True,
+        live_connector_call_performed=False,
+        write_authority_granted=False,
+        max_items_per_kind=request.max_items_per_kind,
+        admitted_at=admitted_at,
+    )
+
+
+def evaluate_github_repo_status_summary(
+    *,
+    fetch_result: GitHubRepoStatusEvidenceFetchResult,
+    clock: Callable[[], str],
+) -> GitHubRepoStatusSummary:
+    """Evaluate read-only repository evidence into a bounded status summary."""
+
+    if not isinstance(fetch_result, GitHubRepoStatusEvidenceFetchResult):
+        raise ValueError("fetch_result must be a GitHubRepoStatusEvidenceFetchResult")
+    summarized_at = require_datetime_text(clock(), "summarized_at")
+    signals: list[str] = []
+    if "repository" not in fetch_result.fetched_evidence_kinds or not fetch_result.repository_summary:
+        signals.append("missing_repository_metadata")
+    if fetch_result.partial_failure_reasons:
+        signals.extend(f"partial_failure:{reason}" for reason in fetch_result.partial_failure_reasons)
+    failed_runs = tuple(run for run in fetch_result.workflow_runs if str(run.get("conclusion") or "") == "failure")
+    open_pr_count = len(fetch_result.open_pull_requests)
+    open_issue_count = len(fetch_result.open_issues)
+    recent_commit_count = len(fetch_result.recent_commits)
+    if failed_runs:
+        signals.append(f"failed_workflow_runs:{len(failed_runs)}")
+    if open_pr_count:
+        signals.append(f"open_pull_requests:{open_pr_count}")
+    if open_issue_count:
+        signals.append(f"open_issues:{open_issue_count}")
+    if recent_commit_count:
+        signals.append(f"recent_commits:{recent_commit_count}")
+    if not signals:
+        signals.append("repository_status_evidence_collected")
+
+    if "missing_repository_metadata" in signals:
+        status = "needs_evidence"
+        summary = "Repository status summary needs repository metadata before a bounded status judgment."
+        recommended_next_action = "collect_repository_metadata"
+        confidence = 0.42
+    elif failed_runs:
+        status = "attention_required"
+        summary = f"Repository has {open_pr_count} open pull requests, {open_issue_count} open issues, and {len(failed_runs)} recent failed workflow runs."
+        recommended_next_action = "inspect_failed_workflow_run_before_release_or_merge_claims"
+        confidence = 0.72
+    else:
+        status = "summarized"
+        summary = f"Repository has {open_pr_count} open pull requests, {open_issue_count} open issues, and {recent_commit_count} recent commits in bounded read-only evidence."
+        recommended_next_action = "continue_read_only_project_review_or_select_specific_pr_or_ci_run"
+        confidence = 0.68
+
+    summary_hash = _stable_hash(
+        {
+            "fetch_id": fetch_result.fetch_id,
+            "status": status,
+            "signals": tuple(signals),
+            "summarized_at": summarized_at,
+        }
+    )
+    return GitHubRepoStatusSummary(
+        summary_id=f"github-repo-status-summary:{summary_hash}",
+        repo=fetch_result.repo,
+        status=status,
+        summary=summary,
+        signals=tuple(dict.fromkeys(signals)),
+        evidence_refs=tuple(fetch_result.evidence_refs),
+        blocked_actions=fetch_result.blocked_actions,
+        recommended_next_action=recommended_next_action,
+        confidence=confidence,
+        write_authority_granted=False,
+        summarized_at=summarized_at,
+    )
+
+
+def build_github_repo_status_summary_receipt(
+    result: GitHubRepoStatusEvidenceFetchResult,
+    *,
+    summary: GitHubRepoStatusSummary,
+    actor_id: str,
+    surface_event_id: str,
+    occurred_at: str,
+) -> CausalCapabilityReceipt:
+    """Emit a causal receipt for read-only GitHub repository status summary."""
+
+    if not isinstance(result, GitHubRepoStatusEvidenceFetchResult):
+        raise ValueError("result must be a GitHubRepoStatusEvidenceFetchResult")
+    if not isinstance(summary, GitHubRepoStatusSummary):
+        raise ValueError("summary must be a GitHubRepoStatusSummary")
+    occurred_at = require_datetime_text(occurred_at, "occurred_at")
+    actor_id = require_non_empty_text(actor_id, "actor_id")
+    surface_event_id = require_non_empty_text(surface_event_id, "surface_event_id")
+    receipt_hash = _stable_hash(
+        {
+            "actor_id": actor_id,
+            "summary_id": summary.summary_id,
+            "fetch_id": result.fetch_id,
+            "surface_event_id": surface_event_id,
+            "occurred_at": occurred_at,
+            "payload_hashes": result.payload_hashes,
+        }
+    )
+    verification_result = (
+        "Read-only repository status evidence collected with partial gaps."
+        if result.partial_failure_reasons
+        else "Read-only repository status evidence collected, hash-bound, and summarized."
+    )
+    return CausalCapabilityReceipt(
+        receipt_id=f"github-repo-status-receipt:{receipt_hash}",
+        event_id=result.admission_id,
+        actor_id=actor_id,
+        surface=GITHUB_WORKROOM_SURFACE,
+        intent=GITHUB_REPO_STATUS_INTENT,
+        target_object=f"github_repository:{result.repo}",
+        risk_class=FabricRiskClass.CLASS_0_OBSERVE,
+        evidence_used=result.evidence_refs,
+        policy_decision=FabricPolicyDecision.ALLOW_READ_ONLY,
+        actions_taken=("performed_get_only_github_repo_reads", "hashed_payloads", "summarized_repository_status"),
+        actions_blocked=result.blocked_actions,
+        assumptions=(
+            "Access token scope is limited to oauth:github.read.",
+            "Summary cannot create issues, comment, trigger workflows, mutate repository state, or claim release readiness.",
+        ),
+        verification_result=verification_result,
+        final_judgment=summary.summary,
+        memory_update=FabricMemoryDecisionStatus.STORE,
+        timestamp=occurred_at,
+        partial_failure_reasons=result.partial_failure_reasons,
+    )
+
+
 def build_pr_safety_projection_from_github_fetch_receipt(
     *,
     fetch_receipt: CausalCapabilityReceipt,
@@ -1659,6 +2112,78 @@ def build_github_actions_failure_workroom_read_model(
     }
 
 
+def build_github_repo_status_workroom_read_model(
+    *,
+    actor_id: str,
+    workspace_id: str,
+    repo: str,
+    surface_event_id: str,
+    occurred_at: str,
+    clock: Callable[[], str],
+    requested_evidence_kinds: tuple[str, ...] = (
+        "repository",
+        "recent_commits",
+        "open_pull_requests",
+        "open_issues",
+        "workflow_runs",
+    ),
+    max_items_per_kind: int = 10,
+) -> dict[str, Any]:
+    """Build the operator Workroom read model for repository status summary."""
+
+    generated_at = require_datetime_text(clock(), "generated_at")
+    admission = admit_github_repo_status_evidence_collection(
+        GitHubRepoStatusEvidenceAdmissionRequest(
+            actor_id=actor_id,
+            workspace_id=workspace_id,
+            repo=repo,
+            requested_evidence_kinds=requested_evidence_kinds,
+            requested_at=occurred_at,
+            surface_event_id=surface_event_id,
+            max_items_per_kind=max_items_per_kind,
+        ),
+        clock=clock,
+    )
+    passport = UniversalCapabilityPassport(
+        passport_id=GITHUB_REPO_STATUS_CAPABILITY_ID,
+        name="GitHub Repository Status Summary",
+        domain="software_governance",
+        inputs=("repo", "actor_id", "requested_evidence_kinds"),
+        outputs=("repository_summary", "status_signals", "recommended_next_action", "receipt"),
+        required_evidence=("github_repository_metadata", "recent_commits", "open_pull_requests", "open_issues", "workflow_runs"),
+        allowed_tools=("github.read.repository", "github.read.commits", "github.read.pull_requests", "github.read.issues", "github.read.workflow_runs"),
+        blocked_actions=_REPO_STATUS_BLOCKED_ACTIONS,
+        risk_class=FabricRiskClass.CLASS_0_OBSERVE,
+        verification_rules=(
+            "no_repository_status_without_repository_metadata",
+            "no_release_readiness_claim_from_summary_only",
+            "no_github_mutation_from_status_summary",
+        ),
+        receipt_fields=("actor", "repo", "evidence_used", "summary", "actions_blocked"),
+        memory_policy="Store receipt metadata and bounded status signals only; do not store raw issue or commit bodies.",
+    )
+    return {
+        "schema_ref": "urn:mullusi:read-model:github-operations-repo-status-workroom:1",
+        "generated_at": generated_at,
+        "capability_id": GITHUB_REPO_STATUS_CAPABILITY_ID,
+        "surface": GITHUB_WORKROOM_SURFACE,
+        "actor_id": require_non_empty_text(actor_id, "actor_id"),
+        "workspace_id": require_non_empty_text(workspace_id, "workspace_id"),
+        "repo": require_non_empty_text(repo, "repo"),
+        "status": "awaiting_evidence",
+        "outcome": "AwaitingEvidence",
+        "required_evidence": list(passport.required_evidence),
+        "allowed_tools": list(passport.allowed_tools),
+        "blocked_actions": list(_REPO_STATUS_BLOCKED_ACTIONS),
+        "live_read_admission": admission.to_json_dict(),
+        "passport": passport.to_json_dict(),
+        "effect_boundary": dict(_EFFECT_BOUNDARY),
+        "raw_tool_surface_exposed": False,
+        "governed": True,
+        "execution_allowed": False,
+    }
+
+
 def render_github_pr_safety_workroom_html(read_model: Mapping[str, Any]) -> str:
     """Render the browser-facing operator Workroom panel."""
 
@@ -1912,6 +2437,92 @@ def _build_episode_steps(
     return tuple(steps)
 
 
+def render_github_repo_status_workroom_html(read_model: Mapping[str, Any]) -> str:
+    """Render the repository status operator Workroom panel."""
+
+    repo = _html(read_model.get("repo", ""))
+    status = _html(read_model.get("status", "awaiting_evidence"))
+    outcome = _html(read_model.get("outcome", "AwaitingEvidence"))
+    blocked_actions = "".join(f"<li>{_html(action)}</li>" for action in read_model.get("blocked_actions", ()))
+    required_evidence = "".join(f"<li>{_html(item)}</li>" for item in read_model.get("required_evidence", ()))
+    github_call_allowed = str(read_model.get("effect_boundary", {}).get("github_call_allowed", False)).lower()
+    mutation_allowed = str(read_model.get("effect_boundary", {}).get("repository_mutation_allowed", False)).lower()
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullusi GitHub Repository Status Workroom</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 2rem; color: #17202a; background: #f7f9fb; }}
+    main {{ max-width: 1080px; margin: 0 auto; }}
+    section, form {{ background: #fff; border: 1px solid #d8dee8; border-radius: 8px; padding: 1rem; margin: 1rem 0; }}
+    label {{ display: block; font-weight: 650; margin-top: .75rem; }}
+    input {{ width: 100%; box-sizing: border-box; margin-top: .25rem; padding: .55rem; border: 1px solid #aeb8c7; border-radius: 6px; }}
+    button {{ margin-top: .9rem; padding: .55rem .85rem; border: 1px solid #1f5f9f; border-radius: 6px; background: #1f5f9f; color: #fff; font-weight: 700; }}
+    pre {{ overflow: auto; background: #0f1720; color: #e8eef7; padding: .85rem; border-radius: 6px; min-height: 4rem; }}
+    dl {{ display: grid; grid-template-columns: 190px 1fr; gap: .5rem 1rem; }}
+    dt {{ font-weight: 700; }}
+    dd {{ margin: 0; }}
+    code {{ background: #eef2f6; padding: .15rem .35rem; border-radius: 4px; }}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mullusi GitHub Repository Status Workroom</h1>
+  <section>
+    <dl>
+      <dt>Repository</dt><dd><code>{repo}</code></dd>
+      <dt>Status</dt><dd>{status}</dd>
+      <dt>Outcome</dt><dd>{outcome}</dd>
+      <dt>GitHub call allowed now</dt><dd>{github_call_allowed}</dd>
+      <dt>Repository mutation allowed</dt><dd>{mutation_allowed}</dd>
+    </dl>
+  </section>
+  <form method="get" action="/operator/github-operations/repo-status">
+    <label>Repository <input name="repo" value="{repo}"></label>
+    <button type="submit">Preview Governed Status Path</button>
+  </form>
+  <section>
+    <h2>Required Evidence</h2>
+    <ul>{required_evidence}</ul>
+  </section>
+  <section>
+    <h2>Blocked Actions</h2>
+    <ul>{blocked_actions}</ul>
+  </section>
+  <section>
+    <h2>Live Read Execution</h2>
+    <form id="repo-status-read">
+      <label>Access token <input name="access_token" type="password" autocomplete="off"></label>
+      <button type="submit">Collect Read-Only Repository Status Evidence</button>
+    </form>
+    <pre id="repo-status-output">Awaiting explicit local token input. No token is persisted or rendered.</pre>
+  </section>
+</main>
+<script>
+document.getElementById("repo-status-read").addEventListener("submit", async (event) => {{
+  event.preventDefault();
+  const tokenInput = event.target.querySelector('input[name="access_token"]');
+  const form = new FormData(event.target);
+  const payload = {{
+    repo: "{repo}",
+    access_token: tokenInput.value,
+    requested_evidence_kinds: ["repository", "recent_commits", "open_pull_requests", "open_issues", "workflow_runs"]
+  }};
+  tokenInput.value = "";
+  const response = await fetch("/operator/github-operations/repo-status/read-evidence", {{
+    method: "POST",
+    headers: {{ "Content-Type": "application/json" }},
+    body: JSON.stringify(payload)
+  }});
+  const data = await response.json();
+  document.getElementById("repo-status-output").textContent = JSON.stringify(data, null, 2);
+}});
+</script>
+</body>
+</html>"""
+
+
 def _stable_hash(payload: Mapping[str, Any]) -> str:
     normalized = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
@@ -1964,11 +2575,123 @@ def _validate_actions_failure_fetch_admission(admission: GitHubActionsFailureEvi
         raise ValueError("admission secret scope does not match GitHub read-only scope")
 
 
+def _validate_repo_status_fetch_admission(admission: GitHubRepoStatusEvidenceAdmission) -> None:
+    if not isinstance(admission, GitHubRepoStatusEvidenceAdmission):
+        raise ValueError("admission must be a GitHubRepoStatusEvidenceAdmission")
+    if admission.capability_id != GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID:
+        raise ValueError("admission capability must be connector.github.read")
+    if admission.live_connector_read_admitted is not True:
+        raise ValueError("live connector read must be admitted before fetch")
+    if admission.live_connector_call_performed is not False:
+        raise ValueError("admission must not already claim connector execution")
+    if admission.write_authority_granted is not False:
+        raise ValueError("read-only fetch cannot use write authority")
+    if admission.allowed_tools != _LIVE_READ_ALLOWED_TOOLS:
+        raise ValueError("admission allowed tools do not match GitHub read-only worker")
+    if admission.allowed_networks != _LIVE_READ_ALLOWED_NETWORKS:
+        raise ValueError("admission allowed networks do not match GitHub read-only network")
+    if admission.required_secret_scope != _LIVE_READ_SECRET_SCOPE:
+        raise ValueError("admission secret scope does not match GitHub read-only scope")
+
+
 def _quote_github_path(path: str) -> str:
     parsed = urllib.parse.urlsplit(path)
     if parsed.scheme or parsed.netloc or parsed.query or parsed.fragment:
         raise GitHubReadOnlyEvidenceFetchError("github_path_must_not_include_external_url_parts")
     return urllib.parse.quote(path, safe="/")
+
+
+def _summarize_repository(payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, Mapping):
+        raise ValueError("repository response must be an object")
+    owner = payload.get("owner", {})
+    owner_login = owner.get("login", "") if isinstance(owner, Mapping) else ""
+    return {
+        "full_name": payload.get("full_name", ""),
+        "default_branch": payload.get("default_branch", ""),
+        "private": bool(payload.get("private", False)),
+        "archived": bool(payload.get("archived", False)),
+        "disabled": bool(payload.get("disabled", False)),
+        "fork": bool(payload.get("fork", False)),
+        "open_issues_count": payload.get("open_issues_count", 0),
+        "stargazers_count": payload.get("stargazers_count", 0),
+        "owner": owner_login,
+        "pushed_at": payload.get("pushed_at", ""),
+        "updated_at": payload.get("updated_at", ""),
+    }
+
+
+def _summarize_recent_commits(payload: Any, *, max_items: int) -> tuple[Mapping[str, Any], ...]:
+    if not isinstance(payload, list):
+        raise ValueError("commits response must be an array")
+    summaries: list[Mapping[str, Any]] = []
+    for index, item in enumerate(payload[:max_items]):
+        if not isinstance(item, Mapping):
+            raise ValueError(f"commit entry {index} must be an object")
+        commit = item.get("commit", {})
+        author = commit.get("author", {}) if isinstance(commit, Mapping) else {}
+        summaries.append(
+            {
+                "sha": str(item.get("sha", ""))[:40],
+                "message_head": str(commit.get("message", "") if isinstance(commit, Mapping) else "").splitlines()[0][:160],
+                "author_name": str(author.get("name", "") if isinstance(author, Mapping) else ""),
+                "authored_at": str(author.get("date", "") if isinstance(author, Mapping) else ""),
+            }
+        )
+    return tuple(summaries)
+
+
+def _summarize_open_pull_requests(payload: Any, *, max_items: int) -> tuple[Mapping[str, Any], ...]:
+    if not isinstance(payload, list):
+        raise ValueError("pulls response must be an array")
+    summaries: list[Mapping[str, Any]] = []
+    for index, item in enumerate(payload[:max_items]):
+        if not isinstance(item, Mapping):
+            raise ValueError(f"pull request entry {index} must be an object")
+        summaries.append(
+            {
+                "number": item.get("number"),
+                "title": str(item.get("title", ""))[:180],
+                "draft": bool(item.get("draft", False)),
+                "state": item.get("state", ""),
+                "created_at": item.get("created_at", ""),
+                "updated_at": item.get("updated_at", ""),
+            }
+        )
+    return tuple(summaries)
+
+
+def _summarize_open_issues(payload: Any, *, max_items: int) -> tuple[Mapping[str, Any], ...]:
+    if not isinstance(payload, list):
+        raise ValueError("issues response must be an array")
+    summaries: list[Mapping[str, Any]] = []
+    for index, item in enumerate(payload[:max_items]):
+        if not isinstance(item, Mapping):
+            raise ValueError(f"issue entry {index} must be an object")
+        if "pull_request" in item:
+            continue
+        labels = item.get("labels", [])
+        label_names = [str(label.get("name", "")) for label in labels if isinstance(label, Mapping)][:8] if isinstance(labels, list) else []
+        summaries.append(
+            {
+                "number": item.get("number"),
+                "title": str(item.get("title", ""))[:180],
+                "state": item.get("state", ""),
+                "labels": label_names,
+                "created_at": item.get("created_at", ""),
+                "updated_at": item.get("updated_at", ""),
+            }
+        )
+    return tuple(summaries)
+
+
+def _summarize_workflow_runs(payload: Any, *, max_items: int) -> tuple[Mapping[str, Any], ...]:
+    if not isinstance(payload, Mapping):
+        raise ValueError("workflow runs response must be an object")
+    runs = payload.get("workflow_runs", [])
+    if not isinstance(runs, list):
+        raise ValueError("workflow runs response workflow_runs must be an array")
+    return tuple(_summarize_workflow_run(item) for item in runs[:max_items] if isinstance(item, Mapping))
 
 
 def _summarize_pull_request(payload: Any) -> dict[str, Any]:
