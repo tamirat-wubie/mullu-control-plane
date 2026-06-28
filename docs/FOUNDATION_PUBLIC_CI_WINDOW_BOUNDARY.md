@@ -68,6 +68,13 @@ python scripts/validate_release_status.py
 python scripts/report_ci_health.py --repo tamirat-wubie/mullu-control-plane --branch main --json
 ```
 
+For an operator-facing command packet that does not change visibility by
+itself, generate the no-execute checklist:
+
+```powershell
+python scripts/generate_public_ci_window_operator_commands.py --pull-request 2380 --branch codex/public-ci-window-visibility-restoration-20260628 --head-sha 331adc8c851b48a754643a9ac33c706c9365071c
+```
+
 When the repository is public and live metadata is intentionally available, the
 remote surface check may also run:
 
