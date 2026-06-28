@@ -83,6 +83,7 @@ EXPECTED_ROOT_KEYS = {
 }
 EXPECTED_RECEIPT_ROOT_KEYS = {
     "branch",
+    "branch_deleted",
     "closed_at",
     "closure_decision",
     "customer_access_claimed",
@@ -437,6 +438,20 @@ def validate_window_receipt(payload: dict[str, Any], observed_at: datetime | Non
             Finding(
                 "public_ci_window_receipt_solver_outcome_invalid",
                 "bounded public receipts must remain AwaitingEvidence",
+            )
+        )
+    if status == "closed" and payload.get("branch_deleted") is not True:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_branch_deleted_invalid",
+                "closed receipts must confirm topic branch deletion",
+            )
+        )
+    if status == "bounded_public_awaiting_evidence" and payload.get("branch_deleted") is not False:
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_branch_deleted_invalid",
+                "bounded public receipts must keep branch_deleted false",
             )
         )
     if payload.get("repo_visibility_before") != EXPECTED_VISIBILITY_BEFORE:

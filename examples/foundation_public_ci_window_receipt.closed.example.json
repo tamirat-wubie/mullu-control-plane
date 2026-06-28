@@ -1,5 +1,6 @@
 {
   "branch": "codex/public-ci-window-protocol-20260626",
+  "branch_deleted": true,
   "closed_at": "2026-06-26T11:15:28Z",
   "closure_decision": "Public CI evidence was collected, all observed checks passed, and repository exposure was closed or bounded without changing public-readiness state.",
   "customer_access_claimed": false,

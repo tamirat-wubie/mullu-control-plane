@@ -111,6 +111,7 @@ def test_public_ci_window_closed_receipt_example_passes() -> None:
     assert payload["public_readiness_claimed"] is False
     assert payload["raw_secrets_committed"] is False
     assert payload["workflow_run_urls"]
+    assert payload["branch_deleted"] is True
 
 
 def test_public_ci_window_receipt_rejects_missing_closure_for_closed_window() -> None:
@@ -122,6 +123,30 @@ def test_public_ci_window_receipt_rejects_missing_closure_for_closed_window() ->
     assert findings
     assert any(finding.rule_id == "public_ci_window_receipt_closed_at_invalid" for finding in findings)
     assert any("closed receipts require closed_at" in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_missing_branch_cleanup() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    del payload["branch_deleted"]
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_root_keys_invalid" for finding in findings)
+    assert any(finding.rule_id == "public_ci_window_receipt_branch_deleted_invalid" for finding in findings)
+    assert any("closed receipts must confirm topic branch deletion" in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_rejects_false_branch_cleanup() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["branch_deleted"] = False
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_branch_deleted_invalid" for finding in findings)
+    assert any("closed receipts must confirm topic branch deletion" in finding.message for finding in findings)
+    assert all("False" not in finding.message for finding in findings)
 
 
 def test_public_ci_window_receipt_rejects_extra_validator_fields() -> None:
@@ -433,6 +458,7 @@ def test_public_ci_window_receipt_allows_bounded_public_awaiting_evidence() -> N
     payload["status"] = "bounded_public_awaiting_evidence"
     payload["solver_outcome"] = "AwaitingEvidence"
     payload["closed_at"] = None
+    payload["branch_deleted"] = False
     payload["merge_commit"] = None
     payload["merged_at"] = None
     payload["opened_at"] = "2026-06-26T10:51:56Z"
@@ -443,6 +469,7 @@ def test_public_ci_window_receipt_allows_bounded_public_awaiting_evidence() -> N
 
     assert findings == []
     assert payload["status"] == "bounded_public_awaiting_evidence"
+    assert payload["branch_deleted"] is False
     assert payload["closed_at"] is None
     assert payload["merge_commit"] is None
     assert payload["merged_at"] is None
@@ -454,6 +481,7 @@ def test_public_ci_window_bounded_receipt_rejects_stale_open_window() -> None:
     payload["status"] = "bounded_public_awaiting_evidence"
     payload["solver_outcome"] = "AwaitingEvidence"
     payload["closed_at"] = None
+    payload["branch_deleted"] = False
     payload["merge_commit"] = None
     payload["merged_at"] = None
     for validator in payload["validators"]:
@@ -486,6 +514,7 @@ def test_public_ci_window_bounded_receipt_rejects_merge_evidence_claim() -> None
     payload["status"] = "bounded_public_awaiting_evidence"
     payload["solver_outcome"] = "AwaitingEvidence"
     payload["closed_at"] = None
+    payload["branch_deleted"] = False
     for validator in payload["validators"]:
         validator["state"] = "AwaitingEvidence"
 
@@ -495,6 +524,25 @@ def test_public_ci_window_bounded_receipt_rejects_merge_evidence_claim() -> None
     assert any(finding.rule_id == "public_ci_window_receipt_merge_commit_invalid" for finding in findings)
     assert any(finding.rule_id == "public_ci_window_receipt_merged_at_invalid" for finding in findings)
     assert all(payload["merge_commit"] not in finding.message for finding in findings)
+
+
+def test_public_ci_window_bounded_receipt_rejects_true_branch_cleanup_claim() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["status"] = "bounded_public_awaiting_evidence"
+    payload["solver_outcome"] = "AwaitingEvidence"
+    payload["closed_at"] = None
+    payload["merge_commit"] = None
+    payload["merged_at"] = None
+    payload["branch_deleted"] = True
+    for validator in payload["validators"]:
+        validator["state"] = "AwaitingEvidence"
+
+    findings = validate_window_receipt(payload, observed_at=datetime(2026, 6, 26, 12, 51, 56, tzinfo=timezone.utc))
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_branch_deleted_invalid" for finding in findings)
+    assert any("bounded public receipts must keep branch_deleted false" in finding.message for finding in findings)
+    assert all("True" not in finding.message for finding in findings)
 
 
 def test_public_ci_window_boundary_cli_passes(capsys) -> None:

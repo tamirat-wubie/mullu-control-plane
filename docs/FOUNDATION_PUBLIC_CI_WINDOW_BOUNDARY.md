@@ -88,6 +88,7 @@ A public CI window receipt must include:
 | opened_at | Timestamp for public visibility start, if known. |
 | closed_at | Timestamp for private restoration, or null with bounded reason. |
 | branch | Branch or pull request being verified. |
+| branch_deleted | Whether the temporary topic branch was deleted after merge or closure. |
 | head_sha | Commit SHA under CI verification. |
 | merge_commit | Merge commit SHA for a closed pull-request window, or null while bounded public evidence remains unresolved. |
 | merged_at | Pull request merge timestamp for a closed window, or null while bounded public evidence remains unresolved. |
