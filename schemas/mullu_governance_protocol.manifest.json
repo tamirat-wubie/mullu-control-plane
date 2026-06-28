@@ -1841,6 +1841,12 @@
       "urn": "urn:mullusi:schema:operator-control-tower-status-receipt:1"
     },
     {
+      "path": "schemas/operator_sandbox_patch_readiness_compact_read_model.schema.json",
+      "schema_id": "operator-sandbox-patch-readiness-compact-read-model",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:operator-sandbox-patch-readiness-compact-read-model:1"
+    },
+    {
       "path": "schemas/sandbox_to_pr_preparation_packet.schema.json",
       "schema_id": "sandbox-to-pr-preparation-packet",
       "surface": "operator",

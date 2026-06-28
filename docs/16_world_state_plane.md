@@ -64,6 +64,42 @@ Maintain the canonical, queryable representation of the current environment stat
 2. Each version MUST carry a timestamp and the evidence that caused the change.
 3. Historical state MUST be queryable — the world-state plane is not only the current snapshot.
 
+## AxiomWorld MVP overlay
+
+`gateway/axiomworld_kernel.py` implements the current AxiomWorld MVP overlay on
+top of `gateway/world_state.py`. It is not a replacement for the canonical
+world-state store. It adds a governed claim and action layer for evidence-backed
+symbols, truth-state transitions, conflict preservation, observer projections,
+simulation labels, and receipt replay.
+
+Implementation boundary:
+
+1. `AxiomWorldKernel.observe_event` admits symbols only when source evidence is
+   present.
+2. `AxiomWorldKernel.propose_claim` creates hypotheses, not validated truth,
+   until `validate_claim` receives supporting evidence.
+3. Conflicting claims remain visible as open contradictions and are not silently
+   resolved.
+4. `AxiomWorldKernel.propose_action` gates high-risk or irreversible actions
+   behind review instead of marking them executable.
+5. `AxiomWorldKernel.simulate_action` records simulation receipts without
+   mutating real world-state entities.
+6. `AxiomWorldKernel.project` filters private state from public projections.
+7. `AxiomWorldGenericEventAdapter.ingest` is the bounded payload adapter used
+   by the gateway API.
+
+Callable local routes:
+
+- `GET /api/v1/axiomworld/health`
+- `POST /api/v1/axiomworld/events`
+
+Verification witnesses:
+
+- `tests/test_gateway/test_axiomworld_kernel.py`
+- `tests/test_gateway/test_axiomworld_generic_event_adapter.py`
+- `tests/test_gateway/test_axiomworld_api.py`
+- `scripts/proof_coverage_matrix.py` surface `axiomworld_kernel_mvp`
+
 ## Policy hooks
 
 - State mutation policy: what evidence quality is required to establish or update an entity.

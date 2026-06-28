@@ -158,6 +158,7 @@ from gateway.github_operations_workroom import (
     read_github_read_only_evidence_receipt_bundle,
     render_github_pr_safety_workroom_html,
 )
+from gateway.axiomworld_api import register_axiomworld_routes
 from gateway.mcp_capabilities import register_mcp_capabilities
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, build_mcp_gateway_import_from_env
 from gateway.observability import GatewayObservabilityRecorder
@@ -179,6 +180,7 @@ from gateway.operator_control_tower import (
     operator_control_tower_status_receipt,
     render_operator_control_tower,
 )
+from gateway.operator_sandbox_patch_readiness import sandbox_patch_readiness_compact_summary
 from gateway.operator_goal_intake import (
     DEFAULT_GOAL_INTAKE_CHANNEL,
     DEFAULT_GOAL_INTAKE_SENDER_ID,
@@ -4206,6 +4208,7 @@ def create_gateway_app(
     mcp_capability_entries: tuple[Any, ...] = (),
     mcp_executor: Any | None = None,
     mcp_authority_records: MCPAuthorityRecords | None = None,
+    axiomworld_adapter: Any | None = None,
 ) -> FastAPI:
     """Create the gateway FastAPI app.
 
@@ -4991,6 +4994,7 @@ def create_gateway_app(
         del authority_operator_audit_events[:-500]
 
     app = FastAPI(title="Mullu Gateway", version="1.0.0")
+    bound_axiomworld_adapter = register_axiomworld_routes(app, adapter=axiomworld_adapter)
 
     @app.exception_handler(RequestValidationError)
     async def request_validation_exception_handler(
@@ -9746,6 +9750,22 @@ def create_gateway_app(
         )
         return operator_control_tower_status_receipt(snapshot)
 
+    @app.get("/operator/control-tower/sandbox-patch-readiness/read-model")
+    def operator_control_tower_sandbox_patch_readiness_read_model(
+        request: Request,
+    ):
+        _require_authority_operator(request)
+        return {
+            "read_model_id": "operator_sandbox_patch_readiness_compact.read_model",
+            "projection_only": True,
+            "external_effects_allowed": False,
+            "summary": sandbox_patch_readiness_compact_summary(),
+            "source_ref": (
+                "gateway.operator_sandbox_patch_readiness.SANDBOX_PATCH_READINESS_REGISTRY "
+                "compact first-blocker projection"
+            ),
+        }
+
     @app.get("/operator/control-tower/local-rollback-receipt/read-model")
     def operator_control_tower_local_rollback_receipt_read_model(
         request: Request,
@@ -10391,6 +10411,7 @@ def create_gateway_app(
     app.state.mcp_executor = mcp_executor
     app.state.mcp_authority_records = mcp_authority_records
     app.state.mcp_gateway_import = mcp_gateway_import
+    app.state.axiomworld_adapter = bound_axiomworld_adapter
     app.state.plan_ledger = plan_ledger
     app.state.goal_intake_preview_store = goal_intake_preview_store
     app.state.tenant_budget_reporter = tenant_budget_reporter

@@ -815,6 +815,24 @@ prerequisite count, scope-admission denial, execution denial,
 authority-promotion denial, and no-effect posture. It is a next scope admission
 readiness projection only and does not admit scope, start execution, promote
 authority, or perform external effects.
+The sandbox patch readiness fields from validation readiness through next scope
+admission are emitted from `SANDBOX_PATCH_READINESS_REGISTRY` in
+`gateway/operator_sandbox_patch_readiness.py`. New registry-eligible readiness
+fields should be added there first so receipt payloads and source references
+stay co-located instead of duplicating gate-shaped code.
+The compact operator summary is rendered from
+`sandbox_patch_readiness_compact_summary()` and reports the first blocked
+registry stage, its next evidence id, prerequisite count, required unlock
+evidence, source reference, and no-effect posture.
+The same compact first-blocker projection is available without loading the full
+control tower at
+`/operator/control-tower/sandbox-patch-readiness/read-model`. The route is
+operator-gated, projection-only, and schema-bound by
+`schemas/operator_sandbox_patch_readiness_compact_read_model.schema.json`. It
+returns `operator_sandbox_patch_readiness_compact.read_model` with
+`external_effects_allowed=false`, the compact summary, and the registry source
+reference. It does not validate bundles, attach receipts, approve work, push
+branches, call connectors, or perform external effects.
 The operator handoff field is `operator_handoff_summary`, composed from
 `workflow_monitor.metadata.developer_workflow_milestone_summary` and
 `workflow_monitor.metadata.operator_decision_summary`. It gives a future

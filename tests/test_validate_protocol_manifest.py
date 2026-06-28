@@ -1040,6 +1040,9 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     operational_entry = entries["operational-case"]
     operator_entry = entries["operator-control-tower-snapshot"]
     operator_status_receipt_entry = entries["operator-control-tower-status-receipt"]
+    operator_sandbox_patch_readiness_entry = entries[
+        "operator-sandbox-patch-readiness-compact-read-model"
+    ]
     sandbox_to_pr_entry = entries["sandbox-to-pr-preparation-packet"]
     sandbox_attachment_entry = entries["developer-workflow-sandbox-receipt-attachment-packet"]
     sandbox_receipt_bundle_entry = entries["developer-workflow-sandbox-receipt-bundle"]
@@ -1069,6 +1072,14 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     assert operator_status_receipt_entry["path"] == "schemas/operator_control_tower_status_receipt.schema.json"
     assert operator_status_receipt_entry["urn"] == "urn:mullusi:schema:operator-control-tower-status-receipt:1"
     assert operator_status_receipt_entry["surface"] == "operator"
+    assert (
+        operator_sandbox_patch_readiness_entry["path"]
+        == "schemas/operator_sandbox_patch_readiness_compact_read_model.schema.json"
+    )
+    assert operator_sandbox_patch_readiness_entry["urn"] == (
+        "urn:mullusi:schema:operator-sandbox-patch-readiness-compact-read-model:1"
+    )
+    assert operator_sandbox_patch_readiness_entry["surface"] == "operator"
     assert sandbox_to_pr_entry["path"] == "schemas/sandbox_to_pr_preparation_packet.schema.json"
     assert sandbox_to_pr_entry["urn"] == "urn:mullusi:schema:sandbox-to-pr-preparation-packet:1"
     assert sandbox_to_pr_entry["surface"] == "operator"
