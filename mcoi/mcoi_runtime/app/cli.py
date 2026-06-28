@@ -424,6 +424,7 @@ def _autonomous_demo_summary_envelope(view: AutonomousRequestEpisodeSummaryView)
         "execution_stage_ids": list(view.execution_stage_ids),
         "step_receipt_refs": list(view.step_receipt_refs),
         "stage_receipt_bindings": [dict(binding) for binding in view.stage_receipt_bindings],
+        "stage_execution_bindings": [dict(binding) for binding in view.stage_execution_bindings],
         "rollback_ref": view.rollback_ref,
     }
 
