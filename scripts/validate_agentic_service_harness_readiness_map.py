@@ -1533,10 +1533,20 @@ def _validate_github_pr_terminal_closure_ready(
             "missing ready row: GitHub PR creation execution admission dry-run binding PR"
         )
 
+    pr_creation_command_preview_row = re.search(
+        r"^\| GitHub PR creation command preview execution-admission binding PR \| READY \| .+agentic_service_harness_github_pr_creation_command_preview.+execution-admission evidence.+redacted `gh pr create` command preview.+command execution.+adapter execution.+branch pushes.+pull-request creation.+repository writes.+receipt-store append.+connector calls.+mutation routes.+secret material.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if pr_creation_command_preview_row is None:
+        errors.append(
+            "missing ready row: GitHub PR creation command preview execution-admission binding PR"
+        )
+
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind live PR creation command preview to execution admission",
+        "harness(pr): bind operator approval request evidence to command preview",
     )
     positions: list[int] = []
     for marker in sequence_markers:
