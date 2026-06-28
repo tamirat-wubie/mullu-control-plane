@@ -1,0 +1,522 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:forge-state-write-admission-packet:1",
+  "title": "Forge State Write Admission Packet",
+  "description": "Foundation Mode packet for non-mutating Forge write-spine admission. The packet can admit a prepared transition model, but it cannot register runtime state-write authority, commit live state, or authorize production mutation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "packet_schema_ref",
+    "adapter_id",
+    "bridge_ref",
+    "source_bridge_ref",
+    "request",
+    "receipt",
+    "invariants",
+    "validators",
+    "packet_hash"
+  ],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "pattern": "^forge-state-write-admission-packet-[0-9a-f]{16}$"
+    },
+    "packet_schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:forge-state-write-admission-packet:1"
+    },
+    "adapter_id": {
+      "type": "string",
+      "const": "forge-state-write-admission.v1"
+    },
+    "bridge_ref": {
+      "type": "string",
+      "const": "forge_write_spine_bridge.v1"
+    },
+    "source_bridge_ref": {
+      "type": "string",
+      "const": "examples/forge_write_spine_bridge.foundation.json"
+    },
+    "request": {
+      "$ref": "#/$defs/request"
+    },
+    "receipt": {
+      "$ref": "#/$defs/receipt"
+    },
+    "invariants": {
+      "$ref": "#/$defs/invariants"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator"
+      }
+    },
+    "packet_hash": {
+      "$ref": "#/$defs/hash"
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sha256_ref": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "non_empty_string": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "tenant_id",
+        "actor_id",
+        "mesh_id",
+        "operation_id",
+        "bridge_ref",
+        "requested_environment",
+        "decision_status",
+        "selected_candidate_id",
+        "mutation_performed",
+        "before_state_hash",
+        "after_state_hash",
+        "delta_hash",
+        "policy_hash",
+        "evaluation_context_hash",
+        "execution_scope_hash",
+        "stages",
+        "certificate",
+        "service_boundary",
+        "evidence_refs",
+        "requested_at",
+        "metadata"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "const": "forge-state-write-admission-dev-offline-1"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "actor_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "mesh_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "bridge_ref": {
+          "type": "string",
+          "const": "forge_write_spine_bridge.v1"
+        },
+        "requested_environment": {
+          "type": "string",
+          "enum": [
+            "dev_offline",
+            "staging_shadow",
+            "production_read_only",
+            "production_state_changing"
+          ],
+          "const": "dev_offline"
+        },
+        "decision_status": {
+          "type": "string",
+          "const": "conditional_accept"
+        },
+        "selected_candidate_id": {
+          "type": "string",
+          "enum": [
+            "governed_scoped_edit",
+            "state_write_reference"
+          ]
+        },
+        "mutation_performed": {
+          "type": "boolean",
+          "const": false
+        },
+        "before_state_hash": {
+          "$ref": "#/$defs/sha256_ref"
+        },
+        "after_state_hash": {
+          "$ref": "#/$defs/sha256_ref"
+        },
+        "delta_hash": {
+          "$ref": "#/$defs/sha256_ref"
+        },
+        "policy_hash": {
+          "$ref": "#/$defs/sha256_ref"
+        },
+        "evaluation_context_hash": {
+          "$ref": "#/$defs/sha256_ref"
+        },
+        "execution_scope_hash": {
+          "$ref": "#/$defs/sha256_ref"
+        },
+        "stages": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": {
+            "$ref": "#/$defs/stage"
+          }
+        },
+        "certificate": {
+          "$ref": "#/$defs/certificate"
+        },
+        "service_boundary": {
+          "$ref": "#/$defs/service_boundary"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/non_empty_string"
+          }
+        },
+        "requested_at": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "metadata": {
+          "$ref": "#/$defs/metadata"
+        }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_id",
+        "order",
+        "receipt_ref",
+        "receipt_hash",
+        "authority_boundary",
+        "satisfied"
+      ],
+      "properties": {
+        "stage_id": {
+          "type": "string",
+          "enum": [
+            "conditional_decision",
+            "fenced_snapshot",
+            "phigov_certificate",
+            "prepared_transition",
+            "lineage_authorization_attestation",
+            "fenced_commit",
+            "lineage_completion_attestation"
+          ]
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7
+        },
+        "receipt_ref": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "receipt_hash": {
+          "$ref": "#/$defs/sha256_ref"
+        },
+        "authority_boundary": {
+          "type": "string",
+          "enum": [
+            "uao_decision",
+            "distributed_lease_boundary",
+            "phigov_certificate",
+            "transition_model",
+            "h_lineage",
+            "fenced_persistence"
+          ]
+        },
+        "satisfied": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "development_only",
+        "required_fields",
+        "issued_at",
+        "expires_at",
+        "key_id",
+        "trust_epoch",
+        "nonce",
+        "signature",
+        "certificate_hash"
+      ],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "const": "forge_dev3_phigov_state_write"
+        },
+        "development_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "required_fields": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "certificate_id" },
+            { "const": "issuer" },
+            { "const": "request_id" },
+            { "const": "decision_receipt_hash" },
+            { "const": "mesh_id" },
+            { "const": "snapshot_id" },
+            { "const": "before_state_hash" },
+            { "const": "after_state_hash" },
+            { "const": "delta_hash" },
+            { "const": "policy_hash" },
+            { "const": "evaluation_context_hash" },
+            { "const": "execution_scope_hash" },
+            { "const": "issued_at" },
+            { "const": "expires_at" },
+            { "const": "key_id" },
+            { "const": "trust_epoch" },
+            { "const": "nonce" },
+            { "const": "signature" }
+          ],
+          "minItems": 18,
+          "maxItems": 18
+        },
+        "issued_at": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "key_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "trust_epoch": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "nonce": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "signature": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "certificate_hash": {
+          "$ref": "#/$defs/sha256_ref"
+        }
+      }
+    },
+    "service_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signed_rpc",
+        "caller_audience_binding",
+        "request_expiry",
+        "persistent_nonce_replay_guard",
+        "pinned_phigov_trust_root",
+        "pinned_lineage_identity",
+        "local_development_keys",
+        "transport_confidentiality",
+        "production_authorized"
+      ],
+      "properties": {
+        "signed_rpc": { "type": "boolean", "const": true },
+        "caller_audience_binding": { "type": "boolean", "const": true },
+        "request_expiry": { "type": "boolean", "const": true },
+        "persistent_nonce_replay_guard": { "type": "boolean", "const": true },
+        "pinned_phigov_trust_root": { "type": "boolean", "const": true },
+        "pinned_lineage_identity": { "type": "boolean", "const": true },
+        "local_development_keys": { "type": "boolean", "const": true },
+        "transport_confidentiality": { "type": "boolean", "const": false },
+        "production_authorized": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "request_id",
+        "tenant_id",
+        "actor_id",
+        "mesh_id",
+        "operation_id",
+        "bridge_ref",
+        "packet_schema_ref",
+        "requested_environment",
+        "status",
+        "solver_outcome",
+        "admission_decision",
+        "external_effects_allowed",
+        "state_write_runtime_registered",
+        "production_authorized",
+        "commit_allowed",
+        "live_mutation_allowed",
+        "prepared_transition_model_allowed",
+        "terminal_closure_required",
+        "blocked_reasons",
+        "required_controls",
+        "evidence_refs",
+        "stage_hash",
+        "certificate_hash",
+        "receipt_hash",
+        "metadata"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^forge-state-write-admission-receipt-[0-9a-f]{16}$"
+        },
+        "request_id": {
+          "type": "string",
+          "const": "forge-state-write-admission-dev-offline-1"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "actor_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "mesh_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "operation_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "bridge_ref": {
+          "type": "string",
+          "const": "forge_write_spine_bridge.v1"
+        },
+        "packet_schema_ref": {
+          "type": "string",
+          "const": "urn:mullusi:schema:forge-state-write-admission-packet:1"
+        },
+        "requested_environment": {
+          "type": "string",
+          "const": "dev_offline"
+        },
+        "status": {
+          "type": "string",
+          "const": "reference_prepare_admitted"
+        },
+        "solver_outcome": {
+          "type": "string",
+          "const": "SolvedVerified"
+        },
+        "admission_decision": {
+          "type": "string",
+          "const": "allow_prepare_model"
+        },
+        "external_effects_allowed": { "type": "boolean", "const": false },
+        "state_write_runtime_registered": { "type": "boolean", "const": false },
+        "production_authorized": { "type": "boolean", "const": false },
+        "commit_allowed": { "type": "boolean", "const": false },
+        "live_mutation_allowed": { "type": "boolean", "const": false },
+        "prepared_transition_model_allowed": { "type": "boolean", "const": true },
+        "terminal_closure_required": { "type": "boolean", "const": true },
+        "blocked_reasons": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "required_controls": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "reference_only_bridge" },
+            { "const": "conditional_decision" },
+            { "const": "fencing_token" },
+            { "const": "immutable_snapshot" },
+            { "const": "signed_phigov_certificate" },
+            { "const": "prepared_transition_model" },
+            { "const": "lineage_authorization_attestation" },
+            { "const": "commit_denied_in_foundation_mode" },
+            { "const": "lineage_completion_attestation" },
+            { "const": "terminal_closure_required" }
+          ],
+          "minItems": 10,
+          "maxItems": 10
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/non_empty_string"
+          }
+        },
+        "stage_hash": {
+          "$ref": "#/$defs/sha256_ref"
+        },
+        "certificate_hash": {
+          "$ref": "#/$defs/sha256_ref"
+        },
+        "receipt_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "metadata": {
+          "$ref": "#/$defs/metadata"
+        }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_only",
+        "mutation_performed",
+        "live_mutation_allowed",
+        "commit_allowed",
+        "production_authorized",
+        "state_write_runtime_registered",
+        "external_effects_allowed",
+        "terminal_closure_required"
+      ],
+      "properties": {
+        "reference_only": { "type": "boolean", "const": true },
+        "mutation_performed": { "type": "boolean", "const": false },
+        "live_mutation_allowed": { "type": "boolean", "const": false },
+        "commit_allowed": { "type": "boolean", "const": false },
+        "production_authorized": { "type": "boolean", "const": false },
+        "state_write_runtime_registered": { "type": "boolean", "const": false },
+        "external_effects_allowed": { "type": "boolean", "const": false },
+        "terminal_closure_required": { "type": "boolean", "const": true }
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "type": "string",
+          "const": "forge-state-write-admission-packet"
+        },
+        "command": {
+          "type": "string",
+          "const": "python scripts/validate_forge_state_write_admission_packet.py"
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

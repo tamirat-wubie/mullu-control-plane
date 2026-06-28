@@ -1,0 +1,245 @@
+{
+  "admission_mode": "operator_approved_live_probe_required",
+  "admission_status": "blocked_awaiting_operator_approval",
+  "blocked_reasons": [
+    "managed_key_custody_operator_approved_probe_missing",
+    "confidential_transport_operator_approved_probe_missing",
+    "persistent_nonce_replay_store_operator_approved_probe_missing",
+    "independent_persistence_store_operator_approved_probe_missing",
+    "independent_worm_lineage_operator_approved_probe_missing",
+    "tenant_scope_guard_operator_approved_probe_missing",
+    "uao_no_bypass_runtime_proof_operator_approved_probe_missing",
+    "rollback_replay_recovery_plan_operator_approved_probe_missing",
+    "pb01_pb02_pb03_write_spine_closure_operator_approved_probe_missing",
+    "pb04_pb11_runtime_operational_closure_operator_approved_probe_missing"
+  ],
+  "bridge_ref": "forge_write_spine_bridge.v1",
+  "disallowed_authority": {
+    "commit_allowed": false,
+    "external_effects_allowed": false,
+    "live_runtime_authorized": false,
+    "production_authorized": false,
+    "state_write_runtime_registered": false,
+    "terminal_closure": false
+  },
+  "next_allowed_action": "request_operator_approval_for_bounded_live_probe_inputs",
+  "packet_hash": "45b9c7743ec61c861c87828c9d911739f562dca97a56a8d94b61513c0636942a",
+  "packet_id": "forge-live-runtime-probe-admission-packet.v1",
+  "probe_items": [
+    {
+      "authority_effect": false,
+      "blocker_reason": "managed_key_custody_operator_approved_probe_missing",
+      "evidence_id": "managed_key_custody",
+      "external_effects_requested": false,
+      "operator_approval_status": "not_approved",
+      "probe_admission_status": "blocked",
+      "probe_execution_allowed": false,
+      "probe_ref": "probe://forge/live-runtime/managed-key-custody",
+      "required_inputs": [
+        "operator_approval",
+        "dependency_or_credential_probe",
+        "recovery_or_revocation_path",
+        "signed_receipt_writer",
+        "sandbox_or_isolation_boundary"
+      ],
+      "signed_receipt_population_allowed": false,
+      "target_signed_evidence_ref": "evidence://forge/live-runtime/managed-key-custody"
+    },
+    {
+      "authority_effect": false,
+      "blocker_reason": "confidential_transport_operator_approved_probe_missing",
+      "evidence_id": "confidential_transport",
+      "external_effects_requested": false,
+      "operator_approval_status": "not_approved",
+      "probe_admission_status": "blocked",
+      "probe_execution_allowed": false,
+      "probe_ref": "probe://forge/live-runtime/confidential-transport",
+      "required_inputs": [
+        "operator_approval",
+        "dependency_or_credential_probe",
+        "recovery_or_revocation_path",
+        "signed_receipt_writer",
+        "sandbox_or_isolation_boundary"
+      ],
+      "signed_receipt_population_allowed": false,
+      "target_signed_evidence_ref": "evidence://forge/live-runtime/confidential-transport"
+    },
+    {
+      "authority_effect": false,
+      "blocker_reason": "persistent_nonce_replay_store_operator_approved_probe_missing",
+      "evidence_id": "persistent_nonce_replay_store",
+      "external_effects_requested": false,
+      "operator_approval_status": "not_approved",
+      "probe_admission_status": "blocked",
+      "probe_execution_allowed": false,
+      "probe_ref": "probe://forge/live-runtime/persistent-nonce-replay-store",
+      "required_inputs": [
+        "operator_approval",
+        "dependency_or_credential_probe",
+        "recovery_or_revocation_path",
+        "signed_receipt_writer",
+        "sandbox_or_isolation_boundary"
+      ],
+      "signed_receipt_population_allowed": false,
+      "target_signed_evidence_ref": "evidence://forge/live-runtime/persistent-nonce-replay-store"
+    },
+    {
+      "authority_effect": false,
+      "blocker_reason": "independent_persistence_store_operator_approved_probe_missing",
+      "evidence_id": "independent_persistence_store",
+      "external_effects_requested": false,
+      "operator_approval_status": "not_approved",
+      "probe_admission_status": "blocked",
+      "probe_execution_allowed": false,
+      "probe_ref": "probe://forge/live-runtime/independent-persistence-store",
+      "required_inputs": [
+        "operator_approval",
+        "dependency_or_credential_probe",
+        "recovery_or_revocation_path",
+        "signed_receipt_writer",
+        "sandbox_or_isolation_boundary"
+      ],
+      "signed_receipt_population_allowed": false,
+      "target_signed_evidence_ref": "evidence://forge/live-runtime/independent-persistence-store"
+    },
+    {
+      "authority_effect": false,
+      "blocker_reason": "independent_worm_lineage_operator_approved_probe_missing",
+      "evidence_id": "independent_worm_lineage",
+      "external_effects_requested": false,
+      "operator_approval_status": "not_approved",
+      "probe_admission_status": "blocked",
+      "probe_execution_allowed": false,
+      "probe_ref": "probe://forge/live-runtime/independent-worm-lineage",
+      "required_inputs": [
+        "operator_approval",
+        "dependency_or_credential_probe",
+        "recovery_or_revocation_path",
+        "signed_receipt_writer",
+        "sandbox_or_isolation_boundary"
+      ],
+      "signed_receipt_population_allowed": false,
+      "target_signed_evidence_ref": "evidence://forge/live-runtime/independent-worm-lineage"
+    },
+    {
+      "authority_effect": false,
+      "blocker_reason": "tenant_scope_guard_operator_approved_probe_missing",
+      "evidence_id": "tenant_scope_guard",
+      "external_effects_requested": false,
+      "operator_approval_status": "not_approved",
+      "probe_admission_status": "blocked",
+      "probe_execution_allowed": false,
+      "probe_ref": "probe://forge/live-runtime/tenant-scope-guard",
+      "required_inputs": [
+        "operator_approval",
+        "dependency_or_credential_probe",
+        "recovery_or_revocation_path",
+        "signed_receipt_writer",
+        "sandbox_or_isolation_boundary"
+      ],
+      "signed_receipt_population_allowed": false,
+      "target_signed_evidence_ref": "evidence://forge/live-runtime/tenant-scope-guard"
+    },
+    {
+      "authority_effect": false,
+      "blocker_reason": "uao_no_bypass_runtime_proof_operator_approved_probe_missing",
+      "evidence_id": "uao_no_bypass_runtime_proof",
+      "external_effects_requested": false,
+      "operator_approval_status": "not_approved",
+      "probe_admission_status": "blocked",
+      "probe_execution_allowed": false,
+      "probe_ref": "probe://forge/live-runtime/uao-no-bypass-runtime-proof",
+      "required_inputs": [
+        "operator_approval",
+        "dependency_or_credential_probe",
+        "recovery_or_revocation_path",
+        "signed_receipt_writer",
+        "sandbox_or_isolation_boundary"
+      ],
+      "signed_receipt_population_allowed": false,
+      "target_signed_evidence_ref": "evidence://forge/live-runtime/uao-no-bypass-runtime-proof"
+    },
+    {
+      "authority_effect": false,
+      "blocker_reason": "rollback_replay_recovery_plan_operator_approved_probe_missing",
+      "evidence_id": "rollback_replay_recovery_plan",
+      "external_effects_requested": false,
+      "operator_approval_status": "not_approved",
+      "probe_admission_status": "blocked",
+      "probe_execution_allowed": false,
+      "probe_ref": "probe://forge/live-runtime/rollback-replay-recovery-plan",
+      "required_inputs": [
+        "operator_approval",
+        "dependency_or_credential_probe",
+        "recovery_or_revocation_path",
+        "signed_receipt_writer",
+        "sandbox_or_isolation_boundary"
+      ],
+      "signed_receipt_population_allowed": false,
+      "target_signed_evidence_ref": "evidence://forge/live-runtime/rollback-replay-recovery-plan"
+    },
+    {
+      "authority_effect": false,
+      "blocker_reason": "pb01_pb02_pb03_write_spine_closure_operator_approved_probe_missing",
+      "evidence_id": "pb01_pb02_pb03_write_spine_closure",
+      "external_effects_requested": false,
+      "operator_approval_status": "not_approved",
+      "probe_admission_status": "blocked",
+      "probe_execution_allowed": false,
+      "probe_ref": "probe://forge/live-runtime/pb01-pb02-pb03-write-spine-closure",
+      "required_inputs": [
+        "operator_approval",
+        "dependency_or_credential_probe",
+        "recovery_or_revocation_path",
+        "signed_receipt_writer",
+        "sandbox_or_isolation_boundary"
+      ],
+      "signed_receipt_population_allowed": false,
+      "target_signed_evidence_ref": "evidence://forge/live-runtime/pb01-pb03-write-spine-closure"
+    },
+    {
+      "authority_effect": false,
+      "blocker_reason": "pb04_pb11_runtime_operational_closure_operator_approved_probe_missing",
+      "evidence_id": "pb04_pb11_runtime_operational_closure",
+      "external_effects_requested": false,
+      "operator_approval_status": "not_approved",
+      "probe_admission_status": "blocked",
+      "probe_execution_allowed": false,
+      "probe_ref": "probe://forge/live-runtime/pb04-pb11-runtime-operational-closure",
+      "required_inputs": [
+        "operator_approval",
+        "dependency_or_credential_probe",
+        "recovery_or_revocation_path",
+        "signed_receipt_writer",
+        "sandbox_or_isolation_boundary"
+      ],
+      "signed_receipt_population_allowed": false,
+      "target_signed_evidence_ref": "evidence://forge/live-runtime/pb04-pb11-operational-closure"
+    }
+  ],
+  "required_controls": [
+    "source_signed_evidence_receipt_required",
+    "operator_approval_required_before_probe",
+    "probe_inputs_required_before_execution",
+    "signed_receipt_writer_required_before_population",
+    "recovery_or_revocation_required_before_population",
+    "foundation_fixture_blocks_probe_execution",
+    "no_runtime_registration",
+    "no_commit_authority",
+    "no_production_authority",
+    "no_external_effects",
+    "terminal_closure_not_claimed"
+  ],
+  "schema_ref": "urn:mullusi:schema:forge-live-runtime-probe-admission-packet:1",
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "source_signed_evidence_receipt_hash": "8009312593365e57d87e468672bb28d4e79cd9ded57bd09f675675b5f601e8c6",
+  "source_signed_evidence_receipt_ref": "examples/forge_live_runtime_signed_evidence_receipt.foundation.json",
+  "validators": [
+    {
+      "command": "python scripts/validate_forge_live_runtime_probe_admission_packet.py",
+      "required_for_closure": true,
+      "validator_id": "forge-live-runtime-probe-admission-packet"
+    }
+  ]
+}

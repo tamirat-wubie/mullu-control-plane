@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:forge-live-runtime-operator-evidence-verification-gate:1",
+  "title": "Forge Live Runtime Operator Evidence Verification Gate",
+  "description": "Blocked gate requiring independent verification before submitted operator evidence refs can be accepted.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "gate_id",
+    "schema_ref",
+    "schema_version",
+    "bridge_ref",
+    "source_operator_evidence_submission_packet_ref",
+    "source_operator_evidence_submission_packet_hash",
+    "verification_mode",
+    "verification_status",
+    "solver_outcome",
+    "proof_state",
+    "verification_items",
+    "verification_item_count",
+    "submitted_ref_count",
+    "verified_ref_count",
+    "required_verification_count",
+    "all_submitted_refs_verified",
+    "promotion_allowed",
+    "signed_receipt_population_allowed",
+    "runtime_authority_effect",
+    "secret_values_present",
+    "blocked_reasons",
+    "required_controls",
+    "disallowed_authority",
+    "next_allowed_action",
+    "validators",
+    "gate_hash"
+  ],
+  "properties": {
+    "gate_id": {
+      "type": "string",
+      "const": "forge-live-runtime-operator-evidence-verification-gate.v1"
+    },
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:forge-live-runtime-operator-evidence-verification-gate:1"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "bridge_ref": { "type": "string", "const": "forge_write_spine_bridge.v1" },
+    "source_operator_evidence_submission_packet_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:/@ -]+\\.json$"
+    },
+    "source_operator_evidence_submission_packet_hash": { "$ref": "#/$defs/hash" },
+    "verification_mode": {
+      "type": "string",
+      "const": "operator_evidence_refs_require_independent_verification"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "blocked_awaiting_operator_evidence_verification",
+        "verified_pending_acceptance"
+      ]
+    },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "proof_state": { "type": "string", "const": "Unknown" },
+    "verification_items": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": { "$ref": "#/$defs/verification_item" }
+    },
+    "verification_item_count": { "type": "integer", "const": 10 },
+    "submitted_ref_count": { "type": "integer", "minimum": 0, "maximum": 80 },
+    "verified_ref_count": { "type": "integer", "minimum": 0, "maximum": 80 },
+    "required_verification_count": { "type": "integer", "const": 80 },
+    "all_submitted_refs_verified": { "type": "boolean" },
+    "promotion_allowed": { "type": "boolean", "const": false },
+    "signed_receipt_population_allowed": { "type": "boolean", "const": false },
+    "runtime_authority_effect": { "type": "boolean", "const": false },
+    "secret_values_present": { "type": "boolean", "const": false },
+    "blocked_reasons": {
+      "type": "array",
+      "maxItems": 10,
+      "items": { "type": "string", "pattern": "^[a-z0-9_]+_verification_missing$" }
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": { "type": "string" }
+    },
+    "disallowed_authority": { "$ref": "#/$defs/disallowed_authority" },
+    "next_allowed_action": {
+      "type": "string",
+      "const": "verify_submitted_operator_evidence_refs_before_acceptance"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": { "$ref": "#/$defs/validator" }
+    },
+    "gate_hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "optional_hash_ref": {
+      "type": "string",
+      "anyOf": [
+        { "const": "" },
+        { "pattern": "^sha256:[0-9a-f]{64}$" }
+      ]
+    },
+    "verification_ref": {
+      "type": "string",
+      "anyOf": [
+        { "const": "" },
+        { "pattern": "^(proof|receipt|lineage|signature|evidence)://[A-Za-z0-9._:/@-]+$" }
+      ]
+    },
+    "verification_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "target_evidence_ref",
+        "source_submission_ref",
+        "verification_slots",
+        "submitted_ref_count",
+        "verified_ref_count",
+        "required_verification_count",
+        "all_slots_verified",
+        "verification_status",
+        "blocker_reason"
+      ],
+      "properties": {
+        "evidence_id": { "type": "string" },
+        "target_evidence_ref": {
+          "type": "string",
+          "pattern": "^evidence://forge/live-runtime/[a-z0-9-]+$"
+        },
+        "source_submission_ref": {
+          "type": "string",
+          "pattern": "^submission://forge/live-runtime/operator-evidence/[a-z0-9-]+$"
+        },
+        "verification_slots": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/verification_slot" }
+        },
+        "submitted_ref_count": { "type": "integer", "minimum": 0, "maximum": 8 },
+        "verified_ref_count": { "type": "integer", "minimum": 0, "maximum": 8 },
+        "required_verification_count": { "type": "integer", "const": 8 },
+        "all_slots_verified": { "type": "boolean" },
+        "verification_status": {
+          "type": "string",
+          "enum": ["blocked_awaiting_submitted_refs", "verified_pending_acceptance"]
+        },
+        "blocker_reason": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+_verification_missing$"
+        }
+      }
+    },
+    "verification_slot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_class",
+        "source_evidence_ref",
+        "source_ref_hash",
+        "verification_ref",
+        "verifier_identity_ref",
+        "verification_status",
+        "verification_passed",
+        "authority_effect",
+        "blocker_reason"
+      ],
+      "properties": {
+        "evidence_class": { "type": "string" },
+        "source_evidence_ref": { "$ref": "#/$defs/verification_ref" },
+        "source_ref_hash": { "$ref": "#/$defs/optional_hash_ref" },
+        "verification_ref": { "$ref": "#/$defs/verification_ref" },
+        "verifier_identity_ref": { "$ref": "#/$defs/verification_ref" },
+        "verification_status": { "type": "string", "enum": ["not_submitted", "verified"] },
+        "verification_passed": { "type": "boolean" },
+        "authority_effect": { "type": "boolean", "const": false },
+        "blocker_reason": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+_[a-z0-9_]+_verification_missing$"
+        }
+      }
+    },
+    "disallowed_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_runtime_authorized",
+        "state_write_runtime_registered",
+        "production_authorized",
+        "external_effects_allowed",
+        "commit_allowed",
+        "terminal_closure"
+      ],
+      "properties": {
+        "live_runtime_authorized": { "type": "boolean", "const": false },
+        "state_write_runtime_registered": { "type": "boolean", "const": false },
+        "production_authorized": { "type": "boolean", "const": false },
+        "external_effects_allowed": { "type": "boolean", "const": false },
+        "commit_allowed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": {
+          "type": "string",
+          "const": "forge-live-runtime-operator-evidence-verification-gate"
+        },
+        "command": {
+          "type": "string",
+          "const": "python scripts/validate_forge_live_runtime_operator_evidence_verification_gate.py"
+        },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

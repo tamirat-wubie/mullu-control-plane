@@ -849,8 +849,13 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     commercial_entry = entries["commercial-metering-snapshot"]
     economic_entry = entries["economic-intelligence-snapshot"]
     federated_entry = entries["federated-control-snapshot"]
+    forge_entry = entries["forge-write-spine-bridge"]
     operational_entry = entries["operational-case"]
     operator_entry = entries["operator-control-tower-snapshot"]
+    operator_status_receipt_entry = entries["operator-control-tower-status-receipt"]
+    sandbox_to_pr_entry = entries["sandbox-to-pr-preparation-packet"]
+    sandbox_attachment_entry = entries["developer-workflow-sandbox-receipt-attachment-packet"]
+    sandbox_receipt_bundle_entry = entries["developer-workflow-sandbox-receipt-bundle"]
 
     assert validate_protocol_manifest(manifest) == []
     assert collaboration_entry["path"] == "schemas/collaboration_case.schema.json"
@@ -865,12 +870,45 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     assert federated_entry["path"] == "schemas/federated_control_snapshot.schema.json"
     assert federated_entry["urn"] == "urn:mullusi:schema:federated-control-snapshot:1"
     assert federated_entry["surface"] == "federation"
+    assert forge_entry["path"] == "schemas/forge_write_spine_bridge.schema.json"
+    assert forge_entry["urn"] == "urn:mullusi:schema:forge-write-spine-bridge:1"
+    assert forge_entry["surface"] == "governance"
     assert operational_entry["path"] == "schemas/operational_case.schema.json"
     assert operational_entry["urn"] == "urn:mullusi:schema:operational-case:1"
     assert operational_entry["surface"] == "case_management"
     assert operator_entry["path"] == "schemas/operator_control_tower_snapshot.schema.json"
     assert operator_entry["urn"] == "urn:mullusi:schema:operator-control-tower-snapshot:1"
     assert operator_entry["surface"] == "operator"
+    assert operator_status_receipt_entry["path"] == "schemas/operator_control_tower_status_receipt.schema.json"
+    assert operator_status_receipt_entry["urn"] == "urn:mullusi:schema:operator-control-tower-status-receipt:1"
+    assert operator_status_receipt_entry["surface"] == "operator"
+    assert sandbox_to_pr_entry["path"] == "schemas/sandbox_to_pr_preparation_packet.schema.json"
+    assert sandbox_to_pr_entry["urn"] == "urn:mullusi:schema:sandbox-to-pr-preparation-packet:1"
+    assert sandbox_to_pr_entry["surface"] == "operator"
+    assert sandbox_attachment_entry["path"] == "schemas/developer_workflow_sandbox_receipt_attachment_packet.schema.json"
+    assert sandbox_attachment_entry["urn"] == (
+        "urn:mullusi:schema:developer-workflow-sandbox-receipt-attachment-packet:1"
+    )
+    assert sandbox_attachment_entry["surface"] == "operator"
+    proof_report_entry = entries["developer-workflow-local-sandbox-proof-report"]
+    rollback_summary_entry = entries["developer-workflow-local-rollback-summary-packet"]
+    rollback_approval_entry = entries["developer-workflow-local-rollback-approval-packet"]
+    rollback_execution_entry = entries["developer-workflow-local-rollback-execution-receipt"]
+    assert proof_report_entry["path"] == "schemas/developer_workflow_local_sandbox_proof_report.schema.json"
+    assert proof_report_entry["urn"] == "urn:mullusi:schema:developer-workflow-local-sandbox-proof-report:1"
+    assert proof_report_entry["surface"] == "operator"
+    assert rollback_summary_entry["path"] == "schemas/developer_workflow_local_rollback_summary_packet.schema.json"
+    assert rollback_summary_entry["urn"] == "urn:mullusi:schema:developer-workflow-local-rollback-summary-packet:1"
+    assert rollback_summary_entry["surface"] == "operator"
+    assert rollback_approval_entry["path"] == "schemas/developer_workflow_local_rollback_approval_packet.schema.json"
+    assert rollback_approval_entry["urn"] == "urn:mullusi:schema:developer-workflow-local-rollback-approval-packet:1"
+    assert rollback_approval_entry["surface"] == "operator"
+    assert rollback_execution_entry["path"] == "schemas/developer_workflow_local_rollback_execution_receipt.schema.json"
+    assert rollback_execution_entry["urn"] == "urn:mullusi:schema:developer-workflow-local-rollback-execution-receipt:1"
+    assert rollback_execution_entry["surface"] == "operator"
+    assert sandbox_receipt_bundle_entry["path"] == "schemas/developer_workflow_sandbox_receipt_bundle.schema.json"
+    assert sandbox_receipt_bundle_entry["urn"] == "urn:mullusi:schema:developer-workflow-sandbox-receipt-bundle:1"
+    assert sandbox_receipt_bundle_entry["surface"] == "workflow"
 
 
 def test_protocol_manifest_indexes_connector_certification_registry() -> None:

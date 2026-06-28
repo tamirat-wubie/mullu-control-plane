@@ -1,0 +1,158 @@
+{
+  "blocked_stage_count": 9,
+  "bridge_ref": "forge_write_spine_bridge.v1",
+  "continuation_count": 4,
+  "continuation_items": [
+    {
+      "artifact_ref": "examples/forge_live_runtime_operator_evidence_request.foundation.json",
+      "authority_effect": false,
+      "continuation_id": "live_runtime_operator_evidence_request",
+      "continuation_status": "blocked_awaiting_operator_live_evidence_refs",
+      "hash_exclusion_reason": "downstream_artifact_depends_on_read_model_hash",
+      "hash_included": false,
+      "solver_outcome": "AwaitingEvidence"
+    },
+    {
+      "artifact_ref": "examples/forge_live_runtime_operator_evidence_submission_packet.foundation.json",
+      "authority_effect": false,
+      "continuation_id": "live_runtime_operator_evidence_submission_packet",
+      "continuation_status": "blocked_awaiting_operator_live_evidence_refs",
+      "hash_exclusion_reason": "downstream_artifact_depends_on_read_model_hash",
+      "hash_included": false,
+      "solver_outcome": "AwaitingEvidence"
+    },
+    {
+      "artifact_ref": "examples/forge_live_runtime_operator_evidence_verification_gate.foundation.json",
+      "authority_effect": false,
+      "continuation_id": "live_runtime_operator_evidence_verification_gate",
+      "continuation_status": "blocked_awaiting_operator_evidence_verification",
+      "hash_exclusion_reason": "downstream_artifact_depends_on_read_model_hash",
+      "hash_included": false,
+      "solver_outcome": "AwaitingEvidence"
+    },
+    {
+      "artifact_ref": "examples/forge_live_runtime_operator_evidence_acceptance_handoff_packet.foundation.json",
+      "authority_effect": false,
+      "continuation_id": "live_runtime_operator_evidence_acceptance_handoff_packet",
+      "continuation_status": "blocked_awaiting_verified_operator_evidence",
+      "hash_exclusion_reason": "downstream_artifact_depends_on_read_model_hash",
+      "hash_included": false,
+      "solver_outcome": "AwaitingEvidence"
+    }
+  ],
+  "disallowed_authority": {
+    "commit_allowed": false,
+    "external_effects_allowed": false,
+    "live_runtime_authorized": false,
+    "production_authorized": false,
+    "state_write_runtime_registered": false,
+    "terminal_closure": false
+  },
+  "live_evidence_present": false,
+  "next_allowed_action": "inspect_read_model_or_collect_live_evidence_after_operator_approval",
+  "read_model_hash": "c7727a035ca1c37d9703c899d22487e812d3ffc955bb384c17de2ffbf5fb9bda",
+  "read_model_id": "forge-live-runtime-evidence-chain-read-model.v1",
+  "read_model_mode": "foundation_live_runtime_evidence_chain_projection",
+  "read_model_status": "blocked_awaiting_live_runtime_evidence",
+  "required_controls": [
+    "source_signed_receipt_population_gate_required",
+    "read_model_only",
+    "all_stage_hashes_required",
+    "downstream_continuation_refs_exclude_hashes_to_avoid_cycle",
+    "blocked_status_preserved",
+    "awaiting_evidence_preserved",
+    "no_runtime_registration",
+    "no_commit_authority",
+    "no_production_authority",
+    "no_external_effects",
+    "terminal_closure_not_claimed"
+  ],
+  "runtime_authority_effect": false,
+  "schema_ref": "urn:mullusi:schema:forge-live-runtime-evidence-chain-read-model:1",
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "source_signed_receipt_population_gate_hash": "e2f30703a4867cadb199584886e6b8b5121d0a16386e11314cab97be319fa18c",
+  "source_signed_receipt_population_gate_ref": "examples/forge_live_runtime_signed_receipt_population_gate.foundation.json",
+  "stage_count": 9,
+  "stage_items": [
+    {
+      "artifact_hash": "d7cb6f30fead7b9bdec0a84607f26265b38d69170bd14aab378c13ed56d858dd",
+      "artifact_ref": "examples/forge_live_runtime_readiness_gate.foundation.json",
+      "authority_effect": false,
+      "solver_outcome": "AwaitingEvidence",
+      "stage_id": "live_runtime_readiness_gate",
+      "stage_status": "blocked_awaiting_evidence"
+    },
+    {
+      "artifact_hash": "c496ecb2024a6148bb22e2143a9323cb231145d538e1a4180b1ef506ee1c65b0",
+      "artifact_ref": "examples/forge_live_runtime_evidence_collection_packet.foundation.json",
+      "authority_effect": false,
+      "solver_outcome": "AwaitingEvidence",
+      "stage_id": "live_runtime_evidence_collection_packet",
+      "stage_status": "not_started"
+    },
+    {
+      "artifact_hash": "9af6c8d9c9ef70acfa3bd1480ead772dca5f468e873ebc0eb906532d4a4c948e",
+      "artifact_ref": "examples/forge_live_runtime_local_evidence_bundle.foundation.json",
+      "authority_effect": false,
+      "solver_outcome": "AwaitingEvidence",
+      "stage_id": "live_runtime_local_evidence_bundle",
+      "stage_status": "blocked_awaiting_live_evidence"
+    },
+    {
+      "artifact_hash": "dfd0131317b8eb7f2a30a38580c067945c8fb54f69545bee27813fa67a47cf76",
+      "artifact_ref": "examples/forge_live_runtime_evidence_acceptance_gate.foundation.json",
+      "authority_effect": false,
+      "solver_outcome": "AwaitingEvidence",
+      "stage_id": "live_runtime_evidence_acceptance_gate",
+      "stage_status": "blocked_awaiting_signed_live_evidence"
+    },
+    {
+      "artifact_hash": "8009312593365e57d87e468672bb28d4e79cd9ded57bd09f675675b5f601e8c6",
+      "artifact_ref": "examples/forge_live_runtime_signed_evidence_receipt.foundation.json",
+      "authority_effect": false,
+      "solver_outcome": "AwaitingEvidence",
+      "stage_id": "live_runtime_signed_evidence_receipt",
+      "stage_status": "awaiting_signed_live_evidence"
+    },
+    {
+      "artifact_hash": "45b9c7743ec61c861c87828c9d911739f562dca97a56a8d94b61513c0636942a",
+      "artifact_ref": "examples/forge_live_runtime_probe_admission_packet.foundation.json",
+      "authority_effect": false,
+      "solver_outcome": "AwaitingEvidence",
+      "stage_id": "live_runtime_probe_admission_packet",
+      "stage_status": "blocked_awaiting_operator_approval"
+    },
+    {
+      "artifact_hash": "b4fef4cb8879bd8dd64502a7fff268fb6870333be86ea25af097c4b03595f7ba",
+      "artifact_ref": "examples/forge_live_runtime_approved_probe_output_packet.foundation.json",
+      "authority_effect": false,
+      "solver_outcome": "AwaitingEvidence",
+      "stage_id": "live_runtime_approved_probe_output_packet",
+      "stage_status": "blocked_awaiting_approved_probe_outputs"
+    },
+    {
+      "artifact_hash": "03a8a0b1100af486dcd520887aa72e5fef72ff1c9e5da4bfabf9efaecb16ef38",
+      "artifact_ref": "examples/forge_live_runtime_post_probe_reconciliation_packet.foundation.json",
+      "authority_effect": false,
+      "solver_outcome": "AwaitingEvidence",
+      "stage_id": "live_runtime_post_probe_reconciliation_packet",
+      "stage_status": "blocked_awaiting_approved_probe_outputs"
+    },
+    {
+      "artifact_hash": "e2f30703a4867cadb199584886e6b8b5121d0a16386e11314cab97be319fa18c",
+      "artifact_ref": "examples/forge_live_runtime_signed_receipt_population_gate.foundation.json",
+      "authority_effect": false,
+      "solver_outcome": "AwaitingEvidence",
+      "stage_id": "live_runtime_signed_receipt_population_gate",
+      "stage_status": "blocked_awaiting_reconciled_probe_outputs"
+    }
+  ],
+  "validators": [
+    {
+      "command": "python scripts/validate_forge_live_runtime_evidence_chain_read_model.py",
+      "required_for_closure": true,
+      "validator_id": "forge-live-runtime-evidence-chain-read-model"
+    }
+  ]
+}

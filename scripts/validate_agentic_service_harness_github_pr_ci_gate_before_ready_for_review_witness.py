@@ -49,6 +49,19 @@ DEFAULT_OUTPUT = (
 EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF = (
     "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json"
 )
+EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF = "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json"
+EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF = (
+    "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json"
+)
+EXPECTED_SOURCE_RESPONSE_WITNESS_REF = "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
+EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF = (
+    "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
+)
+EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF = "witness://actual-non-empty-diff-receipt"
+EXPECTED_CHANGED_FILE_REFS = ("evidence://redacted-file-change-candidate/schema-addition",)
+EXPECTED_DIFF_REFS = ("evidence://redacted-diff-candidate/schema-addition",)
+EXPECTED_REDACTED_DIFF_BUNDLE_REF = "digest://redacted-filesystem-write-diff-bundle-candidate"
+EXPECTED_REDACTED_OUTPUT_REF = "witness://filesystem-write-output-redacted"
 EXPECTED_BINDING_ID = "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness"
 EXPECTED_CI_GATE_REQUEST_ID = "ci-gate.github-pr-before-ready-for-review"
 EXPECTED_SOURCE_ROLLBACK_PLAN_REQUEST_ID = "rollback-plan.github-pr-repository-effect"
@@ -245,6 +258,76 @@ def _validate_ci_gate_before_ready_for_review_witness_semantics(
         payload,
         ("ci_gate", "source_rollback_plan_evidence_ref"),
         EXPECTED_SOURCE_ROLLBACK_PLAN_EVIDENCE_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "actual_diff_repository_effect_rollback_plan_witness_ref"),
+        EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "actual_diff_uao_admission_witness_ref"),
+        EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "actual_diff_branch_write_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "actual_diff_operator_response_witness_ref"),
+        EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "actual_diff_approval_request_binding_ref"),
+        EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "actual_non_empty_diff_receipt_ref"),
+        EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "changed_file_refs"),
+        list(EXPECTED_CHANGED_FILE_REFS),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "diff_refs"),
+        list(EXPECTED_DIFF_REFS),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "redacted_diff_bundle_ref"),
+        EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "redacted_output_ref"),
+        EXPECTED_REDACTED_OUTPUT_REF,
         errors,
         label,
     )

@@ -485,46 +485,10 @@
       "urn": "urn:mullusi:schema:capability-evidence-endpoint:1"
     },
     {
-      "path": "schemas/capability_debt_report.schema.json",
-      "schema_id": "capability-debt-report",
-      "surface": "capability",
-      "urn": "urn:mullusi:schema:capability-debt-report:1"
-    },
-    {
       "path": "schemas/capability_friction_control.schema.json",
       "schema_id": "capability-friction-control",
       "surface": "capability",
       "urn": "urn:mullusi:schema:capability-friction-control:1"
-    },
-    {
-      "path": "schemas/capability_passport_dashboard.schema.json",
-      "schema_id": "capability-passport-dashboard",
-      "surface": "capability",
-      "urn": "urn:mullusi:schema:capability-passport-dashboard:1"
-    },
-    {
-      "path": "schemas/capability_passports.schema.json",
-      "schema_id": "capability-passports",
-      "surface": "capability",
-      "urn": "urn:mullusi:schema:capability-passports:1"
-    },
-    {
-      "path": "schemas/evidence_passports.schema.json",
-      "schema_id": "evidence-passports",
-      "surface": "evidence",
-      "urn": "urn:mullusi:schema:evidence-passports:1"
-    },
-    {
-      "path": "schemas/gate_template_registry.schema.json",
-      "schema_id": "gate-template-registry",
-      "surface": "governance",
-      "urn": "urn:mullusi:schema:gate-template-registry:1"
-    },
-    {
-      "path": "schemas/sandbox_to_live_promotion.schema.json",
-      "schema_id": "sandbox-to-live-promotion",
-      "surface": "capability",
-      "urn": "urn:mullusi:schema:sandbox-to-live-promotion:1"
     },
     {
       "path": "schemas/capability_improvement_portfolio.schema.json",
@@ -1095,6 +1059,102 @@
       "schema_id": "federated-control-snapshot",
       "surface": "federation",
       "urn": "urn:mullusi:schema:federated-control-snapshot:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_readiness_gate.schema.json",
+      "schema_id": "forge-live-runtime-readiness-gate",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-readiness-gate:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_evidence_collection_packet.schema.json",
+      "schema_id": "forge-live-runtime-evidence-collection-packet",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-evidence-collection-packet:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_local_evidence_bundle.schema.json",
+      "schema_id": "forge-live-runtime-local-evidence-bundle",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-local-evidence-bundle:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_evidence_acceptance_gate.schema.json",
+      "schema_id": "forge-live-runtime-evidence-acceptance-gate",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-evidence-acceptance-gate:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_signed_evidence_receipt.schema.json",
+      "schema_id": "forge-live-runtime-signed-evidence-receipt",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-signed-evidence-receipt:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_probe_admission_packet.schema.json",
+      "schema_id": "forge-live-runtime-probe-admission-packet",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-probe-admission-packet:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_approved_probe_output_packet.schema.json",
+      "schema_id": "forge-live-runtime-approved-probe-output-packet",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-approved-probe-output-packet:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_post_probe_reconciliation_packet.schema.json",
+      "schema_id": "forge-live-runtime-post-probe-reconciliation-packet",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-post-probe-reconciliation-packet:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_signed_receipt_population_gate.schema.json",
+      "schema_id": "forge-live-runtime-signed-receipt-population-gate",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-signed-receipt-population-gate:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_evidence_chain_read_model.schema.json",
+      "schema_id": "forge-live-runtime-evidence-chain-read-model",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-evidence-chain-read-model:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_operator_evidence_request.schema.json",
+      "schema_id": "forge-live-runtime-operator-evidence-request",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-operator-evidence-request:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_operator_evidence_submission_packet.schema.json",
+      "schema_id": "forge-live-runtime-operator-evidence-submission-packet",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-operator-evidence-submission-packet:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_operator_evidence_verification_gate.schema.json",
+      "schema_id": "forge-live-runtime-operator-evidence-verification-gate",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-operator-evidence-verification-gate:1"
+    },
+    {
+      "path": "schemas/forge_live_runtime_operator_evidence_acceptance_handoff_packet.schema.json",
+      "schema_id": "forge-live-runtime-operator-evidence-acceptance-handoff-packet",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-live-runtime-operator-evidence-acceptance-handoff-packet:1"
+    },
+    {
+      "path": "schemas/forge_state_write_admission_packet.schema.json",
+      "schema_id": "forge-state-write-admission-packet",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-state-write-admission-packet:1"
+    },
+    {
+      "path": "schemas/forge_write_spine_bridge.schema.json",
+      "schema_id": "forge-write-spine-bridge",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:forge-write-spine-bridge:1"
     },
     {
       "path": "schemas/finance_approval_email_calendar_binding_receipt.schema.json",
@@ -1689,6 +1749,102 @@
       "schema_id": "operator-control-tower-snapshot",
       "surface": "operator",
       "urn": "urn:mullusi:schema:operator-control-tower-snapshot:1"
+    },
+    {
+      "path": "schemas/operator_control_tower_status_receipt.schema.json",
+      "schema_id": "operator-control-tower-status-receipt",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:operator-control-tower-status-receipt:1"
+    },
+    {
+      "path": "schemas/sandbox_to_pr_preparation_packet.schema.json",
+      "schema_id": "sandbox-to-pr-preparation-packet",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:sandbox-to-pr-preparation-packet:1"
+    },
+    {
+      "path": "schemas/developer_workflow_sandbox_receipt_attachment_packet.schema.json",
+      "schema_id": "developer-workflow-sandbox-receipt-attachment-packet",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:developer-workflow-sandbox-receipt-attachment-packet:1"
+    },
+    {
+      "path": "schemas/developer_workflow_local_sandbox_proof_report.schema.json",
+      "schema_id": "developer-workflow-local-sandbox-proof-report",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:developer-workflow-local-sandbox-proof-report:1"
+    },
+    {
+      "path": "schemas/developer_workflow_local_rollback_summary_packet.schema.json",
+      "schema_id": "developer-workflow-local-rollback-summary-packet",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:developer-workflow-local-rollback-summary-packet:1"
+    },
+    {
+      "path": "schemas/developer_workflow_local_rollback_approval_packet.schema.json",
+      "schema_id": "developer-workflow-local-rollback-approval-packet",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:developer-workflow-local-rollback-approval-packet:1"
+    },
+    {
+      "path": "schemas/developer_workflow_local_rollback_execution_receipt.schema.json",
+      "schema_id": "developer-workflow-local-rollback-execution-receipt",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:developer-workflow-local-rollback-execution-receipt:1"
+    },
+    {
+      "path": "schemas/pr_preparation_approval_packet.schema.json",
+      "schema_id": "pr-preparation-approval-packet",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:pr-preparation-approval-packet:1"
+    },
+    {
+      "path": "schemas/local_pr_candidate_packet.schema.json",
+      "schema_id": "local-pr-candidate-packet",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:local-pr-candidate-packet:1"
+    },
+    {
+      "path": "schemas/pr_tool_admission_packet.schema.json",
+      "schema_id": "pr-tool-admission-packet",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:pr-tool-admission-packet:1"
+    },
+    {
+      "path": "schemas/external_pr_execution_approval_witness.schema.json",
+      "schema_id": "external-pr-execution-approval-witness",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:external-pr-execution-approval-witness:1"
+    },
+    {
+      "path": "schemas/pr_command_preview_packet.schema.json",
+      "schema_id": "pr-command-preview-packet",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:pr-command-preview-packet:1"
+    },
+    {
+      "path": "schemas/pr_metadata_packet.schema.json",
+      "schema_id": "pr-metadata-packet",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:pr-metadata-packet:1"
+    },
+    {
+      "path": "schemas/pr_readiness_bundle.schema.json",
+      "schema_id": "pr-readiness-bundle",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:pr-readiness-bundle:1"
+    },
+    {
+      "path": "schemas/developer_workflow_operator_receipt.schema.json",
+      "schema_id": "developer-workflow-operator-receipt",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:developer-workflow-operator-receipt:1"
+    },
+    {
+      "path": "schemas/developer_workflow_sandbox_receipt_bundle.schema.json",
+      "schema_id": "developer-workflow-sandbox-receipt-bundle",
+      "surface": "workflow",
+      "urn": "urn:mullusi:schema:developer-workflow-sandbox-receipt-bundle:1"
     },
     {
       "path": "schemas/operator_plan_receipt_bundle_read_model.schema.json",

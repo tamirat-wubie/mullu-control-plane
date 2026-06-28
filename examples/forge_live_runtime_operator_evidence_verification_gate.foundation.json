@@ -1,0 +1,1076 @@
+{
+  "all_submitted_refs_verified": false,
+  "blocked_reasons": [
+    "managed_key_custody_verification_missing",
+    "confidential_transport_verification_missing",
+    "persistent_nonce_replay_store_verification_missing",
+    "independent_persistence_store_verification_missing",
+    "independent_worm_lineage_verification_missing",
+    "tenant_scope_guard_verification_missing",
+    "uao_no_bypass_runtime_proof_verification_missing",
+    "rollback_replay_recovery_plan_verification_missing",
+    "pb01_pb02_pb03_write_spine_closure_verification_missing",
+    "pb04_pb11_runtime_operational_closure_verification_missing"
+  ],
+  "bridge_ref": "forge_write_spine_bridge.v1",
+  "disallowed_authority": {
+    "commit_allowed": false,
+    "external_effects_allowed": false,
+    "live_runtime_authorized": false,
+    "production_authorized": false,
+    "state_write_runtime_registered": false,
+    "terminal_closure": false
+  },
+  "gate_hash": "87ddae004e928c5779963fe91afb18ffe5698f6da085ee0674416e78b92c76a8",
+  "gate_id": "forge-live-runtime-operator-evidence-verification-gate.v1",
+  "next_allowed_action": "verify_submitted_operator_evidence_refs_before_acceptance",
+  "promotion_allowed": false,
+  "proof_state": "Unknown",
+  "required_controls": [
+    "source_operator_evidence_submission_packet_required",
+    "independent_verification_required",
+    "submitted_refs_are_not_verification",
+    "signature_verification_required",
+    "secret_values_forbidden",
+    "verification_does_not_grant_runtime_authority",
+    "signed_receipt_population_still_separate",
+    "no_runtime_registration",
+    "no_commit_authority",
+    "no_production_authority",
+    "no_external_effects",
+    "terminal_closure_not_claimed"
+  ],
+  "required_verification_count": 80,
+  "runtime_authority_effect": false,
+  "schema_ref": "urn:mullusi:schema:forge-live-runtime-operator-evidence-verification-gate:1",
+  "schema_version": 1,
+  "secret_values_present": false,
+  "signed_receipt_population_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_operator_evidence_submission_packet_hash": "a8f3e2e74e33b8f7500543f1ebb10583274ca31bcacd1bdacd35a7e6a6ab4e5a",
+  "source_operator_evidence_submission_packet_ref": "examples/forge_live_runtime_operator_evidence_submission_packet.foundation.json",
+  "submitted_ref_count": 0,
+  "validators": [
+    {
+      "command": "python scripts/validate_forge_live_runtime_operator_evidence_verification_gate.py",
+      "required_for_closure": true,
+      "validator_id": "forge-live-runtime-operator-evidence-verification-gate"
+    }
+  ],
+  "verification_item_count": 10,
+  "verification_items": [
+    {
+      "all_slots_verified": false,
+      "blocker_reason": "managed_key_custody_verification_missing",
+      "evidence_id": "managed_key_custody",
+      "required_verification_count": 8,
+      "source_submission_ref": "submission://forge/live-runtime/operator-evidence/managed-key-custody",
+      "submitted_ref_count": 0,
+      "target_evidence_ref": "evidence://forge/live-runtime/managed-key-custody",
+      "verification_slots": [
+        {
+          "authority_effect": false,
+          "blocker_reason": "managed_key_custody_operator_approval_ref_verification_missing",
+          "evidence_class": "operator_approval_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "managed_key_custody_dependency_or_credential_probe_ref_verification_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "managed_key_custody_sandbox_or_isolation_evidence_ref_verification_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "managed_key_custody_recovery_or_revocation_ref_verification_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "managed_key_custody_signed_receipt_writer_ref_verification_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "managed_key_custody_signed_live_receipt_ref_verification_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "managed_key_custody_trusted_signing_key_ref_verification_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "managed_key_custody_signature_verification_ref_verification_missing",
+          "evidence_class": "signature_verification_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        }
+      ],
+      "verification_status": "blocked_awaiting_submitted_refs",
+      "verified_ref_count": 0
+    },
+    {
+      "all_slots_verified": false,
+      "blocker_reason": "confidential_transport_verification_missing",
+      "evidence_id": "confidential_transport",
+      "required_verification_count": 8,
+      "source_submission_ref": "submission://forge/live-runtime/operator-evidence/confidential-transport",
+      "submitted_ref_count": 0,
+      "target_evidence_ref": "evidence://forge/live-runtime/confidential-transport",
+      "verification_slots": [
+        {
+          "authority_effect": false,
+          "blocker_reason": "confidential_transport_operator_approval_ref_verification_missing",
+          "evidence_class": "operator_approval_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "confidential_transport_dependency_or_credential_probe_ref_verification_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "confidential_transport_sandbox_or_isolation_evidence_ref_verification_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "confidential_transport_recovery_or_revocation_ref_verification_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "confidential_transport_signed_receipt_writer_ref_verification_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "confidential_transport_signed_live_receipt_ref_verification_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "confidential_transport_trusted_signing_key_ref_verification_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "confidential_transport_signature_verification_ref_verification_missing",
+          "evidence_class": "signature_verification_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        }
+      ],
+      "verification_status": "blocked_awaiting_submitted_refs",
+      "verified_ref_count": 0
+    },
+    {
+      "all_slots_verified": false,
+      "blocker_reason": "persistent_nonce_replay_store_verification_missing",
+      "evidence_id": "persistent_nonce_replay_store",
+      "required_verification_count": 8,
+      "source_submission_ref": "submission://forge/live-runtime/operator-evidence/persistent-nonce-replay-store",
+      "submitted_ref_count": 0,
+      "target_evidence_ref": "evidence://forge/live-runtime/persistent-nonce-replay-store",
+      "verification_slots": [
+        {
+          "authority_effect": false,
+          "blocker_reason": "persistent_nonce_replay_store_operator_approval_ref_verification_missing",
+          "evidence_class": "operator_approval_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "persistent_nonce_replay_store_dependency_or_credential_probe_ref_verification_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "persistent_nonce_replay_store_sandbox_or_isolation_evidence_ref_verification_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "persistent_nonce_replay_store_recovery_or_revocation_ref_verification_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "persistent_nonce_replay_store_signed_receipt_writer_ref_verification_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "persistent_nonce_replay_store_signed_live_receipt_ref_verification_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "persistent_nonce_replay_store_trusted_signing_key_ref_verification_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "persistent_nonce_replay_store_signature_verification_ref_verification_missing",
+          "evidence_class": "signature_verification_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        }
+      ],
+      "verification_status": "blocked_awaiting_submitted_refs",
+      "verified_ref_count": 0
+    },
+    {
+      "all_slots_verified": false,
+      "blocker_reason": "independent_persistence_store_verification_missing",
+      "evidence_id": "independent_persistence_store",
+      "required_verification_count": 8,
+      "source_submission_ref": "submission://forge/live-runtime/operator-evidence/independent-persistence-store",
+      "submitted_ref_count": 0,
+      "target_evidence_ref": "evidence://forge/live-runtime/independent-persistence-store",
+      "verification_slots": [
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_persistence_store_operator_approval_ref_verification_missing",
+          "evidence_class": "operator_approval_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_persistence_store_dependency_or_credential_probe_ref_verification_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_persistence_store_sandbox_or_isolation_evidence_ref_verification_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_persistence_store_recovery_or_revocation_ref_verification_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_persistence_store_signed_receipt_writer_ref_verification_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_persistence_store_signed_live_receipt_ref_verification_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_persistence_store_trusted_signing_key_ref_verification_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_persistence_store_signature_verification_ref_verification_missing",
+          "evidence_class": "signature_verification_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        }
+      ],
+      "verification_status": "blocked_awaiting_submitted_refs",
+      "verified_ref_count": 0
+    },
+    {
+      "all_slots_verified": false,
+      "blocker_reason": "independent_worm_lineage_verification_missing",
+      "evidence_id": "independent_worm_lineage",
+      "required_verification_count": 8,
+      "source_submission_ref": "submission://forge/live-runtime/operator-evidence/independent-worm-lineage",
+      "submitted_ref_count": 0,
+      "target_evidence_ref": "evidence://forge/live-runtime/independent-worm-lineage",
+      "verification_slots": [
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_worm_lineage_operator_approval_ref_verification_missing",
+          "evidence_class": "operator_approval_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_worm_lineage_dependency_or_credential_probe_ref_verification_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_worm_lineage_sandbox_or_isolation_evidence_ref_verification_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_worm_lineage_recovery_or_revocation_ref_verification_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_worm_lineage_signed_receipt_writer_ref_verification_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_worm_lineage_signed_live_receipt_ref_verification_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_worm_lineage_trusted_signing_key_ref_verification_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "independent_worm_lineage_signature_verification_ref_verification_missing",
+          "evidence_class": "signature_verification_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        }
+      ],
+      "verification_status": "blocked_awaiting_submitted_refs",
+      "verified_ref_count": 0
+    },
+    {
+      "all_slots_verified": false,
+      "blocker_reason": "tenant_scope_guard_verification_missing",
+      "evidence_id": "tenant_scope_guard",
+      "required_verification_count": 8,
+      "source_submission_ref": "submission://forge/live-runtime/operator-evidence/tenant-scope-guard",
+      "submitted_ref_count": 0,
+      "target_evidence_ref": "evidence://forge/live-runtime/tenant-scope-guard",
+      "verification_slots": [
+        {
+          "authority_effect": false,
+          "blocker_reason": "tenant_scope_guard_operator_approval_ref_verification_missing",
+          "evidence_class": "operator_approval_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "tenant_scope_guard_dependency_or_credential_probe_ref_verification_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "tenant_scope_guard_sandbox_or_isolation_evidence_ref_verification_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "tenant_scope_guard_recovery_or_revocation_ref_verification_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "tenant_scope_guard_signed_receipt_writer_ref_verification_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "tenant_scope_guard_signed_live_receipt_ref_verification_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "tenant_scope_guard_trusted_signing_key_ref_verification_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "tenant_scope_guard_signature_verification_ref_verification_missing",
+          "evidence_class": "signature_verification_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        }
+      ],
+      "verification_status": "blocked_awaiting_submitted_refs",
+      "verified_ref_count": 0
+    },
+    {
+      "all_slots_verified": false,
+      "blocker_reason": "uao_no_bypass_runtime_proof_verification_missing",
+      "evidence_id": "uao_no_bypass_runtime_proof",
+      "required_verification_count": 8,
+      "source_submission_ref": "submission://forge/live-runtime/operator-evidence/uao-no-bypass-runtime-proof",
+      "submitted_ref_count": 0,
+      "target_evidence_ref": "evidence://forge/live-runtime/uao-no-bypass-runtime-proof",
+      "verification_slots": [
+        {
+          "authority_effect": false,
+          "blocker_reason": "uao_no_bypass_runtime_proof_operator_approval_ref_verification_missing",
+          "evidence_class": "operator_approval_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "uao_no_bypass_runtime_proof_dependency_or_credential_probe_ref_verification_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "uao_no_bypass_runtime_proof_sandbox_or_isolation_evidence_ref_verification_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "uao_no_bypass_runtime_proof_recovery_or_revocation_ref_verification_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "uao_no_bypass_runtime_proof_signed_receipt_writer_ref_verification_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "uao_no_bypass_runtime_proof_signed_live_receipt_ref_verification_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "uao_no_bypass_runtime_proof_trusted_signing_key_ref_verification_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "uao_no_bypass_runtime_proof_signature_verification_ref_verification_missing",
+          "evidence_class": "signature_verification_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        }
+      ],
+      "verification_status": "blocked_awaiting_submitted_refs",
+      "verified_ref_count": 0
+    },
+    {
+      "all_slots_verified": false,
+      "blocker_reason": "rollback_replay_recovery_plan_verification_missing",
+      "evidence_id": "rollback_replay_recovery_plan",
+      "required_verification_count": 8,
+      "source_submission_ref": "submission://forge/live-runtime/operator-evidence/rollback-replay-recovery-plan",
+      "submitted_ref_count": 0,
+      "target_evidence_ref": "evidence://forge/live-runtime/rollback-replay-recovery-plan",
+      "verification_slots": [
+        {
+          "authority_effect": false,
+          "blocker_reason": "rollback_replay_recovery_plan_operator_approval_ref_verification_missing",
+          "evidence_class": "operator_approval_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "rollback_replay_recovery_plan_dependency_or_credential_probe_ref_verification_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "rollback_replay_recovery_plan_sandbox_or_isolation_evidence_ref_verification_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "rollback_replay_recovery_plan_recovery_or_revocation_ref_verification_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "rollback_replay_recovery_plan_signed_receipt_writer_ref_verification_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "rollback_replay_recovery_plan_signed_live_receipt_ref_verification_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "rollback_replay_recovery_plan_trusted_signing_key_ref_verification_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "rollback_replay_recovery_plan_signature_verification_ref_verification_missing",
+          "evidence_class": "signature_verification_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        }
+      ],
+      "verification_status": "blocked_awaiting_submitted_refs",
+      "verified_ref_count": 0
+    },
+    {
+      "all_slots_verified": false,
+      "blocker_reason": "pb01_pb02_pb03_write_spine_closure_verification_missing",
+      "evidence_id": "pb01_pb02_pb03_write_spine_closure",
+      "required_verification_count": 8,
+      "source_submission_ref": "submission://forge/live-runtime/operator-evidence/pb01-pb02-pb03-write-spine-closure",
+      "submitted_ref_count": 0,
+      "target_evidence_ref": "evidence://forge/live-runtime/pb01-pb03-write-spine-closure",
+      "verification_slots": [
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_operator_approval_ref_verification_missing",
+          "evidence_class": "operator_approval_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_dependency_or_credential_probe_ref_verification_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_sandbox_or_isolation_evidence_ref_verification_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_recovery_or_revocation_ref_verification_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_signed_receipt_writer_ref_verification_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_signed_live_receipt_ref_verification_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_trusted_signing_key_ref_verification_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_signature_verification_ref_verification_missing",
+          "evidence_class": "signature_verification_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        }
+      ],
+      "verification_status": "blocked_awaiting_submitted_refs",
+      "verified_ref_count": 0
+    },
+    {
+      "all_slots_verified": false,
+      "blocker_reason": "pb04_pb11_runtime_operational_closure_verification_missing",
+      "evidence_id": "pb04_pb11_runtime_operational_closure",
+      "required_verification_count": 8,
+      "source_submission_ref": "submission://forge/live-runtime/operator-evidence/pb04-pb11-runtime-operational-closure",
+      "submitted_ref_count": 0,
+      "target_evidence_ref": "evidence://forge/live-runtime/pb04-pb11-operational-closure",
+      "verification_slots": [
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_operator_approval_ref_verification_missing",
+          "evidence_class": "operator_approval_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_dependency_or_credential_probe_ref_verification_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_sandbox_or_isolation_evidence_ref_verification_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_recovery_or_revocation_ref_verification_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_signed_receipt_writer_ref_verification_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_signed_live_receipt_ref_verification_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_trusted_signing_key_ref_verification_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        },
+        {
+          "authority_effect": false,
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_signature_verification_ref_verification_missing",
+          "evidence_class": "signature_verification_ref",
+          "source_evidence_ref": "",
+          "source_ref_hash": "",
+          "verification_passed": false,
+          "verification_ref": "",
+          "verification_status": "not_submitted",
+          "verifier_identity_ref": ""
+        }
+      ],
+      "verification_status": "blocked_awaiting_submitted_refs",
+      "verified_ref_count": 0
+    }
+  ],
+  "verification_mode": "operator_evidence_refs_require_independent_verification",
+  "verification_status": "blocked_awaiting_operator_evidence_verification",
+  "verified_ref_count": 0
+}

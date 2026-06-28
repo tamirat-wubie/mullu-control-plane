@@ -117,6 +117,16 @@
         "ci_gate_request_id",
         "source_rollback_plan_request_id",
         "source_rollback_plan_evidence_ref",
+        "actual_diff_repository_effect_rollback_plan_witness_ref",
+        "actual_diff_uao_admission_witness_ref",
+        "actual_diff_branch_write_binding_ref",
+        "actual_diff_operator_response_witness_ref",
+        "actual_diff_approval_request_binding_ref",
+        "actual_non_empty_diff_receipt_ref",
+        "changed_file_refs",
+        "diff_refs",
+        "redacted_diff_bundle_ref",
+        "redacted_output_ref",
         "required_witness_kind",
         "required_evidence_ref",
         "repository_effect_rollback_plan_required",
@@ -139,6 +149,48 @@
         "source_rollback_plan_evidence_ref": {
           "type": "string",
           "const": "evidence://repository-effect-rollback-plan"
+        },
+        "actual_diff_repository_effect_rollback_plan_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json"
+        },
+        "actual_diff_uao_admission_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json"
+        },
+        "actual_diff_branch_write_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json"
+        },
+        "actual_diff_operator_response_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
+        },
+        "actual_diff_approval_request_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
+        },
+        "actual_non_empty_diff_receipt_ref": {
+          "type": "string",
+          "const": "witness://actual-non-empty-diff-receipt"
+        },
+        "changed_file_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/evidence_ref" }
+        },
+        "diff_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/evidence_ref" }
+        },
+        "redacted_diff_bundle_ref": {
+          "type": "string",
+          "const": "digest://redacted-filesystem-write-diff-bundle-candidate"
+        },
+        "redacted_output_ref": {
+          "type": "string",
+          "const": "witness://filesystem-write-output-redacted"
         },
         "required_witness_kind": {
           "type": "string",

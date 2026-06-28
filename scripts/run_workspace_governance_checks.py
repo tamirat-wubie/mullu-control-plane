@@ -1416,6 +1416,76 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_capability_friction_control.py"),
         ),
         CheckCommand(
+            "forge_write_spine_bridge",
+            (python_executable, "scripts/validate_forge_write_spine_bridge.py"),
+        ),
+        CheckCommand(
+            "forge_state_write_admission_packet",
+            (python_executable, "scripts/validate_forge_state_write_admission_packet.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_readiness_gate",
+            (python_executable, "scripts/validate_forge_live_runtime_readiness_gate.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_evidence_collection_packet",
+            (
+                python_executable,
+                "scripts/validate_forge_live_runtime_evidence_collection_packet.py",
+            ),
+        ),
+        CheckCommand(
+            "forge_live_runtime_local_evidence_bundle",
+            (python_executable, "scripts/validate_forge_live_runtime_local_evidence_bundle.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_evidence_acceptance_gate",
+            (python_executable, "scripts/validate_forge_live_runtime_evidence_acceptance_gate.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_signed_evidence_receipt",
+            (python_executable, "scripts/validate_forge_live_runtime_signed_evidence_receipt.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_probe_admission_packet",
+            (python_executable, "scripts/validate_forge_live_runtime_probe_admission_packet.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_approved_probe_output_packet",
+            (python_executable, "scripts/validate_forge_live_runtime_approved_probe_output_packet.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_post_probe_reconciliation_packet",
+            (python_executable, "scripts/validate_forge_live_runtime_post_probe_reconciliation_packet.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_signed_receipt_population_gate",
+            (python_executable, "scripts/validate_forge_live_runtime_signed_receipt_population_gate.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_evidence_chain_read_model",
+            (python_executable, "scripts/validate_forge_live_runtime_evidence_chain_read_model.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_operator_evidence_request",
+            (python_executable, "scripts/validate_forge_live_runtime_operator_evidence_request.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_operator_evidence_submission_packet",
+            (python_executable, "scripts/validate_forge_live_runtime_operator_evidence_submission_packet.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_operator_evidence_verification_gate",
+            (python_executable, "scripts/validate_forge_live_runtime_operator_evidence_verification_gate.py"),
+        ),
+        CheckCommand(
+            "forge_live_runtime_operator_evidence_acceptance_handoff_packet",
+            (
+                python_executable,
+                "scripts/validate_forge_live_runtime_operator_evidence_acceptance_handoff_packet.py",
+            ),
+        ),
+        CheckCommand(
             "operator_plan_receipt_bundle_read_model",
             (python_executable, "scripts/validate_operator_plan_receipt_bundle_read_model.py"),
         ),

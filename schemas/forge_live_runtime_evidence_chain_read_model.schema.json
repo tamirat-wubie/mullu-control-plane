@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:forge-live-runtime-evidence-chain-read-model:1",
+  "title": "Forge Live Runtime Evidence Chain Read Model",
+  "description": "Read-only Foundation Mode projection of the Forge live-runtime evidence chain.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "read_model_id",
+    "schema_ref",
+    "schema_version",
+    "bridge_ref",
+    "source_signed_receipt_population_gate_ref",
+    "source_signed_receipt_population_gate_hash",
+    "read_model_mode",
+    "read_model_status",
+    "solver_outcome",
+    "stage_items",
+    "stage_count",
+    "blocked_stage_count",
+    "continuation_items",
+    "continuation_count",
+    "live_evidence_present",
+    "runtime_authority_effect",
+    "required_controls",
+    "disallowed_authority",
+    "next_allowed_action",
+    "validators",
+    "read_model_hash"
+  ],
+  "properties": {
+    "read_model_id": { "type": "string", "const": "forge-live-runtime-evidence-chain-read-model.v1" },
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:forge-live-runtime-evidence-chain-read-model:1"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "bridge_ref": { "type": "string", "const": "forge_write_spine_bridge.v1" },
+    "source_signed_receipt_population_gate_ref": {
+      "type": "string",
+      "const": "examples/forge_live_runtime_signed_receipt_population_gate.foundation.json"
+    },
+    "source_signed_receipt_population_gate_hash": { "$ref": "#/$defs/hash" },
+    "read_model_mode": {
+      "type": "string",
+      "const": "foundation_live_runtime_evidence_chain_projection"
+    },
+    "read_model_status": {
+      "type": "string",
+      "const": "blocked_awaiting_live_runtime_evidence"
+    },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "stage_items": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": { "$ref": "#/$defs/stage_item" }
+    },
+    "stage_count": { "type": "integer", "const": 9 },
+    "blocked_stage_count": { "type": "integer", "const": 9 },
+    "continuation_items": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/continuation_item" }
+    },
+    "continuation_count": { "type": "integer", "const": 4 },
+    "live_evidence_present": { "type": "boolean", "const": false },
+    "runtime_authority_effect": { "type": "boolean", "const": false },
+    "required_controls": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": { "type": "string" }
+    },
+    "disallowed_authority": { "$ref": "#/$defs/disallowed_authority" },
+    "next_allowed_action": {
+      "type": "string",
+      "const": "inspect_read_model_or_collect_live_evidence_after_operator_approval"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": { "$ref": "#/$defs/validator" }
+    },
+    "read_model_hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "stage_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_id",
+        "artifact_ref",
+        "artifact_hash",
+        "stage_status",
+        "solver_outcome",
+        "authority_effect"
+      ],
+      "properties": {
+        "stage_id": { "type": "string" },
+        "artifact_ref": {
+          "type": "string",
+          "pattern": "^examples/forge_live_runtime_[a-z0-9_]+\\.foundation\\.json$"
+        },
+        "artifact_hash": { "$ref": "#/$defs/hash" },
+        "stage_status": { "type": "string", "minLength": 1 },
+        "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+        "authority_effect": { "type": "boolean", "const": false }
+      }
+    },
+    "continuation_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "continuation_id",
+        "artifact_ref",
+        "continuation_status",
+        "solver_outcome",
+        "hash_included",
+        "hash_exclusion_reason",
+        "authority_effect"
+      ],
+      "properties": {
+        "continuation_id": { "type": "string" },
+        "artifact_ref": {
+          "type": "string",
+          "pattern": "^examples/forge_live_runtime_[a-z0-9_]+\\.foundation\\.json$"
+        },
+        "continuation_status": { "type": "string", "minLength": 1 },
+        "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+        "hash_included": { "type": "boolean", "const": false },
+        "hash_exclusion_reason": {
+          "type": "string",
+          "const": "downstream_artifact_depends_on_read_model_hash"
+        },
+        "authority_effect": { "type": "boolean", "const": false }
+      }
+    },
+    "disallowed_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_runtime_authorized",
+        "state_write_runtime_registered",
+        "production_authorized",
+        "external_effects_allowed",
+        "commit_allowed",
+        "terminal_closure"
+      ],
+      "properties": {
+        "live_runtime_authorized": { "type": "boolean", "const": false },
+        "state_write_runtime_registered": { "type": "boolean", "const": false },
+        "production_authorized": { "type": "boolean", "const": false },
+        "external_effects_allowed": { "type": "boolean", "const": false },
+        "commit_allowed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": {
+          "type": "string",
+          "const": "forge-live-runtime-evidence-chain-read-model"
+        },
+        "command": {
+          "type": "string",
+          "const": "python scripts/validate_forge_live_runtime_evidence_chain_read_model.py"
+        },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

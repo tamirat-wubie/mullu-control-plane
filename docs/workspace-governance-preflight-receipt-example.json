@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1782510652.541783,
-  "check_count": 301,
+  "check_count": 317,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -3305,6 +3305,214 @@
       ],
       "return_code": 0,
       "stdout": "CAPABILITY FRICTION CONTROL VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_write_spine_bridge",
+      "args": [
+        "python",
+        "scripts/validate_forge_write_spine_bridge.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE WRITE-SPINE BRIDGE VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_state_write_admission_packet",
+      "args": [
+        "python",
+        "scripts/validate_forge_state_write_admission_packet.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE STATE-WRITE ADMISSION PACKET VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_readiness_gate",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_readiness_gate.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME READINESS GATE VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_evidence_collection_packet",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_evidence_collection_packet.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME EVIDENCE COLLECTION PACKET VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_local_evidence_bundle",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_local_evidence_bundle.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME LOCAL EVIDENCE BUNDLE VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_evidence_acceptance_gate",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_evidence_acceptance_gate.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME EVIDENCE ACCEPTANCE GATE VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_signed_evidence_receipt",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_signed_evidence_receipt.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME SIGNED EVIDENCE RECEIPT VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_probe_admission_packet",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_probe_admission_packet.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME PROBE ADMISSION PACKET VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_approved_probe_output_packet",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_approved_probe_output_packet.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME APPROVED PROBE OUTPUT PACKET VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_post_probe_reconciliation_packet",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_post_probe_reconciliation_packet.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME POST-PROBE RECONCILIATION PACKET VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_signed_receipt_population_gate",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_signed_receipt_population_gate.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME SIGNED RECEIPT POPULATION GATE VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_evidence_chain_read_model",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_evidence_chain_read_model.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME EVIDENCE CHAIN READ MODEL VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_operator_evidence_request",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_operator_evidence_request.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME OPERATOR EVIDENCE REQUEST VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_operator_evidence_submission_packet",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_operator_evidence_submission_packet.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME OPERATOR EVIDENCE SUBMISSION PACKET VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_operator_evidence_verification_gate",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_operator_evidence_verification_gate.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME OPERATOR EVIDENCE VERIFICATION GATE VALID\n",
+      "stderr": "",
+      "termination_reason": "completed",
+      "termination_signal": null,
+      "passed": true
+    },
+    {
+      "name": "forge_live_runtime_operator_evidence_acceptance_handoff_packet",
+      "args": [
+        "python",
+        "scripts/validate_forge_live_runtime_operator_evidence_acceptance_handoff_packet.py"
+      ],
+      "return_code": 0,
+      "stdout": "FORGE LIVE-RUNTIME OPERATOR EVIDENCE ACCEPTANCE HANDOFF PACKET VALID\n",
       "stderr": "",
       "termination_reason": "completed",
       "termination_signal": null,

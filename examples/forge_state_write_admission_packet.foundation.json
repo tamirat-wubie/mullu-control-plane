@@ -1,0 +1,201 @@
+{
+  "adapter_id": "forge-state-write-admission.v1",
+  "bridge_ref": "forge_write_spine_bridge.v1",
+  "invariants": {
+    "commit_allowed": false,
+    "external_effects_allowed": false,
+    "live_mutation_allowed": false,
+    "mutation_performed": false,
+    "production_authorized": false,
+    "reference_only": true,
+    "state_write_runtime_registered": false,
+    "terminal_closure_required": true
+  },
+  "packet_hash": "a04bfe3c69e614e3479686020c9c1cb0fc6370b2b6cd0cb1bba7e72ebac1da1e",
+  "packet_id": "forge-state-write-admission-packet-3ea79ce0648748de",
+  "packet_schema_ref": "urn:mullusi:schema:forge-state-write-admission-packet:1",
+  "receipt": {
+    "actor_id": "operator-local",
+    "admission_decision": "allow_prepare_model",
+    "blocked_reasons": [],
+    "bridge_ref": "forge_write_spine_bridge.v1",
+    "certificate_hash": "sha256:9ac3bf76353166e22950805a7465bad893a5c2e6459ffed4dafa9a77bc710b4d",
+    "commit_allowed": false,
+    "evidence_refs": [
+      "docs/FORGE_WRITE_SPINE_BRIDGE.md",
+      "examples/forge_write_spine_bridge.foundation.json",
+      "scripts/validate_forge_write_spine_bridge.py"
+    ],
+    "external_effects_allowed": false,
+    "live_mutation_allowed": false,
+    "mesh_id": "mesh://foundation/forge-write-spine/dev-offline",
+    "metadata": {
+      "adapter_mode": "non_mutating_reference_admission",
+      "mutation_route": "not_registered",
+      "policy_id": "forge-state-write-admission.foundation.v1",
+      "production_state_changing_status": "NO_GO"
+    },
+    "operation_id": "operation://forge/write-spine/reference-prepare",
+    "packet_schema_ref": "urn:mullusi:schema:forge-state-write-admission-packet:1",
+    "prepared_transition_model_allowed": true,
+    "production_authorized": false,
+    "receipt_hash": "3ea79ce0648748de3f075232f4b29e64fdc9e9cfa2b08f71bee685b611367560",
+    "receipt_id": "forge-state-write-admission-receipt-3ea79ce0648748de",
+    "request_id": "forge-state-write-admission-dev-offline-1",
+    "requested_environment": "dev_offline",
+    "required_controls": [
+      "reference_only_bridge",
+      "conditional_decision",
+      "fencing_token",
+      "immutable_snapshot",
+      "signed_phigov_certificate",
+      "prepared_transition_model",
+      "lineage_authorization_attestation",
+      "commit_denied_in_foundation_mode",
+      "lineage_completion_attestation",
+      "terminal_closure_required"
+    ],
+    "solver_outcome": "SolvedVerified",
+    "stage_hash": "sha256:f40f83539307be0d9c709581fc56fdbf89ed1d34dd8f423a7b38a765c0cead5f",
+    "state_write_runtime_registered": false,
+    "status": "reference_prepare_admitted",
+    "tenant_id": "foundation-local",
+    "terminal_closure_required": true
+  },
+  "request": {
+    "actor_id": "operator-local",
+    "after_state_hash": "sha256:c2dfd4449731e44c3336e3ac688bcdf987a6603ed9ad053c864c3fa1e6035e38",
+    "before_state_hash": "sha256:1259332ef4e09beca4637c1a8be01d33813deaf06373055faccbabcda1bff81c",
+    "bridge_ref": "forge_write_spine_bridge.v1",
+    "certificate": {
+      "certificate_hash": "sha256:9ac3bf76353166e22950805a7465bad893a5c2e6459ffed4dafa9a77bc710b4d",
+      "development_only": true,
+      "expires_at": "2026-06-27T12:10:00+00:00",
+      "issued_at": "2026-06-27T12:00:00+00:00",
+      "key_id": "dev-phigov-key-1",
+      "nonce": "forge-state-write-dev-offline-nonce-1",
+      "profile": "forge_dev3_phigov_state_write",
+      "required_fields": [
+        "certificate_id",
+        "issuer",
+        "request_id",
+        "decision_receipt_hash",
+        "mesh_id",
+        "snapshot_id",
+        "before_state_hash",
+        "after_state_hash",
+        "delta_hash",
+        "policy_hash",
+        "evaluation_context_hash",
+        "execution_scope_hash",
+        "issued_at",
+        "expires_at",
+        "key_id",
+        "trust_epoch",
+        "nonce",
+        "signature"
+      ],
+      "signature": "ed25519:development-reference-signature",
+      "trust_epoch": "foundation-epoch-1"
+    },
+    "decision_status": "conditional_accept",
+    "delta_hash": "sha256:118c9d0c723188890f7fd870432f4a69c440e062b5806222f0754c1fe8cf7700",
+    "evaluation_context_hash": "sha256:b90a99d537af8e6df0fc263baa0d253ab94e740c8f1558039932ca72f2049407",
+    "evidence_refs": [
+      "docs/FORGE_WRITE_SPINE_BRIDGE.md",
+      "examples/forge_write_spine_bridge.foundation.json",
+      "scripts/validate_forge_write_spine_bridge.py"
+    ],
+    "execution_scope_hash": "sha256:414449e1ea386aad6b377f91d9e8cc1247a76c6930d983ea0321a29f4eb9dc8b",
+    "mesh_id": "mesh://foundation/forge-write-spine/dev-offline",
+    "metadata": {
+      "foundation_mode": true,
+      "source_runtime": "mullu-forge-runtime-v0.1.0-dev3"
+    },
+    "mutation_performed": false,
+    "operation_id": "operation://forge/write-spine/reference-prepare",
+    "policy_hash": "sha256:4b97b50f899b9250a9c7cd35fd85b826f7f37a37e6a2157695b3fc1c2ad5eb8f",
+    "request_id": "forge-state-write-admission-dev-offline-1",
+    "requested_at": "2026-06-27T12:00:00+00:00",
+    "requested_environment": "dev_offline",
+    "selected_candidate_id": "governed_scoped_edit",
+    "service_boundary": {
+      "caller_audience_binding": true,
+      "local_development_keys": true,
+      "persistent_nonce_replay_guard": true,
+      "pinned_lineage_identity": true,
+      "pinned_phigov_trust_root": true,
+      "production_authorized": false,
+      "request_expiry": true,
+      "signed_rpc": true,
+      "transport_confidentiality": false
+    },
+    "stages": [
+      {
+        "authority_boundary": "uao_decision",
+        "order": 1,
+        "receipt_hash": "sha256:10008fa6ee90811a422c95936644404d30763537d5a9fbb6fc31ea1df2233903",
+        "receipt_ref": "receipt://forge/conditional_decision/forge-state-write-admission-dev-offline-1",
+        "satisfied": true,
+        "stage_id": "conditional_decision"
+      },
+      {
+        "authority_boundary": "distributed_lease_boundary",
+        "order": 2,
+        "receipt_hash": "sha256:3d64298e684ea5806df0c63cf1b24914756c534c7f65ffae82011444197be065",
+        "receipt_ref": "receipt://forge/fenced_snapshot/forge-state-write-admission-dev-offline-1",
+        "satisfied": true,
+        "stage_id": "fenced_snapshot"
+      },
+      {
+        "authority_boundary": "phigov_certificate",
+        "order": 3,
+        "receipt_hash": "sha256:40695fe8da9e79c90ba526a25dc546657ef8a5a3f505d44b16c6e8dd2d5d1b32",
+        "receipt_ref": "receipt://forge/phigov_certificate/forge-state-write-admission-dev-offline-1",
+        "satisfied": true,
+        "stage_id": "phigov_certificate"
+      },
+      {
+        "authority_boundary": "transition_model",
+        "order": 4,
+        "receipt_hash": "sha256:6dd012aa83498131ede6658d2093beba7aac43ed666ea921ba08de45ec16bce4",
+        "receipt_ref": "receipt://forge/prepared_transition/forge-state-write-admission-dev-offline-1",
+        "satisfied": true,
+        "stage_id": "prepared_transition"
+      },
+      {
+        "authority_boundary": "h_lineage",
+        "order": 5,
+        "receipt_hash": "sha256:22529076427ce612843ce226b097886f1e33567097f0aecd01d75dcec9d06b47",
+        "receipt_ref": "receipt://forge/lineage_authorization_attestation/forge-state-write-admission-dev-offline-1",
+        "satisfied": true,
+        "stage_id": "lineage_authorization_attestation"
+      },
+      {
+        "authority_boundary": "fenced_persistence",
+        "order": 6,
+        "receipt_hash": "sha256:fdb15e48e0a95fe2c416fc33b90a10f5b23a8ae6174d131e3e2cd56bbac98142",
+        "receipt_ref": "receipt://forge/fenced_commit/forge-state-write-admission-dev-offline-1",
+        "satisfied": true,
+        "stage_id": "fenced_commit"
+      },
+      {
+        "authority_boundary": "h_lineage",
+        "order": 7,
+        "receipt_hash": "sha256:8dae21fdfe5825acc838c66e296784286f2e738bb27701936ad888b8cec969c5",
+        "receipt_ref": "receipt://forge/lineage_completion_attestation/forge-state-write-admission-dev-offline-1",
+        "satisfied": true,
+        "stage_id": "lineage_completion_attestation"
+      }
+    ],
+    "tenant_id": "foundation-local"
+  },
+  "source_bridge_ref": "examples/forge_write_spine_bridge.foundation.json",
+  "validators": [
+    {
+      "command": "python scripts/validate_forge_state_write_admission_packet.py",
+      "required_for_closure": true,
+      "validator_id": "forge-state-write-admission-packet"
+    }
+  ]
+}

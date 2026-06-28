@@ -26,6 +26,20 @@
     "ci_gate_request_id": "ci-gate.github-pr-before-ready-for-review",
     "source_rollback_plan_request_id": "rollback-plan.github-pr-repository-effect",
     "source_rollback_plan_evidence_ref": "evidence://repository-effect-rollback-plan",
+    "actual_diff_repository_effect_rollback_plan_witness_ref": "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json",
+    "actual_diff_uao_admission_witness_ref": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
+    "actual_diff_branch_write_binding_ref": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+    "actual_diff_operator_response_witness_ref": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json",
+    "actual_diff_approval_request_binding_ref": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
+    "actual_non_empty_diff_receipt_ref": "witness://actual-non-empty-diff-receipt",
+    "changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
+    "redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "redacted_output_ref": "witness://filesystem-write-output-redacted",
     "required_witness_kind": "ci_gate_before_ready_for_review",
     "required_evidence_ref": "evidence://ci-gate-before-ready-for-review",
     "repository_effect_rollback_plan_required": true,
