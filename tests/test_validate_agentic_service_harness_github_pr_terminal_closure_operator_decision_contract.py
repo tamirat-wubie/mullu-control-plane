@@ -66,6 +66,57 @@ def test_github_pr_terminal_closure_operator_decision_contract_rejects_gate_bind
     assert len(errors) >= 3
 
 
+def test_github_pr_terminal_closure_operator_decision_contract_rejects_command_preview_approval_gate_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_operator_decision_contract(
+        decision_contract__command_preview_approval_gate_evidence__source_approval_gate_binding_id="other_gate",
+        decision_contract__command_preview_approval_gate_evidence__source_approval_gate_ref="examples/other-gate.json",
+        decision_contract__command_preview_approval_gate_evidence__operator_decision_ref="approval://other-decision",
+        decision_contract__command_preview_approval_gate_evidence__command_preview_terminal_closure_certificate_witness_ref=(
+            "examples/other-terminal-witness.json"
+        ),
+        decision_contract__command_preview_approval_gate_evidence__command_preview_effect_reconciliation_witness_ref=(
+            "examples/other-effect-witness.json"
+        ),
+        decision_contract__command_preview_approval_gate_evidence__command_preview_operator_response_binding_ref=(
+            "examples/other-response-binding.json"
+        ),
+        decision_contract__command_preview_approval_gate_evidence__command_preview_operator_approval_request_binding_ref=(
+            "examples/other-approval-binding.json"
+        ),
+        decision_contract__command_preview_approval_gate_evidence__command_preview_ref="examples/other-command-preview.json",
+        decision_contract__command_preview_approval_gate_evidence__redacted_command_preview="gh pr create --unredacted",
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_operator_decision_contract_semantics(payload, _source_gate(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert (
+        "decision_contract.command_preview_approval_gate_evidence.source_approval_gate_binding_id expected"
+        in serialized_errors
+    )
+    assert "decision_contract.command_preview_approval_gate_evidence.source_approval_gate_ref expected" in serialized_errors
+    assert "decision_contract.command_preview_approval_gate_evidence.operator_decision_ref expected" in serialized_errors
+    assert (
+        "decision_contract.command_preview_approval_gate_evidence.command_preview_terminal_closure_certificate_witness_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "decision_contract.command_preview_approval_gate_evidence.command_preview_effect_reconciliation_witness_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "decision_contract.command_preview_approval_gate_evidence.command_preview_operator_response_binding_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "decision_contract.command_preview_approval_gate_evidence.command_preview_operator_approval_request_binding_ref expected"
+        in serialized_errors
+    )
+    assert "decision_contract.command_preview_approval_gate_evidence.command_preview_ref expected" in serialized_errors
+    assert "decision_contract.command_preview_approval_gate_evidence.redacted_command_preview expected" in serialized_errors
+
+
 def test_github_pr_terminal_closure_operator_decision_contract_rejects_actual_diff_approval_gate_drift() -> None:
     payload = validator.build_mutated_terminal_closure_operator_decision_contract(
         decision_contract__actual_diff_approval_gate_evidence__source_approval_gate_binding_id="other_gate",

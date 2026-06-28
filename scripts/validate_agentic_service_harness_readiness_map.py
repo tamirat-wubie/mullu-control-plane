@@ -682,8 +682,9 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "actual-diff approval request binding",
     "GitHub PR terminal closure operator approval gate command-preview candidate binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate",
-    "GitHub PR terminal closure operator decision contract actual-diff approval gate binding PR",
+    "GitHub PR terminal closure operator decision contract command-preview approval gate binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
+    "command-preview operator approval gate evidence",
     "actual-diff operator approval gate evidence",
     "source approval gate binding id/ref",
     "GitHub PR terminal closure generic continuation rejection actual-diff decision contract binding PR",
@@ -704,6 +705,7 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "certificate minting, repository mutation, connector calls, receipt-store append, secret serialization, destructive operation, and terminal closure remain blocked",
     "Operator approval remains required and uncollected",
     "Explicit operator decision remains uncollected",
+    "command-preview-bound decision contract evidence",
     "actual-diff-bound decision contract evidence",
     "approve_terminal_certificate",
     "deny_terminal_certificate",
@@ -1520,13 +1522,13 @@ def _validate_github_pr_terminal_closure_ready(
         errors.append("missing ready row: GitHub PR terminal closure operator approval gate command-preview candidate binding PR")
 
     decision_contract_row = re.search(
-        r"^\| GitHub PR terminal closure operator decision contract actual-diff approval gate binding PR \| READY \| .+actual-diff operator approval gate evidence.+source approval gate binding id/ref.+Explicit operator decision remains uncollected.+terminal closure authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure operator decision contract command-preview approval gate binding PR \| READY \| .+command-preview operator approval gate evidence.+actual-diff operator approval gate evidence.+source approval gate binding id/ref.+Explicit operator decision remains uncollected.+terminal closure authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if decision_contract_row is None:
         errors.append(
-            "missing ready row: GitHub PR terminal closure operator decision contract actual-diff approval gate binding PR"
+            "missing ready row: GitHub PR terminal closure operator decision contract command-preview approval gate binding PR"
         )
 
     generic_rejection_row = re.search(
@@ -1642,7 +1644,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure operator decision contract to command-preview approval gate",
+        "harness(pr): bind terminal closure generic rejection to command-preview decision contract",
     )
     positions: list[int] = []
     for marker in sequence_markers:
