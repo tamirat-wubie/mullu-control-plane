@@ -68,6 +68,24 @@ def _assert_stage_policy_bindings(body: dict) -> None:
         assert binding["autonomy_reason"] == "autonomous local mode: local action allowed within scope"
 
 
+def _assert_stage_rollback_bindings(body: dict) -> None:
+    assert body["stage_rollback_bindings"] == [
+        {
+            "stage_id": stage_id,
+            "receipt_ref": receipt_ref,
+            "rollback_ref": body["rollback_ref"],
+            "rollback_scope": rollback_scope,
+            "compensation_required": False,
+        }
+        for stage_id, receipt_ref, rollback_scope in zip(
+            body["execution_stage_ids"],
+            body["step_receipt_refs"],
+            ("no_effect", "no_effect", "local_reversible"),
+            strict=True,
+        )
+    ]
+
+
 def test_load_demo_json_object_bounds_invalid_root_type() -> None:
     with pytest.raises(CLIDemoError, match="^invalid JSON response root$") as exc_info:
         _load_demo_json_object(b"[]")
@@ -136,6 +154,7 @@ def test_autonomous_demo_renders_json_continuation_summary(capsys: pytest.Captur
     _assert_stage_execution_bindings(body)
     _assert_stage_verification_bindings(body)
     _assert_stage_policy_bindings(body)
+    _assert_stage_rollback_bindings(body)
     assert body["prompt_count"] == 0
     assert "receipt_path" not in body
     assert body["workflow_descriptor_ref"].startswith("workflow://")
@@ -187,6 +206,7 @@ def test_autonomous_demo_writes_json_receipt_path(
     _assert_stage_execution_bindings(body)
     _assert_stage_verification_bindings(body)
     _assert_stage_policy_bindings(body)
+    _assert_stage_rollback_bindings(body)
     assert body["workflow_descriptor_ref"].startswith("workflow://")
     assert body["rollback_ref"].endswith("/local-effects")
 
@@ -238,6 +258,7 @@ def test_autonomous_demo_quiet_writes_receipt_without_stdout(
     _assert_stage_execution_bindings(body)
     _assert_stage_verification_bindings(body)
     _assert_stage_policy_bindings(body)
+    _assert_stage_rollback_bindings(body)
 
 
 def test_autonomous_demo_receipt_dir_derives_filename_and_creates_directory(
@@ -284,6 +305,7 @@ def test_autonomous_demo_receipt_dir_derives_filename_and_creates_directory(
     _assert_stage_execution_bindings(body)
     _assert_stage_verification_bindings(body)
     _assert_stage_policy_bindings(body)
+    _assert_stage_rollback_bindings(body)
     assert body["automation_state"] == "settled_without_prompt"
 
 
@@ -338,6 +360,7 @@ def test_autonomous_demo_receipt_dir_writes_latest_receipt(
     _assert_stage_execution_bindings(receipt_body)
     _assert_stage_verification_bindings(receipt_body)
     _assert_stage_policy_bindings(receipt_body)
+    _assert_stage_rollback_bindings(receipt_body)
     assert latest_body["receipt_directory_path"] == str(receipt_dir)
     assert latest_body["receipt_schema_version"] == "mcoi.autonomous_demo.receipt.v1"
     assert latest_body["capability_ids"] == ["local.apply"]
@@ -353,6 +376,7 @@ def test_autonomous_demo_receipt_dir_writes_latest_receipt(
     assert latest_body["stage_execution_bindings"] == receipt_body["stage_execution_bindings"]
     assert latest_body["stage_verification_bindings"] == receipt_body["stage_verification_bindings"]
     assert latest_body["stage_policy_bindings"] == receipt_body["stage_policy_bindings"]
+    assert latest_body["stage_rollback_bindings"] == receipt_body["stage_rollback_bindings"]
     assert latest_body["automation_state"] == "settled_without_prompt"
 
 
