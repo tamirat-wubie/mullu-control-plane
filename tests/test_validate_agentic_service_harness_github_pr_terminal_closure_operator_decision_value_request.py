@@ -108,6 +108,48 @@ def test_github_pr_terminal_closure_operator_decision_value_request_rejects_bad_
     assert "decision values must match required order" in serialized_errors
 
 
+def test_github_pr_terminal_closure_operator_decision_value_request_rejects_command_preview_generic_rejection_drift(
+    tmp_path: Path,
+) -> None:
+    payload = build_mutated_operator_decision_value_request(
+        command_preview_generic_rejection_evidence__source_rejection_binding_id="other_rejection",
+        command_preview_generic_rejection_evidence__source_rejection_witness_ref="examples/other-rejection.json",
+        command_preview_generic_rejection_evidence__source_decision_contract_binding_id="other_contract",
+        command_preview_generic_rejection_evidence__source_decision_contract_ref="examples/other-contract.json",
+        command_preview_generic_rejection_evidence__rejection_id="other-rejection",
+        command_preview_generic_rejection_evidence__operator_decision_ref="approval://other",
+        command_preview_generic_rejection_evidence__command_preview_terminal_closure_certificate_witness_ref="examples/other-certificate.json",
+        command_preview_generic_rejection_evidence__command_preview_operator_response_binding_ref="examples/other-response-binding.json",
+        command_preview_generic_rejection_evidence__command_preview_operator_response_witness_ref="examples/other-response.json",
+        command_preview_generic_rejection_evidence__command_preview_operator_approval_request_binding_ref="examples/other-approval.json",
+        command_preview_generic_rejection_evidence__command_preview_ref="examples/other-command-preview.json",
+        command_preview_generic_rejection_evidence__redacted_command_preview="gh pr merge --delete-branch",
+        command_preview_generic_rejection_evidence__command_preview_bound=False,
+    )
+    path = _write_payload(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request(
+        example_paths=(path,)
+    )
+    serialized_errors = "\n".join(validation.errors)
+
+    assert validation.ok is False
+    assert "command_preview_generic_rejection_evidence.source_rejection_binding_id expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.source_rejection_witness_ref expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.source_decision_contract_binding_id expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.source_decision_contract_ref expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.rejection_id expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.operator_decision_ref expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.command_preview_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.command_preview_operator_response_binding_ref expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.command_preview_operator_response_witness_ref expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.command_preview_operator_approval_request_binding_ref expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.command_preview_ref expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.redacted_command_preview expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.command_preview_bound expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.command_preview_bound must be true" in serialized_errors
+
+
 def test_github_pr_terminal_closure_operator_decision_value_request_rejects_actual_diff_generic_rejection_drift(
     tmp_path: Path,
 ) -> None:
