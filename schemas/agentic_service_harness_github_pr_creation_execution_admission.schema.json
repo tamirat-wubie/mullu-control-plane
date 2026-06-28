@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-github-pr-creation-execution-admission:1",
+  "title": "Agentic Service Harness GitHub PR Creation Execution Admission",
+  "description": "Foundation Mode execution-admission preflight for a future GitHub pull-request creation action. This schema binds the PR creation dry-run receipt before live execution can be considered and keeps adapter execution, branch writes, pull-request creation, repository writes, mutation routes, receipt-store append, deployment, DNS mutation, secret serialization, destructive operations, and terminal closure blocked.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_pr_creation_dry_run_receipt_ref",
+    "source_pr_admission_preflight_ref",
+    "source_terminal_closure_certificate_read_model_ref",
+    "scope",
+    "execution_admission_contract",
+    "source_dry_run_binding",
+    "execution_admission_decision",
+    "authority_denials",
+    "receipt_refs",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "const": "agentic_service_harness_github_pr_creation_execution_admission"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "source_pr_creation_dry_run_receipt_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_pr_creation_dry_run_receipt.foundation.json"
+    },
+    "source_pr_admission_preflight_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_pr_admission_preflight.foundation.json"
+    },
+    "source_terminal_closure_certificate_read_model_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json"
+    },
+    "scope": { "$ref": "#/$defs/scope" },
+    "execution_admission_contract": { "$ref": "#/$defs/execution_admission_contract" },
+    "source_dry_run_binding": { "$ref": "#/$defs/source_dry_run_binding" },
+    "execution_admission_decision": { "$ref": "#/$defs/execution_admission_decision" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure_required": { "type": "boolean", "const": true }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "task_service_id",
+        "foundation_phase",
+        "read_only",
+        "admission_only",
+        "execution_admitted",
+        "pr_creation_enabled",
+        "repository_write_enabled",
+        "external_adapter_integrated",
+        "receipt_store_append_enabled",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "task_service_id": { "type": "string", "const": "github-repo-task-service-read-only-foundation" },
+        "foundation_phase": { "type": "string", "const": "foundation_pr_creation_execution_admission_blocked" },
+        "read_only": { "type": "boolean", "const": true },
+        "admission_only": { "type": "boolean", "const": true },
+        "execution_admitted": { "type": "boolean", "const": false },
+        "pr_creation_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false }
+      }
+    },
+    "execution_admission_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "admission_id",
+        "admission_mode",
+        "source_dry_run_id",
+        "requested_action_kind",
+        "allowed_action_classes",
+        "forbidden_action_classes",
+        "required_source_refs",
+        "required_gate_refs",
+        "admission_obligations_checked",
+        "validation_refs",
+        "read_only"
+      ],
+      "properties": {
+        "admission_id": { "type": "string", "const": "github-pr-creation-execution-admission-foundation" },
+        "admission_mode": { "type": "string", "const": "PR_CREATION_EXECUTION_ADMISSION_PREFLIGHT_ONLY" },
+        "source_dry_run_id": { "type": "string", "const": "github-pr-creation-dry-run-receipt-foundation" },
+        "requested_action_kind": { "type": "string", "const": "future_github_pull_request_creation_execution" },
+        "allowed_action_classes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": { "type": "string", "const": "execution_admission_preflight" }
+        },
+        "forbidden_action_classes": {
+          "type": "array",
+          "minItems": 9,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "execute_adapter",
+              "write_to_branch",
+              "open_pr",
+              "append_receipt_store",
+              "deploy",
+              "dns_mutation",
+              "secret_mutation",
+              "destructive_operation",
+              "terminal_closure"
+            ]
+          }
+        },
+        "required_source_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "required_gate_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "admission_obligations_checked": { "$ref": "#/$defs/evidence_ref_list" },
+        "validation_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "read_only": { "type": "boolean", "const": true }
+      }
+    },
+    "source_dry_run_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dry_run_receipt_recorded",
+        "source_execution_decision",
+        "source_runtime_pr_creation_executed",
+        "source_pull_request_opened",
+        "source_branch_created",
+        "source_repository_written",
+        "source_receipt_store_appended",
+        "source_adapter_executed",
+        "source_connector_calls_observed",
+        "source_mutation_route_called",
+        "source_terminal_closure",
+        "source_success_claim_allowed"
+      ],
+      "properties": {
+        "dry_run_receipt_recorded": { "type": "boolean", "const": true },
+        "source_execution_decision": {
+          "type": "string",
+          "const": "PR_CREATION_EXECUTION_BLOCKED_AWAITING_EXPLICIT_ADMISSION"
+        },
+        "source_runtime_pr_creation_executed": { "type": "boolean", "const": false },
+        "source_pull_request_opened": { "type": "boolean", "const": false },
+        "source_branch_created": { "type": "boolean", "const": false },
+        "source_repository_written": { "type": "boolean", "const": false },
+        "source_receipt_store_appended": { "type": "boolean", "const": false },
+        "source_adapter_executed": { "type": "boolean", "const": false },
+        "source_connector_calls_observed": { "type": "boolean", "const": false },
+        "source_mutation_route_called": { "type": "boolean", "const": false },
+        "source_terminal_closure": { "type": "boolean", "const": false },
+        "source_success_claim_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "execution_admission_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "execution_admitted",
+        "execution_target_ref",
+        "required_before_execution_refs",
+        "blocked_reason_refs",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "const": "PR_CREATION_EXECUTION_BLOCKED_DRY_RUN_BOUND_AWAITING_LIVE_AUTHORITY"
+        },
+        "execution_admitted": { "type": "boolean", "const": false },
+        "execution_target_ref": { "type": "string", "const": "github-pr://agentic-service-harness/task-run" },
+        "required_before_execution_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "terminal_closure_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_adapter_execution_enabled",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "repository_write_enabled",
+        "mutation_route_enabled",
+        "receipt_store_append_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "terminal_closure",
+        "default_high_risk_authority"
+      ],
+      "properties": {
+        "live_adapter_execution_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "default_high_risk_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_pr_creation_execution_admission_schema",
+        "github_pr_creation_dry_run_receipt_schema",
+        "github_pr_creation_dry_run_receipt_example",
+        "github_pr_admission_preflight_schema",
+        "terminal_closure_certificate_read_model_schema"
+      ],
+      "properties": {
+        "github_pr_creation_execution_admission_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_creation_dry_run_receipt_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_creation_dry_run_receipt_example": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_admission_preflight_schema": { "$ref": "#/$defs/evidence_ref" },
+        "terminal_closure_certificate_read_model_schema": { "$ref": "#/$defs/evidence_ref" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}
