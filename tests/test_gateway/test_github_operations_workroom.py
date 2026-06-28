@@ -26,15 +26,21 @@ if str(_ROOT) not in sys.path:
 
 import gateway.server as gateway_server  # noqa: E402
 from gateway.github_operations_workroom import (  # noqa: E402
+    GitHubActionsFailureEvidenceAdmissionRequest,
     GitHubReadOnlyEvidenceFetcher,
     GitHubReadOnlyEvidenceAdmissionRequest,
+    GITHUB_ACTIONS_FAILURE_CAPABILITY_ID,
     GITHUB_PR_SAFETY_CAPABILITY_ID,
+    admit_github_actions_failure_evidence_collection,
     admit_github_read_only_evidence_collection,
+    build_github_actions_failure_diagnosis_receipt,
+    build_github_actions_failure_workroom_read_model,
     build_github_read_only_evidence_fetch_receipt,
     GitHubPrSafetyWorkroomRequest,
     build_pr_safety_projection_from_github_fetch_receipt,
     build_github_pr_safety_workroom_projection,
     build_github_pr_safety_workroom_read_model,
+    evaluate_github_actions_failure_diagnosis,
     evaluate_github_pr_safety_judgment,
 )
 from gateway.server import create_gateway_app  # noqa: E402
@@ -123,6 +129,68 @@ class FakeGitHubUrlopen:
                 ).encode("utf-8")
             )
         raise AssertionError(f"unexpected GitHub request path: {path}")
+
+
+class FakeGitHubActionsUrlopen:
+    """Deterministic fake GitHub Actions transport for failure diagnosis tests."""
+
+    def __init__(self) -> None:
+        self.requests: list[urllib.request.Request] = []
+
+    def __call__(self, request: urllib.request.Request, timeout: float) -> FakeGitHubResponse:
+        self.requests.append(request)
+        path = request.full_url.removeprefix("https://api.github.com")
+        if path == "/repos/tamiratl/mullu-control-plane/actions/runs/777":
+            return FakeGitHubResponse(
+                json.dumps(
+                    {
+                        "id": 777,
+                        "name": "CI - Build Verification",
+                        "display_title": "feat: governed actions diagnosis",
+                        "status": "completed",
+                        "conclusion": "failure",
+                        "event": "pull_request",
+                        "head_branch": "feature/actions-diagnosis",
+                        "head_sha": "b" * 40,
+                        "run_number": 81,
+                        "html_url": "https://github.example/actions/runs/777",
+                    }
+                ).encode("utf-8")
+            )
+        if path == "/repos/tamiratl/mullu-control-plane/actions/runs/777/jobs":
+            return FakeGitHubResponse(
+                json.dumps(
+                    {
+                        "total_count": 2,
+                        "jobs": [
+                            {
+                                "id": 9001,
+                                "name": "Python Tests",
+                                "status": "completed",
+                                "conclusion": "failure",
+                                "started_at": "2026-06-28T12:00:00Z",
+                                "completed_at": "2026-06-28T12:01:00Z",
+                                "steps": [
+                                    {"name": "Install", "conclusion": "success"},
+                                    {"name": "Run pytest", "conclusion": "failure"},
+                                ],
+                            },
+                            {
+                                "id": 9002,
+                                "name": "Schema Validation",
+                                "status": "completed",
+                                "conclusion": "success",
+                                "steps": [{"name": "Validate schemas", "conclusion": "success"}],
+                            },
+                        ],
+                    }
+                ).encode("utf-8")
+            )
+        if path == "/repos/tamiratl/mullu-control-plane/actions/jobs/9001/logs":
+            return FakeGitHubResponse(
+                b"setup complete\nERROR tests/test_gateway/test_github_operations_workroom.py::test_failed\nAssertionError: expected governed receipt\n"
+            )
+        raise AssertionError(f"unexpected GitHub Actions request path: {path}")
 
 
 def _clock() -> str:
@@ -264,6 +332,123 @@ def test_github_read_only_evidence_admission_rejects_unsupported_evidence_kind()
             requested_at="2026-06-28T11:59:00+00:00",
             surface_event_id="dashboard-request-42",
         )
+
+
+def test_github_actions_failure_admission_blocks_write_authority() -> None:
+    admission = admit_github_actions_failure_evidence_collection(
+        GitHubActionsFailureEvidenceAdmissionRequest(
+            actor_id="operator:tamirat",
+            workspace_id="workspace:mullusi-control-plane",
+            repo="tamiratl/mullu-control-plane",
+            workflow_run_id=777,
+            requested_evidence_kinds=("workflow_run", "jobs", "failed_job_logs"),
+            requested_at="2026-06-28T11:59:00+00:00",
+            surface_event_id="dashboard-actions-777",
+        ),
+        clock=_clock,
+    )
+
+    assert admission.capability_id == "connector.github.read"
+    assert admission.allowed_tools == ("connector_worker.github_read",)
+    assert admission.allowed_networks == ("api.github.com",)
+    assert admission.required_secret_scope == "oauth:github.read"
+    assert admission.live_connector_read_admitted is True
+    assert admission.live_connector_call_performed is False
+    assert admission.write_authority_granted is False
+    assert admission.max_failed_job_logs == 3
+    assert "rerun_workflow_without_explicit_approval" in admission.blocked_actions
+
+
+def test_github_actions_failure_admission_rejects_write_like_kind() -> None:
+    with pytest.raises(ValueError, match="unsupported GitHub Actions evidence kind"):
+        GitHubActionsFailureEvidenceAdmissionRequest(
+            actor_id="operator:tamirat",
+            workspace_id="workspace:mullusi-control-plane",
+            repo="tamiratl/mullu-control-plane",
+            workflow_run_id=777,
+            requested_evidence_kinds=("rerun",),
+            requested_at="2026-06-28T11:59:00+00:00",
+            surface_event_id="dashboard-actions-777",
+        )
+
+
+def test_github_actions_failure_fetcher_collects_bounded_logs_without_token_disclosure() -> None:
+    admission = admit_github_actions_failure_evidence_collection(
+        GitHubActionsFailureEvidenceAdmissionRequest(
+            actor_id="operator:tamirat",
+            workspace_id="workspace:mullusi-control-plane",
+            repo="tamiratl/mullu-control-plane",
+            workflow_run_id=777,
+            requested_evidence_kinds=("workflow_run", "jobs", "failed_job_logs"),
+            requested_at="2026-06-28T11:59:00+00:00",
+            surface_event_id="dashboard-actions-777",
+        ),
+        clock=_clock,
+    )
+    fake_urlopen = FakeGitHubActionsUrlopen()
+
+    result = GitHubReadOnlyEvidenceFetcher(
+        access_token="github-token-not-returned",
+        urlopen=fake_urlopen,
+    ).fetch_actions_failure(admission, clock=_clock)
+
+    assert result.capability_id == "connector.github.read"
+    assert result.live_connector_call_performed is True
+    assert result.write_authority_granted is False
+    assert result.solver_outcome == "SolvedVerified"
+    assert result.observed_workflow_run["conclusion"] == "failure"
+    assert result.observed_jobs[0]["failed_steps"] == ["Run pytest"]
+    assert result.failed_log_summaries[0]["log_digest"].startswith("sha256:")
+    assert result.failed_log_summaries[0]["raw_log_persisted"] is False
+    assert result.failed_log_summaries[0]["first_failure_signal"].startswith("ERROR ")
+    assert "github-token-not-returned" not in json.dumps(result.to_json_dict(), sort_keys=True)
+    assert len(fake_urlopen.requests) == 3
+    assert all(request.get_method() == "GET" for request in fake_urlopen.requests)
+    assert all(request.full_url.startswith("https://api.github.com/") for request in fake_urlopen.requests)
+
+
+def test_github_actions_failure_diagnosis_and_receipt_are_read_only() -> None:
+    result = _actions_failure_fetch_result()
+
+    diagnosis = evaluate_github_actions_failure_diagnosis(fetch_result=result, clock=_clock)
+    receipt = build_github_actions_failure_diagnosis_receipt(
+        result,
+        diagnosis=diagnosis,
+        actor_id="operator:tamirat",
+        surface_event_id="dashboard-actions-777",
+        occurred_at="2026-06-28T12:01:00+00:00",
+    )
+
+    assert diagnosis.status == "diagnosed"
+    assert diagnosis.write_authority_granted is False
+    assert diagnosis.suspected_failed_jobs == ("Python Tests",)
+    assert diagnosis.recommended_next_action == "prepare_patch_plan_from_failed_job_signal_without_mutating_github"
+    assert "failed_job_log_signal_available" in diagnosis.reasons
+    assert receipt.intent == "DIAGNOSE_GITHUB_ACTIONS_FAILURE"
+    assert receipt.risk_class is FabricRiskClass.CLASS_0_OBSERVE
+    assert receipt.policy_decision is FabricPolicyDecision.ALLOW_READ_ONLY
+    assert "rerun_workflow_without_explicit_approval" in receipt.actions_blocked
+    assert receipt.memory_update is FabricMemoryDecisionStatus.STORE
+
+
+def test_github_actions_failure_read_model_awaits_evidence() -> None:
+    read_model = build_github_actions_failure_workroom_read_model(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        workflow_run_id=777,
+        surface_event_id="dashboard-actions-777",
+        occurred_at="2026-06-28T11:59:00+00:00",
+        clock=_clock,
+    )
+
+    assert read_model["capability_id"] == GITHUB_ACTIONS_FAILURE_CAPABILITY_ID
+    assert read_model["status"] == "awaiting_evidence"
+    assert read_model["outcome"] == "AwaitingEvidence"
+    assert read_model["execution_allowed"] is False
+    assert read_model["effect_boundary"]["github_call_allowed"] is False
+    assert read_model["live_read_admission"]["write_authority_granted"] is False
+    assert "github_actions_jobs" in read_model["required_evidence"]
 
 
 def test_github_read_only_evidence_fetcher_collects_bounded_evidence_without_write_authority() -> None:
@@ -546,6 +731,109 @@ def test_operator_github_read_only_evidence_admission_preview_endpoint_rejects_w
     assert response.json()["detail"]["error_code"] == "invalid_github_read_only_evidence_admission_preview"
 
 
+def test_operator_github_actions_failure_admission_preview_endpoint() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.post(
+        "/operator/github-operations/actions-failure/read-admission/preview",
+        json={
+            "actor_id": "operator:tamirat",
+            "workspace_id": "workspace:mullusi-control-plane",
+            "repo": "tamiratl/mullu-control-plane",
+            "workflow_run_id": 777,
+            "requested_at": "2026-06-28T11:59:00+00:00",
+            "surface_event_id": "dashboard-actions-777",
+            "requested_evidence_kinds": ["workflow_run", "jobs", "failed_job_logs"],
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    admission = payload["github_actions_failure_evidence_admission"]
+    assert payload["outcome"] == "AwaitingEvidence"
+    assert payload["live_connector_call_performed"] is False
+    assert payload["write_authority_granted"] is False
+    assert admission["capability_id"] == "connector.github.read"
+    assert admission["allowed_networks"] == ["api.github.com"]
+    assert admission["required_secret_scope"] == "oauth:github.read"
+    assert "cancel_workflow_without_explicit_approval" in admission["blocked_actions"]
+
+
+def test_operator_github_actions_failure_execution_endpoint_returns_diagnosis_without_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_urlopen = FakeGitHubActionsUrlopen()
+
+    def _fetcher_factory(**kwargs):  # noqa: ANN001
+        return GitHubReadOnlyEvidenceFetcher(
+            access_token=kwargs["access_token"],
+            urlopen=fake_urlopen,
+            timeout_seconds=kwargs["timeout_seconds"],
+        )
+
+    monkeypatch.setattr(gateway_server, "GitHubReadOnlyEvidenceFetcher", _fetcher_factory)
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.post(
+        "/operator/github-operations/actions-failure/read-evidence",
+        json={
+            "actor_id": "operator:tamirat",
+            "workspace_id": "workspace:mullusi-control-plane",
+            "repo": "tamiratl/mullu-control-plane",
+            "workflow_run_id": 777,
+            "requested_at": "2026-06-28T11:59:00+00:00",
+            "surface_event_id": "dashboard-actions-777",
+            "requested_evidence_kinds": ["workflow_run", "jobs", "failed_job_logs"],
+            "access_token": "github-token-not-returned",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    encoded_payload = json.dumps(payload, sort_keys=True)
+    assert "github-token-not-returned" not in encoded_payload
+    assert payload["execution_allowed"] is True
+    assert payload["live_connector_call_performed"] is True
+    assert payload["write_authority_granted"] is False
+    assert payload["effect_boundary"]["github_call_allowed"] is True
+    assert payload["effect_boundary"]["repository_mutation_allowed"] is False
+    assert payload["github_actions_failure_diagnosis"]["status"] == "diagnosed"
+    assert payload["github_actions_failure_diagnosis"]["write_authority_granted"] is False
+    assert payload["github_actions_failure_receipt"]["policy_decision"] == "allow_read_only"
+    assert "rerun_workflow_without_explicit_approval" in payload["github_actions_failure_receipt"]["actions_blocked"]
+    assert len(fake_urlopen.requests) == 3
+    assert all(request.get_method() == "GET" for request in fake_urlopen.requests)
+
+
+def test_operator_github_actions_failure_panel_renders_read_only_form() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get(
+        "/operator/github-operations/actions-failure",
+        params={
+            "repo": "tamiratl/mullu-control-plane",
+            "workflow_run_id": 777,
+            "occurred_at": "2026-06-28T11:59:00+00:00",
+            "surface_event_id": "dashboard-actions-777",
+        },
+    )
+
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "Mullusi GitHub Actions Failure Diagnosis" in response.text
+    assert "awaiting_evidence" in response.text
+    assert "GitHub call allowed" in response.text
+    assert "<code>false</code>" in response.text
+    assert 'id="github-actions-read-form"' in response.text
+    assert 'type="password"' in response.text
+    assert 'fetch("/operator/github-operations/actions-failure/read-evidence"' in response.text
+    assert 'tokenInput.value = "";' in response.text
+    assert "rerun_workflow_without_explicit_approval" in response.text
+
+
 def test_operator_github_read_only_evidence_execution_endpoint_returns_receipts_without_token(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -724,6 +1012,25 @@ def _fetch_receipt(result):
         surface_event_id="dashboard-request-42",
         occurred_at="2026-06-28T12:01:00+00:00",
     )
+
+
+def _actions_failure_fetch_result():
+    admission = admit_github_actions_failure_evidence_collection(
+        GitHubActionsFailureEvidenceAdmissionRequest(
+            actor_id="operator:tamirat",
+            workspace_id="workspace:mullusi-control-plane",
+            repo="tamiratl/mullu-control-plane",
+            workflow_run_id=777,
+            requested_evidence_kinds=("workflow_run", "jobs", "failed_job_logs"),
+            requested_at="2026-06-28T11:59:00+00:00",
+            surface_event_id="dashboard-actions-777",
+        ),
+        clock=_clock,
+    )
+    return GitHubReadOnlyEvidenceFetcher(
+        access_token="github-token-not-returned",
+        urlopen=FakeGitHubActionsUrlopen(),
+    ).fetch_actions_failure(admission, clock=_clock)
 
 
 def _result_with(result, **updates):

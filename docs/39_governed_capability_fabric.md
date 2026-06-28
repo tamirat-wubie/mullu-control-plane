@@ -182,6 +182,10 @@ POST /operator/github-operations/pr-safety/read-admission/preview
 POST /operator/github-operations/pr-safety/read-evidence
 GET  /operator/github-operations/pr-safety/read-evidence/receipts/{receipt_filename}
 POST /operator/github-operations/pr-safety/preview
+GET  /operator/github-operations/actions-failure/read-model
+GET  /operator/github-operations/actions-failure
+POST /operator/github-operations/actions-failure/read-admission/preview
+POST /operator/github-operations/actions-failure/read-evidence
 ```
 
 The GET read model powers the browser-facing Workroom panel. Missing evidence
@@ -247,6 +251,41 @@ read admission -> GET-only fetch -> read evidence receipt -> PR safety projectio
 
 The final projection still cannot merge, deploy, push, delete a branch, or post
 a review. Read evidence earns inspection context, not execution authority.
+
+## GitHub Actions Failure Diagnosis
+
+The Actions failure path is the second narrow Workroom capability. It reuses the
+same governed connector admission, evidence hashing, causal receipt, and
+read-only effect boundary, but targets workflow-run failure diagnosis instead of
+pull-request merge safety.
+
+Allowed evidence:
+
+```text
+workflow_run
+jobs
+failed_job_logs
+```
+
+The live execution route performs only GET requests against `api.github.com` and
+does not return or persist the access token. Failed job logs are reduced to
+hash-bound digests and bounded failure-signal excerpts; raw full logs are not
+persisted.
+
+Blocked actions:
+
+```text
+rerun_workflow_without_explicit_approval
+cancel_workflow_without_explicit_approval
+dispatch_workflow_without_explicit_approval
+post_github_comment_without_write_admission
+mutate_repository_without_write_admission
+```
+
+The result is a read-only diagnosis receipt containing failure summary,
+suspected failed jobs, payload hashes, bounded log signals, recommended next
+action, and blocked actions. No endpoint in this path can rerun, cancel,
+dispatch, comment, push, merge, or deploy.
 
 `evaluate_github_pr_safety_judgment` converts the read-only fetch result and
 fetch receipt into one bounded status:
