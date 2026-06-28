@@ -468,6 +468,7 @@ class AutonomousRequestEpisodeSummaryView:
     stage_receipt_bindings: tuple[Mapping[str, str], ...] = ()
     stage_execution_bindings: tuple[Mapping[str, object], ...] = ()
     stage_verification_bindings: tuple[Mapping[str, object], ...] = ()
+    stage_policy_bindings: tuple[Mapping[str, object], ...] = ()
 
     @staticmethod
     def from_receipt(
@@ -512,6 +513,17 @@ class AutonomousRequestEpisodeSummaryView:
                     "stage_id": step.plan_stage_id,
                     "receipt_ref": step.receipt_ref,
                     "verification_keys": list(step.verification_keys),
+                }
+                for step in receipt.step_receipts
+                if step.plan_stage_id is not None
+            ),
+            stage_policy_bindings=tuple(
+                {
+                    "stage_id": step.plan_stage_id,
+                    "receipt_ref": step.receipt_ref,
+                    "autonomy_decision_id": step.autonomy_decision_id,
+                    "autonomy_status": step.autonomy_status,
+                    "autonomy_reason": step.autonomy_reason,
                 }
                 for step in receipt.step_receipts
                 if step.plan_stage_id is not None
