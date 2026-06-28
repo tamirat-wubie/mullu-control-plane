@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:developer-workflow-local-rollback-execution-receipt:1",
+  "title": "DeveloperWorkflowLocalRollbackExecutionReceipt",
+  "description": "Local-lab rollback execution receipt for approved generated artifact deletion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "workflow_id",
+    "workflow_run_id",
+    "execution_status",
+    "execution_mode",
+    "execution_boundary",
+    "external_effects_allowed",
+    "rollback_execution_performed",
+    "target_path_checks_performed",
+    "workspace_root",
+    "approval_packet_path",
+    "rollback_summary_path",
+    "approval_status",
+    "delete_execution_allowed",
+    "selected_artifact_count",
+    "executed_artifact_count",
+    "skipped_artifact_count",
+    "failed_artifact_count",
+    "source_refs",
+    "artifacts"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "const": "developer_workflow_local_rollback_execution_receipt.v1"
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "mullu_developer_workflow.v1"
+    },
+    "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "execution_status": {
+      "type": "string",
+      "enum": ["blocked_no_approval", "dry_run_ready", "rollback_executed", "rollback_noop", "rollback_partial", "rollback_failed"]
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": ["dry_run", "execute"]
+    },
+    "execution_boundary": {
+      "type": "string",
+      "const": "local_lab_only"
+    },
+    "external_effects_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "rollback_execution_performed": {"type": "boolean"},
+    "target_path_checks_performed": {
+      "type": "boolean",
+      "const": true
+    },
+    "workspace_root": {"type": "string", "minLength": 1, "maxLength": 360},
+    "approval_packet_path": {"type": "string", "minLength": 1, "maxLength": 360},
+    "rollback_summary_path": {"type": "string", "minLength": 1, "maxLength": 360},
+    "approval_status": {
+      "type": "string",
+      "enum": ["pending", "approved", "rejected", "deferred"]
+    },
+    "delete_execution_allowed": {"type": "boolean"},
+    "selected_artifact_count": {"type": "integer", "minimum": 0},
+    "executed_artifact_count": {"type": "integer", "minimum": 0},
+    "skipped_artifact_count": {"type": "integer", "minimum": 0},
+    "failed_artifact_count": {"type": "integer", "minimum": 0},
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approval_packet", "rollback_summary_packet", "runner", "validator"],
+      "properties": {
+        "approval_packet": {"type": "string", "minLength": 1, "maxLength": 360},
+        "rollback_summary_packet": {"type": "string", "minLength": 1, "maxLength": 360},
+        "runner": {
+          "type": "string",
+          "const": "python scripts/execute_developer_workflow_local_rollback.py"
+        },
+        "validator": {
+          "type": "string",
+          "const": "python scripts/validate_developer_workflow_local_rollback_execution_receipt.py"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {"$ref": "#/$defs/artifact"}
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "path",
+        "resolved_path",
+        "rollback_command",
+        "approval_status",
+        "execution_allowed",
+        "required_confirmation",
+        "path_within_workspace",
+        "pre_exists",
+        "post_exists",
+        "action_status",
+        "error_message"
+      ],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "path": {"type": "string", "minLength": 1, "maxLength": 360},
+        "resolved_path": {"type": "string", "minLength": 1, "maxLength": 520},
+        "rollback_command": {"type": "string", "minLength": 1, "maxLength": 520},
+        "approval_status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "deferred"]
+        },
+        "execution_allowed": {"type": "boolean"},
+        "required_confirmation": {"type": "boolean", "const": true},
+        "path_within_workspace": {"type": "boolean"},
+        "pre_exists": {"type": "boolean"},
+        "post_exists": {"type": "boolean"},
+        "action_status": {
+          "type": "string",
+          "enum": ["would_delete", "deleted", "missing_before", "skipped", "boundary_blocked", "failed"]
+        },
+        "error_message": {"type": "string", "maxLength": 320}
+      }
+    }
+  }
+}

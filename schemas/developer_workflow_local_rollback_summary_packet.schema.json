@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:developer-workflow-local-rollback-summary-packet:1",
+  "title": "DeveloperWorkflowLocalRollbackSummaryPacket",
+  "description": "Projection-only rollback summary for Developer Workflow local sandbox generated artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "workflow_id",
+    "workflow_run_id",
+    "packet_status",
+    "execution_boundary",
+    "external_effects_allowed",
+    "rollback_execution_performed",
+    "source_report_path",
+    "generated_artifact_count",
+    "rollback_command_preview",
+    "source_refs",
+    "artifacts"
+  ],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "const": "developer_workflow_local_rollback_summary_packet.v1"
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "mullu_developer_workflow.v1"
+    },
+    "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "packet_status": {
+      "type": "string",
+      "enum": ["rollback_ready", "rollback_unavailable"]
+    },
+    "execution_boundary": {
+      "type": "string",
+      "const": "local_lab_only"
+    },
+    "external_effects_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "rollback_execution_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "source_report_path": {"type": "string", "minLength": 1, "maxLength": 260},
+    "generated_artifact_count": {"type": "integer", "minimum": 0},
+    "rollback_command_preview": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {"type": "string", "minLength": 1, "maxLength": 520}
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["local_sandbox_proof_report", "builder", "validator"],
+      "properties": {
+        "local_sandbox_proof_report": {"type": "string", "minLength": 1, "maxLength": 260},
+        "builder": {
+          "type": "string",
+          "const": "python scripts/build_developer_workflow_local_rollback_summary_packet.py"
+        },
+        "validator": {
+          "type": "string",
+          "const": "python scripts/validate_developer_workflow_local_rollback_summary_packet.py"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {"$ref": "#/$defs/artifact"}
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "path",
+        "artifact_status",
+        "rollback_action",
+        "rollback_command",
+        "required_confirmation"
+      ],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "path": {"type": "string", "minLength": 1, "maxLength": 260},
+        "artifact_status": {
+          "type": "string",
+          "const": "reported"
+        },
+        "rollback_action": {
+          "type": "string",
+          "const": "delete_generated_artifact"
+        },
+        "rollback_command": {"type": "string", "minLength": 1, "maxLength": 520},
+        "required_confirmation": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

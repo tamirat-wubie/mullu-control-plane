@@ -1,0 +1,348 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:forge-write-spine-bridge:1",
+  "$comment": "Purpose: reference-only bridge contract for applying mullu-forge-runtime-v0.1.0-dev3 write-spine constraints to this control plane. Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]. Invariants: no production state-changing authority and no runtime adapter registration.",
+  "title": "ForgeWriteSpineBridge",
+  "description": "Reference-only bridge from Forge dev3 PB01/PB02/PB03 write-spine evidence into the current Mullusi control-plane workspace.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bridge_id",
+    "source_repository",
+    "deployment_boundary",
+    "application_mode",
+    "external_effects_allowed",
+    "state_write_runtime_registered",
+    "write_spine",
+    "certificate_contract",
+    "service_boundary",
+    "workspace_mapping",
+    "required_invariants",
+    "verification"
+  ],
+  "properties": {
+    "bridge_id": {
+      "type": "string",
+      "const": "forge_write_spine_bridge.v1"
+    },
+    "source_repository": {
+      "$ref": "#/$defs/source_repository"
+    },
+    "deployment_boundary": {
+      "$ref": "#/$defs/deployment_boundary"
+    },
+    "application_mode": {
+      "type": "string",
+      "const": "reference_contract_only"
+    },
+    "external_effects_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "state_write_runtime_registered": {
+      "type": "boolean",
+      "const": false
+    },
+    "write_spine": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "$ref": "#/$defs/write_spine_stage"
+      }
+    },
+    "certificate_contract": {
+      "$ref": "#/$defs/certificate_contract"
+    },
+    "service_boundary": {
+      "$ref": "#/$defs/service_boundary"
+    },
+    "workspace_mapping": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 12,
+      "items": {
+        "$ref": "#/$defs/workspace_mapping"
+      }
+    },
+    "required_invariants": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "string",
+        "enum": [
+          "conditional_decision_required",
+          "fencing_token_required",
+          "immutable_snapshot_required",
+          "signed_phigov_certificate_required",
+          "prepared_transition_before_live_mutation",
+          "lineage_authorization_attestation_required",
+          "commit_after_attestation_only",
+          "lineage_completion_attestation_required",
+          "production_state_changing_blocked",
+          "development_reference_not_runtime_authority"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "verification": {
+      "$ref": "#/$defs/verification"
+    }
+  },
+  "$defs": {
+    "source_repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "runtime_version",
+        "observed_commit",
+        "verification_status",
+        "production_state_changing"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "const": "tamirat-wubie/mullu-forge-runtime-v0.1.0-dev3"
+        },
+        "runtime_version": {
+          "type": "string",
+          "const": "0.1.0-dev3"
+        },
+        "observed_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,40}$"
+        },
+        "verification_status": {
+          "type": "string",
+          "const": "aggregate_verification_passed"
+        },
+        "production_state_changing": {
+          "type": "string",
+          "const": "NO_GO"
+        }
+      }
+    },
+    "deployment_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dev_offline",
+        "staging_shadow",
+        "production_read_only",
+        "production_state_changing"
+      ],
+      "properties": {
+        "dev_offline": {
+          "type": "string",
+          "const": "GO"
+        },
+        "staging_shadow": {
+          "type": "string",
+          "const": "GO_WITH_GATES"
+        },
+        "production_read_only": {
+          "type": "string",
+          "const": "CONDITIONAL_GO"
+        },
+        "production_state_changing": {
+          "type": "string",
+          "const": "NO_GO"
+        }
+      }
+    },
+    "write_spine_stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_id",
+        "order",
+        "authority_boundary",
+        "required",
+        "evidence_ref",
+        "commit_gate"
+      ],
+      "properties": {
+        "stage_id": {
+          "type": "string",
+          "enum": [
+            "conditional_decision",
+            "fenced_snapshot",
+            "phigov_certificate",
+            "prepared_transition",
+            "lineage_authorization_attestation",
+            "fenced_commit",
+            "lineage_completion_attestation"
+          ]
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7
+        },
+        "authority_boundary": {
+          "type": "string",
+          "enum": [
+            "UAO",
+            "InceptaMeshPersistence",
+            "Phi_gov",
+            "H_lineage"
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "const": true
+        },
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit_gate": {
+          "type": "string",
+          "enum": [
+            "before_prepare",
+            "before_commit",
+            "commit",
+            "after_commit"
+          ]
+        }
+      }
+    },
+    "certificate_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "development_only",
+        "required_fields"
+      ],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "const": "forge.phigov.ed25519-state-write.v0.1"
+        },
+        "development_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "required_fields": {
+          "type": "array",
+          "minItems": 18,
+          "maxItems": 18,
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "service_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signed_rpc",
+        "caller_audience_binding",
+        "request_expiry",
+        "persistent_nonce_replay_guard",
+        "pinned_phigov_trust_root",
+        "pinned_lineage_identity",
+        "transport_confidentiality",
+        "local_development_keys",
+        "production_authorized"
+      ],
+      "properties": {
+        "signed_rpc": {
+          "type": "boolean",
+          "const": true
+        },
+        "caller_audience_binding": {
+          "type": "boolean",
+          "const": true
+        },
+        "request_expiry": {
+          "type": "boolean",
+          "const": true
+        },
+        "persistent_nonce_replay_guard": {
+          "type": "boolean",
+          "const": true
+        },
+        "pinned_phigov_trust_root": {
+          "type": "boolean",
+          "const": true
+        },
+        "pinned_lineage_identity": {
+          "type": "boolean",
+          "const": true
+        },
+        "transport_confidentiality": {
+          "type": "boolean",
+          "const": false
+        },
+        "local_development_keys": {
+          "type": "boolean",
+          "const": true
+        },
+        "production_authorized": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "workspace_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forge_surface",
+        "workspace_surface",
+        "status"
+      ],
+      "properties": {
+        "forge_surface": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workspace_surface": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "mapped",
+            "partial",
+            "reference_only"
+          ]
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "external_reference_command",
+        "external_reference_result",
+        "local_validator",
+        "local_test"
+      ],
+      "properties": {
+        "external_reference_command": {
+          "type": "string",
+          "const": "PYTHONPATH=src python scripts/verify_all.py"
+        },
+        "external_reference_result": {
+          "type": "string",
+          "const": "aggregate_verification_passed"
+        },
+        "local_validator": {
+          "type": "string",
+          "const": "python scripts/validate_forge_write_spine_bridge.py"
+        },
+        "local_test": {
+          "type": "string",
+          "const": "python -m pytest tests/test_validate_forge_write_spine_bridge.py -q"
+        }
+      }
+    }
+  }
+}

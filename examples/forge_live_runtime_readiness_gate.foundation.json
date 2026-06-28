@@ -1,0 +1,123 @@
+{
+  "admission_decision": "block_live_runtime",
+  "blocked_reasons": [
+    "managed_key_custody_missing",
+    "confidential_transport_missing",
+    "persistent_nonce_replay_store_missing",
+    "independent_persistence_store_missing",
+    "independent_worm_lineage_missing",
+    "tenant_scope_guard_missing",
+    "uao_no_bypass_runtime_proof_missing",
+    "rollback_replay_recovery_plan_missing",
+    "pb01_pb02_pb03_write_spine_closure_missing",
+    "pb04_pb11_runtime_operational_closure_missing"
+  ],
+  "bridge_ref": "forge_write_spine_bridge.v1",
+  "commit_allowed": false,
+  "evaluated_at": "2026-06-27T12:30:00+00:00",
+  "external_effects_allowed": false,
+  "foundation_mode": true,
+  "gate_hash": "d7cb6f30fead7b9bdec0a84607f26265b38d69170bd14aab378c13ed56d858dd",
+  "gate_id": "forge-live-runtime-readiness-gate.v1",
+  "live_runtime_authorized": false,
+  "next_allowed_action": "collect_local_evidence_without_registering_runtime_authority",
+  "production_authorized": false,
+  "readiness_status": "blocked_awaiting_evidence",
+  "required_controls": [
+    "foundation_mode_runtime_block",
+    "managed_key_custody_required",
+    "confidential_transport_required",
+    "persistent_nonce_replay_store_required",
+    "independent_persistence_required",
+    "independent_worm_lineage_required",
+    "tenant_scope_guard_required",
+    "uao_no_bypass_runtime_proof_required",
+    "rollback_replay_recovery_required",
+    "pb01_pb11_evidence_required"
+  ],
+  "required_evidence": [
+    {
+      "blocker_reason": "managed_key_custody_missing",
+      "evidence_id": "managed_key_custody",
+      "evidence_ref": "",
+      "present": false,
+      "required": true
+    },
+    {
+      "blocker_reason": "confidential_transport_missing",
+      "evidence_id": "confidential_transport",
+      "evidence_ref": "",
+      "present": false,
+      "required": true
+    },
+    {
+      "blocker_reason": "persistent_nonce_replay_store_missing",
+      "evidence_id": "persistent_nonce_replay_store",
+      "evidence_ref": "",
+      "present": false,
+      "required": true
+    },
+    {
+      "blocker_reason": "independent_persistence_store_missing",
+      "evidence_id": "independent_persistence_store",
+      "evidence_ref": "",
+      "present": false,
+      "required": true
+    },
+    {
+      "blocker_reason": "independent_worm_lineage_missing",
+      "evidence_id": "independent_worm_lineage",
+      "evidence_ref": "",
+      "present": false,
+      "required": true
+    },
+    {
+      "blocker_reason": "tenant_scope_guard_missing",
+      "evidence_id": "tenant_scope_guard",
+      "evidence_ref": "",
+      "present": false,
+      "required": true
+    },
+    {
+      "blocker_reason": "uao_no_bypass_runtime_proof_missing",
+      "evidence_id": "uao_no_bypass_runtime_proof",
+      "evidence_ref": "",
+      "present": false,
+      "required": true
+    },
+    {
+      "blocker_reason": "rollback_replay_recovery_plan_missing",
+      "evidence_id": "rollback_replay_recovery_plan",
+      "evidence_ref": "",
+      "present": false,
+      "required": true
+    },
+    {
+      "blocker_reason": "pb01_pb02_pb03_write_spine_closure_missing",
+      "evidence_id": "pb01_pb02_pb03_write_spine_closure",
+      "evidence_ref": "",
+      "present": false,
+      "required": true
+    },
+    {
+      "blocker_reason": "pb04_pb11_runtime_operational_closure_missing",
+      "evidence_id": "pb04_pb11_runtime_operational_closure",
+      "evidence_ref": "",
+      "present": false,
+      "required": true
+    }
+  ],
+  "schema_ref": "urn:mullusi:schema:forge-live-runtime-readiness-gate:1",
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "source_admission_packet_ref": "examples/forge_state_write_admission_packet.foundation.json",
+  "source_bridge_ref": "examples/forge_write_spine_bridge.foundation.json",
+  "state_write_runtime_registered": false,
+  "validators": [
+    {
+      "command": "python scripts/validate_forge_live_runtime_readiness_gate.py",
+      "required_for_closure": true,
+      "validator_id": "forge-live-runtime-readiness-gate"
+    }
+  ]
+}

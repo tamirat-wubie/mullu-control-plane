@@ -1,0 +1,50 @@
+{
+  "approval": {
+    "approval_required": true,
+    "approval_status": "pending",
+    "authorized_effect": "prepare_local_pr_candidate_packet"
+  },
+  "branch_name": "codex/developer-workflow-local-candidate",
+  "branch_push_allowed": false,
+  "bundle": {
+    "completed_count": 0,
+    "ready": false,
+    "receipt_ids": [
+      "sandbox_patch_receipt",
+      "test_gate_receipt",
+      "diff_review_receipt",
+      "terminal_receipt"
+    ],
+    "required_count": 4
+  },
+  "candidate_ready": false,
+  "candidate_status": "awaiting_receipts",
+  "diff_refs": [],
+  "execution_boundary": "local_lab_only",
+  "external_effects_allowed": false,
+  "forbidden_effects": [
+    "open_external_pr",
+    "push_branch",
+    "merge",
+    "deploy",
+    "call_connector"
+  ],
+  "packet_hash": "c64dbdb9f8e49837ed1fb5c2c18add9e7395b7972d8efec3bf816d506c044598",
+  "packet_id": "local_pr_candidate_packet.v1",
+  "pr_creation_allowed": false,
+  "rollback": {
+    "command": "use sandbox receipt rollback_command before discarding candidate",
+    "evidence_refs": [],
+    "required": true
+  },
+  "source_refs": {
+    "approval_packet_path": "examples/pr_preparation_approval_packet.foundation.json",
+    "approval_packet_schema": "schemas/pr_preparation_approval_packet.schema.json",
+    "candidate_builder": "python scripts/build_local_pr_candidate_packet.py"
+  },
+  "summary": "Local PR candidate packet prepared from Developer Workflow receipts.",
+  "test_refs": [],
+  "title": "Prepare governed local Developer Workflow candidate",
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

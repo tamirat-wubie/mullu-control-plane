@@ -838,11 +838,37 @@ def test_lane_runtime_authority_evidence_receipt_rejects_missing_lane(tmp_path: 
         )
 
 
+def test_lane_runtime_authority_evidence_receipt_rejects_unexpected_lane(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    extra_item = copy.deepcopy(changed["lane_evidence_items"][0])
+    extra_item["lane_ref"] = "skill://unbounded-lane-evidence"
+    extra_item["delta_reject_ref"] = "delta-reject://universal-symbol-lane/unbounded-lane-evidence"
+    changed["lane_evidence_items"].append(extra_item)
+    changed["contract_summary"]["lane_evidence_item_count"] = len(changed["lane_evidence_items"])
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError, match="unbounded-lane-evidence"):
+        validate_universal_symbol_lane_runtime_authority_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
+        )
+
+
 def test_lane_runtime_authority_evidence_receipt_rejects_observed_evidence_drift(tmp_path: Path) -> None:
     receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
     changed = copy.deepcopy(receipt)
     changed["lane_evidence_items"][0]["observed_evidence_refs"].append("witness://unexpected/live-lane")
     with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError, match="observed_evidence_refs"):
+        validate_universal_symbol_lane_runtime_authority_evidence_receipt(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
+        )
+
+
+def test_lane_runtime_authority_evidence_receipt_rejects_unexpected_blocker(tmp_path: Path) -> None:
+    receipt = json.loads(DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_RECEIPT_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(receipt)
+    changed["lane_evidence_items"][0]["blocker_classifications"].append("unbounded_lane_blocker")
+    with pytest.raises(UniversalSymbolLaneRuntimeAuthorityEvidenceReceiptError, match="unbounded_lane_blocker"):
         validate_universal_symbol_lane_runtime_authority_evidence_receipt(
             _write_policy_case(tmp_path, changed),
             DEFAULT_LANE_RUNTIME_AUTHORITY_EVIDENCE_SCHEMA_PATH,
@@ -895,6 +921,26 @@ def test_runtime_authority_witness_rejects_missing_requirement(tmp_path: Path) -
         )
 
 
+def test_runtime_authority_witness_rejects_unexpected_requirement(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["authority_requirements"].append(
+        {
+            "requirement_id": "requirement://unbounded-runtime-authority",
+            "proof_state": "Unknown",
+            "required_evidence_ref": "policy://unbounded-runtime-authority",
+            "current_decision": "runtime_authority_blocked",
+            "delta_reject_ref": "delta-reject://universal-symbol/unbounded-runtime-authority",
+        }
+    )
+    changed["contract_summary"]["authority_requirement_count"] = len(changed["authority_requirements"])
+    with pytest.raises(UniversalSymbolRuntimeAuthorityWitnessError, match="unbounded-runtime-authority"):
+        validate_universal_symbol_runtime_authority_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_AUTHORITY_SCHEMA_PATH,
+        )
+
+
 def test_runtime_authority_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
     witness = json.loads(DEFAULT_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
     changed = copy.deepcopy(witness)
@@ -911,6 +957,18 @@ def test_runtime_authority_witness_rejects_constraint_drift(tmp_path: Path) -> N
     changed = copy.deepcopy(witness)
     changed["runtime_constraints"]["runtime_admission_policy_required"] = False
     with pytest.raises(UniversalSymbolRuntimeAuthorityWitnessError, match="runtime_admission_policy_required"):
+        validate_universal_symbol_runtime_authority_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_AUTHORITY_SCHEMA_PATH,
+        )
+
+
+def test_runtime_authority_witness_rejects_unexpected_blocked_reason(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["blocked_reasons"].append("unbounded_runtime_authority_reason")
+    changed["contract_summary"]["blocked_reason_count"] = len(changed["blocked_reasons"])
+    with pytest.raises(UniversalSymbolRuntimeAuthorityWitnessError, match="unbounded_runtime_authority_reason"):
         validate_universal_symbol_runtime_authority_witness(
             _write_policy_case(tmp_path, changed),
             DEFAULT_RUNTIME_AUTHORITY_SCHEMA_PATH,
@@ -964,6 +1022,27 @@ def test_runtime_authority_read_model_rejects_missing_projection_link(tmp_path: 
         )
 
 
+def test_runtime_authority_read_model_rejects_unexpected_projection_link(tmp_path: Path) -> None:
+    read_model = json.loads(DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(read_model)
+    changed["authority_chain_projection"].append(
+        {
+            "link_id": "runtime-authority-read-model://unbounded-runtime-link",
+            "label": "Unbounded runtime link",
+            "source_ref": "policy://unbounded-runtime-link",
+            "proof_state": "Unknown",
+            "activation_allowed": False,
+            "operator_visible_summary": "Blocked pending governed evidence.",
+        }
+    )
+    changed["contract_summary"]["authority_chain_projection_count"] = len(changed["authority_chain_projection"])
+    with pytest.raises(UniversalSymbolRuntimeAuthorityReadModelError, match="unbounded-runtime-link"):
+        validate_universal_symbol_runtime_authority_read_model(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_SCHEMA_PATH,
+        )
+
+
 def test_runtime_authority_read_model_rejects_evidence_ref_count_drift(tmp_path: Path) -> None:
     read_model = json.loads(DEFAULT_RUNTIME_AUTHORITY_READ_MODEL_PATH.read_text(encoding="utf-8"))
     changed = copy.deepcopy(read_model)
@@ -999,6 +1078,38 @@ def test_skill_runtime_authority_witness_rejects_missing_lane(tmp_path: Path) ->
         )
 
 
+def test_skill_runtime_authority_witness_rejects_unexpected_lane(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_SKILL_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["lane_requirements"].append(
+        {
+            "lane_ref": "skill://unbounded-runtime-lane",
+            "proof_state": "Unknown",
+            "required_evidence_refs": [
+                "schemas/universal_symbol_skill_runtime_authority_witness.schema.json",
+                "schemas/universal_symbol_runtime_authority_witness.schema.json",
+                "schemas/universal_symbol_lane_runtime_authority_evidence_receipt.schema.json",
+                "schemas/universal_symbol_receipt_store_authority_witness.schema.json",
+                "schemas/universal_symbol_receipt_store_recovery_witness.schema.json",
+                "scripts/validate_universal_symbol_skill_runtime_authority_witness.py",
+            ],
+            "blocked_action_refs": [
+                "blocked://skill/live-dispatch",
+                "blocked://skill/connector-call",
+                "blocked://skill/terminal-closure",
+            ],
+            "admission_state": "blocked_pending_live_runtime_authority",
+            "delta_reject_ref": "delta-reject://universal-symbol-skill/unbounded-runtime-lane",
+        }
+    )
+    changed["contract_summary"]["lane_requirement_count"] = len(changed["lane_requirements"])
+    with pytest.raises(UniversalSymbolSkillRuntimeAuthorityWitnessError, match="unbounded-runtime-lane"):
+        validate_universal_symbol_skill_runtime_authority_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_SKILL_RUNTIME_AUTHORITY_SCHEMA_PATH,
+        )
+
+
 def test_skill_runtime_authority_witness_rejects_missing_delta_reject(tmp_path: Path) -> None:
     witness = json.loads(DEFAULT_SKILL_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
     changed = copy.deepcopy(witness)
@@ -1015,6 +1126,18 @@ def test_skill_runtime_authority_witness_rejects_constraint_drift(tmp_path: Path
     changed = copy.deepcopy(witness)
     changed["lane_constraints"]["runtime_admission_policy_required"] = False
     with pytest.raises(UniversalSymbolSkillRuntimeAuthorityWitnessError, match="runtime_admission_policy_required"):
+        validate_universal_symbol_skill_runtime_authority_witness(
+            _write_policy_case(tmp_path, changed),
+            DEFAULT_SKILL_RUNTIME_AUTHORITY_SCHEMA_PATH,
+        )
+
+
+def test_skill_runtime_authority_witness_rejects_unexpected_blocked_reason(tmp_path: Path) -> None:
+    witness = json.loads(DEFAULT_SKILL_RUNTIME_AUTHORITY_WITNESS_PATH.read_text(encoding="utf-8"))
+    changed = copy.deepcopy(witness)
+    changed["blocked_reasons"].append("unbounded_skill_authority_reason")
+    changed["contract_summary"]["blocked_reason_count"] = len(changed["blocked_reasons"])
+    with pytest.raises(UniversalSymbolSkillRuntimeAuthorityWitnessError, match="unbounded_skill_authority_reason"):
         validate_universal_symbol_skill_runtime_authority_witness(
             _write_policy_case(tmp_path, changed),
             DEFAULT_SKILL_RUNTIME_AUTHORITY_SCHEMA_PATH,

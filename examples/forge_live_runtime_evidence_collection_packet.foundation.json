@@ -1,0 +1,142 @@
+{
+  "blocked_reasons": [
+    "managed_key_custody_missing",
+    "confidential_transport_missing",
+    "persistent_nonce_replay_store_missing",
+    "independent_persistence_store_missing",
+    "independent_worm_lineage_missing",
+    "tenant_scope_guard_missing",
+    "uao_no_bypass_runtime_proof_missing",
+    "rollback_replay_recovery_plan_missing",
+    "pb01_pb02_pb03_write_spine_closure_missing",
+    "pb04_pb11_runtime_operational_closure_missing"
+  ],
+  "bridge_ref": "forge_write_spine_bridge.v1",
+  "collection_mode": "local_evidence_planning_only",
+  "collection_status": "not_started",
+  "disallowed_authority": {
+    "commit_allowed": false,
+    "external_effects_allowed": false,
+    "live_runtime_authorized": false,
+    "production_authorized": false,
+    "state_write_runtime_registered": false,
+    "terminal_closure": false
+  },
+  "evidence_items": [
+    {
+      "allowed_collection_mode": "local_design_or_rehearsal_only",
+      "authority_effect": false,
+      "collected": false,
+      "collection_status": "not_collected",
+      "evidence_id": "managed_key_custody",
+      "source_blocker_reason": "managed_key_custody_missing",
+      "target_evidence_ref": "evidence://forge/live-runtime/managed-key-custody"
+    },
+    {
+      "allowed_collection_mode": "local_design_or_rehearsal_only",
+      "authority_effect": false,
+      "collected": false,
+      "collection_status": "not_collected",
+      "evidence_id": "confidential_transport",
+      "source_blocker_reason": "confidential_transport_missing",
+      "target_evidence_ref": "evidence://forge/live-runtime/confidential-transport"
+    },
+    {
+      "allowed_collection_mode": "local_design_or_rehearsal_only",
+      "authority_effect": false,
+      "collected": false,
+      "collection_status": "not_collected",
+      "evidence_id": "persistent_nonce_replay_store",
+      "source_blocker_reason": "persistent_nonce_replay_store_missing",
+      "target_evidence_ref": "evidence://forge/live-runtime/persistent-nonce-replay-store"
+    },
+    {
+      "allowed_collection_mode": "local_design_or_rehearsal_only",
+      "authority_effect": false,
+      "collected": false,
+      "collection_status": "not_collected",
+      "evidence_id": "independent_persistence_store",
+      "source_blocker_reason": "independent_persistence_store_missing",
+      "target_evidence_ref": "evidence://forge/live-runtime/independent-persistence-store"
+    },
+    {
+      "allowed_collection_mode": "local_design_or_rehearsal_only",
+      "authority_effect": false,
+      "collected": false,
+      "collection_status": "not_collected",
+      "evidence_id": "independent_worm_lineage",
+      "source_blocker_reason": "independent_worm_lineage_missing",
+      "target_evidence_ref": "evidence://forge/live-runtime/independent-worm-lineage"
+    },
+    {
+      "allowed_collection_mode": "local_design_or_rehearsal_only",
+      "authority_effect": false,
+      "collected": false,
+      "collection_status": "not_collected",
+      "evidence_id": "tenant_scope_guard",
+      "source_blocker_reason": "tenant_scope_guard_missing",
+      "target_evidence_ref": "evidence://forge/live-runtime/tenant-scope-guard"
+    },
+    {
+      "allowed_collection_mode": "local_design_or_rehearsal_only",
+      "authority_effect": false,
+      "collected": false,
+      "collection_status": "not_collected",
+      "evidence_id": "uao_no_bypass_runtime_proof",
+      "source_blocker_reason": "uao_no_bypass_runtime_proof_missing",
+      "target_evidence_ref": "evidence://forge/live-runtime/uao-no-bypass-runtime-proof"
+    },
+    {
+      "allowed_collection_mode": "local_design_or_rehearsal_only",
+      "authority_effect": false,
+      "collected": false,
+      "collection_status": "not_collected",
+      "evidence_id": "rollback_replay_recovery_plan",
+      "source_blocker_reason": "rollback_replay_recovery_plan_missing",
+      "target_evidence_ref": "evidence://forge/live-runtime/rollback-replay-recovery-plan"
+    },
+    {
+      "allowed_collection_mode": "local_design_or_rehearsal_only",
+      "authority_effect": false,
+      "collected": false,
+      "collection_status": "not_collected",
+      "evidence_id": "pb01_pb02_pb03_write_spine_closure",
+      "source_blocker_reason": "pb01_pb02_pb03_write_spine_closure_missing",
+      "target_evidence_ref": "evidence://forge/live-runtime/pb01-pb03-write-spine-closure"
+    },
+    {
+      "allowed_collection_mode": "local_design_or_rehearsal_only",
+      "authority_effect": false,
+      "collected": false,
+      "collection_status": "not_collected",
+      "evidence_id": "pb04_pb11_runtime_operational_closure",
+      "source_blocker_reason": "pb04_pb11_runtime_operational_closure_missing",
+      "target_evidence_ref": "evidence://forge/live-runtime/pb04-pb11-operational-closure"
+    }
+  ],
+  "next_allowed_action": "write_local_evidence_artifacts_without_registering_runtime_authority",
+  "packet_hash": "c496ecb2024a6148bb22e2143a9323cb231145d538e1a4180b1ef506ee1c65b0",
+  "packet_id": "forge-live-runtime-evidence-collection-packet.v1",
+  "required_controls": [
+    "readiness_gate_source_required",
+    "local_collection_only",
+    "evidence_refs_not_yet_collected",
+    "no_runtime_registration",
+    "no_commit_authority",
+    "no_production_authority",
+    "no_external_effects",
+    "terminal_closure_not_claimed"
+  ],
+  "schema_ref": "urn:mullusi:schema:forge-live-runtime-evidence-collection-packet:1",
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "source_readiness_gate_hash": "d7cb6f30fead7b9bdec0a84607f26265b38d69170bd14aab378c13ed56d858dd",
+  "source_readiness_gate_ref": "examples/forge_live_runtime_readiness_gate.foundation.json",
+  "validators": [
+    {
+      "command": "python scripts/validate_forge_live_runtime_evidence_collection_packet.py",
+      "required_for_closure": true,
+      "validator_id": "forge-live-runtime-evidence-collection-packet"
+    }
+  ]
+}

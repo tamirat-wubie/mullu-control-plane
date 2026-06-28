@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:forge-live-runtime-signed-receipt-population-gate:1",
+  "title": "Forge Live Runtime Signed Receipt Population Gate",
+  "description": "Foundation Mode gate that blocks signed live evidence receipt population until reconciled probe outputs and signature evidence exist.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "gate_id",
+    "schema_ref",
+    "schema_version",
+    "bridge_ref",
+    "source_post_probe_reconciliation_packet_ref",
+    "source_post_probe_reconciliation_packet_hash",
+    "population_mode",
+    "population_status",
+    "solver_outcome",
+    "receipt_population_allowed",
+    "signed_receipt_refs_populated",
+    "runtime_authority_effect",
+    "population_items",
+    "blocked_reasons",
+    "required_controls",
+    "disallowed_authority",
+    "next_allowed_action",
+    "validators",
+    "gate_hash"
+  ],
+  "properties": {
+    "gate_id": { "type": "string", "const": "forge-live-runtime-signed-receipt-population-gate.v1" },
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:forge-live-runtime-signed-receipt-population-gate:1"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "bridge_ref": { "type": "string", "const": "forge_write_spine_bridge.v1" },
+    "source_post_probe_reconciliation_packet_ref": {
+      "type": "string",
+      "const": "examples/forge_live_runtime_post_probe_reconciliation_packet.foundation.json"
+    },
+    "source_post_probe_reconciliation_packet_hash": { "$ref": "#/$defs/hash" },
+    "population_mode": {
+      "type": "string",
+      "const": "signed_receipt_population_requires_reconciled_probe_outputs"
+    },
+    "population_status": {
+      "type": "string",
+      "const": "blocked_awaiting_reconciled_probe_outputs"
+    },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "receipt_population_allowed": { "type": "boolean", "const": false },
+    "signed_receipt_refs_populated": { "type": "boolean", "const": false },
+    "runtime_authority_effect": { "type": "boolean", "const": false },
+    "population_items": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": { "$ref": "#/$defs/population_item" }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": { "type": "string", "pattern": "^[a-z0-9_]+_reconciled_probe_output_missing$" }
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": { "type": "string" }
+    },
+    "disallowed_authority": { "$ref": "#/$defs/disallowed_authority" },
+    "next_allowed_action": {
+      "type": "string",
+      "const": "populate_signed_receipts_after_reconciliation_and_signature_verification"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": { "$ref": "#/$defs/validator" }
+    },
+    "gate_hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "optional_ref": {
+      "type": "string",
+      "pattern": "^$|^[a-z0-9-]+://forge/live-runtime/[a-z0-9-]+$"
+    },
+    "population_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "source_reconciliation_ref",
+        "target_signed_evidence_ref",
+        "signed_receipt_update_ref",
+        "signed_live_receipt_ref",
+        "signing_key_id",
+        "trust_epoch",
+        "signature",
+        "verification_status",
+        "population_status",
+        "blocker_reason",
+        "authority_effect",
+        "promotion_effect"
+      ],
+      "properties": {
+        "evidence_id": { "type": "string" },
+        "source_reconciliation_ref": {
+          "type": "string",
+          "pattern": "^reconciliation://forge/live-runtime/[a-z0-9-]+$"
+        },
+        "target_signed_evidence_ref": {
+          "type": "string",
+          "pattern": "^evidence://forge/live-runtime/[a-z0-9-]+$"
+        },
+        "signed_receipt_update_ref": { "$ref": "#/$defs/optional_ref" },
+        "signed_live_receipt_ref": { "$ref": "#/$defs/optional_ref" },
+        "signing_key_id": { "type": "string", "const": "" },
+        "trust_epoch": { "type": "string", "const": "" },
+        "signature": { "type": "string", "const": "" },
+        "verification_status": { "type": "string", "const": "not_verified" },
+        "population_status": { "type": "string", "const": "blocked" },
+        "blocker_reason": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+_reconciled_probe_output_missing$"
+        },
+        "authority_effect": { "type": "boolean", "const": false },
+        "promotion_effect": { "type": "boolean", "const": false }
+      }
+    },
+    "disallowed_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_runtime_authorized",
+        "state_write_runtime_registered",
+        "production_authorized",
+        "external_effects_allowed",
+        "commit_allowed",
+        "terminal_closure"
+      ],
+      "properties": {
+        "live_runtime_authorized": { "type": "boolean", "const": false },
+        "state_write_runtime_registered": { "type": "boolean", "const": false },
+        "production_authorized": { "type": "boolean", "const": false },
+        "external_effects_allowed": { "type": "boolean", "const": false },
+        "commit_allowed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": {
+          "type": "string",
+          "const": "forge-live-runtime-signed-receipt-population-gate"
+        },
+        "command": {
+          "type": "string",
+          "const": "python scripts/validate_forge_live_runtime_signed_receipt_population_gate.py"
+        },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

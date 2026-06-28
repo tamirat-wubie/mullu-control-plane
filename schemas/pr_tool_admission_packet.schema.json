@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:pr-tool-admission-packet:1",
+  "title": "PrToolAdmissionPacket",
+  "description": "Projection-only admission packet for local PR-tool preparation from a local PR candidate packet.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "workflow_id",
+    "workflow_run_id",
+    "admission_status",
+    "local_pr_tool_admitted",
+    "execution_boundary",
+    "external_effects_allowed",
+    "pr_creation_allowed",
+    "branch_push_allowed",
+    "candidate",
+    "local_tool_actions_allowed",
+    "external_approval_required_before_execution",
+    "forbidden_effects",
+    "source_refs",
+    "packet_hash"
+  ],
+  "properties": {
+    "packet_id": {"type": "string", "const": "pr_tool_admission_packet.v1"},
+    "workflow_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+    "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "admission_status": {
+      "type": "string",
+      "enum": ["blocked_candidate_incomplete", "local_tool_admitted"]
+    },
+    "local_pr_tool_admitted": {"type": "boolean"},
+    "execution_boundary": {"type": "string", "const": "local_lab_only"},
+    "external_effects_allowed": {"type": "boolean", "const": false},
+    "pr_creation_allowed": {"type": "boolean", "const": false},
+    "branch_push_allowed": {"type": "boolean", "const": false},
+    "candidate": {"$ref": "#/$defs/candidate"},
+    "local_tool_actions_allowed": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["render_pr_body", "assemble_pr_metadata", "prepare_pr_command_preview"]
+      }
+    },
+    "external_approval_required_before_execution": {"type": "boolean", "const": true},
+    "forbidden_effects": {
+      "type": "array",
+      "minItems": 5,
+      "items": {"type": "string", "minLength": 1, "maxLength": 120},
+      "contains": {"const": "open_external_pr"}
+    },
+    "source_refs": {"$ref": "#/$defs/source_refs"},
+    "packet_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_status",
+        "candidate_ready",
+        "candidate_packet_hash",
+        "title",
+        "branch_name",
+        "diff_refs",
+        "test_refs",
+        "rollback_evidence_refs"
+      ],
+      "properties": {
+        "candidate_status": {
+          "type": "string",
+          "enum": ["awaiting_receipts", "awaiting_operator_approval", "ready_for_pr_tool", "blocked"]
+        },
+        "candidate_ready": {"type": "boolean"},
+        "candidate_packet_hash": {"$ref": "#/$defs/hash"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 120},
+        "branch_name": {
+          "type": "string",
+          "pattern": "^codex/[a-z0-9][a-z0-9._/-]{1,118}$"
+        },
+        "diff_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1, "maxLength": 240}
+        },
+        "test_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1, "maxLength": 240}
+        },
+        "rollback_evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1, "maxLength": 240}
+        }
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_packet_path", "candidate_packet_schema", "admission_builder"],
+      "properties": {
+        "candidate_packet_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "candidate_packet_schema": {
+          "type": "string",
+          "const": "schemas/local_pr_candidate_packet.schema.json"
+        },
+        "admission_builder": {
+          "type": "string",
+          "const": "python scripts/build_pr_tool_admission_packet.py"
+        }
+      }
+    }
+  }
+}

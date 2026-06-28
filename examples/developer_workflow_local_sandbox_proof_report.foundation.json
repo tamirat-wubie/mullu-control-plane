@@ -1,0 +1,33 @@
+{
+  "attachment_packet_path": ".change_assurance/developer_workflow_sandbox_receipt_attachment_packet.generated.json",
+  "attachment_packet_status": "awaiting_attachments",
+  "bundle_path": ".change_assurance/developer_workflow_sandbox_receipt_bundle.collected.json",
+  "bundle_status": "awaiting_receipts",
+  "command_preview_rendered": false,
+  "completed_count": 1,
+  "control_tower_url": "/operator/control-tower?domain=software_dev&include_local_sandbox_receipts=true",
+  "errors": [],
+  "evidence_path": ".change_assurance/developer_workflow_sandbox_receipt_evidence.collected.json",
+  "execution_performed": false,
+  "external_effects_allowed": false,
+  "generated_artifacts": {
+    "approval_packet": ".change_assurance/pr_preparation_approval_packet.generated.json",
+    "command_preview": ".change_assurance/pr_command_preview_packet.generated.json",
+    "external_approval_witness": ".change_assurance/external_pr_execution_approval_witness.generated.json",
+    "local_candidate": ".change_assurance/local_pr_candidate_packet.generated.json",
+    "metadata": ".change_assurance/pr_metadata_packet.generated.json",
+    "operator_receipt": ".change_assurance/developer_workflow_operator_receipt.generated.json",
+    "pr_readiness_bundle": ".change_assurance/pr_readiness_bundle.generated.json",
+    "pr_tool_admission": ".change_assurance/pr_tool_admission_packet.generated.json",
+    "sandbox_receipt_attachment_packet": ".change_assurance/developer_workflow_sandbox_receipt_attachment_packet.generated.json",
+    "sandbox_to_pr_packet": ".change_assurance/sandbox_to_pr_preparation_packet.generated.json"
+  },
+  "next_attachment_id": "test_gate_receipt",
+  "ok": true,
+  "operator_receipt_path": ".change_assurance/developer_workflow_operator_receipt.generated.json",
+  "pr_readiness_bundle_path": ".change_assurance/pr_readiness_bundle.generated.json",
+  "pr_readiness_status": "awaiting_sandbox_receipts",
+  "ready_for_external_pr_execution": false,
+  "required_count": 4,
+  "workflow_read_model_url": "/operator/developer-workflow/read-model?domain=software_dev&include_local_sandbox_receipts=true"
+}

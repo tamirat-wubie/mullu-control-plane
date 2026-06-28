@@ -1,0 +1,36 @@
+{
+  "admission_status": "blocked_candidate_incomplete",
+  "branch_push_allowed": false,
+  "candidate": {
+    "branch_name": "codex/developer-workflow-local-candidate",
+    "candidate_packet_hash": "c64dbdb9f8e49837ed1fb5c2c18add9e7395b7972d8efec3bf816d506c044598",
+    "candidate_ready": false,
+    "candidate_status": "awaiting_receipts",
+    "diff_refs": [],
+    "rollback_evidence_refs": [],
+    "test_refs": [],
+    "title": "Prepare governed local Developer Workflow candidate"
+  },
+  "execution_boundary": "local_lab_only",
+  "external_approval_required_before_execution": true,
+  "external_effects_allowed": false,
+  "forbidden_effects": [
+    "open_external_pr",
+    "push_branch",
+    "merge",
+    "deploy",
+    "call_connector"
+  ],
+  "local_pr_tool_admitted": false,
+  "local_tool_actions_allowed": [],
+  "packet_hash": "ccc2a3858c339cc0170f9de23ec63369d2cf50a12a256e839f95d716502de4bf",
+  "packet_id": "pr_tool_admission_packet.v1",
+  "pr_creation_allowed": false,
+  "source_refs": {
+    "admission_builder": "python scripts/build_pr_tool_admission_packet.py",
+    "candidate_packet_path": "examples/local_pr_candidate_packet.foundation.json",
+    "candidate_packet_schema": "schemas/local_pr_candidate_packet.schema.json"
+  },
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

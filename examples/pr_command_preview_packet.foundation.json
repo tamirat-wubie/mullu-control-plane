@@ -1,0 +1,36 @@
+{
+  "blocked_reason": "local_pr_tool_admission_missing",
+  "command_preview": [],
+  "commands_rendered": false,
+  "execution_boundary": "external_repository_pr",
+  "execution_performed": false,
+  "external_effects_allowed_by_witness": false,
+  "packet_hash": "c6a328c417822ada1975ed2a871f61b60f1046507359c9dad06a7dec79a98fa1",
+  "packet_id": "pr_command_preview_packet.v1",
+  "preview_only": true,
+  "preview_status": "blocked",
+  "rollback_preview": [
+    {
+      "command": "git push origin --delete codex/developer-workflow-local-candidate",
+      "rollback_id": "delete_remote_branch"
+    },
+    {
+      "command": "gh pr close <pr-number> --comment 'Closing by governed rollback witness'",
+      "rollback_id": "close_external_pr"
+    }
+  ],
+  "source_refs": {
+    "approval_witness_path": "examples/external_pr_execution_approval_witness.foundation.json",
+    "approval_witness_schema": "schemas/external_pr_execution_approval_witness.schema.json",
+    "preview_builder": "python scripts/build_pr_command_preview_packet.py"
+  },
+  "witness": {
+    "approval_status": "pending",
+    "branch_name": "codex/developer-workflow-local-candidate",
+    "candidate_title": "Prepare governed local Developer Workflow candidate",
+    "execution_status": "awaiting_local_pr_tool_admission",
+    "witness_hash": "404b366b4ff5e13b6701c910c4a67aeb62c1bb777ba77c233ba13383153b2f95"
+  },
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

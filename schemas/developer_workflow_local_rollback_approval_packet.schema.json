@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:developer-workflow-local-rollback-approval-packet:1",
+  "title": "DeveloperWorkflowLocalRollbackApprovalPacket",
+  "description": "Operator approval packet for later local-lab rollback execution of selected generated artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "workflow_id",
+    "workflow_run_id",
+    "packet_status",
+    "approval_status",
+    "approval_scope",
+    "execution_boundary",
+    "external_effects_allowed",
+    "rollback_execution_performed",
+    "delete_execution_allowed",
+    "source_rollback_summary_path",
+    "selected_artifact_count",
+    "selected_artifact_ids",
+    "operator_approval",
+    "source_refs",
+    "authorized_artifacts"
+  ],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "const": "developer_workflow_local_rollback_approval_packet.v1"
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "mullu_developer_workflow.v1"
+    },
+    "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "packet_status": {
+      "type": "string",
+      "enum": ["awaiting_operator_approval", "approval_recorded", "approval_rejected", "approval_deferred"]
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": ["pending", "approved", "rejected", "deferred"]
+    },
+    "approval_scope": {
+      "type": "string",
+      "enum": ["none", "selected_artifacts", "all_generated_artifacts"]
+    },
+    "execution_boundary": {
+      "type": "string",
+      "const": "local_lab_only"
+    },
+    "external_effects_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "rollback_execution_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "delete_execution_allowed": {"type": "boolean"},
+    "source_rollback_summary_path": {"type": "string", "minLength": 1, "maxLength": 260},
+    "selected_artifact_count": {"type": "integer", "minimum": 0},
+    "selected_artifact_ids": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 120}
+    },
+    "operator_approval": {"$ref": "#/$defs/operator_approval"},
+    "source_refs": {"$ref": "#/$defs/source_refs"},
+    "authorized_artifacts": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {"$ref": "#/$defs/authorized_artifact"}
+    }
+  },
+  "$defs": {
+    "operator_approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approval_status", "approved_by", "approved_at", "approval_evidence_ref", "approval_note"],
+      "properties": {
+        "approval_status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "deferred"]
+        },
+        "approved_by": {"type": "string", "maxLength": 120},
+        "approved_at": {"type": "string", "maxLength": 80},
+        "approval_evidence_ref": {"type": "string", "maxLength": 240},
+        "approval_note": {"type": "string", "maxLength": 320}
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["local_rollback_summary_packet", "builder", "validator"],
+      "properties": {
+        "local_rollback_summary_packet": {"type": "string", "minLength": 1, "maxLength": 260},
+        "builder": {
+          "type": "string",
+          "const": "python scripts/build_developer_workflow_local_rollback_approval_packet.py"
+        },
+        "validator": {
+          "type": "string",
+          "const": "python scripts/validate_developer_workflow_local_rollback_approval_packet.py"
+        }
+      }
+    },
+    "authorized_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "path",
+        "rollback_command",
+        "approval_status",
+        "execution_allowed",
+        "required_confirmation"
+      ],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "path": {"type": "string", "minLength": 1, "maxLength": 260},
+        "rollback_command": {"type": "string", "minLength": 1, "maxLength": 520},
+        "approval_status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "deferred"]
+        },
+        "execution_allowed": {"type": "boolean"},
+        "required_confirmation": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

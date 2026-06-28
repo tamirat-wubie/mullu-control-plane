@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:pr-metadata-packet:1",
+  "title": "PrMetadataPacket",
+  "description": "Projection-only PR title, body, labels, and command-preview metadata packet.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "workflow_id",
+    "workflow_run_id",
+    "metadata_status",
+    "preview_only",
+    "execution_performed",
+    "external_effects_allowed",
+    "pr_creation_allowed",
+    "branch_push_allowed",
+    "title",
+    "body",
+    "labels",
+    "source_branch",
+    "target_branch",
+    "command_preview",
+    "rollback",
+    "source_refs",
+    "packet_hash"
+  ],
+  "properties": {
+    "packet_id": {"type": "string", "const": "pr_metadata_packet.v1"},
+    "workflow_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+    "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "metadata_status": {"type": "string", "enum": ["blocked_candidate_incomplete", "ready_for_preview"]},
+    "preview_only": {"type": "boolean", "const": true},
+    "execution_performed": {"type": "boolean", "const": false},
+    "external_effects_allowed": {"type": "boolean", "const": false},
+    "pr_creation_allowed": {"type": "boolean", "const": false},
+    "branch_push_allowed": {"type": "boolean", "const": false},
+    "title": {"type": "string", "minLength": 1, "maxLength": 120},
+    "body": {"$ref": "#/$defs/body"},
+    "labels": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1, "maxLength": 80}
+    },
+    "source_branch": {
+      "type": "string",
+      "pattern": "^codex/[a-z0-9][a-z0-9._/-]{1,118}$"
+    },
+    "target_branch": {"type": "string", "const": "main"},
+    "command_preview": {"$ref": "#/$defs/command_preview"},
+    "rollback": {"$ref": "#/$defs/rollback"},
+    "source_refs": {"$ref": "#/$defs/source_refs"},
+    "packet_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "governance_scope", "testing", "rollback"],
+      "properties": {
+        "summary": {"type": "string", "minLength": 1, "maxLength": 1000},
+        "governance_scope": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "testing": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "rollback": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "command_preview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preview_status", "commands_rendered", "packet_hash"],
+      "properties": {
+        "preview_status": {"type": "string", "enum": ["absent", "blocked", "commands_rendered"]},
+        "commands_rendered": {"type": "boolean"},
+        "packet_hash": {"type": "string", "pattern": "^$|^[a-f0-9]{64}$"}
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "evidence_refs", "notes"],
+      "properties": {
+        "required": {"type": "boolean", "const": true},
+        "evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 240}},
+        "notes": {"type": "string", "minLength": 1, "maxLength": 500}
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_packet_path", "candidate_packet_schema", "metadata_builder"],
+      "properties": {
+        "candidate_packet_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "candidate_packet_schema": {"type": "string", "const": "schemas/local_pr_candidate_packet.schema.json"},
+        "command_preview_packet_path": {"type": "string", "maxLength": 240},
+        "command_preview_packet_schema": {"type": "string", "const": "schemas/pr_command_preview_packet.schema.json"},
+        "metadata_builder": {"type": "string", "const": "python scripts/build_pr_metadata_packet.py"}
+      }
+    }
+  }
+}

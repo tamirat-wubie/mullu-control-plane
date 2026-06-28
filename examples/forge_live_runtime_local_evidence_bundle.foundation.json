@@ -1,0 +1,214 @@
+{
+  "blocked_reasons": [
+    "managed_key_custody_missing",
+    "confidential_transport_missing",
+    "persistent_nonce_replay_store_missing",
+    "independent_persistence_store_missing",
+    "independent_worm_lineage_missing",
+    "tenant_scope_guard_missing",
+    "uao_no_bypass_runtime_proof_missing",
+    "rollback_replay_recovery_plan_missing",
+    "pb01_pb02_pb03_write_spine_closure_missing",
+    "pb04_pb11_runtime_operational_closure_missing"
+  ],
+  "bridge_ref": "forge_write_spine_bridge.v1",
+  "bundle_hash": "9af6c8d9c9ef70acfa3bd1480ead772dca5f468e873ebc0eb906532d4a4c948e",
+  "bundle_id": "forge-live-runtime-local-evidence-bundle.v1",
+  "bundle_mode": "local_design_rehearsal_only",
+  "bundle_status": "local_design_artifacts_available",
+  "disallowed_authority": {
+    "commit_allowed": false,
+    "external_effects_allowed": false,
+    "live_runtime_authorized": false,
+    "production_authorized": false,
+    "state_write_runtime_registered": false,
+    "terminal_closure": false
+  },
+  "local_evidence_items": [
+    {
+      "acceptance_criteria": [
+        "managed_signing_key_identity_defined",
+        "custody_operator_boundary_defined",
+        "rotation_and_revocation_path_defined"
+      ],
+      "authority_effect": false,
+      "blocker_status": "open",
+      "evidence_id": "managed_key_custody",
+      "live_evidence_status": "not_collected",
+      "local_artifact_kind": "key_custody_design",
+      "local_artifact_ref": "artifact://forge/live-runtime/local-design/managed-key-custody",
+      "local_artifact_status": "design_artifact_available",
+      "promotion_effect": false,
+      "source_target_evidence_ref": "evidence://forge/live-runtime/managed-key-custody"
+    },
+    {
+      "acceptance_criteria": [
+        "service_transport_boundary_defined",
+        "request_expiry_and_audience_binding_defined",
+        "plaintext_secret_transport_forbidden"
+      ],
+      "authority_effect": false,
+      "blocker_status": "open",
+      "evidence_id": "confidential_transport",
+      "live_evidence_status": "not_collected",
+      "local_artifact_kind": "transport_boundary_design",
+      "local_artifact_ref": "artifact://forge/live-runtime/local-design/confidential-transport",
+      "local_artifact_status": "design_artifact_available",
+      "promotion_effect": false,
+      "source_target_evidence_ref": "evidence://forge/live-runtime/confidential-transport"
+    },
+    {
+      "acceptance_criteria": [
+        "nonce_scope_defined",
+        "replay_rejection_path_defined",
+        "persistence_durability_requirement_defined"
+      ],
+      "authority_effect": false,
+      "blocker_status": "open",
+      "evidence_id": "persistent_nonce_replay_store",
+      "live_evidence_status": "not_collected",
+      "local_artifact_kind": "nonce_replay_store_design",
+      "local_artifact_ref": "artifact://forge/live-runtime/local-design/persistent-nonce-replay-store",
+      "local_artifact_status": "design_artifact_available",
+      "promotion_effect": false,
+      "source_target_evidence_ref": "evidence://forge/live-runtime/persistent-nonce-replay-store"
+    },
+    {
+      "acceptance_criteria": [
+        "state_store_boundary_defined",
+        "fenced_commit_requirement_defined",
+        "snapshot_basis_requirement_defined"
+      ],
+      "authority_effect": false,
+      "blocker_status": "open",
+      "evidence_id": "independent_persistence_store",
+      "live_evidence_status": "not_collected",
+      "local_artifact_kind": "persistence_store_design",
+      "local_artifact_ref": "artifact://forge/live-runtime/local-design/independent-persistence-store",
+      "local_artifact_status": "design_artifact_available",
+      "promotion_effect": false,
+      "source_target_evidence_ref": "evidence://forge/live-runtime/independent-persistence-store"
+    },
+    {
+      "acceptance_criteria": [
+        "append_only_lineage_boundary_defined",
+        "authorization_completion_attestation_defined",
+        "reconciliation_pending_path_defined"
+      ],
+      "authority_effect": false,
+      "blocker_status": "open",
+      "evidence_id": "independent_worm_lineage",
+      "live_evidence_status": "not_collected",
+      "local_artifact_kind": "worm_lineage_design",
+      "local_artifact_ref": "artifact://forge/live-runtime/local-design/independent-worm-lineage",
+      "local_artifact_status": "design_artifact_available",
+      "promotion_effect": false,
+      "source_target_evidence_ref": "evidence://forge/live-runtime/independent-worm-lineage"
+    },
+    {
+      "acceptance_criteria": [
+        "tenant_identity_binding_defined",
+        "cross_tenant_write_denial_defined",
+        "scope_hash_binding_defined"
+      ],
+      "authority_effect": false,
+      "blocker_status": "open",
+      "evidence_id": "tenant_scope_guard",
+      "live_evidence_status": "not_collected",
+      "local_artifact_kind": "tenant_scope_guard_design",
+      "local_artifact_ref": "artifact://forge/live-runtime/local-design/tenant-scope-guard",
+      "local_artifact_status": "design_artifact_available",
+      "promotion_effect": false,
+      "source_target_evidence_ref": "evidence://forge/live-runtime/tenant-scope-guard"
+    },
+    {
+      "acceptance_criteria": [
+        "uao_admission_required_before_runtime_write",
+        "unorchestrated_effect_denial_defined",
+        "decision_receipt_hash_binding_defined"
+      ],
+      "authority_effect": false,
+      "blocker_status": "open",
+      "evidence_id": "uao_no_bypass_runtime_proof",
+      "live_evidence_status": "not_collected",
+      "local_artifact_kind": "uao_no_bypass_proof_design",
+      "local_artifact_ref": "artifact://forge/live-runtime/local-design/uao-no-bypass-runtime-proof",
+      "local_artifact_status": "design_artifact_available",
+      "promotion_effect": false,
+      "source_target_evidence_ref": "evidence://forge/live-runtime/uao-no-bypass-runtime-proof"
+    },
+    {
+      "acceptance_criteria": [
+        "rollback_snapshot_requirement_defined",
+        "replay_cursor_requirement_defined",
+        "failed_completion_recovery_path_defined"
+      ],
+      "authority_effect": false,
+      "blocker_status": "open",
+      "evidence_id": "rollback_replay_recovery_plan",
+      "live_evidence_status": "not_collected",
+      "local_artifact_kind": "rollback_replay_recovery_design",
+      "local_artifact_ref": "artifact://forge/live-runtime/local-design/rollback-replay-recovery-plan",
+      "local_artifact_status": "design_artifact_available",
+      "promotion_effect": false,
+      "source_target_evidence_ref": "evidence://forge/live-runtime/rollback-replay-recovery-plan"
+    },
+    {
+      "acceptance_criteria": [
+        "conditional_decision_evidence_required",
+        "phigov_certificate_evidence_required",
+        "lineage_attestation_evidence_required"
+      ],
+      "authority_effect": false,
+      "blocker_status": "open",
+      "evidence_id": "pb01_pb02_pb03_write_spine_closure",
+      "live_evidence_status": "not_collected",
+      "local_artifact_kind": "pb01_pb03_closure_design",
+      "local_artifact_ref": "artifact://forge/live-runtime/local-design/pb01-pb02-pb03-write-spine-closure",
+      "local_artifact_status": "design_artifact_available",
+      "promotion_effect": false,
+      "source_target_evidence_ref": "evidence://forge/live-runtime/pb01-pb03-write-spine-closure"
+    },
+    {
+      "acceptance_criteria": [
+        "operational_monitoring_evidence_required",
+        "runtime_recovery_evidence_required",
+        "production_witness_evidence_required"
+      ],
+      "authority_effect": false,
+      "blocker_status": "open",
+      "evidence_id": "pb04_pb11_runtime_operational_closure",
+      "live_evidence_status": "not_collected",
+      "local_artifact_kind": "pb04_pb11_operational_design",
+      "local_artifact_ref": "artifact://forge/live-runtime/local-design/pb04-pb11-runtime-operational-closure",
+      "local_artifact_status": "design_artifact_available",
+      "promotion_effect": false,
+      "source_target_evidence_ref": "evidence://forge/live-runtime/pb04-pb11-operational-closure"
+    }
+  ],
+  "next_allowed_action": "replace_design_artifacts_with_validated_live_evidence_after_approval",
+  "readiness_status": "blocked_awaiting_live_evidence",
+  "required_controls": [
+    "source_collection_packet_required",
+    "local_design_artifacts_only",
+    "live_evidence_not_collected",
+    "blockers_remain_open",
+    "no_runtime_registration",
+    "no_commit_authority",
+    "no_production_authority",
+    "no_external_effects",
+    "terminal_closure_not_claimed"
+  ],
+  "schema_ref": "urn:mullusi:schema:forge-live-runtime-local-evidence-bundle:1",
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "source_collection_packet_hash": "c496ecb2024a6148bb22e2143a9323cb231145d538e1a4180b1ef506ee1c65b0",
+  "source_collection_packet_ref": "examples/forge_live_runtime_evidence_collection_packet.foundation.json",
+  "validators": [
+    {
+      "command": "python scripts/validate_forge_live_runtime_local_evidence_bundle.py",
+      "required_for_closure": true,
+      "validator_id": "forge-live-runtime-local-evidence-bundle"
+    }
+  ]
+}

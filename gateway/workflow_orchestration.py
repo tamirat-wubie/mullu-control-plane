@@ -68,6 +68,16 @@ _REVIEW_TASK_STATUSES = frozenset({TaskRunStatus.REQUIRES_REVIEW, TaskRunStatus.
 _MUTATION_RECEIPTS_METADATA_KEY = "mutation_receipts"
 _LIFE_MEANING_JUDGMENT_REQUIRED_METADATA_KEY = "life_meaning_judgment_required"
 _LIFE_MEANING_JUDGMENT_REF_METADATA_KEY = "life_meaning_judgment_ref"
+_WORKFLOW_RISK_CLASSES = frozenset({"R0", "R1", "R2", "R3", "R4", "R5"})
+_HIGH_RISK_CLASSES = frozenset({"R3", "R4"})
+_ROLLBACK_LABELS = frozenset({
+    "REVERSIBLE",
+    "PARTIALLY_REVERSIBLE",
+    "COMPENSATABLE",
+    "IRREVERSIBLE",
+    "UNKNOWN",
+    "NOT_REQUIRED",
+})
 
 
 @dataclass(frozen=True, slots=True)
@@ -447,7 +457,36 @@ class WorkflowOrchestrator:
 
 def workflow_run_to_json_dict(run: WorkflowRun) -> dict[str, Any]:
     """Return the JSON-contract representation of one workflow run."""
-    return _json_ready(asdict(run))
+    payload = _json_ready(asdict(run))
+    risk_class = _workflow_risk_class(run)
+    evidence_refs = _workflow_evidence_refs(run)
+    rollback_plan = _workflow_rollback_plan(run, risk_class=risk_class)
+    monitoring_state = _workflow_monitoring_state(run, risk_class=risk_class)
+    payload.update({
+        "user_id": _metadata_text(run, "user_id", run.actor_id),
+        "project_id": _metadata_text(run, "project_id", run.tenant_id),
+        "request": _metadata_text(run, "request", run.goal),
+        "intent": _metadata_text(run, "intent", run.goal),
+        "boundary": _workflow_boundary(run, risk_class=risk_class),
+        "goal_contract": _workflow_goal_contract(run),
+        "lifecycle_state": _workflow_lifecycle_state(run),
+        "risk_class": risk_class,
+        "evidence_refs": list(evidence_refs),
+        "approval_refs": list(_workflow_approval_refs(run)),
+        "sandbox_refs": list(_workflow_sandbox_refs(run)),
+        "action_plan": _workflow_action_plan(run, risk_class=risk_class),
+        "execution_status": _workflow_execution_status(run),
+        "receipt_refs": list(_workflow_receipt_refs(run)),
+        "rollback_plan": rollback_plan,
+        "validation_result": _workflow_validation_result(
+            run,
+            evidence_refs=evidence_refs,
+            rollback_plan=rollback_plan,
+            monitoring_state=monitoring_state,
+        ),
+        "monitoring_state": monitoring_state,
+    })
+    return payload
 
 
 def workflow_mutation_receipts(run: WorkflowRun, limit: int = 50) -> tuple[WorkflowMutationReceipt, ...]:
@@ -461,6 +500,327 @@ def workflow_mutation_receipts(run: WorkflowRun, limit: int = 50) -> tuple[Workf
 def workflow_effect_records(run: WorkflowRun, limit: int = 50) -> tuple[Any, ...]:
     """Return recent workflow mutation receipts as execution actual-effect records."""
     return tuple(receipt.to_effect_record() for receipt in workflow_mutation_receipts(run, limit=limit))
+
+
+def _workflow_lifecycle_state(run: WorkflowRun) -> str:
+    status_map = {
+        WorkflowRunStatus.CREATED: "INTAKE",
+        WorkflowRunStatus.PLANNED: "PLANNED",
+        WorkflowRunStatus.WAITING_FOR_APPROVAL: "AWAITING_APPROVAL",
+        WorkflowRunStatus.APPROVED: "APPROVED",
+        WorkflowRunStatus.EXECUTING: "EXECUTING",
+        WorkflowRunStatus.WAITING_FOR_VERIFICATION: "OBSERVED",
+        WorkflowRunStatus.COMMITTED: "CLOSED",
+        WorkflowRunStatus.COMPENSATED: "ROLLED_BACK",
+        WorkflowRunStatus.ACCEPTED_RISK: "VALIDATED",
+        WorkflowRunStatus.REQUIRES_REVIEW: "BLOCKED",
+        WorkflowRunStatus.FAILED: "FAILED",
+    }
+    return status_map[run.status]
+
+
+def _workflow_risk_class(run: WorkflowRun) -> str:
+    configured = str(run.metadata.get("risk_class") or "").strip().upper()
+    if configured in _WORKFLOW_RISK_CLASSES:
+        return configured
+    if _workflow_external_effects_allowed(run):
+        return "R3"
+    if any(task.approval_required for task in run.tasks):
+        return "R2"
+    return "R1"
+
+
+def _workflow_external_effects_allowed(run: WorkflowRun) -> bool:
+    return (
+        run.metadata.get("external_effects_allowed") is True
+        or run.metadata.get("real_world_effects_allowed") is True
+    )
+
+
+def _workflow_boundary(run: WorkflowRun, *, risk_class: str) -> dict[str, Any]:
+    outside_scope = _metadata_text_refs(run, "outside_scope")
+    if not outside_scope:
+        outside_scope = (
+            "external effects without approval",
+            "production or customer state without witness",
+            "raw secret exposure",
+        )
+    forbidden_effects = _metadata_text_refs(run, "forbidden_effects")
+    if not forbidden_effects:
+        forbidden_effects = (
+            "unapproved_external_effect",
+            "unreceipted_closure",
+            "silent_rollback_gap",
+        )
+    return {
+        "inside_scope": list(_workflow_action_refs(run)),
+        "outside_scope": list(outside_scope),
+        "approval_required": any(task.approval_required for task in run.tasks) or risk_class in _HIGH_RISK_CLASSES,
+        "external_effects_allowed": _workflow_external_effects_allowed(run),
+        "forbidden_effects": list(forbidden_effects),
+        "protected_refs": [
+            f"tenant_hash:{_hash_text(run.tenant_id)}",
+            f"actor_hash:{_hash_text(run.actor_id)}",
+            f"goal_hash:{_hash_text(run.goal)}",
+        ],
+    }
+
+
+def _workflow_goal_contract(run: WorkflowRun) -> dict[str, Any]:
+    configured = run.metadata.get("goal_contract")
+    if isinstance(configured, dict):
+        return {
+            "desired_state": str(configured.get("desired_state") or run.goal),
+            "success_conditions": _coerce_text_refs(configured.get("success_conditions")),
+            "failure_conditions": _coerce_text_refs(configured.get("failure_conditions")),
+            "proof_required": _coerce_text_refs(configured.get("proof_required")),
+            "stop_conditions": _coerce_text_refs(configured.get("stop_conditions")),
+        }
+    return {
+        "desired_state": run.goal,
+        "success_conditions": [
+            "goal state validated",
+            "constraints respected",
+            "receipt emitted before closure",
+        ],
+        "failure_conditions": [
+            "required approval missing",
+            "required evidence missing",
+            "rollback state unknown",
+        ],
+        "proof_required": [
+            "workflow mutation receipt",
+            "evidence references",
+            "validation result",
+        ],
+        "stop_conditions": [
+            "closed",
+            "blocked",
+            "failed",
+            "rolled back",
+        ],
+    }
+
+
+def _workflow_action_plan(run: WorkflowRun, *, risk_class: str) -> dict[str, Any]:
+    steps = []
+    for task in run.tasks:
+        task_risk = str(task.metadata.get("risk_class") or risk_class).strip().upper()
+        if task_risk not in _WORKFLOW_RISK_CLASSES:
+            task_risk = risk_class
+        steps.append({
+            "task_id": task.task_id,
+            "action": task.action,
+            "risk_class": task_risk,
+            "depends_on": list(task.depends_on),
+        })
+    return {
+        "selected_action": run.tasks[0].action,
+        "steps": steps,
+        "option_count": int(run.metadata.get("option_count", 1) or 1),
+        "external_effects_allowed": _workflow_external_effects_allowed(run),
+    }
+
+
+def _workflow_execution_status(run: WorkflowRun) -> dict[str, Any]:
+    statuses = [task_run.status for task_run in run.task_runs]
+    return {
+        "current_status": run.status.value,
+        "current_task_id": _workflow_current_task_id(run),
+        "tasks_total": len(run.task_runs),
+        "tasks_closed": sum(1 for status in statuses if status in _CLOSED_TASK_STATUSES),
+        "tasks_waiting_for_approval": sum(1 for status in statuses if status == TaskRunStatus.WAITING_FOR_APPROVAL),
+        "tasks_failed": sum(1 for status in statuses if status in _REVIEW_TASK_STATUSES),
+        "effects_executed": any(status in _CLOSED_TASK_STATUSES for status in statuses),
+    }
+
+
+def _workflow_current_task_id(run: WorkflowRun) -> str:
+    by_task_id = {task_run.task_id: task_run for task_run in run.task_runs}
+    for task in run.tasks:
+        task_run = by_task_id[task.task_id]
+        if task_run.status not in _CLOSED_TASK_STATUSES:
+            return task.task_id
+    return ""
+
+
+def _workflow_rollback_plan(run: WorkflowRun, *, risk_class: str) -> dict[str, Any]:
+    configured = run.metadata.get("rollback_plan")
+    configured_map = configured if isinstance(configured, dict) else {}
+    rollback_refs = tuple(dict.fromkeys((
+        *_metadata_text_refs(run, "rollback_refs"),
+        *_coerce_text_refs(configured_map.get("rollback_refs")),
+        *_workflow_compensation_refs(run),
+    )))
+    compensating_action = str(configured_map.get("compensating_action") or "")
+    if not compensating_action:
+        compensating_action = _workflow_compensating_action(run)
+    external_effect = _workflow_external_effects_allowed(run) or risk_class in _HIGH_RISK_CLASSES
+    rollback_required = configured_map.get("rollback_required")
+    if not isinstance(rollback_required, bool):
+        rollback_required = external_effect or bool(compensating_action)
+    rollback_ready = configured_map.get("rollback_ready")
+    if not isinstance(rollback_ready, bool):
+        rollback_ready = not rollback_required or bool(rollback_refs) or bool(compensating_action)
+    label = str(configured_map.get("reversibility_label") or "").strip().upper()
+    if label not in _ROLLBACK_LABELS:
+        if not rollback_required:
+            label = "NOT_REQUIRED"
+        elif compensating_action:
+            label = "COMPENSATABLE"
+        elif rollback_refs:
+            label = "REVERSIBLE"
+        else:
+            label = "UNKNOWN"
+    return {
+        "reversibility_label": label,
+        "rollback_required": rollback_required,
+        "rollback_ready": rollback_ready,
+        "rollback_refs": list(rollback_refs),
+        "compensating_action": compensating_action,
+    }
+
+
+def _workflow_monitoring_state(run: WorkflowRun, *, risk_class: str) -> dict[str, Any]:
+    monitor_refs = _metadata_text_refs(run, "monitor_refs")
+    monitoring_required = (
+        run.metadata.get("monitoring_required") is True
+        or _workflow_external_effects_allowed(run)
+        or risk_class in _HIGH_RISK_CLASSES
+    )
+    configured_status = str(run.metadata.get("monitoring_status") or "").strip()
+    if configured_status in {"not_required", "pending", "active", "completed", "blocked"}:
+        status = configured_status
+    elif not monitoring_required:
+        status = "not_required"
+    elif monitor_refs:
+        status = "active"
+    else:
+        status = "pending"
+    return {
+        "monitoring_required": monitoring_required,
+        "monitoring_status": status,
+        "monitor_refs": list(monitor_refs),
+    }
+
+
+def _workflow_validation_result(
+    run: WorkflowRun,
+    *,
+    evidence_refs: tuple[str, ...],
+    rollback_plan: dict[str, Any],
+    monitoring_state: dict[str, Any],
+) -> dict[str, Any]:
+    receipt_refs = _workflow_receipt_refs(run)
+    closed = run.status == WorkflowRunStatus.COMMITTED
+    failed = run.status == WorkflowRunStatus.FAILED
+    blocked = run.status == WorkflowRunStatus.REQUIRES_REVIEW
+    constraints_respected = not failed
+    evidence_attached = bool(evidence_refs)
+    receipt_emitted = bool(receipt_refs)
+    rollback_state_known = rollback_plan["rollback_ready"] is True or rollback_plan["rollback_required"] is False
+    monitoring_handled = (
+        monitoring_state["monitoring_required"] is False
+        or monitoring_state["monitoring_status"] in {"active", "completed"}
+    )
+    if failed:
+        status = "FAIL_CRITICAL"
+    elif blocked:
+        status = "NEEDS_HUMAN_DECISION"
+    elif closed and all((
+        constraints_respected,
+        evidence_attached,
+        receipt_emitted,
+        rollback_state_known,
+        monitoring_handled,
+    )):
+        status = "PASS"
+    else:
+        status = "PASS_WITH_LIMITS"
+    return {
+        "status": status,
+        "goal_satisfied": closed,
+        "constraints_respected": constraints_respected,
+        "evidence_attached": evidence_attached,
+        "receipt_emitted": receipt_emitted,
+        "rollback_state_known": rollback_state_known,
+        "monitoring_handled": monitoring_handled,
+        "checked_at": _workflow_last_receipt_time(run),
+        "evidence_refs": list(evidence_refs),
+    }
+
+
+def _workflow_action_refs(run: WorkflowRun) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(task.action for task in run.tasks if task.action))
+
+
+def _workflow_approval_refs(run: WorkflowRun) -> tuple[str, ...]:
+    return tuple(dict.fromkeys((
+        *_metadata_text_refs(run, "approval_refs"),
+        *(task_run.approval_ref for task_run in run.task_runs if task_run.approval_ref),
+    )))
+
+
+def _workflow_evidence_refs(run: WorkflowRun) -> tuple[str, ...]:
+    return tuple(dict.fromkeys((
+        *run.evidence_refs,
+        *_metadata_text_refs(run, "evidence_refs"),
+        *(ref for task_run in run.task_runs for ref in task_run.evidence_refs),
+    )))
+
+
+def _workflow_sandbox_refs(run: WorkflowRun) -> tuple[str, ...]:
+    return _metadata_text_refs(run, "sandbox_refs")
+
+
+def _workflow_receipt_refs(run: WorkflowRun) -> tuple[str, ...]:
+    terminal_refs = (f"terminal-certificate:{run.terminal_certificate_id}",) if run.terminal_certificate_id else ()
+    return tuple(dict.fromkeys((
+        *_metadata_text_refs(run, "receipt_refs"),
+        *(receipt.evidence_ref for receipt in workflow_mutation_receipts(run, limit=10_000)),
+        *terminal_refs,
+    )))
+
+
+def _workflow_compensation_refs(run: WorkflowRun) -> tuple[str, ...]:
+    return tuple(
+        f"compensation-task:{task.compensation_task_id}"
+        for task in run.tasks
+        if task.compensation_task_id
+    )
+
+
+def _workflow_compensating_action(run: WorkflowRun) -> str:
+    for task in run.tasks:
+        if task.compensation_task_id:
+            return task.compensation_task_id
+    return ""
+
+
+def _workflow_last_receipt_time(run: WorkflowRun) -> str:
+    receipts = workflow_mutation_receipts(run, limit=10_000)
+    if receipts:
+        return receipts[-1].recorded_at
+    return str(run.metadata.get("checked_at") or "")
+
+
+def _metadata_text(run: WorkflowRun, key: str, default: str) -> str:
+    value = run.metadata.get(key)
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return default
+
+
+def _metadata_text_refs(run: WorkflowRun, key: str) -> tuple[str, ...]:
+    return _coerce_text_refs(run.metadata.get(key))
+
+
+def _coerce_text_refs(value: Any) -> tuple[str, ...]:
+    if isinstance(value, str):
+        return (value.strip(),) if value.strip() else ()
+    if isinstance(value, (tuple, list)):
+        return tuple(str(item).strip() for item in value if str(item).strip())
+    return ()
 
 
 def _initial_task_run(workflow_run_id: str, task: WorkflowTaskSpec) -> TaskRun:

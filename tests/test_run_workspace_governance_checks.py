@@ -55,6 +55,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_read_model_projections",
         "agentic_service_harness_read_model_integrity",
         "agentic_service_harness_read_model_persistence",
+        "agentic_service_harness_read_model_binding_plan",
         "agentic_service_harness_github_repo_task_service",
         "agentic_service_harness_github_repo_task_intake",
         "agentic_service_harness_dashboard_data_contract",
@@ -225,6 +226,28 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "tenant_scope_coverage",
         "persistence_tenant_guard_coverage",
         "mcp_capability_manifest",
+        "capability_debt_report",
+        "capability_passports",
+        "capability_passport_dashboard",
+        "capability_friction_control",
+        "forge_write_spine_bridge",
+        "forge_state_write_admission_packet",
+        "forge_live_runtime_readiness_gate",
+        "forge_live_runtime_evidence_collection_packet",
+        "forge_live_runtime_local_evidence_bundle",
+        "forge_live_runtime_evidence_acceptance_gate",
+        "forge_live_runtime_signed_evidence_receipt",
+        "forge_live_runtime_probe_admission_packet",
+        "forge_live_runtime_approved_probe_output_packet",
+        "forge_live_runtime_post_probe_reconciliation_packet",
+        "forge_live_runtime_signed_receipt_population_gate",
+        "forge_live_runtime_evidence_chain_read_model",
+        "forge_live_runtime_operator_evidence_request",
+        "forge_live_runtime_operator_evidence_submission_packet",
+        "forge_live_runtime_operator_evidence_verification_gate",
+        "forge_live_runtime_operator_evidence_acceptance_handoff_packet",
+        "operator_plan_receipt_bundle_read_model",
+        "worker_receipt_ledger_read_model",
         "mcp_operator_checklist",
         "public_naming_readiness",
         "public_demo_surfaces",
@@ -306,6 +329,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("agentic_service_harness_read_model_integrity", "agentic_service_harness_read_model_persistence")
     assert_ordered(
         "agentic_service_harness_read_model_persistence",
+        "agentic_service_harness_read_model_binding_plan",
+    )
+    assert_ordered(
+        "agentic_service_harness_read_model_binding_plan",
         "agentic_service_harness_github_repo_task_service",
     )
     assert_ordered(
@@ -935,6 +962,72 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "--manifest",
         "examples/mcp_capability_manifest.json",
         "--json",
+    )
+    assert args_by_name["capability_debt_report"][1:] == (
+        "scripts/validate_capability_debt_report.py",
+    )
+    assert args_by_name["capability_passports"][1:] == (
+        "scripts/validate_capability_passports.py",
+    )
+    assert args_by_name["capability_passport_dashboard"][1:] == (
+        "scripts/validate_capability_passport_dashboard.py",
+    )
+    assert args_by_name["capability_friction_control"][1:] == (
+        "scripts/validate_capability_friction_control.py",
+    )
+    assert args_by_name["forge_write_spine_bridge"][1:] == (
+        "scripts/validate_forge_write_spine_bridge.py",
+    )
+    assert args_by_name["forge_state_write_admission_packet"][1:] == (
+        "scripts/validate_forge_state_write_admission_packet.py",
+    )
+    assert args_by_name["forge_live_runtime_readiness_gate"][1:] == (
+        "scripts/validate_forge_live_runtime_readiness_gate.py",
+    )
+    assert args_by_name["forge_live_runtime_evidence_collection_packet"][1:] == (
+        "scripts/validate_forge_live_runtime_evidence_collection_packet.py",
+    )
+    assert args_by_name["forge_live_runtime_local_evidence_bundle"][1:] == (
+        "scripts/validate_forge_live_runtime_local_evidence_bundle.py",
+    )
+    assert args_by_name["forge_live_runtime_evidence_acceptance_gate"][1:] == (
+        "scripts/validate_forge_live_runtime_evidence_acceptance_gate.py",
+    )
+    assert args_by_name["forge_live_runtime_signed_evidence_receipt"][1:] == (
+        "scripts/validate_forge_live_runtime_signed_evidence_receipt.py",
+    )
+    assert args_by_name["forge_live_runtime_probe_admission_packet"][1:] == (
+        "scripts/validate_forge_live_runtime_probe_admission_packet.py",
+    )
+    assert args_by_name["forge_live_runtime_approved_probe_output_packet"][1:] == (
+        "scripts/validate_forge_live_runtime_approved_probe_output_packet.py",
+    )
+    assert args_by_name["forge_live_runtime_post_probe_reconciliation_packet"][1:] == (
+        "scripts/validate_forge_live_runtime_post_probe_reconciliation_packet.py",
+    )
+    assert args_by_name["forge_live_runtime_signed_receipt_population_gate"][1:] == (
+        "scripts/validate_forge_live_runtime_signed_receipt_population_gate.py",
+    )
+    assert args_by_name["forge_live_runtime_evidence_chain_read_model"][1:] == (
+        "scripts/validate_forge_live_runtime_evidence_chain_read_model.py",
+    )
+    assert args_by_name["forge_live_runtime_operator_evidence_request"][1:] == (
+        "scripts/validate_forge_live_runtime_operator_evidence_request.py",
+    )
+    assert args_by_name["forge_live_runtime_operator_evidence_submission_packet"][1:] == (
+        "scripts/validate_forge_live_runtime_operator_evidence_submission_packet.py",
+    )
+    assert args_by_name["forge_live_runtime_operator_evidence_verification_gate"][1:] == (
+        "scripts/validate_forge_live_runtime_operator_evidence_verification_gate.py",
+    )
+    assert args_by_name["forge_live_runtime_operator_evidence_acceptance_handoff_packet"][1:] == (
+        "scripts/validate_forge_live_runtime_operator_evidence_acceptance_handoff_packet.py",
+    )
+    assert args_by_name["operator_plan_receipt_bundle_read_model"][1:] == (
+        "scripts/validate_operator_plan_receipt_bundle_read_model.py",
+    )
+    assert args_by_name["worker_receipt_ledger_read_model"][1:] == (
+        "scripts/validate_worker_receipt_ledger_read_model.py",
     )
     assert args_by_name["mcp_operator_checklist"][1:] == (
         "scripts/validate_mcp_operator_checklist.py",

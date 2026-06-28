@@ -1,0 +1,324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:forge-live-runtime-evidence-collection-packet:1",
+  "title": "Forge Live Runtime Evidence Collection Packet",
+  "description": "Foundation Mode local-only packet for planning evidence collection for the blocked Forge live-runtime readiness gate without registering runtime authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "schema_ref",
+    "schema_version",
+    "bridge_ref",
+    "source_readiness_gate_ref",
+    "source_readiness_gate_hash",
+    "collection_mode",
+    "solver_outcome",
+    "collection_status",
+    "evidence_items",
+    "blocked_reasons",
+    "required_controls",
+    "disallowed_authority",
+    "next_allowed_action",
+    "validators",
+    "packet_hash"
+  ],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "const": "forge-live-runtime-evidence-collection-packet.v1"
+    },
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:forge-live-runtime-evidence-collection-packet:1"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "bridge_ref": {
+      "type": "string",
+      "const": "forge_write_spine_bridge.v1"
+    },
+    "source_readiness_gate_ref": {
+      "type": "string",
+      "const": "examples/forge_live_runtime_readiness_gate.foundation.json"
+    },
+    "source_readiness_gate_hash": {
+      "$ref": "#/$defs/hash"
+    },
+    "collection_mode": {
+      "type": "string",
+      "const": "local_evidence_planning_only"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "collection_status": {
+      "type": "string",
+      "const": "not_started"
+    },
+    "evidence_items": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "prefixItems": [
+        { "$ref": "#/$defs/managed_key_custody" },
+        { "$ref": "#/$defs/confidential_transport" },
+        { "$ref": "#/$defs/persistent_nonce_replay_store" },
+        { "$ref": "#/$defs/independent_persistence_store" },
+        { "$ref": "#/$defs/independent_worm_lineage" },
+        { "$ref": "#/$defs/tenant_scope_guard" },
+        { "$ref": "#/$defs/uao_no_bypass_runtime_proof" },
+        { "$ref": "#/$defs/rollback_replay_recovery_plan" },
+        { "$ref": "#/$defs/pb01_pb02_pb03_write_spine_closure" },
+        { "$ref": "#/$defs/pb04_pb11_runtime_operational_closure" }
+      ]
+    },
+    "blocked_reasons": {
+      "$ref": "#/$defs/blocked_reasons"
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "prefixItems": [
+        { "const": "readiness_gate_source_required" },
+        { "const": "local_collection_only" },
+        { "const": "evidence_refs_not_yet_collected" },
+        { "const": "no_runtime_registration" },
+        { "const": "no_commit_authority" },
+        { "const": "no_production_authority" },
+        { "const": "no_external_effects" },
+        { "const": "terminal_closure_not_claimed" }
+      ]
+    },
+    "disallowed_authority": {
+      "$ref": "#/$defs/disallowed_authority"
+    },
+    "next_allowed_action": {
+      "type": "string",
+      "const": "write_local_evidence_artifacts_without_registering_runtime_authority"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator"
+      }
+    },
+    "packet_hash": {
+      "$ref": "#/$defs/hash"
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "prefixItems": [
+        { "const": "managed_key_custody_missing" },
+        { "const": "confidential_transport_missing" },
+        { "const": "persistent_nonce_replay_store_missing" },
+        { "const": "independent_persistence_store_missing" },
+        { "const": "independent_worm_lineage_missing" },
+        { "const": "tenant_scope_guard_missing" },
+        { "const": "uao_no_bypass_runtime_proof_missing" },
+        { "const": "rollback_replay_recovery_plan_missing" },
+        { "const": "pb01_pb02_pb03_write_spine_closure_missing" },
+        { "const": "pb04_pb11_runtime_operational_closure_missing" }
+      ]
+    },
+    "evidence_item_base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "collection_status",
+        "source_blocker_reason",
+        "target_evidence_ref",
+        "allowed_collection_mode",
+        "authority_effect",
+        "collected"
+      ],
+      "properties": {
+        "evidence_id": { "type": "string" },
+        "collection_status": { "type": "string", "const": "not_collected" },
+        "source_blocker_reason": { "type": "string" },
+        "target_evidence_ref": { "type": "string", "pattern": "^evidence://forge/live-runtime/[a-z0-9-]+$" },
+        "allowed_collection_mode": { "type": "string", "const": "local_design_or_rehearsal_only" },
+        "authority_effect": { "type": "boolean", "const": false },
+        "collected": { "type": "boolean", "const": false }
+      }
+    },
+    "managed_key_custody": {
+      "allOf": [
+        { "$ref": "#/$defs/evidence_item_base" },
+        {
+          "properties": {
+            "evidence_id": { "const": "managed_key_custody" },
+            "source_blocker_reason": { "const": "managed_key_custody_missing" },
+            "target_evidence_ref": { "const": "evidence://forge/live-runtime/managed-key-custody" }
+          }
+        }
+      ]
+    },
+    "confidential_transport": {
+      "allOf": [
+        { "$ref": "#/$defs/evidence_item_base" },
+        {
+          "properties": {
+            "evidence_id": { "const": "confidential_transport" },
+            "source_blocker_reason": { "const": "confidential_transport_missing" },
+            "target_evidence_ref": { "const": "evidence://forge/live-runtime/confidential-transport" }
+          }
+        }
+      ]
+    },
+    "persistent_nonce_replay_store": {
+      "allOf": [
+        { "$ref": "#/$defs/evidence_item_base" },
+        {
+          "properties": {
+            "evidence_id": { "const": "persistent_nonce_replay_store" },
+            "source_blocker_reason": { "const": "persistent_nonce_replay_store_missing" },
+            "target_evidence_ref": { "const": "evidence://forge/live-runtime/persistent-nonce-replay-store" }
+          }
+        }
+      ]
+    },
+    "independent_persistence_store": {
+      "allOf": [
+        { "$ref": "#/$defs/evidence_item_base" },
+        {
+          "properties": {
+            "evidence_id": { "const": "independent_persistence_store" },
+            "source_blocker_reason": { "const": "independent_persistence_store_missing" },
+            "target_evidence_ref": { "const": "evidence://forge/live-runtime/independent-persistence-store" }
+          }
+        }
+      ]
+    },
+    "independent_worm_lineage": {
+      "allOf": [
+        { "$ref": "#/$defs/evidence_item_base" },
+        {
+          "properties": {
+            "evidence_id": { "const": "independent_worm_lineage" },
+            "source_blocker_reason": { "const": "independent_worm_lineage_missing" },
+            "target_evidence_ref": { "const": "evidence://forge/live-runtime/independent-worm-lineage" }
+          }
+        }
+      ]
+    },
+    "tenant_scope_guard": {
+      "allOf": [
+        { "$ref": "#/$defs/evidence_item_base" },
+        {
+          "properties": {
+            "evidence_id": { "const": "tenant_scope_guard" },
+            "source_blocker_reason": { "const": "tenant_scope_guard_missing" },
+            "target_evidence_ref": { "const": "evidence://forge/live-runtime/tenant-scope-guard" }
+          }
+        }
+      ]
+    },
+    "uao_no_bypass_runtime_proof": {
+      "allOf": [
+        { "$ref": "#/$defs/evidence_item_base" },
+        {
+          "properties": {
+            "evidence_id": { "const": "uao_no_bypass_runtime_proof" },
+            "source_blocker_reason": { "const": "uao_no_bypass_runtime_proof_missing" },
+            "target_evidence_ref": { "const": "evidence://forge/live-runtime/uao-no-bypass-runtime-proof" }
+          }
+        }
+      ]
+    },
+    "rollback_replay_recovery_plan": {
+      "allOf": [
+        { "$ref": "#/$defs/evidence_item_base" },
+        {
+          "properties": {
+            "evidence_id": { "const": "rollback_replay_recovery_plan" },
+            "source_blocker_reason": { "const": "rollback_replay_recovery_plan_missing" },
+            "target_evidence_ref": { "const": "evidence://forge/live-runtime/rollback-replay-recovery-plan" }
+          }
+        }
+      ]
+    },
+    "pb01_pb02_pb03_write_spine_closure": {
+      "allOf": [
+        { "$ref": "#/$defs/evidence_item_base" },
+        {
+          "properties": {
+            "evidence_id": { "const": "pb01_pb02_pb03_write_spine_closure" },
+            "source_blocker_reason": { "const": "pb01_pb02_pb03_write_spine_closure_missing" },
+            "target_evidence_ref": { "const": "evidence://forge/live-runtime/pb01-pb03-write-spine-closure" }
+          }
+        }
+      ]
+    },
+    "pb04_pb11_runtime_operational_closure": {
+      "allOf": [
+        { "$ref": "#/$defs/evidence_item_base" },
+        {
+          "properties": {
+            "evidence_id": { "const": "pb04_pb11_runtime_operational_closure" },
+            "source_blocker_reason": { "const": "pb04_pb11_runtime_operational_closure_missing" },
+            "target_evidence_ref": { "const": "evidence://forge/live-runtime/pb04-pb11-operational-closure" }
+          }
+        }
+      ]
+    },
+    "disallowed_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_runtime_authorized",
+        "state_write_runtime_registered",
+        "production_authorized",
+        "external_effects_allowed",
+        "commit_allowed",
+        "terminal_closure"
+      ],
+      "properties": {
+        "live_runtime_authorized": { "type": "boolean", "const": false },
+        "state_write_runtime_registered": { "type": "boolean", "const": false },
+        "production_authorized": { "type": "boolean", "const": false },
+        "external_effects_allowed": { "type": "boolean", "const": false },
+        "commit_allowed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "type": "string",
+          "const": "forge-live-runtime-evidence-collection-packet"
+        },
+        "command": {
+          "type": "string",
+          "const": "python scripts/validate_forge_live_runtime_evidence_collection_packet.py"
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,913 @@
+{
+  "acceptance_allowed": false,
+  "all_required_refs_present": false,
+  "blocked_reasons": [
+    "managed_key_custody_submitted_refs_missing",
+    "confidential_transport_submitted_refs_missing",
+    "persistent_nonce_replay_store_submitted_refs_missing",
+    "independent_persistence_store_submitted_refs_missing",
+    "independent_worm_lineage_submitted_refs_missing",
+    "tenant_scope_guard_submitted_refs_missing",
+    "uao_no_bypass_runtime_proof_submitted_refs_missing",
+    "rollback_replay_recovery_plan_submitted_refs_missing",
+    "pb01_pb02_pb03_write_spine_closure_submitted_refs_missing",
+    "pb04_pb11_runtime_operational_closure_submitted_refs_missing"
+  ],
+  "bridge_ref": "forge_write_spine_bridge.v1",
+  "disallowed_authority": {
+    "commit_allowed": false,
+    "external_effects_allowed": false,
+    "live_runtime_authorized": false,
+    "production_authorized": false,
+    "state_write_runtime_registered": false,
+    "terminal_closure": false
+  },
+  "next_allowed_action": "submit_redacted_operator_evidence_refs_for_validation",
+  "packet_hash": "a8f3e2e74e33b8f7500543f1ebb10583274ca31bcacd1bdacd35a7e6a6ab4e5a",
+  "packet_id": "forge-live-runtime-operator-evidence-submission-packet.v1",
+  "proof_state": "Unknown",
+  "required_controls": [
+    "source_operator_evidence_request_required",
+    "submitted_ref_slots_required",
+    "secret_values_forbidden",
+    "placeholder_refs_not_live_evidence",
+    "submission_does_not_grant_runtime_authority",
+    "signature_verification_required_before_acceptance",
+    "no_runtime_registration",
+    "no_commit_authority",
+    "no_production_authority",
+    "no_external_effects",
+    "terminal_closure_not_claimed"
+  ],
+  "required_ref_count": 80,
+  "runtime_authority_effect": false,
+  "schema_ref": "urn:mullusi:schema:forge-live-runtime-operator-evidence-submission-packet:1",
+  "schema_version": 1,
+  "secret_values_present": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_operator_evidence_request_hash": "4033ef3b810cd650e21973fd0af1c3862f043a3ad5d9724241885e170aa5a11d",
+  "source_operator_evidence_request_ref": "examples/forge_live_runtime_operator_evidence_request.foundation.json",
+  "submission_item_count": 10,
+  "submission_items": [
+    {
+      "all_required_refs_present": false,
+      "blocker_reason": "managed_key_custody_submitted_refs_missing",
+      "evidence_id": "managed_key_custody",
+      "requested_input_ref": "request://forge/live-runtime/operator-evidence/managed-key-custody",
+      "required_ref_count": 8,
+      "secret_values_present": false,
+      "submission_status": "blocked_missing_required_refs",
+      "submitted_ref_count": 0,
+      "submitted_refs": [
+        {
+          "blocker_reason": "managed_key_custody_operator_approval_ref_missing",
+          "evidence_class": "operator_approval_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "managed_key_custody_dependency_or_credential_probe_ref_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "managed_key_custody_sandbox_or_isolation_evidence_ref_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "managed_key_custody_recovery_or_revocation_ref_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "managed_key_custody_signed_receipt_writer_ref_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "managed_key_custody_signed_live_receipt_ref_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "managed_key_custody_trusted_signing_key_ref_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "managed_key_custody_signature_verification_ref_missing",
+          "evidence_class": "signature_verification_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        }
+      ],
+      "target_evidence_ref": "evidence://forge/live-runtime/managed-key-custody"
+    },
+    {
+      "all_required_refs_present": false,
+      "blocker_reason": "confidential_transport_submitted_refs_missing",
+      "evidence_id": "confidential_transport",
+      "requested_input_ref": "request://forge/live-runtime/operator-evidence/confidential-transport",
+      "required_ref_count": 8,
+      "secret_values_present": false,
+      "submission_status": "blocked_missing_required_refs",
+      "submitted_ref_count": 0,
+      "submitted_refs": [
+        {
+          "blocker_reason": "confidential_transport_operator_approval_ref_missing",
+          "evidence_class": "operator_approval_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "confidential_transport_dependency_or_credential_probe_ref_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "confidential_transport_sandbox_or_isolation_evidence_ref_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "confidential_transport_recovery_or_revocation_ref_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "confidential_transport_signed_receipt_writer_ref_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "confidential_transport_signed_live_receipt_ref_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "confidential_transport_trusted_signing_key_ref_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "confidential_transport_signature_verification_ref_missing",
+          "evidence_class": "signature_verification_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        }
+      ],
+      "target_evidence_ref": "evidence://forge/live-runtime/confidential-transport"
+    },
+    {
+      "all_required_refs_present": false,
+      "blocker_reason": "persistent_nonce_replay_store_submitted_refs_missing",
+      "evidence_id": "persistent_nonce_replay_store",
+      "requested_input_ref": "request://forge/live-runtime/operator-evidence/persistent-nonce-replay-store",
+      "required_ref_count": 8,
+      "secret_values_present": false,
+      "submission_status": "blocked_missing_required_refs",
+      "submitted_ref_count": 0,
+      "submitted_refs": [
+        {
+          "blocker_reason": "persistent_nonce_replay_store_operator_approval_ref_missing",
+          "evidence_class": "operator_approval_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "persistent_nonce_replay_store_dependency_or_credential_probe_ref_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "persistent_nonce_replay_store_sandbox_or_isolation_evidence_ref_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "persistent_nonce_replay_store_recovery_or_revocation_ref_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "persistent_nonce_replay_store_signed_receipt_writer_ref_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "persistent_nonce_replay_store_signed_live_receipt_ref_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "persistent_nonce_replay_store_trusted_signing_key_ref_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "persistent_nonce_replay_store_signature_verification_ref_missing",
+          "evidence_class": "signature_verification_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        }
+      ],
+      "target_evidence_ref": "evidence://forge/live-runtime/persistent-nonce-replay-store"
+    },
+    {
+      "all_required_refs_present": false,
+      "blocker_reason": "independent_persistence_store_submitted_refs_missing",
+      "evidence_id": "independent_persistence_store",
+      "requested_input_ref": "request://forge/live-runtime/operator-evidence/independent-persistence-store",
+      "required_ref_count": 8,
+      "secret_values_present": false,
+      "submission_status": "blocked_missing_required_refs",
+      "submitted_ref_count": 0,
+      "submitted_refs": [
+        {
+          "blocker_reason": "independent_persistence_store_operator_approval_ref_missing",
+          "evidence_class": "operator_approval_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_persistence_store_dependency_or_credential_probe_ref_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_persistence_store_sandbox_or_isolation_evidence_ref_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_persistence_store_recovery_or_revocation_ref_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_persistence_store_signed_receipt_writer_ref_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_persistence_store_signed_live_receipt_ref_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_persistence_store_trusted_signing_key_ref_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_persistence_store_signature_verification_ref_missing",
+          "evidence_class": "signature_verification_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        }
+      ],
+      "target_evidence_ref": "evidence://forge/live-runtime/independent-persistence-store"
+    },
+    {
+      "all_required_refs_present": false,
+      "blocker_reason": "independent_worm_lineage_submitted_refs_missing",
+      "evidence_id": "independent_worm_lineage",
+      "requested_input_ref": "request://forge/live-runtime/operator-evidence/independent-worm-lineage",
+      "required_ref_count": 8,
+      "secret_values_present": false,
+      "submission_status": "blocked_missing_required_refs",
+      "submitted_ref_count": 0,
+      "submitted_refs": [
+        {
+          "blocker_reason": "independent_worm_lineage_operator_approval_ref_missing",
+          "evidence_class": "operator_approval_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_worm_lineage_dependency_or_credential_probe_ref_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_worm_lineage_sandbox_or_isolation_evidence_ref_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_worm_lineage_recovery_or_revocation_ref_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_worm_lineage_signed_receipt_writer_ref_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_worm_lineage_signed_live_receipt_ref_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_worm_lineage_trusted_signing_key_ref_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "independent_worm_lineage_signature_verification_ref_missing",
+          "evidence_class": "signature_verification_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        }
+      ],
+      "target_evidence_ref": "evidence://forge/live-runtime/independent-worm-lineage"
+    },
+    {
+      "all_required_refs_present": false,
+      "blocker_reason": "tenant_scope_guard_submitted_refs_missing",
+      "evidence_id": "tenant_scope_guard",
+      "requested_input_ref": "request://forge/live-runtime/operator-evidence/tenant-scope-guard",
+      "required_ref_count": 8,
+      "secret_values_present": false,
+      "submission_status": "blocked_missing_required_refs",
+      "submitted_ref_count": 0,
+      "submitted_refs": [
+        {
+          "blocker_reason": "tenant_scope_guard_operator_approval_ref_missing",
+          "evidence_class": "operator_approval_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "tenant_scope_guard_dependency_or_credential_probe_ref_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "tenant_scope_guard_sandbox_or_isolation_evidence_ref_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "tenant_scope_guard_recovery_or_revocation_ref_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "tenant_scope_guard_signed_receipt_writer_ref_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "tenant_scope_guard_signed_live_receipt_ref_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "tenant_scope_guard_trusted_signing_key_ref_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "tenant_scope_guard_signature_verification_ref_missing",
+          "evidence_class": "signature_verification_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        }
+      ],
+      "target_evidence_ref": "evidence://forge/live-runtime/tenant-scope-guard"
+    },
+    {
+      "all_required_refs_present": false,
+      "blocker_reason": "uao_no_bypass_runtime_proof_submitted_refs_missing",
+      "evidence_id": "uao_no_bypass_runtime_proof",
+      "requested_input_ref": "request://forge/live-runtime/operator-evidence/uao-no-bypass-runtime-proof",
+      "required_ref_count": 8,
+      "secret_values_present": false,
+      "submission_status": "blocked_missing_required_refs",
+      "submitted_ref_count": 0,
+      "submitted_refs": [
+        {
+          "blocker_reason": "uao_no_bypass_runtime_proof_operator_approval_ref_missing",
+          "evidence_class": "operator_approval_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "uao_no_bypass_runtime_proof_dependency_or_credential_probe_ref_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "uao_no_bypass_runtime_proof_sandbox_or_isolation_evidence_ref_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "uao_no_bypass_runtime_proof_recovery_or_revocation_ref_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "uao_no_bypass_runtime_proof_signed_receipt_writer_ref_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "uao_no_bypass_runtime_proof_signed_live_receipt_ref_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "uao_no_bypass_runtime_proof_trusted_signing_key_ref_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "uao_no_bypass_runtime_proof_signature_verification_ref_missing",
+          "evidence_class": "signature_verification_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        }
+      ],
+      "target_evidence_ref": "evidence://forge/live-runtime/uao-no-bypass-runtime-proof"
+    },
+    {
+      "all_required_refs_present": false,
+      "blocker_reason": "rollback_replay_recovery_plan_submitted_refs_missing",
+      "evidence_id": "rollback_replay_recovery_plan",
+      "requested_input_ref": "request://forge/live-runtime/operator-evidence/rollback-replay-recovery-plan",
+      "required_ref_count": 8,
+      "secret_values_present": false,
+      "submission_status": "blocked_missing_required_refs",
+      "submitted_ref_count": 0,
+      "submitted_refs": [
+        {
+          "blocker_reason": "rollback_replay_recovery_plan_operator_approval_ref_missing",
+          "evidence_class": "operator_approval_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "rollback_replay_recovery_plan_dependency_or_credential_probe_ref_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "rollback_replay_recovery_plan_sandbox_or_isolation_evidence_ref_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "rollback_replay_recovery_plan_recovery_or_revocation_ref_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "rollback_replay_recovery_plan_signed_receipt_writer_ref_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "rollback_replay_recovery_plan_signed_live_receipt_ref_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "rollback_replay_recovery_plan_trusted_signing_key_ref_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "rollback_replay_recovery_plan_signature_verification_ref_missing",
+          "evidence_class": "signature_verification_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        }
+      ],
+      "target_evidence_ref": "evidence://forge/live-runtime/rollback-replay-recovery-plan"
+    },
+    {
+      "all_required_refs_present": false,
+      "blocker_reason": "pb01_pb02_pb03_write_spine_closure_submitted_refs_missing",
+      "evidence_id": "pb01_pb02_pb03_write_spine_closure",
+      "requested_input_ref": "request://forge/live-runtime/operator-evidence/pb01-pb02-pb03-write-spine-closure",
+      "required_ref_count": 8,
+      "secret_values_present": false,
+      "submission_status": "blocked_missing_required_refs",
+      "submitted_ref_count": 0,
+      "submitted_refs": [
+        {
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_operator_approval_ref_missing",
+          "evidence_class": "operator_approval_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_dependency_or_credential_probe_ref_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_sandbox_or_isolation_evidence_ref_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_recovery_or_revocation_ref_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_signed_receipt_writer_ref_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_signed_live_receipt_ref_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_trusted_signing_key_ref_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb01_pb02_pb03_write_spine_closure_signature_verification_ref_missing",
+          "evidence_class": "signature_verification_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        }
+      ],
+      "target_evidence_ref": "evidence://forge/live-runtime/pb01-pb03-write-spine-closure"
+    },
+    {
+      "all_required_refs_present": false,
+      "blocker_reason": "pb04_pb11_runtime_operational_closure_submitted_refs_missing",
+      "evidence_id": "pb04_pb11_runtime_operational_closure",
+      "requested_input_ref": "request://forge/live-runtime/operator-evidence/pb04-pb11-runtime-operational-closure",
+      "required_ref_count": 8,
+      "secret_values_present": false,
+      "submission_status": "blocked_missing_required_refs",
+      "submitted_ref_count": 0,
+      "submitted_refs": [
+        {
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_operator_approval_ref_missing",
+          "evidence_class": "operator_approval_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_dependency_or_credential_probe_ref_missing",
+          "evidence_class": "dependency_or_credential_probe_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_sandbox_or_isolation_evidence_ref_missing",
+          "evidence_class": "sandbox_or_isolation_evidence_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_recovery_or_revocation_ref_missing",
+          "evidence_class": "recovery_or_revocation_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_signed_receipt_writer_ref_missing",
+          "evidence_class": "signed_receipt_writer_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_signed_live_receipt_ref_missing",
+          "evidence_class": "signed_live_receipt_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_trusted_signing_key_ref_missing",
+          "evidence_class": "trusted_signing_key_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        },
+        {
+          "blocker_reason": "pb04_pb11_runtime_operational_closure_signature_verification_ref_missing",
+          "evidence_class": "signature_verification_ref",
+          "evidence_ref": "",
+          "ref_hash": "",
+          "secret_value_present": false,
+          "submitted": false,
+          "validation_status": "missing"
+        }
+      ],
+      "target_evidence_ref": "evidence://forge/live-runtime/pb04-pb11-operational-closure"
+    }
+  ],
+  "submission_mode": "operator_live_evidence_ref_intake",
+  "submission_status": "blocked_awaiting_operator_live_evidence_refs",
+  "submitted_ref_count": 0,
+  "validators": [
+    {
+      "command": "python scripts/validate_forge_live_runtime_operator_evidence_submission_packet.py",
+      "required_for_closure": true,
+      "validator_id": "forge-live-runtime-operator-evidence-submission-packet"
+    }
+  ]
+}

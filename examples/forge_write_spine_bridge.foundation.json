@@ -1,0 +1,162 @@
+{
+  "application_mode": "reference_contract_only",
+  "bridge_id": "forge_write_spine_bridge.v1",
+  "certificate_contract": {
+    "development_only": true,
+    "profile": "forge.phigov.ed25519-state-write.v0.1",
+    "required_fields": [
+      "certificate_id",
+      "issuer",
+      "request_id",
+      "decision_receipt_hash",
+      "mesh_id",
+      "snapshot_id",
+      "before_state_hash",
+      "after_state_hash",
+      "delta_hash",
+      "policy_hash",
+      "evaluation_context_hash",
+      "execution_scope_hash",
+      "issued_at",
+      "expires_at",
+      "key_id",
+      "trust_epoch",
+      "nonce",
+      "signature"
+    ]
+  },
+  "deployment_boundary": {
+    "dev_offline": "GO",
+    "production_read_only": "CONDITIONAL_GO",
+    "production_state_changing": "NO_GO",
+    "staging_shadow": "GO_WITH_GATES"
+  },
+  "external_effects_allowed": false,
+  "required_invariants": [
+    "conditional_decision_required",
+    "fencing_token_required",
+    "immutable_snapshot_required",
+    "signed_phigov_certificate_required",
+    "prepared_transition_before_live_mutation",
+    "lineage_authorization_attestation_required",
+    "commit_after_attestation_only",
+    "lineage_completion_attestation_required",
+    "production_state_changing_blocked",
+    "development_reference_not_runtime_authority"
+  ],
+  "service_boundary": {
+    "caller_audience_binding": true,
+    "local_development_keys": true,
+    "persistent_nonce_replay_guard": true,
+    "pinned_lineage_identity": true,
+    "pinned_phigov_trust_root": true,
+    "production_authorized": false,
+    "request_expiry": true,
+    "signed_rpc": true,
+    "transport_confidentiality": false
+  },
+  "source_repository": {
+    "observed_commit": "876c865",
+    "production_state_changing": "NO_GO",
+    "repository": "tamirat-wubie/mullu-forge-runtime-v0.1.0-dev3",
+    "runtime_version": "0.1.0-dev3",
+    "verification_status": "aggregate_verification_passed"
+  },
+  "state_write_runtime_registered": false,
+  "verification": {
+    "external_reference_command": "PYTHONPATH=src python scripts/verify_all.py",
+    "external_reference_result": "aggregate_verification_passed",
+    "local_test": "python -m pytest tests/test_validate_forge_write_spine_bridge.py -q",
+    "local_validator": "python scripts/validate_forge_write_spine_bridge.py"
+  },
+  "workspace_mapping": [
+    {
+      "forge_surface": "conditional Forge decision",
+      "status": "mapped",
+      "workspace_surface": "docs/UNIVERSAL_ACTION_ORCHESTRATION.md"
+    },
+    {
+      "forge_surface": "monotonic fencing token",
+      "status": "partial",
+      "workspace_surface": "gateway/distributed_lease_boundary.py"
+    },
+    {
+      "forge_surface": "signed Phi_gov state-write certificate",
+      "status": "reference_only",
+      "workspace_surface": "schemas/forge_write_spine_bridge.schema.json"
+    },
+    {
+      "forge_surface": "attested H_lineage authorization receipt",
+      "status": "partial",
+      "workspace_surface": "mcoi/mcoi_runtime/contracts/receipt_signing.py"
+    },
+    {
+      "forge_surface": "hash-linked command witness",
+      "status": "mapped",
+      "workspace_surface": "gateway/command_spine.py"
+    },
+    {
+      "forge_surface": "production state-changing blocker",
+      "status": "mapped",
+      "workspace_surface": "docs/FOUNDATION_MODE.md"
+    }
+  ],
+  "write_spine": [
+    {
+      "authority_boundary": "UAO",
+      "commit_gate": "before_prepare",
+      "evidence_ref": "conditional_decision_receipt",
+      "order": 1,
+      "required": true,
+      "stage_id": "conditional_decision"
+    },
+    {
+      "authority_boundary": "InceptaMeshPersistence",
+      "commit_gate": "before_prepare",
+      "evidence_ref": "fence_token_and_snapshot_receipt",
+      "order": 2,
+      "required": true,
+      "stage_id": "fenced_snapshot"
+    },
+    {
+      "authority_boundary": "Phi_gov",
+      "commit_gate": "before_prepare",
+      "evidence_ref": "signed_state_write_certificate",
+      "order": 3,
+      "required": true,
+      "stage_id": "phigov_certificate"
+    },
+    {
+      "authority_boundary": "InceptaMeshPersistence",
+      "commit_gate": "before_commit",
+      "evidence_ref": "prepared_transition_receipt",
+      "order": 4,
+      "required": true,
+      "stage_id": "prepared_transition"
+    },
+    {
+      "authority_boundary": "H_lineage",
+      "commit_gate": "before_commit",
+      "evidence_ref": "signed_lineage_authorization_attestation",
+      "order": 5,
+      "required": true,
+      "stage_id": "lineage_authorization_attestation"
+    },
+    {
+      "authority_boundary": "InceptaMeshPersistence",
+      "commit_gate": "commit",
+      "evidence_ref": "fenced_commit_receipt",
+      "order": 6,
+      "required": true,
+      "stage_id": "fenced_commit"
+    },
+    {
+      "authority_boundary": "H_lineage",
+      "commit_gate": "after_commit",
+      "evidence_ref": "signed_lineage_completion_attestation",
+      "order": 7,
+      "required": true,
+      "stage_id": "lineage_completion_attestation"
+    }
+  ]
+}

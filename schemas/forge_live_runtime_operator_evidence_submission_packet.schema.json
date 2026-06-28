@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:forge-live-runtime-operator-evidence-submission-packet:1",
+  "title": "Forge Live Runtime Operator Evidence Submission Packet",
+  "description": "Intake packet for redacted operator-supplied Forge live-runtime evidence references.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "schema_ref",
+    "schema_version",
+    "bridge_ref",
+    "source_operator_evidence_request_ref",
+    "source_operator_evidence_request_hash",
+    "submission_mode",
+    "submission_status",
+    "solver_outcome",
+    "proof_state",
+    "submission_items",
+    "submission_item_count",
+    "submitted_ref_count",
+    "required_ref_count",
+    "all_required_refs_present",
+    "secret_values_present",
+    "runtime_authority_effect",
+    "acceptance_allowed",
+    "blocked_reasons",
+    "required_controls",
+    "disallowed_authority",
+    "next_allowed_action",
+    "validators",
+    "packet_hash"
+  ],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "const": "forge-live-runtime-operator-evidence-submission-packet.v1"
+    },
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:forge-live-runtime-operator-evidence-submission-packet:1"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "bridge_ref": { "type": "string", "const": "forge_write_spine_bridge.v1" },
+    "source_operator_evidence_request_ref": {
+      "type": "string",
+      "const": "examples/forge_live_runtime_operator_evidence_request.foundation.json"
+    },
+    "source_operator_evidence_request_hash": { "$ref": "#/$defs/hash" },
+    "submission_mode": { "type": "string", "const": "operator_live_evidence_ref_intake" },
+    "submission_status": {
+      "type": "string",
+      "enum": [
+        "blocked_awaiting_operator_live_evidence_refs",
+        "submitted_for_validation"
+      ]
+    },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "proof_state": { "type": "string", "const": "Unknown" },
+    "submission_items": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": { "$ref": "#/$defs/submission_item" }
+    },
+    "submission_item_count": { "type": "integer", "const": 10 },
+    "submitted_ref_count": { "type": "integer", "minimum": 0, "maximum": 80 },
+    "required_ref_count": { "type": "integer", "const": 80 },
+    "all_required_refs_present": { "type": "boolean" },
+    "secret_values_present": { "type": "boolean", "const": false },
+    "runtime_authority_effect": { "type": "boolean", "const": false },
+    "acceptance_allowed": { "type": "boolean", "const": false },
+    "blocked_reasons": {
+      "type": "array",
+      "maxItems": 10,
+      "items": { "type": "string", "pattern": "^[a-z0-9_]+_submitted_refs_missing$" }
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": { "type": "string" }
+    },
+    "disallowed_authority": { "$ref": "#/$defs/disallowed_authority" },
+    "next_allowed_action": {
+      "type": "string",
+      "const": "submit_redacted_operator_evidence_refs_for_validation"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": { "$ref": "#/$defs/validator" }
+    },
+    "packet_hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "hash_ref": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "optional_hash_ref": {
+      "type": "string",
+      "anyOf": [
+        { "const": "" },
+        { "pattern": "^sha256:[0-9a-f]{64}$" }
+      ]
+    },
+    "evidence_ref": {
+      "type": "string",
+      "anyOf": [
+        { "const": "" },
+        {
+          "pattern": "^(evidence|artifact|receipt|proof|lineage|operator|sandbox|probe|signature|key)://[A-Za-z0-9._:/@-]+$"
+        }
+      ]
+    },
+    "submission_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "target_evidence_ref",
+        "requested_input_ref",
+        "submitted_refs",
+        "submitted_ref_count",
+        "required_ref_count",
+        "all_required_refs_present",
+        "secret_values_present",
+        "submission_status",
+        "blocker_reason"
+      ],
+      "properties": {
+        "evidence_id": { "type": "string" },
+        "target_evidence_ref": {
+          "type": "string",
+          "pattern": "^evidence://forge/live-runtime/[a-z0-9-]+$"
+        },
+        "requested_input_ref": {
+          "type": "string",
+          "pattern": "^request://forge/live-runtime/operator-evidence/[a-z0-9-]+$"
+        },
+        "submitted_refs": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "prefixItems": [
+            { "$ref": "#/$defs/operator_approval_slot" },
+            { "$ref": "#/$defs/dependency_or_credential_probe_slot" },
+            { "$ref": "#/$defs/sandbox_or_isolation_evidence_slot" },
+            { "$ref": "#/$defs/recovery_or_revocation_slot" },
+            { "$ref": "#/$defs/signed_receipt_writer_slot" },
+            { "$ref": "#/$defs/signed_live_receipt_slot" },
+            { "$ref": "#/$defs/trusted_signing_key_slot" },
+            { "$ref": "#/$defs/signature_verification_slot" }
+          ]
+        },
+        "submitted_ref_count": { "type": "integer", "minimum": 0, "maximum": 8 },
+        "required_ref_count": { "type": "integer", "const": 8 },
+        "all_required_refs_present": { "type": "boolean" },
+        "secret_values_present": { "type": "boolean", "const": false },
+        "submission_status": {
+          "type": "string",
+          "enum": ["blocked_missing_required_refs", "submitted_for_validation"]
+        },
+        "blocker_reason": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+_submitted_refs_missing$"
+        }
+      }
+    },
+    "submitted_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_class",
+        "evidence_ref",
+        "ref_hash",
+        "submitted",
+        "secret_value_present",
+        "validation_status",
+        "blocker_reason"
+      ],
+      "properties": {
+        "evidence_class": { "type": "string" },
+        "evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+        "ref_hash": { "$ref": "#/$defs/optional_hash_ref" },
+        "submitted": { "type": "boolean" },
+        "secret_value_present": { "type": "boolean", "const": false },
+        "validation_status": {
+          "type": "string",
+          "enum": ["missing", "submitted_unverified"]
+        },
+        "blocker_reason": { "type": "string", "pattern": "^[a-z0-9_]+_[a-z0-9_]+_missing$" }
+      }
+    },
+    "operator_approval_slot": {
+      "allOf": [
+        { "$ref": "#/$defs/submitted_ref" },
+        {
+          "properties": {
+            "evidence_class": { "const": "operator_approval_ref" }
+          }
+        }
+      ]
+    },
+    "dependency_or_credential_probe_slot": {
+      "allOf": [
+        { "$ref": "#/$defs/submitted_ref" },
+        {
+          "properties": {
+            "evidence_class": { "const": "dependency_or_credential_probe_ref" }
+          }
+        }
+      ]
+    },
+    "sandbox_or_isolation_evidence_slot": {
+      "allOf": [
+        { "$ref": "#/$defs/submitted_ref" },
+        {
+          "properties": {
+            "evidence_class": { "const": "sandbox_or_isolation_evidence_ref" }
+          }
+        }
+      ]
+    },
+    "recovery_or_revocation_slot": {
+      "allOf": [
+        { "$ref": "#/$defs/submitted_ref" },
+        {
+          "properties": {
+            "evidence_class": { "const": "recovery_or_revocation_ref" }
+          }
+        }
+      ]
+    },
+    "signed_receipt_writer_slot": {
+      "allOf": [
+        { "$ref": "#/$defs/submitted_ref" },
+        {
+          "properties": {
+            "evidence_class": { "const": "signed_receipt_writer_ref" }
+          }
+        }
+      ]
+    },
+    "signed_live_receipt_slot": {
+      "allOf": [
+        { "$ref": "#/$defs/submitted_ref" },
+        {
+          "properties": {
+            "evidence_class": { "const": "signed_live_receipt_ref" }
+          }
+        }
+      ]
+    },
+    "trusted_signing_key_slot": {
+      "allOf": [
+        { "$ref": "#/$defs/submitted_ref" },
+        {
+          "properties": {
+            "evidence_class": { "const": "trusted_signing_key_ref" }
+          }
+        }
+      ]
+    },
+    "signature_verification_slot": {
+      "allOf": [
+        { "$ref": "#/$defs/submitted_ref" },
+        {
+          "properties": {
+            "evidence_class": { "const": "signature_verification_ref" }
+          }
+        }
+      ]
+    },
+    "disallowed_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_runtime_authorized",
+        "state_write_runtime_registered",
+        "production_authorized",
+        "external_effects_allowed",
+        "commit_allowed",
+        "terminal_closure"
+      ],
+      "properties": {
+        "live_runtime_authorized": { "type": "boolean", "const": false },
+        "state_write_runtime_registered": { "type": "boolean", "const": false },
+        "production_authorized": { "type": "boolean", "const": false },
+        "external_effects_allowed": { "type": "boolean", "const": false },
+        "commit_allowed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": {
+          "type": "string",
+          "const": "forge-live-runtime-operator-evidence-submission-packet"
+        },
+        "command": {
+          "type": "string",
+          "const": "python scripts/validate_forge_live_runtime_operator_evidence_submission_packet.py"
+        },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

@@ -9,11 +9,27 @@
     "workflow_id",
     "tenant_id",
     "actor_id",
+    "user_id",
+    "project_id",
+    "request",
+    "intent",
+    "boundary",
     "goal",
+    "goal_contract",
+    "lifecycle_state",
+    "risk_class",
     "status",
     "tasks",
     "task_runs",
     "evidence_refs",
+    "approval_refs",
+    "sandbox_refs",
+    "action_plan",
+    "execution_status",
+    "receipt_refs",
+    "rollback_plan",
+    "validation_result",
+    "monitoring_state",
     "terminal_certificate_id",
     "run_hash",
     "metadata"
@@ -35,9 +51,55 @@
       "type": "string",
       "minLength": 1
     },
+    "user_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intent": {
+      "type": "string",
+      "minLength": 1
+    },
+    "boundary": {
+      "$ref": "#/$defs/boundary_contract"
+    },
     "goal": {
       "type": "string",
       "minLength": 1
+    },
+    "goal_contract": {
+      "$ref": "#/$defs/goal_contract"
+    },
+    "lifecycle_state": {
+      "type": "string",
+      "enum": [
+        "INTAKE",
+        "INTERPRETED",
+        "BOUNDARY_CHECKED",
+        "EVIDENCE_ASSEMBLED",
+        "RISK_CLASSIFIED",
+        "PLANNED",
+        "AWAITING_APPROVAL",
+        "APPROVED",
+        "EXECUTING",
+        "OBSERVED",
+        "VALIDATED",
+        "RECEIPTED",
+        "CLOSED",
+        "BLOCKED",
+        "FAILED",
+        "ROLLED_BACK"
+      ]
+    },
+    "risk_class": {
+      "$ref": "#/$defs/risk_class"
     },
     "status": {
       "type": "string",
@@ -70,11 +132,31 @@
       }
     },
     "evidence_refs": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
+      "$ref": "#/$defs/text_refs"
+    },
+    "approval_refs": {
+      "$ref": "#/$defs/text_refs"
+    },
+    "sandbox_refs": {
+      "$ref": "#/$defs/text_refs"
+    },
+    "action_plan": {
+      "$ref": "#/$defs/action_plan"
+    },
+    "execution_status": {
+      "$ref": "#/$defs/execution_status"
+    },
+    "receipt_refs": {
+      "$ref": "#/$defs/text_refs"
+    },
+    "rollback_plan": {
+      "$ref": "#/$defs/rollback_plan"
+    },
+    "validation_result": {
+      "$ref": "#/$defs/validation_result"
+    },
+    "monitoring_state": {
+      "$ref": "#/$defs/monitoring_state"
     },
     "terminal_certificate_id": {
       "type": "string"
@@ -88,6 +170,294 @@
     }
   },
   "$defs": {
+    "risk_class": {
+      "type": "string",
+      "enum": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5"
+      ]
+    },
+    "text_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "boundary_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inside_scope",
+        "outside_scope",
+        "approval_required",
+        "external_effects_allowed",
+        "forbidden_effects",
+        "protected_refs"
+      ],
+      "properties": {
+        "inside_scope": {
+          "$ref": "#/$defs/text_refs"
+        },
+        "outside_scope": {
+          "$ref": "#/$defs/text_refs"
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "external_effects_allowed": {
+          "type": "boolean"
+        },
+        "forbidden_effects": {
+          "$ref": "#/$defs/text_refs"
+        },
+        "protected_refs": {
+          "$ref": "#/$defs/text_refs"
+        }
+      }
+    },
+    "goal_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "desired_state",
+        "success_conditions",
+        "failure_conditions",
+        "proof_required",
+        "stop_conditions"
+      ],
+      "properties": {
+        "desired_state": {
+          "type": "string",
+          "minLength": 1
+        },
+        "success_conditions": {
+          "$ref": "#/$defs/text_refs"
+        },
+        "failure_conditions": {
+          "$ref": "#/$defs/text_refs"
+        },
+        "proof_required": {
+          "$ref": "#/$defs/text_refs"
+        },
+        "stop_conditions": {
+          "$ref": "#/$defs/text_refs"
+        }
+      }
+    },
+    "action_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selected_action",
+        "steps",
+        "option_count",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "selected_action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "task_id",
+              "action",
+              "risk_class",
+              "depends_on"
+            ],
+            "properties": {
+              "task_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "action": {
+                "type": "string",
+                "minLength": 1
+              },
+              "risk_class": {
+                "$ref": "#/$defs/risk_class"
+              },
+              "depends_on": {
+                "$ref": "#/$defs/text_refs"
+              }
+            }
+          }
+        },
+        "option_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "external_effects_allowed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "execution_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_status",
+        "current_task_id",
+        "tasks_total",
+        "tasks_closed",
+        "tasks_waiting_for_approval",
+        "tasks_failed",
+        "effects_executed"
+      ],
+      "properties": {
+        "current_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "current_task_id": {
+          "type": "string"
+        },
+        "tasks_total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tasks_closed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tasks_waiting_for_approval": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tasks_failed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effects_executed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "rollback_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reversibility_label",
+        "rollback_required",
+        "rollback_ready",
+        "rollback_refs",
+        "compensating_action"
+      ],
+      "properties": {
+        "reversibility_label": {
+          "type": "string",
+          "enum": [
+            "REVERSIBLE",
+            "PARTIALLY_REVERSIBLE",
+            "COMPENSATABLE",
+            "IRREVERSIBLE",
+            "UNKNOWN",
+            "NOT_REQUIRED"
+          ]
+        },
+        "rollback_required": {
+          "type": "boolean"
+        },
+        "rollback_ready": {
+          "type": "boolean"
+        },
+        "rollback_refs": {
+          "$ref": "#/$defs/text_refs"
+        },
+        "compensating_action": {
+          "type": "string"
+        }
+      }
+    },
+    "validation_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "goal_satisfied",
+        "constraints_respected",
+        "evidence_attached",
+        "receipt_emitted",
+        "rollback_state_known",
+        "monitoring_handled",
+        "checked_at",
+        "evidence_refs"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "PASS",
+            "PASS_WITH_LIMITS",
+            "FAIL_RECOVERABLE",
+            "FAIL_CRITICAL",
+            "BLOCKED_BY_UNKNOWN",
+            "NEEDS_HUMAN_DECISION"
+          ]
+        },
+        "goal_satisfied": {
+          "type": "boolean"
+        },
+        "constraints_respected": {
+          "type": "boolean"
+        },
+        "evidence_attached": {
+          "type": "boolean"
+        },
+        "receipt_emitted": {
+          "type": "boolean"
+        },
+        "rollback_state_known": {
+          "type": "boolean"
+        },
+        "monitoring_handled": {
+          "type": "boolean"
+        },
+        "checked_at": {
+          "type": "string"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/text_refs"
+        }
+      }
+    },
+    "monitoring_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "monitoring_required",
+        "monitoring_status",
+        "monitor_refs"
+      ],
+      "properties": {
+        "monitoring_required": {
+          "type": "boolean"
+        },
+        "monitoring_status": {
+          "type": "string",
+          "enum": [
+            "not_required",
+            "pending",
+            "active",
+            "completed",
+            "blocked"
+          ]
+        },
+        "monitor_refs": {
+          "$ref": "#/$defs/text_refs"
+        }
+      }
+    },
     "task_spec": {
       "type": "object",
       "additionalProperties": false,
@@ -126,11 +496,7 @@
           "minLength": 1
         },
         "depends_on": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
+          "$ref": "#/$defs/text_refs"
         },
         "approval_required": {
           "type": "boolean"
@@ -146,11 +512,7 @@
           "type": "string"
         },
         "evidence_required": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
+          "$ref": "#/$defs/text_refs"
         },
         "metadata": {
           "type": "object"
@@ -213,11 +575,7 @@
           "type": "string"
         },
         "evidence_refs": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
+          "$ref": "#/$defs/text_refs"
         },
         "terminal_certificate_id": {
           "type": "string"

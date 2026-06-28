@@ -173,6 +173,40 @@ def test_github_pr_effect_reconciliation_witness_rejects_remaining_witness_drift
     assert payload["remaining_witnesses"][0]["witness_kind"] == "effect_reconciliation"
 
 
+def test_github_pr_effect_reconciliation_witness_rejects_actual_diff_ci_gate_drift() -> None:
+    payload = validator.build_mutated_effect_reconciliation_witness(
+        effect_reconciliation__requires_actual_diff_ci_gate_before_ready_for_review_witness=False,
+        effect_reconciliation__actual_diff_ci_gate_before_ready_for_review_witness_ref="examples/wrong-ci-gate.json",
+        effect_reconciliation__actual_diff_repository_effect_rollback_plan_witness_ref="examples/wrong-rollback.json",
+        effect_reconciliation__actual_diff_uao_admission_witness_ref="examples/wrong-uao.json",
+        effect_reconciliation__actual_diff_branch_write_binding_ref="examples/wrong-branch-write.json",
+        effect_reconciliation__actual_diff_operator_response_witness_ref="examples/wrong-response.json",
+        effect_reconciliation__actual_diff_approval_request_binding_ref="examples/wrong-approval.json",
+        effect_reconciliation__actual_non_empty_diff_receipt_ref="witness://wrong-diff",
+        effect_reconciliation__changed_file_refs=["evidence://wrong-file"],
+        effect_reconciliation__diff_refs=["evidence://wrong-diff"],
+        effect_reconciliation__redacted_diff_bundle_ref="digest://wrong-bundle",
+        effect_reconciliation__redacted_output_ref="witness://wrong-output",
+    )
+
+    errors: list[str] = []
+    validator._validate_effect_reconciliation_witness_semantics(payload, _source_ci_gate_witness(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "effect_reconciliation.requires_actual_diff_ci_gate_before_ready_for_review_witness must be true" in serialized_errors
+    assert "effect_reconciliation.actual_diff_ci_gate_before_ready_for_review_witness_ref expected" in serialized_errors
+    assert "effect_reconciliation.actual_diff_repository_effect_rollback_plan_witness_ref expected" in serialized_errors
+    assert "effect_reconciliation.actual_diff_uao_admission_witness_ref expected" in serialized_errors
+    assert "effect_reconciliation.actual_diff_branch_write_binding_ref expected" in serialized_errors
+    assert "effect_reconciliation.actual_diff_operator_response_witness_ref expected" in serialized_errors
+    assert "effect_reconciliation.actual_diff_approval_request_binding_ref expected" in serialized_errors
+    assert "effect_reconciliation.actual_non_empty_diff_receipt_ref expected" in serialized_errors
+    assert "effect_reconciliation.changed_file_refs expected" in serialized_errors
+    assert "effect_reconciliation.diff_refs expected" in serialized_errors
+    assert "effect_reconciliation.redacted_diff_bundle_ref expected" in serialized_errors
+    assert "effect_reconciliation.redacted_output_ref expected" in serialized_errors
+
+
 def test_github_pr_effect_reconciliation_witness_rejects_mutation_route_and_secret_like_payload() -> None:
     payload = validator.build_mutated_effect_reconciliation_witness(
         requested_evidence_ref="POST /api/github/effect-reconciliation authority",

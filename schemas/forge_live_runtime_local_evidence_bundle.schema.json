@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:forge-live-runtime-local-evidence-bundle:1",
+  "title": "Forge Live Runtime Local Evidence Bundle",
+  "description": "Foundation Mode local design and rehearsal evidence bundle for Forge live-runtime blockers without live runtime authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bundle_id",
+    "schema_ref",
+    "schema_version",
+    "bridge_ref",
+    "source_collection_packet_ref",
+    "source_collection_packet_hash",
+    "bundle_mode",
+    "bundle_status",
+    "solver_outcome",
+    "readiness_status",
+    "local_evidence_items",
+    "blocked_reasons",
+    "required_controls",
+    "disallowed_authority",
+    "next_allowed_action",
+    "validators",
+    "bundle_hash"
+  ],
+  "properties": {
+    "bundle_id": {
+      "type": "string",
+      "const": "forge-live-runtime-local-evidence-bundle.v1"
+    },
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:forge-live-runtime-local-evidence-bundle:1"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "bridge_ref": {
+      "type": "string",
+      "const": "forge_write_spine_bridge.v1"
+    },
+    "source_collection_packet_ref": {
+      "type": "string",
+      "const": "examples/forge_live_runtime_evidence_collection_packet.foundation.json"
+    },
+    "source_collection_packet_hash": {
+      "$ref": "#/$defs/hash"
+    },
+    "bundle_mode": {
+      "type": "string",
+      "const": "local_design_rehearsal_only"
+    },
+    "bundle_status": {
+      "type": "string",
+      "const": "local_design_artifacts_available"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "const": "AwaitingEvidence"
+    },
+    "readiness_status": {
+      "type": "string",
+      "const": "blocked_awaiting_live_evidence"
+    },
+    "local_evidence_items": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "$ref": "#/$defs/local_evidence_item"
+      }
+    },
+    "blocked_reasons": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9_]+_missing$"
+      }
+    },
+    "required_controls": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "type": "string"
+      }
+    },
+    "disallowed_authority": {
+      "$ref": "#/$defs/disallowed_authority"
+    },
+    "next_allowed_action": {
+      "type": "string",
+      "const": "replace_design_artifacts_with_validated_live_evidence_after_approval"
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator"
+      }
+    },
+    "bundle_hash": {
+      "$ref": "#/$defs/hash"
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "local_evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "source_target_evidence_ref",
+        "local_artifact_ref",
+        "local_artifact_kind",
+        "local_artifact_status",
+        "live_evidence_status",
+        "blocker_status",
+        "authority_effect",
+        "promotion_effect",
+        "acceptance_criteria"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string"
+        },
+        "source_target_evidence_ref": {
+          "type": "string",
+          "pattern": "^evidence://forge/live-runtime/[a-z0-9-]+$"
+        },
+        "local_artifact_ref": {
+          "type": "string",
+          "pattern": "^artifact://forge/live-runtime/local-design/[a-z0-9-]+$"
+        },
+        "local_artifact_kind": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "local_artifact_status": {
+          "type": "string",
+          "const": "design_artifact_available"
+        },
+        "live_evidence_status": {
+          "type": "string",
+          "const": "not_collected"
+        },
+        "blocker_status": {
+          "type": "string",
+          "const": "open"
+        },
+        "authority_effect": {
+          "type": "boolean",
+          "const": false
+        },
+        "promotion_effect": {
+          "type": "boolean",
+          "const": false
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          }
+        }
+      }
+    },
+    "disallowed_authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_runtime_authorized",
+        "state_write_runtime_registered",
+        "production_authorized",
+        "external_effects_allowed",
+        "commit_allowed",
+        "terminal_closure"
+      ],
+      "properties": {
+        "live_runtime_authorized": { "type": "boolean", "const": false },
+        "state_write_runtime_registered": { "type": "boolean", "const": false },
+        "production_authorized": { "type": "boolean", "const": false },
+        "external_effects_allowed": { "type": "boolean", "const": false },
+        "commit_allowed": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "type": "string",
+          "const": "forge-live-runtime-local-evidence-bundle"
+        },
+        "command": {
+          "type": "string",
+          "const": "python scripts/validate_forge_live_runtime_local_evidence_bundle.py"
+        },
+        "required_for_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    }
+  }
+}

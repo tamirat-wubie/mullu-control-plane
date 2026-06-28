@@ -1,0 +1,57 @@
+{
+  "body": {
+    "governance_scope": [
+      "OCE",
+      "RAG",
+      "CDCV",
+      "CQTE",
+      "UWMA",
+      "SRCA",
+      "PRS"
+    ],
+    "rollback": [
+      "Rollback evidence remains pending until local sandbox receipts complete."
+    ],
+    "summary": "Local PR candidate packet prepared from Developer Workflow receipts.",
+    "testing": [
+      "Validate local PR candidate packet before metadata use.",
+      "Validate PR metadata packet before command preview or external PR action.",
+      "Command preview status: blocked"
+    ]
+  },
+  "branch_push_allowed": false,
+  "command_preview": {
+    "commands_rendered": false,
+    "packet_hash": "c6a328c417822ada1975ed2a871f61b60f1046507359c9dad06a7dec79a98fa1",
+    "preview_status": "blocked"
+  },
+  "execution_performed": false,
+  "external_effects_allowed": false,
+  "labels": [
+    "governance",
+    "developer-workflow",
+    "local-lab"
+  ],
+  "metadata_status": "blocked_candidate_incomplete",
+  "packet_hash": "44a54bc720dd2dd23f687bf1ab4b64ded2552b4db4449fbc0cb3d4e24ad92c1f",
+  "packet_id": "pr_metadata_packet.v1",
+  "pr_creation_allowed": false,
+  "preview_only": true,
+  "rollback": {
+    "evidence_refs": [],
+    "notes": "use sandbox receipt rollback_command before discarding candidate",
+    "required": true
+  },
+  "source_branch": "codex/developer-workflow-local-candidate",
+  "source_refs": {
+    "candidate_packet_path": "examples/local_pr_candidate_packet.foundation.json",
+    "candidate_packet_schema": "schemas/local_pr_candidate_packet.schema.json",
+    "command_preview_packet_path": "examples/pr_command_preview_packet.foundation.json",
+    "command_preview_packet_schema": "schemas/pr_command_preview_packet.schema.json",
+    "metadata_builder": "python scripts/build_pr_metadata_packet.py"
+  },
+  "target_branch": "main",
+  "title": "Prepare governed local Developer Workflow candidate",
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

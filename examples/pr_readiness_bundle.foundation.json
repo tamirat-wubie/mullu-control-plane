@@ -1,0 +1,85 @@
+{
+  "artifacts": {
+    "approval_packet": {
+      "artifact_id": "approval_packet",
+      "hash": "dce4122a7c886e97de229cda596bc625eaa9275a35e29d3f29da179a1d602816",
+      "ready": false,
+      "status": "pending"
+    },
+    "command_preview": {
+      "artifact_id": "command_preview",
+      "hash": "c6a328c417822ada1975ed2a871f61b60f1046507359c9dad06a7dec79a98fa1",
+      "ready": false,
+      "status": "blocked"
+    },
+    "external_approval_witness": {
+      "artifact_id": "external_approval_witness",
+      "hash": "404b366b4ff5e13b6701c910c4a67aeb62c1bb777ba77c233ba13383153b2f95",
+      "ready": false,
+      "status": "awaiting_local_pr_tool_admission"
+    },
+    "local_candidate": {
+      "artifact_id": "local_candidate",
+      "hash": "c64dbdb9f8e49837ed1fb5c2c18add9e7395b7972d8efec3bf816d506c044598",
+      "ready": false,
+      "status": "awaiting_receipts"
+    },
+    "metadata": {
+      "artifact_id": "metadata",
+      "hash": "44a54bc720dd2dd23f687bf1ab4b64ded2552b4db4449fbc0cb3d4e24ad92c1f",
+      "ready": false,
+      "status": "blocked_candidate_incomplete"
+    },
+    "pr_tool_admission": {
+      "artifact_id": "pr_tool_admission",
+      "hash": "ccc2a3858c339cc0170f9de23ec63369d2cf50a12a256e839f95d716502de4bf",
+      "ready": false,
+      "status": "blocked_candidate_incomplete"
+    },
+    "sandbox_receipts": {
+      "artifact_id": "sandbox_receipts",
+      "hash": "fcf7980d84f2d80ba6dd15e3b5fac3bb235fac81c77964081a1c146c506a17a3",
+      "ready": false,
+      "status": "awaiting_receipts"
+    }
+  },
+  "branch_push_allowed": false,
+  "bundle_hash": "2b7ef0eb49957e843b3dd858af45118cb35ec786d7c0119000ea8ad12252aa4e",
+  "bundle_id": "pr_readiness_bundle.v1",
+  "execution_performed": false,
+  "external_effects_allowed": false,
+  "next_evidence": [
+    "sandbox_receipts",
+    "approval_packet",
+    "local_candidate",
+    "pr_tool_admission",
+    "external_approval_witness",
+    "command_preview",
+    "metadata"
+  ],
+  "operator_summary": "Sandbox receipt bundle is incomplete; PR execution remains blocked.",
+  "pr_creation_allowed": false,
+  "preview_only": true,
+  "readiness_status": "awaiting_sandbox_receipts",
+  "ready_for_external_pr_execution": false,
+  "rollback": {
+    "commands": [
+      "git push origin --delete codex/developer-workflow-local-candidate",
+      "gh pr close <pr-number> --comment 'Closing by governed rollback witness'"
+    ],
+    "evidence_refs": [],
+    "required": true
+  },
+  "source_refs": {
+    "approval_packet_path": "examples/pr_preparation_approval_packet.foundation.json",
+    "bundle_builder": "python scripts/build_pr_readiness_bundle.py",
+    "command_preview_packet_path": "examples/pr_command_preview_packet.foundation.json",
+    "external_approval_witness_path": "examples/external_pr_execution_approval_witness.foundation.json",
+    "local_candidate_packet_path": "examples/local_pr_candidate_packet.foundation.json",
+    "metadata_packet_path": "examples/pr_metadata_packet.foundation.json",
+    "pr_tool_admission_packet_path": "examples/pr_tool_admission_packet.foundation.json",
+    "sandbox_receipt_bundle_path": "examples/developer_workflow_sandbox_receipt_bundle.foundation.json"
+  },
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

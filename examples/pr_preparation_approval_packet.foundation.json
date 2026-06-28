@@ -1,0 +1,50 @@
+{
+  "approval_required": true,
+  "approval_status": "pending",
+  "authorized_effect_after_approval": "prepare_local_pr_candidate_packet",
+  "bundle": {
+    "bundle_id": "developer_workflow_sandbox_receipt_bundle.v1",
+    "bundle_status": "awaiting_receipts",
+    "completed_count": 0,
+    "ready": false,
+    "receipt_ids": [
+      "sandbox_patch_receipt",
+      "test_gate_receipt",
+      "diff_review_receipt",
+      "terminal_receipt"
+    ],
+    "required_count": 4
+  },
+  "decision_request": {
+    "allowed_decisions": [
+      "approve_prepare_pr_candidate",
+      "reject",
+      "defer"
+    ],
+    "decision_id": "approve_pr_preparation",
+    "default_decision": "defer",
+    "prompt": "Approve preparation of a local PR candidate packet only; external PR creation remains blocked."
+  },
+  "execution_boundary": "local_lab_only",
+  "external_effects_allowed": false,
+  "forbidden_effects": [
+    "open_external_pr",
+    "push_branch",
+    "merge",
+    "deploy",
+    "call_connector"
+  ],
+  "next_action": "complete sandbox patch, test, diff, and terminal receipts",
+  "packet_hash": "dce4122a7c886e97de229cda596bc625eaa9275a35e29d3f29da179a1d602816",
+  "packet_id": "pr_preparation_approval_packet.v1",
+  "packet_status": "awaiting_receipts",
+  "pr_creation_allowed": false,
+  "source_refs": {
+    "bundle_path": "examples/developer_workflow_sandbox_receipt_bundle.foundation.json",
+    "bundle_schema": "schemas/developer_workflow_sandbox_receipt_bundle.schema.json",
+    "bundle_validator": "python scripts/validate_developer_workflow_sandbox_receipt_bundle.py",
+    "packet_builder": "python scripts/build_pr_preparation_approval_packet.py"
+  },
+  "workflow_id": "mullu_developer_workflow.v1",
+  "workflow_run_id": "developer_workflow_v1_foundation_run"
+}

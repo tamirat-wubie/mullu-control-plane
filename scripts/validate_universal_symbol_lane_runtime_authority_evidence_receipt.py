@@ -44,6 +44,7 @@ REQUIRED_BLOCKERS: tuple[str, ...] = (
     "recovery_evidence_missing",
     "audit_receipt_missing",
     "live_runtime_witness_missing",
+    "blocked_action_refs_missing",
 )
 
 LANE_EVIDENCE_CONSTRAINT_TRUE_FIELDS: tuple[str, ...] = (
@@ -344,6 +345,8 @@ def _require_members(
 ) -> None:
     for missing_value in sorted(set(required_values) - set(observed_values)):
         errors.append(f"{field_name} missing required value: {missing_value}")
+    for unexpected_value in sorted(set(observed_values) - set(required_values)):
+        errors.append(f"{field_name} has unexpected value: {unexpected_value}")
     if len(observed_values) != len(set(observed_values)):
         errors.append(f"{field_name} values must be unique")
 

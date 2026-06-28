@@ -1,0 +1,87 @@
+{
+  "approval": {
+    "required": true,
+    "status": "pending"
+  },
+  "blocker": "sandbox_receipts_incomplete",
+  "execution_boundary": "local_lab_only",
+  "external_effects_allowed": false,
+  "next_action": "complete sandbox patch, test, diff, and terminal receipts",
+  "next_evidence": [
+    {
+      "action": "attach before state, after state, diff, command, and rollback receipt",
+      "evidence_id": "sandbox_patch_receipt",
+      "label": "Sandbox patch receipt",
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.sandbox_patch_receipt",
+      "status": "pending"
+    },
+    {
+      "action": "attach bounded local test command receipt and observed result",
+      "evidence_id": "test_gate_receipt",
+      "label": "Test gate receipt",
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.test_gate_receipt",
+      "status": "pending"
+    },
+    {
+      "action": "attach reviewed diff hash and reviewer evidence reference",
+      "evidence_id": "diff_review_receipt",
+      "label": "Diff review receipt",
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.diff_review_receipt",
+      "status": "pending"
+    },
+    {
+      "action": "attach final local receipt summary and no-external-effect witness",
+      "evidence_id": "terminal_receipt",
+      "label": "Terminal receipt",
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.terminal_receipt",
+      "status": "pending"
+    }
+  ],
+  "packet_id": "sandbox_to_pr_preparation_packet.v1",
+  "policy": {
+    "approval_required": true,
+    "change_capability_id": "software_dev.change.run",
+    "pr_capability_id": "software_dev.pr_candidate.prepare",
+    "ready": true,
+    "rollback_default": true
+  },
+  "pr_candidate": {
+    "prepared": false,
+    "status": "pending"
+  },
+  "receipts": {
+    "completed_count": 0,
+    "ready": false,
+    "required_count": 4,
+    "rollback_receipt_status": "not_recorded"
+  },
+  "receipt_bundle_ref": {
+    "builder": "python scripts/build_developer_workflow_sandbox_receipt_bundle.py",
+    "example_path": "examples/developer_workflow_sandbox_receipt_bundle.foundation.json",
+    "schema_ref": "schemas/developer_workflow_sandbox_receipt_bundle.schema.json",
+    "validator": "python scripts/validate_developer_workflow_sandbox_receipt_bundle.py"
+  },
+  "required_evidence": [
+    {
+      "evidence_id": "capability_passports",
+      "source": "capability_health.metadata.sandbox_to_pr_policy",
+      "status": "complete"
+    },
+    {
+      "evidence_id": "sandbox_receipts",
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist",
+      "status": "pending"
+    },
+    {
+      "evidence_id": "operator_approval",
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.operator_approval",
+      "status": "pending"
+    },
+    {
+      "evidence_id": "pr_candidate",
+      "source": "workflow_monitor.metadata.developer_workflow_run.receipt_checklist.pr_candidate",
+      "status": "pending"
+    }
+  ],
+  "status": "awaiting_receipts"
+}

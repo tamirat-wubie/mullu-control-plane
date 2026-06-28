@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:pr-preparation-approval-packet:1",
+  "title": "PrPreparationApprovalPacket",
+  "description": "Projection-only approval packet for preparing a local PR candidate after Developer Workflow v1 sandbox receipts are complete.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "workflow_id",
+    "workflow_run_id",
+    "packet_status",
+    "execution_boundary",
+    "external_effects_allowed",
+    "pr_creation_allowed",
+    "approval_required",
+    "approval_status",
+    "next_action",
+    "bundle",
+    "decision_request",
+    "authorized_effect_after_approval",
+    "forbidden_effects",
+    "source_refs",
+    "packet_hash"
+  ],
+  "properties": {
+    "packet_id": {"type": "string", "const": "pr_preparation_approval_packet.v1"},
+    "workflow_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+    "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "packet_status": {
+      "type": "string",
+      "enum": ["awaiting_receipts", "awaiting_operator_approval", "approval_recorded"]
+    },
+    "execution_boundary": {"type": "string", "const": "local_lab_only"},
+    "external_effects_allowed": {"type": "boolean", "const": false},
+    "pr_creation_allowed": {"type": "boolean", "const": false},
+    "approval_required": {"type": "boolean", "const": true},
+    "approval_status": {"type": "string", "enum": ["pending", "approved", "rejected", "deferred"]},
+    "next_action": {"type": "string", "minLength": 1, "maxLength": 240},
+    "bundle": {"$ref": "#/$defs/bundle"},
+    "decision_request": {"$ref": "#/$defs/decision_request"},
+    "authorized_effect_after_approval": {
+      "type": "string",
+      "const": "prepare_local_pr_candidate_packet"
+    },
+    "forbidden_effects": {
+      "type": "array",
+      "minItems": 5,
+      "items": {"type": "string", "minLength": 1, "maxLength": 120},
+      "contains": {"const": "open_external_pr"}
+    },
+    "source_refs": {"$ref": "#/$defs/source_refs"},
+    "packet_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_id",
+        "bundle_status",
+        "ready",
+        "completed_count",
+        "required_count",
+        "receipt_ids"
+      ],
+      "properties": {
+        "bundle_id": {"type": "string", "const": "developer_workflow_sandbox_receipt_bundle.v1"},
+        "bundle_status": {
+          "type": "string",
+          "enum": ["awaiting_receipts", "receipts_complete", "unknown"]
+        },
+        "ready": {"type": "boolean"},
+        "completed_count": {"type": "integer", "minimum": 0, "maximum": 4},
+        "required_count": {"type": "integer", "const": 4},
+        "receipt_ids": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "enum": [
+              "sandbox_patch_receipt",
+              "test_gate_receipt",
+              "diff_review_receipt",
+              "terminal_receipt"
+            ]
+          }
+        }
+      }
+    },
+    "decision_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision_id", "prompt", "allowed_decisions", "default_decision"],
+      "properties": {
+        "decision_id": {"type": "string", "const": "approve_pr_preparation"},
+        "prompt": {"type": "string", "minLength": 1, "maxLength": 240},
+        "allowed_decisions": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "enum": ["approve_prepare_pr_candidate", "reject", "defer"]
+          }
+        },
+        "default_decision": {"type": "string", "const": "defer"}
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bundle_path", "bundle_schema", "bundle_validator", "packet_builder"],
+      "properties": {
+        "bundle_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "bundle_schema": {
+          "type": "string",
+          "const": "schemas/developer_workflow_sandbox_receipt_bundle.schema.json"
+        },
+        "bundle_validator": {
+          "type": "string",
+          "const": "python scripts/validate_developer_workflow_sandbox_receipt_bundle.py"
+        },
+        "packet_builder": {
+          "type": "string",
+          "const": "python scripts/build_pr_preparation_approval_packet.py"
+        }
+      }
+    }
+  }
+}

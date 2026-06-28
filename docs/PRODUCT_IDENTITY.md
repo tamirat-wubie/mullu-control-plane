@@ -10,10 +10,10 @@ Invariants: Mullu Govern is the public product; Mullu is the suite/family; Mullu
 Public-facing surfaces should make the purpose clear before they expose technical proof details.
 
 ```text
-Mission: make AI action governable, auditable, and accountable.
-Problem: AI is moving from answers into actions, but action without proof creates risk.
-Solution: route consequential AI work through policy, approval, budget, evidence, receipts, audit, and rollback.
-Market role: trust layer for AI actions, not a foundation model or free-running chatbot.
+Mission: make symbolic intelligence action governable, auditable, and accountable.
+Problem: symbolic intelligence is moving from answers into actions, but action without proof creates risk.
+Solution: route consequential symbolic work through policy, approval, budget, evidence, receipts, audit, and rollback.
+Market role: trust layer for symbolic intelligence actions, not a foundation model or free-running chatbot.
 Current status: Foundation Mode; local proof and claim boundaries first.
 ```
 
@@ -21,45 +21,44 @@ Use this hierarchy for website copy, homepage drafts, public route candidates, R
 
 ## Public Mission
 
-Mullusi exists to make powerful AI systems safe enough to trust.
+Mullusi exists to make powerful symbolic intelligence systems safe enough to trust.
 
-As AI moves from answering questions to taking actions, organizations need more than model intelligence. They need control, proof, approval, budget limits, audit trails, rollback paths, and clear responsibility.
+As symbolic intelligence moves from answering questions to taking actions, organizations need more than model capability. They need control, proof, approval, budget limits, audit trails, rollback paths, and clear responsibility.
 
-Mullu Govern turns AI-driven work into governed proposals and proof-backed outcomes. The goal is accountable automation: useful AI action that can be limited, reviewed, approved, blocked, and audited.
+Mullu Govern turns symbolic work into governed proposals and proof-backed outcomes. The goal is accountable automation: useful symbolic intelligence action that can be limited, reviewed, approved, blocked, and audited.
 
-## AGI/ASI Fear Boundary
+## Advanced Capability Fear Boundary
 
-Do not position Mullu Govern as an AGI or ASI product.
+Do not position Mullu Govern as a speculative general-capability product.
 
 The safe public framing is:
 
 ```text
 Mullu Govern is not built to unleash unchecked machine autonomy.
-It is built to limit, verify, and govern AI-driven action.
+It is built to limit, verify, and govern symbolic intelligence action.
 ```
 
 Allowed language:
 
 ```text
-governable AI action
+governable symbolic intelligence action
 accountable automation
 proof-backed outcomes
 approval-gated execution
 budget-controlled action
-audit-ready AI workflows
-trust layer for AI actions
+audit-ready symbolic workflows
+trust layer for symbolic intelligence actions
 ```
 
 Blocked language:
 
 ```text
-AGI platform
-ASI platform
+speculative general-capability platform
 unbounded autonomous intelligence
-fully safe AI
-guaranteed AI containment
-production-ready AI governance
-customer-ready AI operations
+fully safe symbolic intelligence
+guaranteed symbolic containment
+production-ready symbolic governance
+customer-ready symbolic operations
 live payment automation
 live email automation
 ```
@@ -70,7 +69,7 @@ live email automation
 | --- | --- | --- | --- |
 | Mullusi | Company and ecosystem brand | The owner, public ecosystem, governance authority, research publisher, and trust surface | Company site, research, billing, governance, audit, ecosystem |
 | Mullu | Suite/family | The Mullusi product family containing Govern, Proof, Ledger, Inspect, Code, Desk, CLI, and Control Plane | Suite navigation, ecosystem maps, family-level docs |
-| Mullu Govern | Public product | Governable AI action for approvals, budgets, traces, audit, lineage, policy enforcement, skill boundaries, deployment controls, and proof-backed outcomes | Public website, onboarding, pricing, product UI, citations |
+| Mullu Govern | Public product | Governable symbolic intelligence action for approvals, budgets, traces, audit, lineage, policy enforcement, skill boundaries, deployment controls, and proof-backed outcomes | Public website, onboarding, pricing, product UI, citations |
 | Mullu Platform | Developer/platform term | The universal governed agentic framework beneath Mullu | SDKs, APIs, architecture docs, deployment docs |
 | Mullu Proof | Evidence surface | Receipts, proof stamps, lineage packages, and compliance evidence | Audit, export, proof review, trust boundary |
 | Mullu Ledger | Financial/audit surface | Budgets, spend limits, payment states, receipts, settlements, and financial compliance evidence | Budget and payment governance |
@@ -94,7 +93,7 @@ Mullusi is the company behind it.
 
 Mullu Govern covers:
 
-1. Governed AI-action workflows.
+1. Governed symbolic intelligence workflows.
 2. Approval-gated execution.
 3. Budget and spend enforcement.
 4. Trace, lineage, and audit preservation.
@@ -115,12 +114,12 @@ Mullu Govern covers:
 
 ## Public Positioning
 
-Mullu Govern is governed execution for AI-assisted real work. It lets a person or organization define goals, admit capabilities, route actions through approvals, enforce budgets and policy, verify effects, preserve audit receipts, and promote successful patterns into reusable operational memory.
+Mullu Govern is governed execution for symbolic work. It lets a person or organization define goals, admit capabilities, route actions through approvals, enforce budgets and policy, verify effects, preserve audit receipts, and promote successful patterns into reusable operational memory.
 
 Public anchor:
 
 ```text
-Make AI action governable.
+Make symbolic intelligence action governable.
 ```
 
 Technical anchor:
@@ -135,7 +134,7 @@ The public promise is governed action before execution: explicit authority, dete
 
 | Surface | Primary user | Required surface |
 | --- | --- | --- |
-| Mullu Govern | Individual, team, enterprise | Governable AI action across approvals, budgets, traces, audit, policy, deployment controls, and proof-backed outcomes |
+| Mullu Govern | Individual, team, enterprise | Governable symbolic intelligence action across approvals, budgets, traces, audit, policy, deployment controls, and proof-backed outcomes |
 | Mullu Proof | Auditor, reviewer, operator | Receipts, lineage, proof stamps, compliance evidence, and trust exports |
 | Mullu Ledger | Finance operator, admin | Budget, spend, payment, settlement, and financial audit control |
 | Mullu Inspect | Individual, researcher, operator | Browser inspection, page structure, evidence capture, and symbolic web review |

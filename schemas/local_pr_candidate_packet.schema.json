@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:local-pr-candidate-packet:1",
+  "title": "LocalPrCandidatePacket",
+  "description": "Projection-only local PR candidate packet prepared from an approved Developer Workflow v1 PR-preparation approval packet.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "packet_id",
+    "workflow_id",
+    "workflow_run_id",
+    "candidate_status",
+    "candidate_ready",
+    "execution_boundary",
+    "external_effects_allowed",
+    "pr_creation_allowed",
+    "branch_push_allowed",
+    "title",
+    "branch_name",
+    "summary",
+    "approval",
+    "bundle",
+    "diff_refs",
+    "test_refs",
+    "rollback",
+    "forbidden_effects",
+    "source_refs",
+    "packet_hash"
+  ],
+  "properties": {
+    "packet_id": {"type": "string", "const": "local_pr_candidate_packet.v1"},
+    "workflow_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+    "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "candidate_status": {
+      "type": "string",
+      "enum": ["awaiting_receipts", "awaiting_operator_approval", "ready_for_pr_tool", "blocked"]
+    },
+    "candidate_ready": {"type": "boolean"},
+    "execution_boundary": {"type": "string", "const": "local_lab_only"},
+    "external_effects_allowed": {"type": "boolean", "const": false},
+    "pr_creation_allowed": {"type": "boolean", "const": false},
+    "branch_push_allowed": {"type": "boolean", "const": false},
+    "title": {"type": "string", "minLength": 1, "maxLength": 120},
+    "branch_name": {
+      "type": "string",
+      "pattern": "^codex/[a-z0-9][a-z0-9._/-]{1,118}$"
+    },
+    "summary": {"type": "string", "minLength": 1, "maxLength": 600},
+    "approval": {"$ref": "#/$defs/approval"},
+    "bundle": {"$ref": "#/$defs/bundle"},
+    "diff_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 240}
+    },
+    "test_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 240}
+    },
+    "rollback": {"$ref": "#/$defs/rollback"},
+    "forbidden_effects": {
+      "type": "array",
+      "minItems": 5,
+      "items": {"type": "string", "minLength": 1, "maxLength": 120},
+      "contains": {"const": "open_external_pr"}
+    },
+    "source_refs": {"$ref": "#/$defs/source_refs"},
+    "packet_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approval_status", "approval_required", "authorized_effect"],
+      "properties": {
+        "approval_status": {"type": "string", "enum": ["pending", "approved", "rejected", "deferred"]},
+        "approval_required": {"type": "boolean", "const": true},
+        "authorized_effect": {"type": "string", "const": "prepare_local_pr_candidate_packet"}
+      }
+    },
+    "bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ready", "completed_count", "required_count", "receipt_ids"],
+      "properties": {
+        "ready": {"type": "boolean"},
+        "completed_count": {"type": "integer", "minimum": 0, "maximum": 4},
+        "required_count": {"type": "integer", "const": 4},
+        "receipt_ids": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "enum": [
+              "sandbox_patch_receipt",
+              "test_gate_receipt",
+              "diff_review_receipt",
+              "terminal_receipt"
+            ]
+          }
+        }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "command", "evidence_refs"],
+      "properties": {
+        "required": {"type": "boolean", "const": true},
+        "command": {"type": "string", "minLength": 1, "maxLength": 300},
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1, "maxLength": 240}
+        }
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approval_packet_path", "approval_packet_schema", "candidate_builder"],
+      "properties": {
+        "approval_packet_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "approval_packet_schema": {
+          "type": "string",
+          "const": "schemas/pr_preparation_approval_packet.schema.json"
+        },
+        "candidate_builder": {
+          "type": "string",
+          "const": "python scripts/build_local_pr_candidate_packet.py"
+        }
+      }
+    }
+  }
+}

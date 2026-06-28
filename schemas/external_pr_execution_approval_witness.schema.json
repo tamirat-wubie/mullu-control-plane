@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:external-pr-execution-approval-witness:1",
+  "title": "ExternalPrExecutionApprovalWitness",
+  "description": "Projection-only approval witness for external PR execution after local PR-tool admission.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "workflow_id",
+    "workflow_run_id",
+    "approval_status",
+    "execution_status",
+    "execution_boundary",
+    "operator_approved_external_effects",
+    "external_effects_allowed",
+    "pr_creation_allowed",
+    "branch_push_allowed",
+    "approved_external_effects",
+    "admission",
+    "required_before_execution",
+    "rollback",
+    "forbidden_without_approval",
+    "source_refs",
+    "witness_hash"
+  ],
+  "properties": {
+    "witness_id": {"type": "string", "const": "external_pr_execution_approval_witness.v1"},
+    "workflow_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+    "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "approval_status": {"type": "string", "enum": ["pending", "approved", "rejected", "deferred"]},
+    "execution_status": {
+      "type": "string",
+      "enum": ["awaiting_local_pr_tool_admission", "awaiting_operator_approval", "approved_for_external_pr_execution"]
+    },
+    "execution_boundary": {"type": "string", "const": "external_repository_pr"},
+    "operator_approved_external_effects": {"type": "boolean"},
+    "external_effects_allowed": {"type": "boolean"},
+    "pr_creation_allowed": {"type": "boolean"},
+    "branch_push_allowed": {"type": "boolean"},
+    "approved_external_effects": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["push_branch", "open_external_pr"]
+      }
+    },
+    "admission": {"$ref": "#/$defs/admission"},
+    "required_before_execution": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "string",
+        "enum": [
+          "local_pr_tool_admission",
+          "operator_external_pr_approval",
+          "rollback_plan",
+          "diff_and_test_receipts",
+          "workspace_boundary"
+        ]
+      },
+      "contains": {"const": "operator_external_pr_approval"}
+    },
+    "rollback": {"$ref": "#/$defs/rollback"},
+    "forbidden_without_approval": {
+      "type": "array",
+      "minItems": 5,
+      "items": {"type": "string", "minLength": 1, "maxLength": 120},
+      "contains": {"const": "open_external_pr"}
+    },
+    "source_refs": {"$ref": "#/$defs/source_refs"},
+    "witness_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "admission_status",
+        "local_pr_tool_admitted",
+        "admission_packet_hash",
+        "candidate_title",
+        "branch_name",
+        "local_tool_actions_allowed"
+      ],
+      "properties": {
+        "admission_status": {"type": "string", "enum": ["blocked_candidate_incomplete", "local_tool_admitted"]},
+        "local_pr_tool_admitted": {"type": "boolean"},
+        "admission_packet_hash": {"$ref": "#/$defs/hash"},
+        "candidate_title": {"type": "string", "minLength": 1, "maxLength": 120},
+        "branch_name": {
+          "type": "string",
+          "pattern": "^codex/[a-z0-9][a-z0-9._/-]{1,118}$"
+        },
+        "local_tool_actions_allowed": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["render_pr_body", "assemble_pr_metadata", "prepare_pr_command_preview"]
+          }
+        }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "branch_delete_command", "pr_close_command", "evidence_refs"],
+      "properties": {
+        "required": {"type": "boolean", "const": true},
+        "branch_delete_command": {"type": "string", "minLength": 1, "maxLength": 240},
+        "pr_close_command": {"type": "string", "minLength": 1, "maxLength": 240},
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1, "maxLength": 240}
+        }
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["admission_packet_path", "admission_packet_schema", "witness_builder"],
+      "properties": {
+        "admission_packet_path": {"type": "string", "minLength": 1, "maxLength": 240},
+        "admission_packet_schema": {
+          "type": "string",
+          "const": "schemas/pr_tool_admission_packet.schema.json"
+        },
+        "witness_builder": {
+          "type": "string",
+          "const": "python scripts/build_external_pr_execution_approval_witness.py"
+        }
+      }
+    }
+  }
+}
