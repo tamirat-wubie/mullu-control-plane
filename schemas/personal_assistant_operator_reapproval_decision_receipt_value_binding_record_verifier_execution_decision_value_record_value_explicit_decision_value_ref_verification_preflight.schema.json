@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-verification-preflight:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Value Binding Record Verifier Execution Decision Value Record Value Explicit Decision Value Ref Verification Preflight",
+  "description": "No-effect verification preflight for submitted explicit decision value ref identifiers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "explicit_decision_value_ref_verification_preflight_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_explicit_decision_value_ref_submitted_ref_intake_id",
+    "explicit_decision_value_ref_verification_preflight_state",
+    "decision",
+    "outcome",
+    "verification_record_count",
+    "verification_record_ids",
+    "source_submitted_ref_record_ids",
+    "submitted_ref_uris",
+    "verification_records",
+    "receipt",
+    "effect_boundary",
+    "private_payload_policy",
+    "summary",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "explicit_decision_value_ref_verification_preflight_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_verification_preflight_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {"type": "string", "format": "date-time"},
+    "governed": {"const": true},
+    "source_projection": {
+      "const": "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_submitted_ref_intake"
+    },
+    "source_explicit_decision_value_ref_submitted_ref_intake_id": {"$ref": "#/$defs/non_empty_text"},
+    "explicit_decision_value_ref_verification_preflight_state": {"const": "submitted_refs_checked_not_verified"},
+    "decision": {"const": "blocked"},
+    "outcome": {"const": "AwaitingEvidence"},
+    "verification_record_count": {"const": 4},
+    "verification_record_ids": {"$ref": "#/$defs/string_array"},
+    "source_submitted_ref_record_ids": {"$ref": "#/$defs/string_array"},
+    "submitted_ref_uris": {"$ref": "#/$defs/string_array"},
+    "verification_records": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/$defs/verification_record"}
+    },
+    "receipt": {"type": "object"},
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "summary": {"$ref": "#/$defs/summary"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "non_empty_text": {"type": "string", "minLength": 1},
+    "string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/non_empty_text"}
+    },
+    "ref_name": {
+      "enum": [
+        "operator_decision_value_ref",
+        "operator_identity_ref",
+        "operator_signature_ref",
+        "operator_reapproval_decision_receipt_ref"
+      ]
+    },
+    "verification_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verification_record_id",
+        "ref_name",
+        "source_submitted_ref_record_id",
+        "source_explicit_decision_value_ref_submitted_ref_intake_id",
+        "submitted_ref_uri",
+        "verification_status",
+        "verification_preflight_checked",
+        "submitted_ref_observed",
+        "submitted_ref_only",
+        "raw_ref_payload_present",
+        "raw_operator_value_present",
+        "verified",
+        "accepted",
+        "bound",
+        "validated",
+        "stored",
+        "grants_authority",
+        "grants_verifier_execution",
+        "operator_value_record_created",
+        "verifier_execution_allowed",
+        "authority_granted",
+        "blocking_reason"
+      ],
+      "properties": {
+        "verification_record_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_verification_record_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "ref_name": {"$ref": "#/$defs/ref_name"},
+        "source_submitted_ref_record_id": {"$ref": "#/$defs/non_empty_text"},
+        "source_explicit_decision_value_ref_submitted_ref_intake_id": {"$ref": "#/$defs/non_empty_text"},
+        "submitted_ref_uri": {
+          "type": "string",
+          "pattern": "^evidence://personal-assistant/operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-submitted/.+$"
+        },
+        "verification_status": {"const": "preflight_checked_not_verified"},
+        "verification_preflight_checked": {"const": true},
+        "submitted_ref_observed": {"const": true},
+        "submitted_ref_only": {"const": true},
+        "raw_ref_payload_present": {"const": false},
+        "raw_operator_value_present": {"const": false},
+        "verified": {"const": false},
+        "accepted": {"const": false},
+        "bound": {"const": false},
+        "validated": {"const": false},
+        "stored": {"const": false},
+        "grants_authority": {"const": false},
+        "grants_verifier_execution": {"const": false},
+        "operator_value_record_created": {"const": false},
+        "verifier_execution_allowed": {"const": false},
+        "authority_granted": {"const": false},
+        "blocking_reason": {"$ref": "#/$defs/non_empty_text"}
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "required_value_refs_submitted": {"const": true},
+        "submitted_ref_only": {"const": true},
+        "verification_preflight_checked": {"const": true},
+        "explicit_decision_value_refs_verified": {"const": false},
+        "explicit_decision_value_refs_accepted": {"const": false},
+        "explicit_decision_value_refs_bound": {"const": false},
+        "explicit_decision_value_refs_validated": {"const": false},
+        "explicit_decision_value_refs_stored": {"const": false},
+        "operator_decision_value_present": {"const": false},
+        "operator_value_record_created": {"const": false},
+        "verifier_execution_allowed": {"const": false},
+        "authority_granted": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "explicit_decision_value_ref_submitted_ref_projection": {"const": "ref_identifier_only"},
+        "explicit_decision_value_ref_verification_projection": {"const": "preflight_status_only"},
+        "operator_decision_value_projection": {"const": "absent"}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "verification_record_count": {"const": 4},
+        "verification_preflight_checked_count": {"const": 4},
+        "submitted_ref_observed_count": {"const": 4},
+        "submitted_ref_only_count": {"const": 4},
+        "verified_ref_count": {"const": 0},
+        "accepted_ref_count": {"const": 0},
+        "bound_ref_count": {"const": 0},
+        "validated_ref_count": {"const": 0},
+        "stored_ref_count": {"const": 0},
+        "raw_ref_payload_count": {"const": 0},
+        "raw_operator_value_count": {"const": 0},
+        "operator_value_record_creation_count": {"const": 0},
+        "verifier_execution_allowed_count": {"const": 0},
+        "authority_grant_count": {"const": 0}
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "outcome": {"const": "AwaitingEvidence"},
+        "verification_preflight_checked": {"const": true},
+        "explicit_decision_value_refs_verified": {"const": false},
+        "explicit_decision_value_refs_accepted": {"const": false},
+        "authority_granted": {"const": false}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "runtime_boundary": {"const": "submitted_refs_checked_not_verified"},
+        "verification_preflight_only": {"const": true},
+        "authority_granted": {"const": false}
+      }
+    }
+  }
+}
