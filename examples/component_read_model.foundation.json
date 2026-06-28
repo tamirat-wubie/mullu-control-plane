@@ -23,8 +23,8 @@
     "proof_bound_count": 9,
     "awaiting_binding_count": 1,
     "bound_route_count": 35,
-    "route_family_classification_count": 79,
-    "classified_declared_route_count": 453,
+    "route_family_classification_count": 80,
+    "classified_declared_route_count": 455,
     "blocked_component_count": 1
   },
   "components": [
