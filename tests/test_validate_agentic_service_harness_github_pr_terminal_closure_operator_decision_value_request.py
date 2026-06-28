@@ -118,6 +118,9 @@ def test_github_pr_terminal_closure_operator_decision_value_request_rejects_comm
         command_preview_generic_rejection_evidence__source_decision_contract_ref="examples/other-contract.json",
         command_preview_generic_rejection_evidence__rejection_id="other-rejection",
         command_preview_generic_rejection_evidence__operator_decision_ref="approval://other",
+        command_preview_generic_rejection_evidence__requires_command_preview_generic_rejection_evidence=False,
+        command_preview_generic_rejection_evidence__requires_command_preview_operator_approval_gate_evidence=False,
+        command_preview_generic_rejection_evidence__requires_command_preview_terminal_closure_certificate_witness=False,
         command_preview_generic_rejection_evidence__command_preview_terminal_closure_certificate_witness_ref="examples/other-certificate.json",
         command_preview_generic_rejection_evidence__command_preview_operator_response_binding_ref="examples/other-response-binding.json",
         command_preview_generic_rejection_evidence__command_preview_operator_response_witness_ref="examples/other-response.json",
@@ -140,6 +143,9 @@ def test_github_pr_terminal_closure_operator_decision_value_request_rejects_comm
     assert "command_preview_generic_rejection_evidence.source_decision_contract_ref expected" in serialized_errors
     assert "command_preview_generic_rejection_evidence.rejection_id expected" in serialized_errors
     assert "command_preview_generic_rejection_evidence.operator_decision_ref expected" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.requires_command_preview_generic_rejection_evidence must be true" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.requires_command_preview_operator_approval_gate_evidence must be true" in serialized_errors
+    assert "command_preview_generic_rejection_evidence.requires_command_preview_terminal_closure_certificate_witness must be true" in serialized_errors
     assert "command_preview_generic_rejection_evidence.command_preview_terminal_closure_certificate_witness_ref expected" in serialized_errors
     assert "command_preview_generic_rejection_evidence.command_preview_operator_response_binding_ref expected" in serialized_errors
     assert "command_preview_generic_rejection_evidence.command_preview_operator_response_witness_ref expected" in serialized_errors
