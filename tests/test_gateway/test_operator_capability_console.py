@@ -1646,6 +1646,18 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Operator Sandbox Patch PR CI Readiness" in response.text
     assert "PR CI readiness blocked until PR creation evidence" in response.text
     assert "blocked_until_pr_creation" in response.text
+    assert "Operator Sandbox Patch Merge Readiness" in response.text
+    assert "Merge readiness blocked until CI pass" in response.text
+    assert "blocked_until_ci_pass" in response.text
+    assert "Operator Sandbox Patch Release Handoff Readiness" in response.text
+    assert "Release handoff blocked until terminal closure" in response.text
+    assert "blocked_until_terminal_closure" in response.text
+    assert "Operator Sandbox Patch Deployment Publication Readiness" in response.text
+    assert "Deployment publication blocked until release handoff" in response.text
+    assert "blocked_until_release_handoff" in response.text
+    assert "Operator Sandbox Patch Production Monitoring Readiness" in response.text
+    assert "Production monitoring blocked until deployment publication" in response.text
+    assert "blocked_until_publication" in response.text
     assert "Operator Handoff Summary" in response.text
     assert "Handoff ready for local resume" in response.text
     assert "external_pr_creation, branch_push, merge, deployment, connector_write, real_world_effect" in response.text
@@ -2599,6 +2611,91 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
             "PR CI readiness blocked until PR creation evidence and CI observation authority are complete"
         ),
     }
+    assert receipt["operator_sandbox_patch_merge_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_merge_readiness.foundation",
+        "merge_status": "blocked_until_ci_pass",
+        "merge_target": "protected_branch_merge",
+        "required_before_merge": [
+            "github_pull_request_created",
+            "ci_checks_passed",
+            "review_approval_recorded",
+            "rollback_plan_verified",
+            "merge_approval_recorded",
+        ],
+        "missing_prerequisite_count": 5,
+        "merge_performed": False,
+        "merge_allowed": False,
+        "branch_write_allowed": False,
+        "github_call_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Merge readiness blocked until CI pass, review approval, rollback, and merge approval evidence are complete"
+        ),
+    }
+    assert receipt["operator_sandbox_patch_release_handoff_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_release_handoff_readiness.foundation",
+        "handoff_status": "blocked_until_terminal_closure",
+        "handoff_target": "release_handoff_packet",
+        "required_before_handoff": [
+            "merge_execution_receipt_recorded",
+            "terminal_closure_certificate_minted",
+            "effect_reconciliation_witness_bound",
+            "rollback_retention_verified",
+            "release_notes_prepared",
+        ],
+        "missing_prerequisite_count": 5,
+        "handoff_performed": False,
+        "release_publication_allowed": False,
+        "deployment_allowed": False,
+        "public_claim_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Release handoff blocked until terminal closure, reconciliation, rollback, and release-note evidence are complete"
+        ),
+    }
+    assert receipt["operator_sandbox_patch_deployment_publication_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_deployment_publication_readiness.foundation",
+        "publication_status": "blocked_until_release_handoff",
+        "publication_target": "deployment_publication_closure_plan",
+        "required_before_publication": [
+            "release_handoff_packet_prepared",
+            "deployment_publication_closure_plan_verified",
+            "production_evidence_witness_bound",
+            "dns_target_binding_verified",
+            "operator_deployment_approval_recorded",
+        ],
+        "missing_prerequisite_count": 5,
+        "publication_performed": False,
+        "deployment_allowed": False,
+        "dns_change_allowed": False,
+        "production_claim_allowed": False,
+        "public_endpoint_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Deployment publication blocked until release handoff, production evidence, DNS binding, and deployment approval evidence are complete"
+        ),
+    }
+    assert receipt["operator_sandbox_patch_production_monitoring_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_production_monitoring_readiness.foundation",
+        "monitoring_status": "blocked_until_publication",
+        "monitoring_target": "production_monitoring_witness",
+        "required_before_monitoring": [
+            "deployment_publication_witness_recorded",
+            "public_health_witness_bound",
+            "runtime_conformance_certificate_available",
+            "telemetry_monitoring_plan_verified",
+            "incident_rollback_recovery_plan_verified",
+        ],
+        "missing_prerequisite_count": 5,
+        "monitoring_activation_performed": False,
+        "monitor_activation_allowed": False,
+        "alert_routing_allowed": False,
+        "production_claim_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Production monitoring blocked until deployment publication, health, runtime conformance, telemetry, and incident recovery evidence are complete"
+        ),
+    }
     assert receipt["operator_handoff_summary"] == {
         "summary_id": "operator_handoff.foundation",
         "handoff_status": "ready_for_local_resume",
@@ -3038,6 +3135,22 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
     assert (
         receipt["source_refs"]["operator_sandbox_patch_pr_ci_readiness_summary"]
         == "docs/21_workflow_runtime.md sandbox_patch_receipt PR CI readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_merge_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt merge readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_release_handoff_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt release handoff readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_deployment_publication_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt deployment publication readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_production_monitoring_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt production monitoring readiness"
     )
     assert (
         receipt["source_refs"]["operator_handoff_summary"]

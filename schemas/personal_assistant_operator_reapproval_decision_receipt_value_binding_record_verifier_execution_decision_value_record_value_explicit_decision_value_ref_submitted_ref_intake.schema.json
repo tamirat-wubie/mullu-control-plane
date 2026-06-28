@@ -1,0 +1,374 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-submitted-ref-intake:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Value Binding Record Verifier Execution Decision Value Record Value Explicit Decision Value Ref Submitted Ref Intake",
+  "description": "No-effect submitted-ref intake for required explicit decision value refs after the request projection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "explicit_decision_value_ref_submitted_ref_intake_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_explicit_decision_value_ref_request_id",
+    "explicit_decision_value_ref_submitted_ref_intake_state",
+    "decision",
+    "outcome",
+    "submitted_ref_record_count",
+    "submitted_ref_record_ids",
+    "source_required_ref_request_ids",
+    "submitted_ref_uris",
+    "submitted_ref_records",
+    "receipt",
+    "effect_boundary",
+    "private_payload_policy",
+    "summary",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "explicit_decision_value_ref_submitted_ref_intake_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_submitted_ref_intake_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "governed": {
+      "const": true
+    },
+    "source_projection": {
+      "const": "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_request"
+    },
+    "source_explicit_decision_value_ref_request_id": {
+      "$ref": "#/$defs/non_empty_text"
+    },
+    "explicit_decision_value_ref_submitted_ref_intake_state": {
+      "const": "submitted_refs_recorded_not_accepted"
+    },
+    "decision": {
+      "const": "blocked"
+    },
+    "outcome": {
+      "const": "AwaitingEvidence"
+    },
+    "submitted_ref_record_count": {
+      "const": 4
+    },
+    "submitted_ref_record_ids": {
+      "$ref": "#/$defs/string_array"
+    },
+    "source_required_ref_request_ids": {
+      "$ref": "#/$defs/string_array"
+    },
+    "submitted_ref_uris": {
+      "$ref": "#/$defs/string_array"
+    },
+    "submitted_ref_records": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/submitted_ref_record"
+      }
+    },
+    "receipt": {
+      "type": "object"
+    },
+    "effect_boundary": {
+      "$ref": "#/$defs/effect_boundary"
+    },
+    "private_payload_policy": {
+      "$ref": "#/$defs/private_payload_policy"
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "assurance": {
+      "$ref": "#/$defs/assurance"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    }
+  },
+  "$defs": {
+    "non_empty_text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/non_empty_text"
+      }
+    },
+    "ref_name": {
+      "enum": [
+        "operator_decision_value_ref",
+        "operator_identity_ref",
+        "operator_signature_ref",
+        "operator_reapproval_decision_receipt_ref"
+      ]
+    },
+    "submitted_ref_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "submitted_ref_record_id",
+        "ref_name",
+        "source_required_ref_request_id",
+        "source_explicit_decision_value_ref_request_id",
+        "source_requested_evidence_uri",
+        "submitted_ref_uri",
+        "submitted_ref_status",
+        "submitted_ref_recorded",
+        "submitted_ref_only",
+        "raw_ref_payload_present",
+        "raw_operator_value_present",
+        "present",
+        "collected",
+        "accepted",
+        "bound",
+        "validated",
+        "stored",
+        "grants_authority",
+        "grants_verifier_execution",
+        "operator_value_record_created",
+        "verifier_execution_allowed",
+        "authority_granted",
+        "blocking_reason"
+      ],
+      "properties": {
+        "submitted_ref_record_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_submitted_ref_record_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "ref_name": {
+          "$ref": "#/$defs/ref_name"
+        },
+        "source_required_ref_request_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "source_explicit_decision_value_ref_request_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "source_requested_evidence_uri": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "submitted_ref_uri": {
+          "type": "string",
+          "pattern": "^evidence://personal-assistant/operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-submitted/.+$"
+        },
+        "submitted_ref_status": {
+          "const": "submitted_not_accepted"
+        },
+        "submitted_ref_recorded": {
+          "const": true
+        },
+        "submitted_ref_only": {
+          "const": true
+        },
+        "raw_ref_payload_present": {
+          "const": false
+        },
+        "raw_operator_value_present": {
+          "const": false
+        },
+        "present": {
+          "const": true
+        },
+        "collected": {
+          "const": false
+        },
+        "accepted": {
+          "const": false
+        },
+        "bound": {
+          "const": false
+        },
+        "validated": {
+          "const": false
+        },
+        "stored": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        },
+        "grants_verifier_execution": {
+          "const": false
+        },
+        "operator_value_record_created": {
+          "const": false
+        },
+        "verifier_execution_allowed": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        },
+        "blocking_reason": {
+          "$ref": "#/$defs/non_empty_text"
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "required_value_refs_requested": {
+          "const": true
+        },
+        "required_value_refs_submitted": {
+          "const": true
+        },
+        "submitted_ref_only": {
+          "const": true
+        },
+        "explicit_decision_value_refs_accepted": {
+          "const": false
+        },
+        "explicit_decision_value_refs_bound": {
+          "const": false
+        },
+        "explicit_decision_value_refs_validated": {
+          "const": false
+        },
+        "explicit_decision_value_refs_stored": {
+          "const": false
+        },
+        "operator_decision_value_present": {
+          "const": false
+        },
+        "operator_value_record_created": {
+          "const": false
+        },
+        "verifier_execution_allowed": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        },
+        "live_connector_execution_allowed": {
+          "const": false
+        },
+        "connector_mutation_allowed": {
+          "const": false
+        },
+        "memory_write_allowed": {
+          "const": false
+        },
+        "deployment_mutation_allowed": {
+          "const": false
+        },
+        "nested_mind_live_activation_allowed": {
+          "const": false
+        },
+        "public_readiness_claim_allowed": {
+          "const": false
+        }
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "raw_private_payload_serialized": {
+          "const": false
+        },
+        "secret_values_serialized": {
+          "const": false
+        },
+        "explicit_decision_value_ref_request_projection": {
+          "const": "request_metadata_only"
+        },
+        "explicit_decision_value_ref_submitted_ref_projection": {
+          "const": "ref_identifier_only"
+        },
+        "operator_decision_value_projection": {
+          "const": "absent"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "submitted_ref_record_count": {
+          "const": 4
+        },
+        "submitted_ref_recorded_count": {
+          "const": 4
+        },
+        "submitted_ref_only_count": {
+          "const": 4
+        },
+        "accepted_ref_count": {
+          "const": 0
+        },
+        "bound_ref_count": {
+          "const": 0
+        },
+        "validated_ref_count": {
+          "const": 0
+        },
+        "stored_ref_count": {
+          "const": 0
+        },
+        "raw_ref_payload_count": {
+          "const": 0
+        },
+        "raw_operator_value_count": {
+          "const": 0
+        },
+        "operator_value_record_creation_count": {
+          "const": 0
+        },
+        "verifier_execution_allowed_count": {
+          "const": 0
+        },
+        "authority_grant_count": {
+          "const": 0
+        }
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "outcome": {
+          "const": "AwaitingEvidence"
+        },
+        "required_value_refs_submitted": {
+          "const": true
+        },
+        "submitted_ref_only": {
+          "const": true
+        },
+        "explicit_decision_value_refs_accepted": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "runtime_boundary": {
+          "const": "submitted_refs_recorded_not_accepted"
+        },
+        "submitted_ref_intake_only": {
+          "const": true
+        },
+        "authority_granted": {
+          "const": false
+        }
+      }
+    }
+  }
+}

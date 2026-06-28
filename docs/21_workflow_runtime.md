@@ -728,6 +728,37 @@ prerequisites, missing prerequisite count, CI-observation denial, GitHub polling
 denial, check-update denial, ready-for-review denial, and no-effect posture. It
 is a PR CI readiness projection only and does not poll GitHub, update checks,
 mark a pull request ready for review, or perform external effects.
+The sandbox patch merge readiness field is
+`operator_sandbox_patch_merge_readiness_summary`, anchored to the documented
+`sandbox_patch_receipt` merge readiness path. It reports merge status, merge
+target, prerequisites, missing prerequisite count, merge denial, branch-write
+denial, GitHub-call denial, and no-effect posture. It is a merge readiness
+projection only and does not merge, write a branch, call GitHub, or perform
+external effects.
+The sandbox patch release handoff readiness field is
+`operator_sandbox_patch_release_handoff_readiness_summary`, anchored to the
+documented `sandbox_patch_receipt` release handoff readiness path. It reports
+handoff status, handoff target, prerequisites, missing prerequisite count,
+handoff denial, release-publication denial, deployment denial, public-claim
+denial, and no-effect posture. It is a release handoff readiness projection only
+and does not publish a release, deploy, make public claims, or perform external
+effects.
+The sandbox patch deployment publication readiness field is
+`operator_sandbox_patch_deployment_publication_readiness_summary`, anchored to
+the documented `sandbox_patch_receipt` deployment publication readiness path. It
+reports publication status, publication target, prerequisites, missing
+prerequisite count, publication denial, deployment denial, DNS-change denial,
+production-claim denial, public-endpoint denial, and no-effect posture. It is a
+deployment publication readiness projection only and does not deploy, change
+DNS, publish an endpoint, make production claims, or perform external effects.
+The sandbox patch production monitoring readiness field is
+`operator_sandbox_patch_production_monitoring_readiness_summary`, anchored to the
+documented `sandbox_patch_receipt` production monitoring readiness path. It
+reports monitoring status, monitoring target, prerequisites, missing
+prerequisite count, monitoring-activation denial, alert-routing denial,
+production-claim denial, and no-effect posture. It is a production monitoring
+readiness projection only and does not activate monitors, route alerts, make
+production claims, or perform external effects.
 The operator handoff field is `operator_handoff_summary`, composed from
 `workflow_monitor.metadata.developer_workflow_milestone_summary` and
 `workflow_monitor.metadata.operator_decision_summary`. It gives a future

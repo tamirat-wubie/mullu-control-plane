@@ -506,6 +506,7 @@ class AutonomousRequestStepReceipt:
     plan_id: str | None = None
     plan_stage_id: str | None = None
     plan_predecessors: tuple[str, ...] = ()
+    verification_keys: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -560,6 +561,11 @@ class AutonomousRequestStepReceipt:
             self,
             "plan_predecessors",
             tuple(ensure_non_empty_text("plan_predecessor", value) for value in self.plan_predecessors),
+        )
+        object.__setattr__(
+            self,
+            "verification_keys",
+            tuple(ensure_non_empty_text("verification_key", value) for value in self.verification_keys),
         )
 
 
@@ -1097,6 +1103,7 @@ def _step_receipt_from_report(
         plan_id=None if plan is None else plan.plan_id,
         plan_stage_id=None if plan is None else plan_step.stage_id,
         plan_predecessors=() if plan is None else plan_step.predecessors,
+        verification_keys=() if plan is None else plan_step.verification_keys,
     )
 
 
@@ -1215,6 +1222,7 @@ def _blocked_step_receipt(
         plan_id=None if plan is None else plan.plan_id,
         plan_stage_id=None if plan is None or plan_step is None else plan_step.stage_id,
         plan_predecessors=() if plan is None or plan_step is None else plan_step.predecessors,
+        verification_keys=() if plan is None or plan_step is None else plan_step.verification_keys,
     )
 
 
@@ -1250,6 +1258,7 @@ def _blocked_dependency_step_receipt(
         plan_id=None if plan is None else plan.plan_id,
         plan_stage_id=plan_step.stage_id,
         plan_predecessors=plan_step.predecessors,
+        verification_keys=plan_step.verification_keys,
     )
 
 

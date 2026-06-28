@@ -685,7 +685,6 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "GitHub PR terminal closure operator decision contract command-preview approval gate binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
     "command-preview operator approval gate evidence",
-    "actual-diff operator approval gate evidence",
     "source approval gate binding id/ref",
     "GitHub PR terminal closure generic continuation rejection actual-diff decision contract binding PR",
     "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
@@ -706,7 +705,6 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "Operator approval remains required and uncollected",
     "Explicit operator decision remains uncollected",
     "command-preview-bound decision contract evidence",
-    "actual-diff-bound decision contract evidence",
     "approve_terminal_certificate",
     "deny_terminal_certificate",
     "Generic continuation remains rejected",
@@ -1522,7 +1520,7 @@ def _validate_github_pr_terminal_closure_ready(
         errors.append("missing ready row: GitHub PR terminal closure operator approval gate command-preview candidate binding PR")
 
     decision_contract_row = re.search(
-        r"^\| GitHub PR terminal closure operator decision contract command-preview approval gate binding PR \| READY \| .+command-preview operator approval gate evidence.+actual-diff operator approval gate evidence.+source approval gate binding id/ref.+Explicit operator decision remains uncollected.+terminal closure authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure operator decision contract command-preview approval gate binding PR \| READY \| .+command-preview operator approval gate evidence.+actual-diff operator approval gate evidence.+source approval gate binding id/ref.+redacted command preview.+actual-diff terminal closure certificate witness.+Explicit operator decision remains uncollected.+terminal closure authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
@@ -1644,7 +1642,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure generic rejection to command-preview decision contract",
+        "harness(pr): bind terminal closure generic continuation rejection to command-preview decision contract",
     )
     positions: list[int] = []
     for marker in sequence_markers:
