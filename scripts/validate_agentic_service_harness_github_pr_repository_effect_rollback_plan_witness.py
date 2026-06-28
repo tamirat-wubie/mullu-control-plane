@@ -2,13 +2,14 @@
 """Validate Agentic Service Harness GitHub PR repository-effect rollback-plan witness.
 
 Purpose: prove the GitHub pull-request repository-effect rollback plan witness request
-is actual-diff-UAO-bound, read-only, and non-authorizing.
+is command-preview and actual-diff UAO-bound, read-only, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: schemas/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.schema.json,
 examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json,
 scripts.validate_agentic_service_harness_github_pr_uao_admission_witness, and
 scripts.validate_schemas.
 Invariants:
+  - The binding request binds to the command-preview GitHub PR UAO admission witness.
   - The binding request binds to the actual-diff GitHub PR UAO admission witness.
   - repository-effect rollback plan authority remains AwaitingEvidence and uncollected.
   - Binding request alone grants no branch, PR, repository, connector, network,
@@ -32,11 +33,17 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_agentic_service_harness_github_pr_uao_admission_witness import (  # noqa: E402
+    EXPECTED_ARGUMENT_VECTOR,
     EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+    EXPECTED_COMMAND_PREVIEW,
+    EXPECTED_PLACEHOLDER_REFS,
     EXPECTED_REDACTED_DIFF_BUNDLE_REF,
     EXPECTED_REDACTED_OUTPUT_REF,
     EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
     EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+    EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+    EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
+    EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
     EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
     DEFAULT_EXAMPLES as DEFAULT_SOURCE_UAO_ADMISSION_WITNESS_EXAMPLES,
     DEFAULT_SCHEMA as DEFAULT_SOURCE_UAO_ADMISSION_WITNESS_SCHEMA,
@@ -74,6 +81,22 @@ REQUIRED_RECEIPT_REFS = {
     "github_pr_uao_admission_witness_example": (
         "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json"
     ),
+    "github_pr_operator_response_command_preview_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_response_command_preview_binding.schema.json"
+    ),
+    "github_pr_operator_response_command_preview_binding_example": (
+        EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF
+    ),
+    "github_pr_operator_approval_request_command_preview_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.schema.json"
+    ),
+    "github_pr_operator_approval_request_command_preview_binding_example": (
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF
+    ),
+    "github_pr_creation_command_preview_schema": (
+        "schemas/agentic_service_harness_github_pr_creation_command_preview.schema.json"
+    ),
+    "github_pr_creation_command_preview_example": EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
     "github_pr_branch_write_authority_binding_schema": (
         "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json"
     ),
@@ -127,7 +150,10 @@ REQUIRED_TRUE_FLAGS = (
     "planning_only",
     "read_only",
     "report_is_not_terminal_closure",
+    "requires_command_preview_uao_admission_witness",
     "requires_actual_diff_uao_admission_witness",
+    "command_preview_bound",
+    "operator_response_bound",
     "uao_admission_witness_required",
     "repository_effect_rollback_plan_required",
     "blocks_pr_admission",
@@ -168,6 +194,7 @@ class GitHubPrBranchWriteAuthorityBindingValidation:
     example_paths: tuple[str, ...]
     example_count: int
     source_uao_admission_witness_ref: str
+    command_preview_uao_admission_witness_ref: str
     actual_diff_uao_admission_witness_ref: str
 
     def as_dict(self) -> dict[str, Any]:
@@ -225,6 +252,7 @@ def validate_agentic_service_harness_github_pr_repository_effect_rollback_plan_w
         example_paths=tuple(_path_label(path) for path in example_paths),
         example_count=len(examples),
         source_uao_admission_witness_ref=EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
+        command_preview_uao_admission_witness_ref=EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
         actual_diff_uao_admission_witness_ref=EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
     )
 
@@ -260,6 +288,74 @@ def _validate_repository_effect_rollback_plan_witness_semantics(
         errors,
         label,
     )
+    _require_equal(
+        payload,
+        ("rollback_plan", "requires_command_preview_uao_admission_witness"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("rollback_plan", "command_preview_uao_admission_witness_ref"),
+        EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("rollback_plan", "command_preview_branch_write_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("rollback_plan", "command_preview_operator_response_binding_ref"),
+        EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("rollback_plan", "command_preview_operator_response_witness_ref"),
+        EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("rollback_plan", "command_preview_operator_approval_request_binding_ref"),
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("rollback_plan", "command_preview_ref"),
+        EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("rollback_plan", "redacted_command_preview"),
+        EXPECTED_COMMAND_PREVIEW,
+        errors,
+        label,
+    )
+    observed_vector = _get_nested(payload, ("rollback_plan", "argument_vector_template"))
+    if tuple(observed_vector) != EXPECTED_ARGUMENT_VECTOR:
+        errors.append(
+            f"{label}: rollback_plan.argument_vector_template expected "
+            f"{EXPECTED_ARGUMENT_VECTOR!r}, observed {observed_vector!r}"
+        )
+    observed_placeholders = _get_nested(payload, ("rollback_plan", "placeholder_refs"))
+    if tuple(observed_placeholders) != EXPECTED_PLACEHOLDER_REFS:
+        errors.append(
+            f"{label}: rollback_plan.placeholder_refs expected "
+            f"{EXPECTED_PLACEHOLDER_REFS!r}, observed {observed_placeholders!r}"
+        )
     _require_equal(
         payload,
         ("rollback_plan", "requires_actual_diff_uao_admission_witness"),
@@ -330,6 +426,8 @@ def _validate_repository_effect_rollback_plan_witness_semantics(
         errors,
         label,
     )
+    _require_equal(payload, ("rollback_plan", "command_preview_bound"), True, errors, label)
+    _require_equal(payload, ("rollback_plan", "operator_response_bound"), True, errors, label)
     _require_equal(
         payload,
         ("rollback_plan", "repository_effect_rollback_plan_effect"),
@@ -340,6 +438,62 @@ def _validate_repository_effect_rollback_plan_witness_semantics(
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
     if source_uao_admission_witness:
         source_uao_admission = _mapping(_get_nested(source_uao_admission_witness, ("uao_admission",)))
+        _require_equal(
+            payload,
+            ("rollback_plan", "command_preview_branch_write_binding_ref"),
+            source_uao_admission.get("command_preview_branch_write_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("rollback_plan", "command_preview_operator_response_binding_ref"),
+            source_uao_admission.get("command_preview_operator_response_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("rollback_plan", "command_preview_operator_response_witness_ref"),
+            source_uao_admission.get("command_preview_operator_response_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("rollback_plan", "command_preview_operator_approval_request_binding_ref"),
+            source_uao_admission.get("command_preview_operator_approval_request_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("rollback_plan", "command_preview_ref"),
+            source_uao_admission.get("command_preview_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("rollback_plan", "redacted_command_preview"),
+            source_uao_admission.get("redacted_command_preview"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("rollback_plan", "argument_vector_template"),
+            source_uao_admission.get("argument_vector_template"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("rollback_plan", "placeholder_refs"),
+            source_uao_admission.get("placeholder_refs"),
+            errors,
+            label,
+        )
         _require_equal(
             payload,
             ("rollback_plan", "actual_diff_branch_write_binding_ref"),

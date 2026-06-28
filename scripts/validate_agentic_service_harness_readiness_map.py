@@ -573,8 +573,14 @@ REQUIRED_GITHUB_PR_UAO_ACTUAL_DIFF_BRANCH_WRITE_BINDING_TERMS = (
     "terminal closure fail closed",
 )
 REQUIRED_GITHUB_PR_ROLLBACK_ACTUAL_DIFF_UAO_BINDING_TERMS = (
-    "GitHub PR repository-effect rollback actual-diff UAO binding PR",
+    "GitHub PR repository-effect rollback command-preview UAO binding PR",
     "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+    "command-preview UAO admission witness",
+    "command-preview branch-write binding",
+    "command-preview operator response binding",
+    "redacted command preview",
+    "argument vector template",
+    "placeholder refs",
     "actual-diff UAO admission witness",
     "actual-diff branch-write authority binding",
     "actual-diff operator response witness",
@@ -1406,12 +1412,12 @@ def _validate_github_pr_rollback_actual_diff_uao_binding_ready(
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| GitHub PR repository-effect rollback actual-diff UAO binding PR \| READY \| .+actual-diff UAO admission witness.+terminal closure fail closed\. \|$",
+        r"^\| GitHub PR repository-effect rollback command-preview UAO binding PR \| READY \| .+command-preview UAO admission witness.+actual-diff UAO admission witness.+terminal closure fail closed\. \|$",
         map_text,
         re.MULTILINE,
     )
     if closure_row is None:
-        errors.append("missing ready row: GitHub PR repository-effect rollback actual-diff UAO binding PR")
+        errors.append("missing ready row: GitHub PR repository-effect rollback command-preview UAO binding PR")
 
 
 def _validate_github_pr_ci_gate_ready(
@@ -1611,7 +1617,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind repository-effect rollback to command-preview UAO admission",
+        "harness(pr): bind CI gate to command-preview rollback evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:
