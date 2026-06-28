@@ -12,6 +12,7 @@ customer exposure, public launch, or production deployment is authorized.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import sys
 from pathlib import Path
 
@@ -434,10 +435,11 @@ def test_public_ci_window_receipt_allows_bounded_public_awaiting_evidence() -> N
     payload["closed_at"] = None
     payload["merge_commit"] = None
     payload["merged_at"] = None
+    payload["opened_at"] = "2026-06-26T10:51:56Z"
     for validator in payload["validators"]:
         validator["state"] = "AwaitingEvidence"
 
-    findings = validate_window_receipt(payload)
+    findings = validate_window_receipt(payload, observed_at=datetime(2026, 6, 26, 12, 51, 56, tzinfo=timezone.utc))
 
     assert findings == []
     assert payload["status"] == "bounded_public_awaiting_evidence"
@@ -445,6 +447,38 @@ def test_public_ci_window_receipt_allows_bounded_public_awaiting_evidence() -> N
     assert payload["merge_commit"] is None
     assert payload["merged_at"] is None
     assert all(validator["state"] == "AwaitingEvidence" for validator in payload["validators"])
+
+
+def test_public_ci_window_bounded_receipt_rejects_stale_open_window() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["status"] = "bounded_public_awaiting_evidence"
+    payload["solver_outcome"] = "AwaitingEvidence"
+    payload["closed_at"] = None
+    payload["merge_commit"] = None
+    payload["merged_at"] = None
+    for validator in payload["validators"]:
+        validator["state"] = "AwaitingEvidence"
+
+    findings = validate_window_receipt(payload, observed_at=datetime(2026, 6, 26, 17, 0, 0, tzinfo=timezone.utc))
+
+    assert findings
+    assert any(
+        finding.rule_id == "public_ci_window_receipt_stale_bounded_public_window"
+        for finding in findings
+    )
+    assert any("bounded public receipts must close or refresh evidence within six hours" in finding.message for finding in findings)
+    assert all("2026-06-26T10:51:56Z" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_closed_receipt_does_not_use_stale_bounded_window_rule() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+
+    findings = validate_window_receipt(payload, observed_at=datetime(2026, 6, 27, 17, 0, 0, tzinfo=timezone.utc))
+
+    assert findings == []
+    assert payload["status"] == "closed"
+    assert payload["closed_at"] == "2026-06-26T11:15:28Z"
+    assert payload["merge_commit"]
 
 
 def test_public_ci_window_bounded_receipt_rejects_merge_evidence_claim() -> None:

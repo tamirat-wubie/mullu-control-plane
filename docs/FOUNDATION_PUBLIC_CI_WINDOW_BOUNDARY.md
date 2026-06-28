@@ -53,6 +53,10 @@ does not promote any public launch claim.
 | close-window | Make the repository private again when possible, or record why it remains public. | Closure timestamp or explicit bounded exposure decision. |
 | post-window receipt | Preserve a UWMA record of the window. | Receipt fields listed below. |
 
+Bounded-public receipts with an `opened_at` timestamp and no `closed_at`
+must close or refresh evidence within six hours. Older open windows are stale
+and must not be treated as governed closure evidence.
+
 ## Required Validators
 
 Before and after a public CI window, run the strongest available local lanes:

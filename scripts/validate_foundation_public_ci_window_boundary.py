@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 import sys
@@ -115,6 +115,7 @@ ALLOWED_VISIBILITY_AFTER_BY_STATUS = {
     "bounded_public_awaiting_evidence": {"bounded_public", "private_or_bounded_public"},
 }
 EXPECTED_RECEIPT_WORKFLOW_RUN_COUNT = 2
+MAX_BOUNDED_PUBLIC_WINDOW_AGE = timedelta(hours=6)
 REQUIRED_RECEIPT_TEXT_FRAGMENTS = {
     "reason": (
         "Foundation Mode",
@@ -385,10 +386,11 @@ def _parse_utc_timestamp(value: Any) -> datetime | None:
     return parsed
 
 
-def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
+def validate_window_receipt(payload: dict[str, Any], observed_at: datetime | None = None) -> list[Finding]:
     """Validate one window-specific public CI receipt."""
 
     findings: list[Finding] = []
+    observed_at = observed_at or datetime.now(timezone.utc)
     if set(payload) != EXPECTED_RECEIPT_ROOT_KEYS:
         findings.append(
             Finding(
@@ -543,6 +545,18 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
             Finding(
                 "public_ci_window_receipt_timestamp_order_invalid",
                 "closed_at must be greater than or equal to opened_at",
+            )
+        )
+    if (
+        status == "bounded_public_awaiting_evidence"
+        and parsed_opened_at is not None
+        and parsed_closed_at is None
+        and observed_at - parsed_opened_at > MAX_BOUNDED_PUBLIC_WINDOW_AGE
+    ):
+        findings.append(
+            Finding(
+                "public_ci_window_receipt_stale_bounded_public_window",
+                "bounded public receipts must close or refresh evidence within six hours",
             )
         )
 
