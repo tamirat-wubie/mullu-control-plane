@@ -39,6 +39,7 @@ from gateway.operator_sandbox_patch_readiness import (  # noqa: E402
 )
 import gateway.server as server_module  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
+from scripts.build_developer_workflow_operator_receipt import canonical_hash as operator_receipt_hash  # noqa: E402
 from mcoi_runtime.contracts.software_dev_loop import (  # noqa: E402
     SoftwareChangeReceipt,
     SoftwareChangeReceiptStage,
@@ -50,6 +51,9 @@ SANDBOX_TO_PR_PACKET_SCHEMA_PATH = _ROOT / "schemas" / "sandbox_to_pr_preparatio
 CONTROL_TOWER_STATUS_RECEIPT_SCHEMA_PATH = _ROOT / "schemas" / "operator_control_tower_status_receipt.schema.json"
 SANDBOX_PATCH_READINESS_COMPACT_SCHEMA_PATH = (
     _ROOT / "schemas" / "operator_sandbox_patch_readiness_compact_read_model.schema.json"
+)
+DEVELOPER_WORKFLOW_STATUS_SCHEMA_PATH = (
+    _ROOT / "schemas" / "operator_developer_workflow_status_read_model.schema.json"
 )
 
 
@@ -204,6 +208,63 @@ def _local_rollback_execution_receipt() -> dict[str, object]:
             encoding="utf-8"
         )
     )
+
+
+def _developer_workflow_operator_receipt() -> dict[str, object]:
+    receipt: dict[str, object] = {
+        "receipt_id": "developer_workflow_operator_receipt.v1",
+        "workflow_id": "mullu_developer_workflow.v1",
+        "workflow_run_id": "developer_workflow_v1_foundation_run",
+        "solver_outcome": "AwaitingEvidence",
+        "execution_boundary": "local_lab_to_external_pr_preview",
+        "execution_performed": False,
+        "readiness_status": "awaiting_external_pr_approval",
+        "sandbox_receipts": {
+            "bundle_status": "receipts_complete",
+            "completed_count": 4,
+            "required_count": 4,
+            "bundle_hash": "a" * 64,
+        },
+        "approvals": {
+            "pr_preparation": {"status": "approved", "ready": True},
+            "external_pr_execution": {"status": "pending", "ready": False},
+        },
+        "local_pr_candidate": {
+            "candidate_status": "ready_for_pr_tool",
+            "candidate_ready": True,
+            "pr_tool_admitted": True,
+        },
+        "external_handoff": {
+            "ready_for_external_pr_execution": False,
+            "command_preview_rendered": False,
+            "external_effects_allowed": False,
+            "pr_creation_allowed": False,
+            "branch_push_allowed": False,
+        },
+        "next_evidence": ["external_approval_witness", "command_preview"],
+        "rollback": {
+            "required": True,
+            "evidence_refs": ["sandbox_patch_receipt"],
+            "commands": [
+                "git push origin --delete codex/developer-workflow-local-readiness",
+                "gh pr close <pr-number> --comment 'Closing by governed rollback witness'",
+            ],
+        },
+        "source_refs": {
+            "sandbox_receipt_bundle_path": ".change_assurance/developer_workflow_sandbox_receipt_bundle.generated.json",
+            "approval_packet_path": ".change_assurance/pr_preparation_approval_packet.approved.json",
+            "local_candidate_packet_path": ".change_assurance/local_pr_candidate_packet.generated.json",
+            "pr_tool_admission_packet_path": ".change_assurance/pr_tool_admission_packet.generated.json",
+            "external_approval_witness_path": ".change_assurance/external_pr_execution_approval_witness.pending.json",
+            "command_preview_packet_path": ".change_assurance/pr_command_preview_packet.blocked.json",
+            "metadata_packet_path": ".change_assurance/pr_metadata_packet.generated.json",
+            "pr_readiness_bundle_path": ".change_assurance/pr_readiness_bundle.generated.json",
+            "receipt_builder": "python scripts/build_developer_workflow_operator_receipt.py",
+        },
+        "receipt_hash": "",
+    }
+    receipt["receipt_hash"] = operator_receipt_hash(receipt)
+    return receipt
 
 
 def _receipt(receipt_id: str, stage: SoftwareChangeReceiptStage) -> SoftwareChangeReceipt:
@@ -1565,6 +1626,8 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert response.status_code == 200
     assert "Mullu Operator Control Tower" in response.text
     assert "/operator/control-tower/status-receipt" in response.text
+    assert "/operator/control-tower/developer-workflow-status/read-model" in response.text
+    assert "/operator/control-tower?include_developer_workflow_operator_receipt=true" in response.text
     assert "Control Tower Headline" in response.text
     assert "Control tower headline: local lab can continue" in response.text
     assert "Local Lab Readiness" in response.text
@@ -1581,6 +1644,13 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Decision collect_sandbox_receipts can continue in local lab" in response.text
     assert "Friction Reduction Summary" in response.text
     assert "Friction reduced to collect_sandbox_receipts" in response.text
+    assert "Developer Workflow Operator Receipt" in response.text
+    assert "reload with generated receipt" in response.text
+    assert "Action needed before PR execution:" in response.text
+    assert "External approval:" in response.text
+    assert "Local candidate ready:" in response.text
+    assert "PR tool admitted:" in response.text
+    assert "External effects allowed: false" in response.text
     assert "Safe Automatic Action Candidates" in response.text
     assert "Safe Local Action Queue" in response.text
     assert "7 safe local actions queued for fast mode" in response.text
@@ -3532,6 +3602,99 @@ def test_operator_control_tower_sandbox_patch_readiness_read_model_route() -> No
     assert summary["next_evidence_id"] == "sandbox_patch_receipt_bundle_generated"
     assert summary["missing_prerequisite_count"] == 2
     assert summary["external_effects_allowed"] is False
+
+
+def test_operator_control_tower_developer_workflow_status_read_model_route(monkeypatch, tmp_path: Path) -> None:
+    receipt_path = tmp_path / "developer_workflow_operator_receipt.generated.json"
+    receipt_path.write_text(
+        json.dumps(_developer_workflow_operator_receipt(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server_module, "LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH", receipt_path)
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/operator/control-tower/developer-workflow-status/read-model")
+
+    assert response.status_code == 200
+    read_model = response.json()
+    schema = json.loads(DEVELOPER_WORKFLOW_STATUS_SCHEMA_PATH.read_text(encoding="utf-8"))
+    Draft202012Validator(schema).validate(read_model)
+    assert read_model["read_model_id"] == "operator_developer_workflow_status.read_model"
+    assert read_model["projection_only"] is True
+    assert read_model["external_effects_allowed"] is False
+    assert read_model["task"] == "Governed Developer Workflow v1"
+    assert read_model["status"] == "awaiting_external_pr_approval"
+    assert read_model["reason"] == "operator external PR approval missing"
+    assert read_model["next_unlock"] == "external_approval_witness"
+    assert read_model["risk"] == "external repository write"
+    assert read_model["action_needed"] == "approve or defer external PR execution"
+    assert read_model["summary"]["sandbox_receipts_completed"] == 4
+    assert read_model["summary"]["local_candidate_ready"] is True
+    assert read_model["summary"]["pr_tool_admitted"] is True
+    assert read_model["summary"]["external_approval_status"] == "pending"
+    assert read_model["summary"]["command_preview_rendered"] is False
+    assert read_model["summary"]["execution_performed"] is False
+
+
+def test_operator_control_tower_read_model_surfaces_generated_operator_receipt(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "developer_workflow_operator_receipt.generated.json"
+    receipt_path.write_text(
+        json.dumps(_developer_workflow_operator_receipt(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server_module, "LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH", receipt_path)
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/operator/control-tower/read-model?include_developer_workflow_operator_receipt=true")
+
+    assert response.status_code == 200
+    panels = {item["panel"]: item for item in response.json()["panels"]}
+    workflow_metadata = panels["workflow_monitor"]["metadata"]
+    operator_receipt = workflow_metadata["developer_workflow_operator_receipt"]
+    operator_summary = workflow_metadata["developer_workflow_operator_receipt_summary"]
+    assert operator_receipt["readiness_status"] == "awaiting_external_pr_approval"
+    assert operator_receipt["solver_outcome"] == "AwaitingEvidence"
+    assert operator_receipt["next_evidence"] == ["external_approval_witness", "command_preview"]
+    assert operator_receipt["external_approval_status"] == "pending"
+    assert operator_receipt["local_candidate_ready"] is True
+    assert operator_receipt["pr_tool_admitted"] is True
+    assert operator_receipt["external_effects_allowed"] is False
+    assert operator_receipt["execution_performed"] is False
+    assert operator_receipt["command_preview_rendered"] is False
+    assert operator_summary["readiness_status"] == "awaiting_external_pr_approval"
+    assert operator_summary["external_approval_status"] == "pending"
+    assert operator_summary["local_candidate_ready"] is True
+    assert operator_summary["pr_tool_admitted"] is True
+    assert operator_summary["execution_performed"] is False
+    assert operator_summary["external_effects_allowed"] is False
+
+
+def test_operator_control_tower_html_action_banner_uses_generated_receipt(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "developer_workflow_operator_receipt.generated.json"
+    receipt_path.write_text(
+        json.dumps(_developer_workflow_operator_receipt(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server_module, "LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH", receipt_path)
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/operator/control-tower?include_developer_workflow_operator_receipt=true")
+
+    assert response.status_code == 200
+    assert "Action needed before PR execution: provide external_approval_witness" in response.text
+    assert "external approval is pending" in response.text
+    assert "External approval: pending" in response.text
+    assert "PR tool admitted: true" in response.text
+    assert "External effects allowed: false" in response.text
 
 
 def test_operator_control_tower_projects_rollback_receipt_visibility() -> None:

@@ -4780,6 +4780,36 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     operator_receipt_execution = False
     operator_receipt_preview = developer_workflow_operator_receipt.get("command_preview_rendered") is True
     operator_receipt_hash = str(developer_workflow_operator_receipt.get("receipt_hash") or "")
+    operator_receipt_approval = str(developer_workflow_operator_receipt.get("external_approval_status") or "pending")
+    operator_receipt_candidate_ready = developer_workflow_operator_receipt.get("local_candidate_ready") is True
+    operator_receipt_tool_admitted = developer_workflow_operator_receipt.get("pr_tool_admitted") is True
+    operator_receipt_external_ready = developer_workflow_operator_receipt.get("ready_for_external_pr_execution") is True
+    operator_receipt_external_effects = developer_workflow_operator_receipt.get("external_effects_allowed") is True
+    operator_receipt_next_evidence = developer_workflow_operator_receipt.get("next_evidence", ())
+    if not isinstance(operator_receipt_next_evidence, list):
+        operator_receipt_next_evidence = []
+    operator_receipt_next_unlock = next(
+        (str(item) for item in operator_receipt_next_evidence if str(item).strip()),
+        "none",
+    )
+    operator_receipt_evidence_text = ", ".join(
+        str(item) for item in operator_receipt_next_evidence if str(item).strip()
+    )
+    if not operator_receipt_evidence_text:
+        operator_receipt_evidence_text = "none"
+    if operator_receipt_external_ready and operator_receipt_approval == "approved":
+        operator_receipt_action_banner = "PR execution remains disabled in this dashboard; use the approved external path only."
+    elif operator_receipt_approval != "approved":
+        operator_receipt_action_banner = (
+            f"Action needed before PR execution: provide {operator_receipt_next_unlock}; "
+            "external approval is pending."
+        )
+    elif not operator_receipt_preview:
+        operator_receipt_action_banner = "Action needed before PR execution: render command preview."
+    else:
+        operator_receipt_action_banner = (
+            f"Action needed before PR execution: complete {operator_receipt_evidence_text}."
+        )
     fast_summary = mode_summary.get("fast", {}) if isinstance(mode_summary.get("fast", {}), Mapping) else {}
     balanced_summary = mode_summary.get("balanced", {}) if isinstance(mode_summary.get("balanced", {}), Mapping) else {}
     strict_summary = mode_summary.get("strict", {}) if isinstance(mode_summary.get("strict", {}), Mapping) else {}
@@ -4835,6 +4865,8 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <nav>
       <a href="/operator/control-tower/read-model">json read model</a>
       <a href="/operator/control-tower/status-receipt">status receipt</a>
+      <a href="/operator/control-tower/developer-workflow-status/read-model">developer workflow status</a>
+      <a href="/operator/control-tower?include_developer_workflow_operator_receipt=true">generated receipt view</a>
       <a href="/operator/capabilities">capability console</a>
       <a href="/operator/capabilities/friction-control/read-model?domain=software_dev">friction control</a>
       <a href="{escape(workflow_run_href)}">developer workflow</a>
@@ -5705,12 +5737,21 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
   </section>
   <section>
     <h2>Developer Workflow Operator Receipt</h2>
+    <p>{escape(operator_receipt_action_banner)}</p>
     <div class="metrics">
       <span class="metric">Outcome: {escape(operator_receipt_outcome)}</span>
       <span class="metric">Readiness: {escape(operator_receipt_status)}</span>
+      <span class="metric">External approval: {escape(operator_receipt_approval)}</span>
+      <span class="metric">Local candidate ready: {escape(str(operator_receipt_candidate_ready).lower())}</span>
+      <span class="metric">PR tool admitted: {escape(str(operator_receipt_tool_admitted).lower())}</span>
+      <span class="metric">External PR ready: {escape(str(operator_receipt_external_ready).lower())}</span>
+      <span class="metric">Next unlock: {escape(operator_receipt_next_unlock)}</span>
       <span class="metric">Command preview: {escape(str(operator_receipt_preview).lower())}</span>
       <span class="metric">Execution performed: {escape(str(operator_receipt_execution).lower())}</span>
+      <span class="metric">External effects allowed: {escape(str(operator_receipt_external_effects).lower())}</span>
       <span class="metric">Receipt hash: {escape(operator_receipt_hash[:16] or "unavailable")}</span>
+      <span class="metric"><a href="/operator/control-tower/developer-workflow-status/read-model">status JSON</a></span>
+      <span class="metric"><a href="/operator/control-tower?include_developer_workflow_operator_receipt=true">reload with generated receipt</a></span>
     </div>
   </section>
   <section>

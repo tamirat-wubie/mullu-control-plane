@@ -270,6 +270,9 @@ from scripts.validate_developer_workflow_local_rollback_approval_packet import (
 from scripts.validate_developer_workflow_local_rollback_execution_receipt import (
     validate_developer_workflow_local_rollback_execution_receipt,
 )
+from scripts.build_developer_workflow_operator_receipt import (
+    validate_developer_workflow_operator_receipt,
+)
 from gateway.physical_capability_promotion_store import build_physical_capability_promotion_receipt_store_from_env
 from gateway.signature_verification import (
     ChannelVerifierConfig, VerificationMethod, WebhookVerifier,
@@ -290,6 +293,9 @@ LOCAL_ROLLBACK_APPROVAL_PACKET_PATH = (
 )
 LOCAL_ROLLBACK_EXECUTION_RECEIPT_PATH = (
     Path(".change_assurance") / "developer_workflow_local_rollback_execution_receipt.generated.json"
+)
+LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH = (
+    Path(".change_assurance") / "developer_workflow_operator_receipt.generated.json"
 )
 LOCAL_ROLLBACK_RECEIPT_HREF_BASE = "/operator/control-tower/local-rollback-receipt"
 PHYSICAL_ACTION_RECEIPT_SCHEMA_REF = "urn:mullusi:schema:physical-action-receipt:1"
@@ -2470,6 +2476,103 @@ def _load_local_sandbox_proof_report(*, include_local_sandbox_receipts: bool) ->
     return payload
 
 
+def _load_local_developer_workflow_operator_receipt() -> dict[str, Any]:
+    """Load the generated Developer Workflow operator receipt for read-only status."""
+
+    path = LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="developer_workflow_operator_receipt_missing")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=422, detail="developer_workflow_operator_receipt_invalid_json") from exc
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=422, detail="developer_workflow_operator_receipt_root_must_be_object")
+    validation = validate_developer_workflow_operator_receipt(receipt=payload, receipt_path=path)
+    if not validation.ok:
+        raise HTTPException(status_code=422, detail="developer_workflow_operator_receipt_contract_invalid")
+    if payload.get("execution_performed") is not False:
+        raise HTTPException(status_code=422, detail="developer_workflow_operator_receipt_execution_overclaim")
+    return payload
+
+
+def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the compact product status row for Developer Workflow v1."""
+
+    readiness_status = str(receipt.get("readiness_status") or "awaiting_sandbox_receipts")
+    next_evidence = [str(item) for item in receipt.get("next_evidence", ()) if str(item).strip()]
+    sandbox_receipts = receipt.get("sandbox_receipts", {})
+    if not isinstance(sandbox_receipts, Mapping):
+        sandbox_receipts = {}
+    approvals = receipt.get("approvals", {})
+    if not isinstance(approvals, Mapping):
+        approvals = {}
+    external_approval = approvals.get("external_pr_execution", {})
+    if not isinstance(external_approval, Mapping):
+        external_approval = {}
+    local_candidate = receipt.get("local_pr_candidate", {})
+    if not isinstance(local_candidate, Mapping):
+        local_candidate = {}
+    external_handoff = receipt.get("external_handoff", {})
+    if not isinstance(external_handoff, Mapping):
+        external_handoff = {}
+    first_next_evidence = next_evidence[0] if next_evidence else "none"
+    return {
+        "read_model_id": "operator_developer_workflow_status.read_model",
+        "projection_only": True,
+        "external_effects_allowed": False,
+        "task": "Governed Developer Workflow v1",
+        "status": readiness_status,
+        "reason": _developer_workflow_status_reason(readiness_status, first_next_evidence),
+        "next_unlock": first_next_evidence,
+        "risk": _developer_workflow_status_risk(readiness_status),
+        "action_needed": _developer_workflow_status_action(readiness_status, first_next_evidence),
+        "summary": {
+            "solver_outcome": str(receipt.get("solver_outcome") or "AwaitingEvidence"),
+            "workflow_run_id": str(receipt.get("workflow_run_id") or "developer_workflow_v1_foundation_run"),
+            "sandbox_receipts_completed": int(sandbox_receipts.get("completed_count", 0) or 0),
+            "sandbox_receipts_required": int(sandbox_receipts.get("required_count", 0) or 0),
+            "local_candidate_ready": local_candidate.get("candidate_ready") is True,
+            "pr_tool_admitted": local_candidate.get("pr_tool_admitted") is True,
+            "external_approval_status": str(external_approval.get("status") or "pending"),
+            "command_preview_rendered": external_handoff.get("command_preview_rendered") is True,
+            "execution_performed": False,
+            "receipt_hash": str(receipt.get("receipt_hash") or ""),
+        },
+        "source_ref": str(LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH.as_posix()),
+    }
+
+
+def _developer_workflow_status_reason(readiness_status: str, next_evidence: str) -> str:
+    if readiness_status == "awaiting_external_pr_approval":
+        return "operator external PR approval missing"
+    if readiness_status == "awaiting_operator_approval":
+        return "local PR candidate approval missing"
+    if readiness_status == "awaiting_sandbox_receipts":
+        return "sandbox receipt evidence incomplete"
+    if readiness_status == "ready_for_external_pr_execution":
+        return "external PR execution evidence is prepared but not executed by this read model"
+    return f"next evidence required: {next_evidence}"
+
+
+def _developer_workflow_status_risk(readiness_status: str) -> str:
+    if readiness_status in {"awaiting_external_pr_approval", "ready_for_external_pr_execution"}:
+        return "external repository write"
+    return "low, local lab only"
+
+
+def _developer_workflow_status_action(readiness_status: str, next_evidence: str) -> str:
+    if readiness_status == "awaiting_external_pr_approval":
+        return "approve or defer external PR execution"
+    if readiness_status == "awaiting_operator_approval":
+        return "approve local PR candidate preparation"
+    if readiness_status == "awaiting_sandbox_receipts":
+        return "complete sandbox receipt bundle"
+    if readiness_status == "ready_for_external_pr_execution":
+        return "execute external PR commands only through explicit approved path"
+    return f"provide {next_evidence}"
+
+
 def _load_local_rollback_summary_packet(*, include_local_sandbox_receipts: bool) -> dict[str, Any] | None:
     """Load the last local rollback summary packet when explicitly requested."""
 
@@ -2634,6 +2737,7 @@ def _workflow_monitor_panel_read_model(
     current_task: Mapping[str, Any],
     plan_review: Mapping[str, Any],
     developer_workflow_run: Mapping[str, Any],
+    developer_workflow_operator_receipt: Mapping[str, Any] | None = None,
     local_sandbox_proof_report: Mapping[str, Any] | None = None,
     local_rollback_summary_packet: Mapping[str, Any] | None = None,
     local_rollback_approval_packet: Mapping[str, Any] | None = None,
@@ -2708,10 +2812,14 @@ def _workflow_monitor_panel_read_model(
         developer_workflow_summary=developer_workflow_summary,
     )
     pr_readiness_summary = _pr_readiness_summary(pr_readiness_bundle)
-    developer_workflow_operator_receipt = _developer_workflow_operator_receipt_projection(
+    generated_operator_receipt = _developer_workflow_operator_receipt_projection(
         pr_readiness_bundle=pr_readiness_bundle,
         developer_workflow_summary=developer_workflow_summary,
     )
+    if developer_workflow_operator_receipt is not None:
+        generated_operator_receipt = _developer_workflow_operator_receipt_from_generated_receipt(
+            developer_workflow_operator_receipt
+        )
     proof_report_summary = _local_sandbox_proof_report_summary(local_sandbox_proof_report)
     rollback_summary = _local_rollback_summary_packet_summary(local_rollback_summary_packet)
     rollback_approval = _local_rollback_approval_packet_summary(local_rollback_approval_packet)
@@ -2786,9 +2894,9 @@ def _workflow_monitor_panel_read_model(
             "pr_readiness_bundle": pr_readiness_bundle,
             "pr_readiness_summary": pr_readiness_summary,
             "evidence_progress_summary": evidence_progress_summary,
-            "developer_workflow_operator_receipt": developer_workflow_operator_receipt,
+            "developer_workflow_operator_receipt": generated_operator_receipt,
             "developer_workflow_operator_receipt_summary": (
-                _developer_workflow_operator_receipt_summary(developer_workflow_operator_receipt)
+                _developer_workflow_operator_receipt_summary(generated_operator_receipt)
             ),
             "local_sandbox_proof_report": proof_report_summary,
             "local_sandbox_proof_readiness_summary": _local_sandbox_proof_readiness_summary(
@@ -4232,12 +4340,16 @@ def _developer_workflow_operator_receipt_projection(
         "readiness_status": readiness_status,
         "execution_performed": False,
         "ready_for_external_pr_execution": ready_for_external,
+        "external_approval_status": "pending",
+        "local_candidate_ready": ready_for_external,
+        "pr_tool_admitted": ready_for_external,
         "command_preview_rendered": command_preview.get("ready") is True,
         "next_evidence": [
             str(item)
             for item in pr_readiness_bundle.get("next_evidence", ())
             if str(item).strip()
         ][:8],
+        "external_effects_allowed": False,
         "source_refs": {
             "pr_readiness": "workflow_monitor.metadata.pr_readiness_bundle",
             "schema": "schemas/developer_workflow_operator_receipt.schema.json",
@@ -4246,6 +4358,46 @@ def _developer_workflow_operator_receipt_projection(
     }
     receipt["receipt_hash"] = canonical_hash(receipt)
     return receipt
+
+
+def _developer_workflow_operator_receipt_from_generated_receipt(
+    receipt: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Return dashboard-safe fields from a validated generated operator receipt."""
+
+    external_handoff = receipt.get("external_handoff", {})
+    if not isinstance(external_handoff, Mapping):
+        external_handoff = {}
+    approvals = receipt.get("approvals", {})
+    if not isinstance(approvals, Mapping):
+        approvals = {}
+    external_approval = approvals.get("external_pr_execution", {})
+    if not isinstance(external_approval, Mapping):
+        external_approval = {}
+    local_candidate = receipt.get("local_pr_candidate", {})
+    if not isinstance(local_candidate, Mapping):
+        local_candidate = {}
+    next_evidence = receipt.get("next_evidence", ())
+    if not isinstance(next_evidence, list):
+        next_evidence = []
+    return {
+        "receipt_id": str(receipt.get("receipt_id") or "developer_workflow_operator_receipt.v1"),
+        "schema_ref": "schemas/developer_workflow_operator_receipt.schema.json",
+        "workflow_id": str(receipt.get("workflow_id") or "mullu_developer_workflow.v1"),
+        "workflow_run_id": str(receipt.get("workflow_run_id") or "developer_workflow_v1_foundation_run"),
+        "solver_outcome": str(receipt.get("solver_outcome") or "AwaitingEvidence"),
+        "readiness_status": str(receipt.get("readiness_status") or "awaiting_sandbox_receipts"),
+        "execution_performed": False,
+        "ready_for_external_pr_execution": external_handoff.get("ready_for_external_pr_execution") is True,
+        "external_approval_status": str(external_approval.get("status") or "pending"),
+        "local_candidate_ready": local_candidate.get("candidate_ready") is True,
+        "pr_tool_admitted": local_candidate.get("pr_tool_admitted") is True,
+        "command_preview_rendered": external_handoff.get("command_preview_rendered") is True,
+        "next_evidence": [str(item) for item in next_evidence if str(item).strip()][:8],
+        "external_effects_allowed": False,
+        "source_refs": dict(receipt.get("source_refs", {})) if isinstance(receipt.get("source_refs"), Mapping) else {},
+        "receipt_hash": str(receipt.get("receipt_hash") or ""),
+    }
 
 
 def _developer_workflow_operator_receipt_summary(receipt: Mapping[str, Any]) -> dict[str, Any]:
@@ -4258,6 +4410,9 @@ def _developer_workflow_operator_receipt_summary(receipt: Mapping[str, Any]) -> 
         "solver_outcome": str(receipt.get("solver_outcome") or "AwaitingEvidence"),
         "readiness_status": str(receipt.get("readiness_status") or "awaiting_sandbox_receipts"),
         "ready_for_external_pr_execution": receipt.get("ready_for_external_pr_execution") is True,
+        "external_approval_status": str(receipt.get("external_approval_status") or "pending"),
+        "local_candidate_ready": receipt.get("local_candidate_ready") is True,
+        "pr_tool_admitted": receipt.get("pr_tool_admitted") is True,
         "command_preview_rendered": receipt.get("command_preview_rendered") is True,
         "next_evidence_count": len([item for item in next_evidence if str(item).strip()]),
         "execution_performed": False,
@@ -9740,6 +9895,7 @@ def create_gateway_app(
         domain: str,
         risk_level: str,
         include_local_sandbox_receipts: bool = False,
+        include_developer_workflow_operator_receipt: bool = False,
     ):
         sandbox_receipt_bundle = _load_local_sandbox_receipt_bundle(
             include_local_sandbox_receipts=include_local_sandbox_receipts,
@@ -9756,6 +9912,15 @@ def create_gateway_app(
         local_rollback_execution_receipt = _load_local_rollback_execution_receipt(
             include_local_sandbox_receipts=include_local_sandbox_receipts,
         )
+        local_developer_workflow_operator_receipt = None
+        if include_developer_workflow_operator_receipt:
+            try:
+                local_developer_workflow_operator_receipt = _load_local_developer_workflow_operator_receipt()
+            except HTTPException as exc:
+                if exc.status_code == 404:
+                    local_developer_workflow_operator_receipt = None
+                else:
+                    raise
         friction_control = build_capability_friction_control_read_model(
             capability_admission_gate=capability_admission_gate,
             domain=domain,
@@ -9817,6 +9982,7 @@ def create_gateway_app(
                 current_task=current_task,
                 plan_review=plan_review,
                 developer_workflow_run=developer_workflow_run,
+                developer_workflow_operator_receipt=local_developer_workflow_operator_receipt,
                 local_sandbox_proof_report=local_sandbox_proof_report,
                 local_rollback_summary_packet=local_rollback_summary_packet,
                 local_rollback_approval_packet=local_rollback_approval_packet,
@@ -9833,6 +9999,7 @@ def create_gateway_app(
         domain: str = "software_dev",
         risk_level: str = "",
         include_local_sandbox_receipts: bool = False,
+        include_developer_workflow_operator_receipt: bool = False,
     ):
         _require_authority_operator(request)
         snapshot = _operator_control_tower_snapshot(
@@ -9840,6 +10007,7 @@ def create_gateway_app(
             domain=domain,
             risk_level=risk_level,
             include_local_sandbox_receipts=include_local_sandbox_receipts,
+            include_developer_workflow_operator_receipt=include_developer_workflow_operator_receipt,
         )
         return operator_control_tower_snapshot_to_json_dict(snapshot)
 
@@ -9850,6 +10018,7 @@ def create_gateway_app(
         domain: str = "software_dev",
         risk_level: str = "",
         include_local_sandbox_receipts: bool = False,
+        include_developer_workflow_operator_receipt: bool = False,
     ):
         _require_authority_operator(request)
         snapshot = _operator_control_tower_snapshot(
@@ -9857,6 +10026,7 @@ def create_gateway_app(
             domain=domain,
             risk_level=risk_level,
             include_local_sandbox_receipts=include_local_sandbox_receipts,
+            include_developer_workflow_operator_receipt=include_developer_workflow_operator_receipt,
         )
         return operator_control_tower_status_receipt(snapshot)
 
@@ -9875,6 +10045,13 @@ def create_gateway_app(
                 "compact first-blocker projection"
             ),
         }
+
+    @app.get("/operator/control-tower/developer-workflow-status/read-model")
+    def operator_control_tower_developer_workflow_status_read_model(
+        request: Request,
+    ):
+        _require_authority_operator(request)
+        return _developer_workflow_status_read_model(_load_local_developer_workflow_operator_receipt())
 
     @app.get("/operator/control-tower/local-rollback-receipt/read-model")
     def operator_control_tower_local_rollback_receipt_read_model(
@@ -9899,6 +10076,7 @@ def create_gateway_app(
         domain: str = "software_dev",
         risk_level: str = "",
         include_local_sandbox_receipts: bool = False,
+        include_developer_workflow_operator_receipt: bool = False,
     ):
         _require_authority_operator(request)
         snapshot = _operator_control_tower_snapshot(
@@ -9906,6 +10084,7 @@ def create_gateway_app(
             domain=domain,
             risk_level=risk_level,
             include_local_sandbox_receipts=include_local_sandbox_receipts,
+            include_developer_workflow_operator_receipt=include_developer_workflow_operator_receipt,
         )
         return HTMLResponse(render_operator_control_tower(snapshot))
 

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:operator-developer-workflow-status-read-model:1",
+  "title": "OperatorDeveloperWorkflowStatusReadModel",
+  "description": "Projection-only dashboard row for Developer Workflow v1 status from the generated operator receipt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "read_model_id",
+    "projection_only",
+    "external_effects_allowed",
+    "task",
+    "status",
+    "reason",
+    "next_unlock",
+    "risk",
+    "action_needed",
+    "summary",
+    "source_ref"
+  ],
+  "properties": {
+    "read_model_id": {
+      "type": "string",
+      "const": "operator_developer_workflow_status.read_model"
+    },
+    "projection_only": {"type": "boolean", "const": true},
+    "external_effects_allowed": {"type": "boolean", "const": false},
+    "task": {"type": "string", "const": "Governed Developer Workflow v1"},
+    "status": {"type": "string", "minLength": 1, "maxLength": 120},
+    "reason": {"type": "string", "minLength": 1, "maxLength": 240},
+    "next_unlock": {"type": "string", "minLength": 1, "maxLength": 120},
+    "risk": {"type": "string", "minLength": 1, "maxLength": 160},
+    "action_needed": {"type": "string", "minLength": 1, "maxLength": 240},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "solver_outcome",
+        "workflow_run_id",
+        "sandbox_receipts_completed",
+        "sandbox_receipts_required",
+        "local_candidate_ready",
+        "pr_tool_admitted",
+        "external_approval_status",
+        "command_preview_rendered",
+        "execution_performed",
+        "receipt_hash"
+      ],
+      "properties": {
+        "solver_outcome": {"type": "string", "minLength": 1, "maxLength": 80},
+        "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "sandbox_receipts_completed": {"type": "integer", "minimum": 0, "maximum": 4},
+        "sandbox_receipts_required": {"type": "integer", "minimum": 0, "maximum": 4},
+        "local_candidate_ready": {"type": "boolean"},
+        "pr_tool_admitted": {"type": "boolean"},
+        "external_approval_status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "command_preview_rendered": {"type": "boolean"},
+        "execution_performed": {"type": "boolean", "const": false},
+        "receipt_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "source_ref": {"type": "string", "minLength": 1, "maxLength": 260}
+  }
+}

@@ -1865,6 +1865,12 @@
       "urn": "urn:mullusi:schema:operator-sandbox-patch-readiness-compact-read-model:1"
     },
     {
+      "path": "schemas/operator_developer_workflow_status_read_model.schema.json",
+      "schema_id": "operator-developer-workflow-status-read-model",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:operator-developer-workflow-status-read-model:1"
+    },
+    {
       "path": "schemas/sandbox_to_pr_preparation_packet.schema.json",
       "schema_id": "sandbox-to-pr-preparation-packet",
       "surface": "operator",
