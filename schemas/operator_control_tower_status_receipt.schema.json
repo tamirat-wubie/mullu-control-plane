@@ -69,6 +69,13 @@
     "operator_sandbox_patch_release_handoff_readiness_summary",
     "operator_sandbox_patch_deployment_publication_readiness_summary",
     "operator_sandbox_patch_production_monitoring_readiness_summary",
+    "operator_sandbox_patch_incident_response_readiness_summary",
+    "operator_sandbox_patch_recovery_closure_readiness_summary",
+    "operator_sandbox_patch_trust_ledger_readiness_summary",
+    "operator_sandbox_patch_terminal_audit_export_readiness_summary",
+    "operator_sandbox_patch_foundation_closure_readiness_summary",
+    "operator_sandbox_patch_iteration_resume_readiness_summary",
+    "operator_sandbox_patch_next_scope_admission_readiness_summary",
     "operator_handoff_summary",
     "operator_review_readiness_summary",
     "operator_review_packet_summary",
@@ -199,6 +206,27 @@
     },
     "operator_sandbox_patch_production_monitoring_readiness_summary": {
       "$ref": "#/$defs/operator_sandbox_patch_production_monitoring_readiness_summary"
+    },
+    "operator_sandbox_patch_incident_response_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_incident_response_readiness_summary"
+    },
+    "operator_sandbox_patch_recovery_closure_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_recovery_closure_readiness_summary"
+    },
+    "operator_sandbox_patch_trust_ledger_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_trust_ledger_readiness_summary"
+    },
+    "operator_sandbox_patch_terminal_audit_export_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_terminal_audit_export_readiness_summary"
+    },
+    "operator_sandbox_patch_foundation_closure_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_foundation_closure_readiness_summary"
+    },
+    "operator_sandbox_patch_iteration_resume_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_iteration_resume_readiness_summary"
+    },
+    "operator_sandbox_patch_next_scope_admission_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_next_scope_admission_readiness_summary"
     },
     "operator_handoff_summary": {"$ref": "#/$defs/operator_handoff_summary"},
     "operator_review_readiness_summary": {"$ref": "#/$defs/operator_review_readiness_summary"},
@@ -2595,6 +2623,304 @@
         "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
       }
     },
+    "operator_sandbox_patch_incident_response_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "incident_status",
+        "incident_target",
+        "required_before_incident_response",
+        "missing_prerequisite_count",
+        "incident_response_performed",
+        "containment_allowed",
+        "rollback_execution_allowed",
+        "paging_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_incident_response_readiness.foundation"
+        },
+        "incident_status": {
+          "type": "string",
+          "enum": ["blocked_until_monitoring", "ready"]
+        },
+        "incident_target": {
+          "type": "string",
+          "const": "incident_response_runbook"
+        },
+        "required_before_incident_response": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "incident_response_performed": {"type": "boolean", "const": false},
+        "containment_allowed": {"type": "boolean", "const": false},
+        "rollback_execution_allowed": {"type": "boolean", "const": false},
+        "paging_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_recovery_closure_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "recovery_status",
+        "recovery_target",
+        "required_before_recovery_closure",
+        "missing_prerequisite_count",
+        "recovery_closure_performed",
+        "closure_certification_allowed",
+        "replay_promotion_allowed",
+        "post_incident_publication_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_recovery_closure_readiness.foundation"
+        },
+        "recovery_status": {
+          "type": "string",
+          "enum": ["blocked_until_incident_response", "ready"]
+        },
+        "recovery_target": {
+          "type": "string",
+          "const": "recovery_closure_packet"
+        },
+        "required_before_recovery_closure": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "recovery_closure_performed": {"type": "boolean", "const": false},
+        "closure_certification_allowed": {"type": "boolean", "const": false},
+        "replay_promotion_allowed": {"type": "boolean", "const": false},
+        "post_incident_publication_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_trust_ledger_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "ledger_status",
+        "ledger_target",
+        "required_before_trust_ledger_anchor",
+        "missing_prerequisite_count",
+        "ledger_anchor_performed",
+        "remote_submission_allowed",
+        "verification_publication_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_trust_ledger_readiness.foundation"
+        },
+        "ledger_status": {
+          "type": "string",
+          "enum": ["blocked_until_recovery_closure", "ready"]
+        },
+        "ledger_target": {
+          "type": "string",
+          "const": "trust_ledger_anchor_packet"
+        },
+        "required_before_trust_ledger_anchor": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "ledger_anchor_performed": {"type": "boolean", "const": false},
+        "remote_submission_allowed": {"type": "boolean", "const": false},
+        "verification_publication_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_terminal_audit_export_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "audit_export_status",
+        "audit_export_target",
+        "required_before_terminal_audit_export",
+        "missing_prerequisite_count",
+        "audit_export_performed",
+        "archive_submission_allowed",
+        "external_publication_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_terminal_audit_export_readiness.foundation"
+        },
+        "audit_export_status": {
+          "type": "string",
+          "enum": ["blocked_until_trust_ledger_anchor", "ready"]
+        },
+        "audit_export_target": {
+          "type": "string",
+          "const": "terminal_audit_export_package"
+        },
+        "required_before_terminal_audit_export": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "audit_export_performed": {"type": "boolean", "const": false},
+        "archive_submission_allowed": {"type": "boolean", "const": false},
+        "external_publication_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_foundation_closure_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "foundation_closure_status",
+        "foundation_closure_target",
+        "required_before_foundation_closure",
+        "missing_prerequisite_count",
+        "foundation_closure_certified",
+        "promotion_allowed",
+        "handoff_publication_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_foundation_closure_readiness.foundation"
+        },
+        "foundation_closure_status": {
+          "type": "string",
+          "enum": ["blocked_until_terminal_audit_export", "ready"]
+        },
+        "foundation_closure_target": {
+          "type": "string",
+          "const": "foundation_closure_certificate"
+        },
+        "required_before_foundation_closure": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "foundation_closure_certified": {"type": "boolean", "const": false},
+        "promotion_allowed": {"type": "boolean", "const": false},
+        "handoff_publication_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_iteration_resume_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "iteration_resume_status",
+        "iteration_resume_target",
+        "required_before_iteration_resume",
+        "missing_prerequisite_count",
+        "next_iteration_started",
+        "automatic_resume_allowed",
+        "authority_carryover_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_iteration_resume_readiness.foundation"
+        },
+        "iteration_resume_status": {
+          "type": "string",
+          "enum": ["blocked_until_foundation_closure", "ready"]
+        },
+        "iteration_resume_target": {
+          "type": "string",
+          "const": "next_iteration_intake_packet"
+        },
+        "required_before_iteration_resume": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "next_iteration_started": {"type": "boolean", "const": false},
+        "automatic_resume_allowed": {"type": "boolean", "const": false},
+        "authority_carryover_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_next_scope_admission_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "next_scope_admission_status",
+        "next_scope_target",
+        "required_before_next_scope_admission",
+        "missing_prerequisite_count",
+        "scope_admitted",
+        "execution_allowed",
+        "authority_promotion_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_next_scope_admission_readiness.foundation"
+        },
+        "next_scope_admission_status": {
+          "type": "string",
+          "enum": ["blocked_until_iteration_resume", "ready"]
+        },
+        "next_scope_target": {
+          "type": "string",
+          "const": "next_scope_admission_packet"
+        },
+        "required_before_next_scope_admission": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "scope_admitted": {"type": "boolean", "const": false},
+        "execution_allowed": {"type": "boolean", "const": false},
+        "authority_promotion_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
     "operator_handoff_summary": {
       "type": "object",
       "additionalProperties": false,
@@ -3742,6 +4068,13 @@
         "operator_sandbox_patch_release_handoff_readiness_summary",
         "operator_sandbox_patch_deployment_publication_readiness_summary",
         "operator_sandbox_patch_production_monitoring_readiness_summary",
+        "operator_sandbox_patch_incident_response_readiness_summary",
+        "operator_sandbox_patch_recovery_closure_readiness_summary",
+        "operator_sandbox_patch_trust_ledger_readiness_summary",
+        "operator_sandbox_patch_terminal_audit_export_readiness_summary",
+        "operator_sandbox_patch_foundation_closure_readiness_summary",
+        "operator_sandbox_patch_iteration_resume_readiness_summary",
+        "operator_sandbox_patch_next_scope_admission_readiness_summary",
         "operator_handoff_summary",
         "operator_review_readiness_summary",
         "operator_review_packet_summary",
@@ -4000,6 +4333,34 @@
         "operator_sandbox_patch_production_monitoring_readiness_summary": {
           "type": "string",
           "const": "docs/21_workflow_runtime.md sandbox_patch_receipt production monitoring readiness"
+        },
+        "operator_sandbox_patch_incident_response_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt incident response readiness"
+        },
+        "operator_sandbox_patch_recovery_closure_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt recovery closure readiness"
+        },
+        "operator_sandbox_patch_trust_ledger_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt trust ledger readiness"
+        },
+        "operator_sandbox_patch_terminal_audit_export_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt terminal audit export readiness"
+        },
+        "operator_sandbox_patch_foundation_closure_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt foundation closure readiness"
+        },
+        "operator_sandbox_patch_iteration_resume_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt iteration resume readiness"
+        },
+        "operator_sandbox_patch_next_scope_admission_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt next scope admission readiness"
         },
         "operator_handoff_summary": {
           "type": "string",

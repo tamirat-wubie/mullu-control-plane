@@ -1658,6 +1658,27 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Operator Sandbox Patch Production Monitoring Readiness" in response.text
     assert "Production monitoring blocked until deployment publication" in response.text
     assert "blocked_until_publication" in response.text
+    assert "Operator Sandbox Patch Incident Response Readiness" in response.text
+    assert "Incident response blocked until monitoring" in response.text
+    assert "blocked_until_monitoring" in response.text
+    assert "Operator Sandbox Patch Recovery Closure Readiness" in response.text
+    assert "Recovery closure blocked until containment" in response.text
+    assert "blocked_until_incident_response" in response.text
+    assert "Operator Sandbox Patch Trust Ledger Readiness" in response.text
+    assert "Trust ledger anchoring blocked until recovery closure" in response.text
+    assert "blocked_until_recovery_closure" in response.text
+    assert "Operator Sandbox Patch Terminal Audit Export Readiness" in response.text
+    assert "Terminal audit export blocked until trust ledger anchor" in response.text
+    assert "blocked_until_trust_ledger_anchor" in response.text
+    assert "Operator Sandbox Patch Foundation Closure Readiness" in response.text
+    assert "Foundation closure blocked until terminal audit export" in response.text
+    assert "blocked_until_terminal_audit_export" in response.text
+    assert "Operator Sandbox Patch Iteration Resume Readiness" in response.text
+    assert "Iteration resume blocked until foundation closure" in response.text
+    assert "blocked_until_foundation_closure" in response.text
+    assert "Operator Sandbox Patch Next Scope Admission Readiness" in response.text
+    assert "Next scope admission blocked until intake" in response.text
+    assert "blocked_until_iteration_resume" in response.text
     assert "Operator Handoff Summary" in response.text
     assert "Handoff ready for local resume" in response.text
     assert "external_pr_creation, branch_push, merge, deployment, connector_write, real_world_effect" in response.text
@@ -2696,6 +2717,148 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
             "Production monitoring blocked until deployment publication, health, runtime conformance, telemetry, and incident recovery evidence are complete"
         ),
     }
+    assert receipt["operator_sandbox_patch_incident_response_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_incident_response_readiness.foundation",
+        "incident_status": "blocked_until_monitoring",
+        "incident_target": "incident_response_runbook",
+        "required_before_incident_response": [
+            "production_monitoring_witness_recorded",
+            "incident_response_runbook_verified",
+            "rollback_execution_receipt_template_bound",
+            "containment_evidence_contract_bound",
+            "operator_incident_authority_recorded",
+        ],
+        "missing_prerequisite_count": 5,
+        "incident_response_performed": False,
+        "containment_allowed": False,
+        "rollback_execution_allowed": False,
+        "paging_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Incident response blocked until monitoring, runbook, rollback, containment, and operator authority evidence are complete"
+        ),
+    }
+    assert receipt["operator_sandbox_patch_recovery_closure_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_recovery_closure_readiness.foundation",
+        "recovery_status": "blocked_until_incident_response",
+        "recovery_target": "recovery_closure_packet",
+        "required_before_recovery_closure": [
+            "incident_containment_evidence_recorded",
+            "rollback_or_replay_receipt_recorded",
+            "post_incident_verification_passed",
+            "operator_recovery_closure_approval_recorded",
+            "terminal_recovery_closure_packet_prepared",
+        ],
+        "missing_prerequisite_count": 5,
+        "recovery_closure_performed": False,
+        "closure_certification_allowed": False,
+        "replay_promotion_allowed": False,
+        "post_incident_publication_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Recovery closure blocked until containment, rollback or replay, verification, approval, and terminal recovery packet evidence are complete"
+        ),
+    }
+    assert receipt["operator_sandbox_patch_trust_ledger_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_trust_ledger_readiness.foundation",
+        "ledger_status": "blocked_until_recovery_closure",
+        "ledger_target": "trust_ledger_anchor_packet",
+        "required_before_trust_ledger_anchor": [
+            "terminal_recovery_closure_packet_prepared",
+            "trust_ledger_bundle_export_prepared",
+            "evidence_artifact_hashes_recorded",
+            "operator_trust_ledger_anchor_approval_recorded",
+            "remote_submission_preflight_passed",
+        ],
+        "missing_prerequisite_count": 5,
+        "ledger_anchor_performed": False,
+        "remote_submission_allowed": False,
+        "verification_publication_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Trust ledger anchoring blocked until recovery closure, export, hash, approval, and remote submission preflight evidence are complete"
+        ),
+    }
+    assert receipt["operator_sandbox_patch_terminal_audit_export_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_terminal_audit_export_readiness.foundation",
+        "audit_export_status": "blocked_until_trust_ledger_anchor",
+        "audit_export_target": "terminal_audit_export_package",
+        "required_before_terminal_audit_export": [
+            "trust_ledger_anchor_receipt_recorded",
+            "trust_ledger_anchor_verification_passed",
+            "audit_bundle_integrity_report_recorded",
+            "operator_audit_export_approval_recorded",
+            "export_retention_boundary_verified",
+        ],
+        "missing_prerequisite_count": 5,
+        "audit_export_performed": False,
+        "archive_submission_allowed": False,
+        "external_publication_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Terminal audit export blocked until trust ledger anchor, verification, integrity, approval, and retention evidence are complete"
+        ),
+    }
+    assert receipt["operator_sandbox_patch_foundation_closure_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_foundation_closure_readiness.foundation",
+        "foundation_closure_status": "blocked_until_terminal_audit_export",
+        "foundation_closure_target": "foundation_closure_certificate",
+        "required_before_foundation_closure": [
+            "terminal_audit_export_package_prepared",
+            "operator_final_closure_approval_recorded",
+            "all_no_effect_denials_preserved",
+            "open_gap_register_reviewed",
+            "next_iteration_handoff_recorded",
+        ],
+        "missing_prerequisite_count": 5,
+        "foundation_closure_certified": False,
+        "promotion_allowed": False,
+        "handoff_publication_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Foundation closure blocked until terminal audit export, final approval, denial preservation, gap review, and next-iteration handoff evidence are complete"
+        ),
+    }
+    assert receipt["operator_sandbox_patch_iteration_resume_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_iteration_resume_readiness.foundation",
+        "iteration_resume_status": "blocked_until_foundation_closure",
+        "iteration_resume_target": "next_iteration_intake_packet",
+        "required_before_iteration_resume": [
+            "foundation_closure_certificate_recorded",
+            "next_iteration_scope_declared",
+            "next_iteration_risk_boundary_reviewed",
+            "next_iteration_evidence_queue_seeded",
+            "operator_resume_intent_recorded",
+        ],
+        "missing_prerequisite_count": 5,
+        "next_iteration_started": False,
+        "automatic_resume_allowed": False,
+        "authority_carryover_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Iteration resume blocked until foundation closure, next scope, risk boundary, evidence queue, and operator resume intent evidence are complete"
+        ),
+    }
+    assert receipt["operator_sandbox_patch_next_scope_admission_readiness_summary"] == {
+        "summary_id": "operator_sandbox_patch_next_scope_admission_readiness.foundation",
+        "next_scope_admission_status": "blocked_until_iteration_resume",
+        "next_scope_target": "next_scope_admission_packet",
+        "required_before_next_scope_admission": [
+            "next_iteration_intake_packet_prepared",
+            "next_scope_boundaries_declared",
+            "next_scope_acceptance_criteria_recorded",
+            "next_scope_risk_review_recorded",
+            "next_scope_rollback_expectations_recorded",
+        ],
+        "missing_prerequisite_count": 5,
+        "scope_admitted": False,
+        "execution_allowed": False,
+        "authority_promotion_allowed": False,
+        "external_effects_allowed": False,
+        "operator_message": (
+            "Next scope admission blocked until intake, boundaries, acceptance criteria, risk review, and rollback expectation evidence are complete"
+        ),
+    }
     assert receipt["operator_handoff_summary"] == {
         "summary_id": "operator_handoff.foundation",
         "handoff_status": "ready_for_local_resume",
@@ -3151,6 +3314,34 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
     assert (
         receipt["source_refs"]["operator_sandbox_patch_production_monitoring_readiness_summary"]
         == "docs/21_workflow_runtime.md sandbox_patch_receipt production monitoring readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_incident_response_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt incident response readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_recovery_closure_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt recovery closure readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_trust_ledger_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt trust ledger readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_terminal_audit_export_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt terminal audit export readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_foundation_closure_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt foundation closure readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_iteration_resume_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt iteration resume readiness"
+    )
+    assert (
+        receipt["source_refs"]["operator_sandbox_patch_next_scope_admission_readiness_summary"]
+        == "docs/21_workflow_runtime.md sandbox_patch_receipt next scope admission readiness"
     )
     assert (
         receipt["source_refs"]["operator_handoff_summary"]
