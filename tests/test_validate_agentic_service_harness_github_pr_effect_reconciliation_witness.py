@@ -5,6 +5,8 @@ uncollected, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: scripts.validate_agentic_service_harness_github_pr_effect_reconciliation_witness.
 Invariants:
+  - Effect reconciliation must consume command-preview CI gate evidence.
+  - Effect reconciliation must consume actual-diff CI gate evidence.
   - Missing effect reconciliation never grants terminal closure or merge effects.
   - Remaining witnesses are empty because this is the final missing-evidence request.
   - Mutation routes and secret-like payloads fail closed.
@@ -25,6 +27,10 @@ def test_github_pr_effect_reconciliation_witness_passes() -> None:
     assert validation.errors == ()
     assert validation.example_count == 1
     assert validation.source_ci_gate_before_ready_for_review_witness_ref == validator.EXPECTED_SOURCE_CI_GATE_WITNESS_REF
+    assert (
+        validation.command_preview_ci_gate_before_ready_for_review_witness_ref
+        == validator.EXPECTED_SOURCE_CI_GATE_WITNESS_REF
+    )
     assert validation.actual_diff_ci_gate_before_ready_for_review_witness_ref == validator.EXPECTED_SOURCE_CI_GATE_WITNESS_REF
 
 
@@ -32,6 +38,9 @@ def test_github_pr_effect_reconciliation_witness_rejects_collected_authority() -
     payload = validator.build_mutated_effect_reconciliation_witness(
         effect_reconciliation_collected=True,
         authority_granted=True,
+        effect_reconciliation__requires_command_preview_ci_gate_before_ready_for_review_witness=False,
+        effect_reconciliation__command_preview_bound=False,
+        effect_reconciliation__operator_response_bound=False,
         effect_reconciliation__requires_actual_diff_ci_gate_before_ready_for_review_witness=False,
         effect_reconciliation__ci_gate_before_ready_for_review_satisfied=True,
         effect_reconciliation__effect_reconciliation_collected=True,
@@ -45,6 +54,9 @@ def test_github_pr_effect_reconciliation_witness_rejects_collected_authority() -
 
     assert "effect_reconciliation_collected must be false" in serialized_errors
     assert "authority_granted must be false" in serialized_errors
+    assert "effect_reconciliation.requires_command_preview_ci_gate_before_ready_for_review_witness must be true" in serialized_errors
+    assert "effect_reconciliation.command_preview_bound must be true" in serialized_errors
+    assert "effect_reconciliation.operator_response_bound must be true" in serialized_errors
     assert "effect_reconciliation.requires_actual_diff_ci_gate_before_ready_for_review_witness must be true" in serialized_errors
     assert "effect_reconciliation.ci_gate_before_ready_for_review_satisfied must be false" in serialized_errors
     assert "effect_reconciliation.effect_reconciliation_collected must be false" in serialized_errors
@@ -108,6 +120,38 @@ def test_github_pr_effect_reconciliation_witness_rejects_actual_diff_ci_gate_dri
     assert "effect_reconciliation.redacted_output_ref" in serialized_errors
 
 
+def test_github_pr_effect_reconciliation_witness_rejects_command_preview_ci_gate_drift() -> None:
+    payload = validator.build_mutated_effect_reconciliation_witness(
+        effect_reconciliation__command_preview_ci_gate_before_ready_for_review_witness_ref="examples/drift.json",
+        effect_reconciliation__command_preview_repository_effect_rollback_plan_witness_ref="examples/drift.json",
+        effect_reconciliation__command_preview_uao_admission_witness_ref="examples/drift.json",
+        effect_reconciliation__command_preview_branch_write_binding_ref="examples/drift.json",
+        effect_reconciliation__command_preview_operator_response_binding_ref="examples/drift.json",
+        effect_reconciliation__command_preview_operator_response_witness_ref="examples/drift.json",
+        effect_reconciliation__command_preview_operator_approval_request_binding_ref="examples/drift.json",
+        effect_reconciliation__command_preview_ref="examples/drift.json",
+        effect_reconciliation__redacted_command_preview="gh pr create --body leaked",
+        effect_reconciliation__argument_vector_template=["gh", "pr", "create"],
+        effect_reconciliation__placeholder_refs=["placeholder://drift"],
+    )
+
+    errors: list[str] = []
+    validator._validate_effect_reconciliation_witness_semantics(payload, _source_ci_gate_witness(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "effect_reconciliation.command_preview_ci_gate_before_ready_for_review_witness_ref" in serialized_errors
+    assert "effect_reconciliation.command_preview_repository_effect_rollback_plan_witness_ref" in serialized_errors
+    assert "effect_reconciliation.command_preview_uao_admission_witness_ref" in serialized_errors
+    assert "effect_reconciliation.command_preview_branch_write_binding_ref" in serialized_errors
+    assert "effect_reconciliation.command_preview_operator_response_binding_ref" in serialized_errors
+    assert "effect_reconciliation.command_preview_operator_response_witness_ref" in serialized_errors
+    assert "effect_reconciliation.command_preview_operator_approval_request_binding_ref" in serialized_errors
+    assert "effect_reconciliation.command_preview_ref" in serialized_errors
+    assert "effect_reconciliation.redacted_command_preview" in serialized_errors
+    assert "effect_reconciliation.argument_vector_template" in serialized_errors
+    assert "effect_reconciliation.placeholder_refs" in serialized_errors
+
+
 def test_github_pr_effect_reconciliation_witness_rejects_remaining_witness_drift() -> None:
     payload = validator.build_mutated_effect_reconciliation_witness(
         remaining_witnesses=[
@@ -157,6 +201,10 @@ def test_github_pr_effect_reconciliation_witness_cli_writes_report(tmp_path: Pat
     assert file_payload["ok"] is True
     assert stdout_payload["errors"] == []
     assert file_payload["source_ci_gate_before_ready_for_review_witness_ref"] == validator.EXPECTED_SOURCE_CI_GATE_WITNESS_REF
+    assert (
+        file_payload["command_preview_ci_gate_before_ready_for_review_witness_ref"]
+        == validator.EXPECTED_SOURCE_CI_GATE_WITNESS_REF
+    )
     assert (
         file_payload["actual_diff_ci_gate_before_ready_for_review_witness_ref"]
         == validator.EXPECTED_SOURCE_CI_GATE_WITNESS_REF
