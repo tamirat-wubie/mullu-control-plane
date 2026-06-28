@@ -66,6 +66,9 @@
     "operator_sandbox_patch_pr_creation_readiness_summary",
     "operator_sandbox_patch_pr_ci_readiness_summary",
     "operator_sandbox_patch_merge_readiness_summary",
+    "operator_sandbox_patch_release_handoff_readiness_summary",
+    "operator_sandbox_patch_deployment_publication_readiness_summary",
+    "operator_sandbox_patch_production_monitoring_readiness_summary",
     "operator_handoff_summary",
     "operator_review_readiness_summary",
     "operator_review_packet_summary",
@@ -187,6 +190,15 @@
     },
     "operator_sandbox_patch_merge_readiness_summary": {
       "$ref": "#/$defs/operator_sandbox_patch_merge_readiness_summary"
+    },
+    "operator_sandbox_patch_release_handoff_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_release_handoff_readiness_summary"
+    },
+    "operator_sandbox_patch_deployment_publication_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_deployment_publication_readiness_summary"
+    },
+    "operator_sandbox_patch_production_monitoring_readiness_summary": {
+      "$ref": "#/$defs/operator_sandbox_patch_production_monitoring_readiness_summary"
     },
     "operator_handoff_summary": {"$ref": "#/$defs/operator_handoff_summary"},
     "operator_review_readiness_summary": {"$ref": "#/$defs/operator_review_readiness_summary"},
@@ -2449,6 +2461,140 @@
         "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
       }
     },
+    "operator_sandbox_patch_release_handoff_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "handoff_status",
+        "handoff_target",
+        "required_before_handoff",
+        "missing_prerequisite_count",
+        "handoff_performed",
+        "release_publication_allowed",
+        "deployment_allowed",
+        "public_claim_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_release_handoff_readiness.foundation"
+        },
+        "handoff_status": {
+          "type": "string",
+          "enum": ["blocked_until_terminal_closure", "ready"]
+        },
+        "handoff_target": {
+          "type": "string",
+          "const": "release_handoff_packet"
+        },
+        "required_before_handoff": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "handoff_performed": {"type": "boolean", "const": false},
+        "release_publication_allowed": {"type": "boolean", "const": false},
+        "deployment_allowed": {"type": "boolean", "const": false},
+        "public_claim_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_deployment_publication_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "publication_status",
+        "publication_target",
+        "required_before_publication",
+        "missing_prerequisite_count",
+        "publication_performed",
+        "deployment_allowed",
+        "dns_change_allowed",
+        "production_claim_allowed",
+        "public_endpoint_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_deployment_publication_readiness.foundation"
+        },
+        "publication_status": {
+          "type": "string",
+          "enum": ["blocked_until_release_handoff", "ready"]
+        },
+        "publication_target": {
+          "type": "string",
+          "const": "deployment_publication_closure_plan"
+        },
+        "required_before_publication": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "publication_performed": {"type": "boolean", "const": false},
+        "deployment_allowed": {"type": "boolean", "const": false},
+        "dns_change_allowed": {"type": "boolean", "const": false},
+        "production_claim_allowed": {"type": "boolean", "const": false},
+        "public_endpoint_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
+    "operator_sandbox_patch_production_monitoring_readiness_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "monitoring_status",
+        "monitoring_target",
+        "required_before_monitoring",
+        "missing_prerequisite_count",
+        "monitoring_activation_performed",
+        "monitor_activation_allowed",
+        "alert_routing_allowed",
+        "production_claim_allowed",
+        "external_effects_allowed",
+        "operator_message"
+      ],
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "const": "operator_sandbox_patch_production_monitoring_readiness.foundation"
+        },
+        "monitoring_status": {
+          "type": "string",
+          "enum": ["blocked_until_publication", "ready"]
+        },
+        "monitoring_target": {
+          "type": "string",
+          "const": "production_monitoring_witness"
+        },
+        "required_before_monitoring": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "missing_prerequisite_count": {"type": "integer", "minimum": 0},
+        "monitoring_activation_performed": {"type": "boolean", "const": false},
+        "monitor_activation_allowed": {"type": "boolean", "const": false},
+        "alert_routing_allowed": {"type": "boolean", "const": false},
+        "production_claim_allowed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 320}
+      }
+    },
     "operator_handoff_summary": {
       "type": "object",
       "additionalProperties": false,
@@ -3593,6 +3739,9 @@
         "operator_sandbox_patch_pr_creation_readiness_summary",
         "operator_sandbox_patch_pr_ci_readiness_summary",
         "operator_sandbox_patch_merge_readiness_summary",
+        "operator_sandbox_patch_release_handoff_readiness_summary",
+        "operator_sandbox_patch_deployment_publication_readiness_summary",
+        "operator_sandbox_patch_production_monitoring_readiness_summary",
         "operator_handoff_summary",
         "operator_review_readiness_summary",
         "operator_review_packet_summary",
@@ -3839,6 +3988,18 @@
         "operator_sandbox_patch_merge_readiness_summary": {
           "type": "string",
           "const": "docs/21_workflow_runtime.md sandbox_patch_receipt merge readiness"
+        },
+        "operator_sandbox_patch_release_handoff_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt release handoff readiness"
+        },
+        "operator_sandbox_patch_deployment_publication_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt deployment publication readiness"
+        },
+        "operator_sandbox_patch_production_monitoring_readiness_summary": {
+          "type": "string",
+          "const": "docs/21_workflow_runtime.md sandbox_patch_receipt production monitoring readiness"
         },
         "operator_handoff_summary": {
           "type": "string",
