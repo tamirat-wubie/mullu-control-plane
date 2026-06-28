@@ -35,6 +35,21 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.validate_agentic_service_harness_github_pr_effect_reconciliation_witness import (  # noqa: E402
     DEFAULT_EXAMPLES as DEFAULT_SOURCE_EFFECT_RECONCILIATION_EXAMPLES,
     DEFAULT_SCHEMA as DEFAULT_SOURCE_EFFECT_RECONCILIATION_SCHEMA,
+    EXPECTED_ARGUMENT_VECTOR,
+    EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+    EXPECTED_COMMAND_PREVIEW,
+    EXPECTED_PLACEHOLDER_REFS,
+    EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+    EXPECTED_REDACTED_OUTPUT_REF,
+    EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+    EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+    EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+    EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
+    EXPECTED_SOURCE_CI_GATE_WITNESS_REF,
+    EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
+    EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+    EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+    EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
     validate_agentic_service_harness_github_pr_effect_reconciliation_witness,
 )
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
@@ -71,20 +86,64 @@ REQUIRED_RECEIPT_REFS = {
     "github_pr_effect_reconciliation_witness_schema": (
         "schemas/agentic_service_harness_github_pr_effect_reconciliation_witness.schema.json"
     ),
+    "github_pr_effect_reconciliation_witness_example": (
+        "examples/agentic_service_harness_github_pr_effect_reconciliation_witness.foundation.json"
+    ),
     "github_pr_ci_gate_before_ready_for_review_witness_schema": (
         "schemas/agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.schema.json"
+    ),
+    "github_pr_ci_gate_before_ready_for_review_witness_example": (
+        "examples/agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.foundation.json"
     ),
     "github_pr_repository_effect_rollback_plan_witness_schema": (
         "schemas/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.schema.json"
     ),
+    "github_pr_repository_effect_rollback_plan_witness_example": (
+        "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json"
+    ),
     "github_pr_uao_admission_witness_schema": (
         "schemas/agentic_service_harness_github_pr_uao_admission_witness.schema.json"
     ),
+    "github_pr_uao_admission_witness_example": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
+    "github_pr_operator_response_command_preview_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_response_command_preview_binding.schema.json"
+    ),
+    "github_pr_operator_response_command_preview_binding_example": (
+        EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF
+    ),
+    "github_pr_operator_approval_request_command_preview_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.schema.json"
+    ),
+    "github_pr_operator_approval_request_command_preview_binding_example": (
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF
+    ),
+    "github_pr_creation_command_preview_schema": (
+        "schemas/agentic_service_harness_github_pr_creation_command_preview.schema.json"
+    ),
+    "github_pr_creation_command_preview_example": EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
     "github_pr_branch_write_authority_binding_schema": (
         "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json"
     ),
+    "github_pr_branch_write_authority_binding_example": (
+        "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json"
+    ),
+    "github_pr_operator_response_witness_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json"
+    ),
+    "github_pr_operator_response_witness_example": (
+        "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
+    ),
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json"
+    ),
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": (
+        "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
+    ),
     "github_pr_operator_approval_request_schema": (
         "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json"
+    ),
+    "github_pr_actual_non_empty_diff_admission_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.schema.json"
     ),
     "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
     "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json",
@@ -122,6 +181,10 @@ REQUIRED_TRUE_FLAGS = (
     "planning_only",
     "read_only",
     "report_is_not_terminal_closure",
+    "requires_command_preview_effect_reconciliation_witness",
+    "requires_actual_diff_effect_reconciliation_witness",
+    "command_preview_bound",
+    "operator_response_bound",
     "effect_reconciliation_required",
     "terminal_closure_certificate_required",
     "certifies_branch_state",
@@ -166,6 +229,8 @@ class GitHubPrTerminalClosureCertificateWitnessValidation:
     example_paths: tuple[str, ...]
     example_count: int
     source_effect_reconciliation_witness_ref: str
+    command_preview_effect_reconciliation_witness_ref: str
+    actual_diff_effect_reconciliation_witness_ref: str
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -222,6 +287,8 @@ def validate_agentic_service_harness_github_pr_terminal_closure_certificate_witn
         example_paths=tuple(_path_label(path) for path in example_paths),
         example_count=len(examples),
         source_effect_reconciliation_witness_ref=EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF,
+        command_preview_effect_reconciliation_witness_ref=EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF,
+        actual_diff_effect_reconciliation_witness_ref=EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF,
     )
 
 
@@ -276,6 +343,165 @@ def _validate_terminal_closure_certificate_witness_semantics(
     )
     _require_equal(
         payload,
+        ("terminal_closure_certificate", "requires_command_preview_effect_reconciliation_witness"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "command_preview_effect_reconciliation_witness_ref"),
+        EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "command_preview_ci_gate_before_ready_for_review_witness_ref"),
+        EXPECTED_SOURCE_CI_GATE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "command_preview_repository_effect_rollback_plan_witness_ref"),
+        EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "command_preview_uao_admission_witness_ref"),
+        EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "command_preview_branch_write_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "command_preview_operator_response_binding_ref"),
+        EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "command_preview_operator_response_witness_ref"),
+        EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "command_preview_operator_approval_request_binding_ref"),
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "command_preview_ref"),
+        EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "redacted_command_preview"),
+        EXPECTED_COMMAND_PREVIEW,
+        errors,
+        label,
+    )
+    observed_vector = _get_nested(payload, ("terminal_closure_certificate", "argument_vector_template"))
+    if tuple(observed_vector) != EXPECTED_ARGUMENT_VECTOR:
+        errors.append(
+            f"{label}: terminal_closure_certificate.argument_vector_template expected "
+            f"{EXPECTED_ARGUMENT_VECTOR!r}, observed {observed_vector!r}"
+        )
+    observed_placeholders = _get_nested(payload, ("terminal_closure_certificate", "placeholder_refs"))
+    if tuple(observed_placeholders) != EXPECTED_PLACEHOLDER_REFS:
+        errors.append(
+            f"{label}: terminal_closure_certificate.placeholder_refs expected "
+            f"{EXPECTED_PLACEHOLDER_REFS!r}, observed {observed_placeholders!r}"
+        )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "actual_diff_effect_reconciliation_witness_ref"),
+        EXPECTED_SOURCE_EFFECT_RECONCILIATION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "actual_diff_ci_gate_before_ready_for_review_witness_ref"),
+        EXPECTED_SOURCE_CI_GATE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "actual_diff_repository_effect_rollback_plan_witness_ref"),
+        EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "actual_diff_uao_admission_witness_ref"),
+        EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "actual_diff_branch_write_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "actual_diff_operator_response_witness_ref"),
+        EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "actual_diff_approval_request_binding_ref"),
+        EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "actual_non_empty_diff_receipt_ref"),
+        EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "redacted_diff_bundle_ref"),
+        EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("terminal_closure_certificate", "redacted_output_ref"),
+        EXPECTED_REDACTED_OUTPUT_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
         ("terminal_closure_certificate", "required_witness_kind"),
         "terminal_closure_certificate",
         errors,
@@ -318,6 +544,42 @@ def _validate_terminal_closure_certificate_witness_semantics(
             errors,
             label,
         )
+        source_effect_reconciliation = _mapping(
+            _get_nested(source_effect_reconciliation_witness, ("effect_reconciliation",))
+        )
+        for key in (
+            "command_preview_ci_gate_before_ready_for_review_witness_ref",
+            "command_preview_repository_effect_rollback_plan_witness_ref",
+            "command_preview_uao_admission_witness_ref",
+            "command_preview_branch_write_binding_ref",
+            "command_preview_operator_response_binding_ref",
+            "command_preview_operator_response_witness_ref",
+            "command_preview_operator_approval_request_binding_ref",
+            "command_preview_ref",
+            "redacted_command_preview",
+            "argument_vector_template",
+            "placeholder_refs",
+            "actual_diff_ci_gate_before_ready_for_review_witness_ref",
+            "actual_diff_repository_effect_rollback_plan_witness_ref",
+            "actual_diff_uao_admission_witness_ref",
+            "actual_diff_branch_write_binding_ref",
+            "actual_diff_operator_response_witness_ref",
+            "actual_diff_approval_request_binding_ref",
+            "actual_non_empty_diff_receipt_ref",
+            "changed_file_refs",
+            "diff_refs",
+            "redacted_diff_bundle_ref",
+            "redacted_output_ref",
+        ):
+            _require_equal(
+                payload,
+                ("terminal_closure_certificate", key),
+                source_effect_reconciliation.get(key),
+                errors,
+                label,
+            )
+    _require_equal(payload, ("terminal_closure_certificate", "command_preview_bound"), True, errors, label)
+    _require_equal(payload, ("terminal_closure_certificate", "operator_response_bound"), True, errors, label)
     observed_witnesses = _get_nested(payload, ("remaining_witnesses",))
     if not isinstance(observed_witnesses, list):
         errors.append(f"{label}: remaining_witnesses must be a list")
@@ -375,6 +637,12 @@ def _get_nested(payload: Mapping[str, Any], path: tuple[str, ...]) -> Any:
             return None
         current = current.get(part)
     return current
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    if isinstance(value, Mapping):
+        return value
+    return {}
 
 
 def _walk_leaves(value: Any, path: tuple[str, ...] = ()) -> list[tuple[tuple[str, ...], Any]]:

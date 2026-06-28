@@ -90,6 +90,30 @@ REQUIRED_RECEIPT_REFS = {
         "schemas/agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.schema.json"
     ),
 }
+ACTUAL_DIFF_DECISION_CONTRACT_EVIDENCE_KEYS = (
+    "source_approval_gate_binding_id",
+    "source_approval_gate_ref",
+    "operator_decision_ref",
+    "actual_diff_terminal_closure_certificate_witness_ref",
+    "actual_diff_effect_reconciliation_witness_ref",
+    "actual_diff_ci_gate_before_ready_for_review_witness_ref",
+    "actual_diff_repository_effect_rollback_plan_witness_ref",
+    "actual_diff_uao_admission_witness_ref",
+    "actual_diff_branch_write_binding_ref",
+    "actual_diff_operator_response_witness_ref",
+    "actual_diff_approval_request_binding_ref",
+    "actual_non_empty_diff_receipt_ref",
+    "changed_file_refs",
+    "diff_refs",
+    "redacted_diff_bundle_ref",
+    "redacted_output_ref",
+    "effect_reconciliation_collected",
+    "binds_branch_state",
+    "binds_pull_request_state",
+    "binds_check_state",
+    "binds_merge_state",
+    "binds_branch_deletion_state",
+)
 REQUIRED_FALSE_FLAGS = (
     "operator_decision_value_present",
     "accepted_as_operator_approval",
@@ -119,6 +143,13 @@ REQUIRED_TRUE_FLAGS = (
     "generic_continuation_rejected",
     "read_only",
     "report_is_not_terminal_closure",
+    "requires_actual_diff_operator_approval_gate_evidence",
+    "effect_reconciliation_collected",
+    "binds_branch_state",
+    "binds_pull_request_state",
+    "binds_check_state",
+    "binds_merge_state",
+    "binds_branch_deletion_state",
 )
 ALLOWED_SECRET_KEYS = {
     "dns_mutation_enabled",
@@ -290,6 +321,49 @@ def _validate_terminal_closure_generic_continuation_rejection_semantics(
             errors,
             label,
         )
+        _require_equal(
+            payload,
+            ("continuation_rejection", "actual_diff_decision_contract_evidence", "source_decision_contract_binding_id"),
+            _get_nested(source_decision_contract, ("binding_id",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("continuation_rejection", "actual_diff_decision_contract_evidence", "source_decision_contract_ref"),
+            EXPECTED_SOURCE_DECISION_CONTRACT_REF,
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("continuation_rejection", "actual_diff_decision_contract_evidence", "operator_decision_ref"),
+            _get_nested(source_decision_contract, ("decision_contract", "operator_decision_ref")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            (
+                "continuation_rejection",
+                "actual_diff_decision_contract_evidence",
+                "requires_actual_diff_operator_approval_gate_evidence",
+            ),
+            True,
+            errors,
+            label,
+        )
+        for evidence_key in ACTUAL_DIFF_DECISION_CONTRACT_EVIDENCE_KEYS:
+            _require_equal(
+                payload,
+                ("continuation_rejection", "actual_diff_decision_contract_evidence", evidence_key),
+                _get_nested(
+                    source_decision_contract,
+                    ("decision_contract", "actual_diff_approval_gate_evidence", evidence_key),
+                ),
+                errors,
+                label,
+            )
         _require_equal(
             payload,
             ("terminal_closure",),

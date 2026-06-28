@@ -81,6 +81,31 @@ EXPECTED_FORBIDDEN_FIELDS = (
     "secret_value",
     "token",
 )
+ACTUAL_DIFF_GENERIC_REJECTION_EVIDENCE_KEYS = (
+    "source_approval_gate_binding_id",
+    "source_approval_gate_ref",
+    "operator_decision_ref",
+    "requires_actual_diff_operator_approval_gate_evidence",
+    "actual_diff_terminal_closure_certificate_witness_ref",
+    "actual_diff_effect_reconciliation_witness_ref",
+    "actual_diff_ci_gate_before_ready_for_review_witness_ref",
+    "actual_diff_repository_effect_rollback_plan_witness_ref",
+    "actual_diff_uao_admission_witness_ref",
+    "actual_diff_branch_write_binding_ref",
+    "actual_diff_operator_response_witness_ref",
+    "actual_diff_approval_request_binding_ref",
+    "actual_non_empty_diff_receipt_ref",
+    "changed_file_refs",
+    "diff_refs",
+    "redacted_diff_bundle_ref",
+    "redacted_output_ref",
+    "effect_reconciliation_collected",
+    "binds_branch_state",
+    "binds_pull_request_state",
+    "binds_check_state",
+    "binds_merge_state",
+    "binds_branch_deletion_state",
+)
 REQUIRED_RECEIPT_REFS = {
     "github_pr_terminal_closure_operator_decision_value_request_schema": (
         "schemas/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request.schema.json"
@@ -128,9 +153,19 @@ REQUIRED_FALSE_FLAGS = (
     "terminal_certificate_minted_by_request",
     "mints_terminal_certificate",
     "grants_terminal_authority",
+    "operator_decision_value_present",
+    "accepted_as_operator_approval",
 )
 REQUIRED_TRUE_FLAGS = (
     "generic_continuation_rejected",
+    "requires_actual_diff_generic_rejection_evidence",
+    "requires_actual_diff_operator_approval_gate_evidence",
+    "effect_reconciliation_collected",
+    "binds_branch_state",
+    "binds_pull_request_state",
+    "binds_check_state",
+    "binds_merge_state",
+    "binds_branch_deletion_state",
     "planning_only",
     "read_only",
     "report_is_not_terminal_closure",
@@ -278,6 +313,101 @@ def _validate_decision_value_request_semantics(
             errors,
             label,
         )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "source_rejection_binding_id"),
+            _get_nested(source_rejection, ("binding_id",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "source_rejection_witness_ref"),
+            EXPECTED_SOURCE_REJECTION_REF,
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "source_decision_contract_binding_id"),
+            _get_nested(source_rejection, ("continuation_rejection", "source_decision_contract_binding_id")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "source_decision_contract_ref"),
+            _get_nested(source_rejection, ("continuation_rejection", "source_decision_contract_ref")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "rejection_id"),
+            _get_nested(source_rejection, ("continuation_rejection", "rejection_id")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "rejection_status"),
+            _get_nested(source_rejection, ("rejection_status",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "requires_actual_diff_generic_rejection_evidence"),
+            True,
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "generic_continuation_rejected"),
+            _get_nested(source_rejection, ("generic_continuation_rejected",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "operator_decision_value_present"),
+            _get_nested(source_rejection, ("operator_decision_value_present",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "accepted_as_operator_approval"),
+            _get_nested(source_rejection, ("accepted_as_operator_approval",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "terminal_closure_certificate_minted"),
+            _get_nested(source_rejection, ("terminal_closure_certificate_minted",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("actual_diff_generic_rejection_evidence", "terminal_closure_authorized"),
+            _get_nested(source_rejection, ("terminal_closure_authorized",)),
+            errors,
+            label,
+        )
+        for evidence_key in ACTUAL_DIFF_GENERIC_REJECTION_EVIDENCE_KEYS:
+            _require_equal(
+                payload,
+                ("actual_diff_generic_rejection_evidence", evidence_key),
+                _get_nested(
+                    source_rejection,
+                    ("continuation_rejection", "actual_diff_decision_contract_evidence", evidence_key),
+                ),
+                errors,
+                label,
+            )
     requirements = _get_nested(payload, ("decision_value_requirements",))
     if not isinstance(requirements, list):
         errors.append(f"{label}: decision_value_requirements must be a list")

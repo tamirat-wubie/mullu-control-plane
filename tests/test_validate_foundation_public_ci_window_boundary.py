@@ -167,6 +167,30 @@ def test_public_ci_window_receipt_rejects_invalid_bounded_visibility_after_label
     assert all("private" not in finding.message for finding in findings)
 
 
+def test_public_ci_window_receipt_rejects_reason_without_budget_actions_boundary() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["reason"] = "Temporary visibility was useful for general repository review."
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_text_contract_invalid" for finding in findings)
+    assert any("reason must preserve public CI window boundary wording" in finding.message for finding in findings)
+    assert all("general repository review" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_exposure_decision_without_deployment_boundary() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["exposure_decision"] = "The public window was used for GitHub Actions and PR verification."
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_text_contract_invalid" for finding in findings)
+    assert any("exposure_decision must preserve public CI window boundary wording" in finding.message for finding in findings)
+    assert all("PR verification" not in finding.message for finding in findings)
+
+
 def test_public_ci_window_receipt_rejects_invalid_opened_at_timestamp() -> None:
     payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
     payload["opened_at"] = "2026-06-26 10:51:56"
@@ -190,6 +214,30 @@ def test_public_ci_window_receipt_rejects_closed_at_before_opened_at() -> None:
     assert any(finding.rule_id == "public_ci_window_receipt_timestamp_order_invalid" for finding in findings)
     assert any("closed_at must be greater than or equal to opened_at" in finding.message for finding in findings)
     assert all("2026-06-26T10:51:56Z" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_window_id_date_mismatch() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["window_id"] = "foundation_public_ci_window.20260625.pr2213"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_window_id_date_mismatch" for finding in findings)
+    assert any("window_id date must match opened_at UTC date" in finding.message for finding in findings)
+    assert all("20260625" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_malformed_window_id_date_token() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["window_id"] = "foundation_public_ci_window.pr2213"
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_window_id_date_mismatch" for finding in findings)
+    assert any("window_id date must match opened_at UTC date" in finding.message for finding in findings)
+    assert all("foundation_public_ci_window.pr2213" not in finding.message for finding in findings)
 
 
 def test_public_ci_window_receipt_rejects_secret_shaped_text() -> None:
@@ -233,6 +281,34 @@ def test_public_ci_window_receipt_rejects_duplicate_workflow_run_urls() -> None:
     assert any(finding.rule_id == "public_ci_window_receipt_workflow_urls_duplicate" for finding in findings)
     assert any("must not repeat a GitHub Actions run" in finding.message for finding in findings)
     assert all("28233991896" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_missing_workflow_run_url() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["workflow_run_urls"] = [
+        "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28233991896"
+    ]
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_workflow_url_count_invalid" for finding in findings)
+    assert any("workflow_run_urls must contain exactly 2 runs" in finding.message for finding in findings)
+    assert all("28233991896" not in finding.message for finding in findings)
+
+
+def test_public_ci_window_receipt_rejects_extra_workflow_run_url() -> None:
+    payload = load_json_object(DEFAULT_RECEIPT_PATH, "public CI window receipt example")
+    payload["workflow_run_urls"].append(
+        "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28233999999"
+    )
+
+    findings = validate_window_receipt(payload)
+
+    assert findings
+    assert any(finding.rule_id == "public_ci_window_receipt_workflow_url_count_invalid" for finding in findings)
+    assert any("workflow_run_urls must contain exactly 2 runs" in finding.message for finding in findings)
+    assert all("28233999999" not in finding.message for finding in findings)
 
 
 def test_public_ci_window_receipt_derives_pr_check_command_from_pull_request() -> None:

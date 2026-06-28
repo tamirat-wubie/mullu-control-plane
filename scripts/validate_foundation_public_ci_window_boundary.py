@@ -112,6 +112,26 @@ ALLOWED_VISIBILITY_AFTER_BY_STATUS = {
     "closed": {"private", "private_or_bounded_public"},
     "bounded_public_awaiting_evidence": {"bounded_public", "private_or_bounded_public"},
 }
+EXPECTED_RECEIPT_WORKFLOW_RUN_COUNT = 2
+REQUIRED_RECEIPT_TEXT_FRAGMENTS = {
+    "reason": (
+        "Foundation Mode",
+        "budget",
+        "GitHub Actions",
+    ),
+    "exposure_decision": (
+        "GitHub Actions",
+        "No public launch",
+        "customer access",
+        "production deployment",
+        "raw secret exposure",
+    ),
+    "closure_decision": (
+        "Public CI evidence",
+        "checks",
+        "public-readiness state",
+    ),
+}
 SECRET_SHAPED_FRAGMENTS = (
     "-----begin",
     "private key",
@@ -174,6 +194,13 @@ class Finding:
 
 def _normalise(content: str) -> str:
     return " ".join(content.casefold().split())
+
+
+def _contains_all_fragments(value: Any, fragments: tuple[str, ...]) -> bool:
+    if not isinstance(value, str):
+        return False
+    normalised_value = _normalise(value)
+    return all(_normalise(fragment) in normalised_value for fragment in fragments)
 
 
 def validate_document_text(content: str) -> list[Finding]:
@@ -328,6 +355,18 @@ def _window_id_binds_pull_request(window_id: Any, pull_request_number: str) -> b
     return isinstance(window_id, str) and window_id.endswith(f".pr{pull_request_number}")
 
 
+def _window_id_date_token(window_id: Any) -> str | None:
+    if not isinstance(window_id, str):
+        return None
+    parts = window_id.split(".")
+    if len(parts) != 3 or parts[0] != "foundation_public_ci_window":
+        return None
+    date_token = parts[1]
+    if len(date_token) != 8 or not date_token.isdigit():
+        return None
+    return date_token
+
+
 def _is_hex_sha(value: Any) -> bool:
     return isinstance(value, str) and len(value) == 40 and all(char in "0123456789abcdef" for char in value)
 
@@ -426,6 +465,14 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
     for key in required_text_fields:
         if not _is_non_empty_string(payload.get(key)):
             findings.append(Finding("public_ci_window_receipt_required_string_invalid", f"{key} must be non-empty"))
+    for key, fragments in REQUIRED_RECEIPT_TEXT_FRAGMENTS.items():
+        if not _contains_all_fragments(payload.get(key), fragments):
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_text_contract_invalid",
+                    f"{key} must preserve public CI window boundary wording",
+                )
+            )
     if not _is_hex_sha(payload.get("head_sha")):
         findings.append(Finding("public_ci_window_receipt_head_sha_invalid", "head_sha must be a 40-character lowercase hex SHA"))
     pull_request_number = _pull_request_number(payload.get("pull_request"))
@@ -448,6 +495,15 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
                 "opened_at must be an ISO-8601 UTC timestamp ending in Z",
             )
         )
+    else:
+        window_id_date = _window_id_date_token(payload.get("window_id"))
+        if window_id_date != parsed_opened_at.strftime("%Y%m%d"):
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_window_id_date_mismatch",
+                    "window_id date must match opened_at UTC date",
+                )
+            )
 
     closed_at = payload.get("closed_at")
     if status == "closed" and not _is_non_empty_string(closed_at):
@@ -480,6 +536,13 @@ def validate_window_receipt(payload: dict[str, Any]) -> list[Finding]:
             Finding("public_ci_window_receipt_workflow_urls_invalid", "workflow_run_urls must be a non-empty list")
         )
     else:
+        if len(workflow_urls) != EXPECTED_RECEIPT_WORKFLOW_RUN_COUNT:
+            findings.append(
+                Finding(
+                    "public_ci_window_receipt_workflow_url_count_invalid",
+                    f"workflow_run_urls must contain exactly {EXPECTED_RECEIPT_WORKFLOW_RUN_COUNT} runs",
+                )
+            )
         workflow_run_ids = tuple(_github_actions_run_id(item) for item in workflow_urls)
         if any(run_id is None for run_id in workflow_run_ids):
             findings.append(

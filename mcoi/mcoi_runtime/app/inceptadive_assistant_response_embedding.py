@@ -147,10 +147,7 @@ def _public_route_ref(route: str) -> str:
     normalized = " ".join(str(route or "").strip().split())
     if _route_is_public_path(normalized):
         return normalized
-    return _PUBLIC_ROUTE_PREFIX + stable_identifier(
-        "assistant-response-route",
-        {"value": normalized or "unknown"},
-    )
+    return stable_identifier("assistant-response-route", {"value": normalized or "unknown"})
 
 
 def _route_is_public_path(value: str) -> bool:

@@ -1,0 +1,154 @@
+{
+  "report_id": "agentic_service_harness_github_pr_creation_dry_run_receipt",
+  "schema_version": 1,
+  "generated_at": "2026-06-27T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "source_pr_admission_preflight_ref": "examples/agentic_service_harness_github_pr_admission_preflight.foundation.json",
+  "source_terminal_closure_certificate_read_model_ref": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json",
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "foundation_phase": "foundation_pr_creation_dry_run_only",
+    "read_only": true,
+    "dry_run_only": true,
+    "pr_creation_enabled": false,
+    "repository_write_enabled": false,
+    "external_adapter_integrated": false,
+    "receipt_store_append_enabled": false,
+    "secret_values_serialized": false
+  },
+  "dry_run_contract": {
+    "dry_run_id": "github-pr-creation-dry-run-receipt-foundation",
+    "dry_run_mode": "PR_CREATION_DRY_RUN_ONLY",
+    "source_admission_preflight_id": "github-pr-admission-preflight-foundation",
+    "simulated_action_kind": "future_github_pull_request_creation",
+    "allowed_action_classes": [
+      "dry_run"
+    ],
+    "forbidden_action_classes": [
+      "execute_adapter",
+      "write_to_branch",
+      "open_pr",
+      "append_receipt_store",
+      "deploy",
+      "dns_mutation",
+      "secret_mutation",
+      "destructive_operation",
+      "terminal_closure"
+    ],
+    "required_source_refs": [
+      "examples/agentic_service_harness_github_pr_admission_preflight.foundation.json",
+      "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json",
+      "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+      "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.schema.json",
+      "schemas/agentic_service_harness_github_pr_creation_dry_run_receipt.schema.json"
+    ],
+    "required_gate_refs": [
+      "gate://harness/no-live-adapter-execution",
+      "gate://harness/no-branch-write",
+      "gate://harness/no-pr-creation",
+      "gate://harness/no-repository-write",
+      "gate://harness/no-receipt-store-append",
+      "gate://harness/no-mutation-route",
+      "gate://harness/no-secret-serialization",
+      "gate://harness/terminal-closure-denied"
+    ],
+    "dry_run_obligations_checked": [
+      "obligation://bind-pr-admission-preflight-before-dry-run",
+      "obligation://bind-terminal-certificate-read-model-before-dry-run",
+      "obligation://record-pr-creation-dry-run-receipt",
+      "obligation://deny-live-pr-creation",
+      "obligation://deny-repository-effects",
+      "obligation://deny-receipt-store-append",
+      "obligation://deny-secret-material",
+      "obligation://bind-execution-admission-blocker"
+    ],
+    "validation_refs": [
+      "scripts/validate_agentic_service_harness_github_pr_creation_dry_run_receipt.py",
+      "scripts/validate_agentic_service_harness_github_pr_admission_preflight.py",
+      "scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_read_model.py"
+    ],
+    "read_only": true
+  },
+  "simulated_pr_creation": {
+    "result_state": "PR_CREATION_DRY_RUN_RECORDED",
+    "dry_run_receipt_recorded": true,
+    "source_admission_decision": "PR_ADMISSION_BLOCKED_AWAITING_OPERATOR_APPROVAL_AND_BRANCH_BINDING",
+    "source_pr_admitted": false,
+    "source_terminal_certificate_read_model_projection_only": true,
+    "source_terminal_certificate_read_model_not_terminal_closure": true,
+    "runtime_pr_creation_executed": false,
+    "pull_request_opened": false,
+    "branch_created": false,
+    "repository_written": false,
+    "receipt_store_appended": false,
+    "adapter_executed": false,
+    "connector_calls_observed": false,
+    "mutation_route_called": false,
+    "external_effects_observed": false,
+    "raw_output_included": false,
+    "raw_secret_material_included": false,
+    "output_digest": "sha256:66d7c3345e83e095184ce8a2e509e43b46ad9eab44d59e777ddcf08da6145d65",
+    "terminal_closure": false,
+    "success_claim_allowed": false
+  },
+  "execution_admission_gate": {
+    "decision": "PR_CREATION_EXECUTION_BLOCKED_AWAITING_EXPLICIT_ADMISSION",
+    "execution_admitted": false,
+    "execution_target_ref": "github-pr://agentic-service-harness/task-run",
+    "required_before_execution_refs": [
+      "examples/agentic_service_harness_github_pr_admission_preflight.foundation.json",
+      "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json",
+      "evidence://operator-approval-for-pr-execution",
+      "evidence://branch-write-authority-binding",
+      "evidence://uao-pr-execution-admission",
+      "evidence://repository-effect-rollback-plan",
+      "evidence://receipt-store-write-path-binding",
+      "evidence://effect-reconciliation-before-terminal-closure"
+    ],
+    "blocked_reason_refs": [
+      "blocked://pr-creation/dry-run-only",
+      "blocked://pr-admission/source-preflight-denied",
+      "blocked://terminal-certificate-read-model/projection-only",
+      "blocked://operator-approval/not-present",
+      "blocked://uao/pr-execution-not-admitted",
+      "blocked://terminal-closure/not-authorized"
+    ],
+    "terminal_closure_allowed": false
+  },
+  "authority_denials": {
+    "live_adapter_execution_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "repository_write_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "receipt_refs": {
+    "github_pr_creation_dry_run_receipt_schema": "schemas/agentic_service_harness_github_pr_creation_dry_run_receipt.schema.json",
+    "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+    "github_pr_admission_preflight_example": "examples/agentic_service_harness_github_pr_admission_preflight.foundation.json",
+    "terminal_closure_certificate_read_model_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.schema.json",
+    "terminal_closure_certificate_read_model_example": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-creation-dry-run-receipt",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_creation_dry_run_receipt.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Bind PR creation execution admission to this dry-run receipt before any live pull-request creation path is considered.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

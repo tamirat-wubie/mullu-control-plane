@@ -4,6 +4,8 @@
   "generated_at": "2026-06-17T00:00:00Z",
   "solver_outcome": "SolvedVerified",
   "source_receipt_emitter_ref": "examples/agentic_service_harness_github_task_receipt_emitter_dry_run.foundation.json",
+  "source_non_empty_diff_file_summary_receipt_ref": "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json",
+  "source_terminal_closure_certificate_read_model_ref": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json",
   "scope": {
     "tenant_id": "tenant-local-foundation",
     "organization_id": "org-mullusi-foundation",
@@ -42,8 +44,11 @@
     ],
     "required_source_refs": [
       "examples/agentic_service_harness_github_task_receipt_emitter_dry_run.foundation.json",
+      "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json",
+      "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json",
       "examples/agentic_service_harness_github_repo_task_service.foundation.json",
-      "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json"
+      "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+      "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.schema.json"
     ],
     "required_gate_refs": [
       "gate://harness/no-live-adapter-execution",
@@ -56,8 +61,11 @@
     ],
     "admission_obligations_checked": [
       "obligation://record-pr-admission-preflight",
+      "obligation://require-non-empty-diff-file-summary-before-pr",
       "obligation://require-operator-approval-before-pr",
       "obligation://require-branch-write-authority-before-pr",
+      "obligation://require-terminal-certificate-read-model-before-pr",
+      "obligation://deny-pr-creation-from-read-model-projection",
       "obligation://deny-pr-creation-without-approval",
       "obligation://deny-repository-effects",
       "obligation://deny-secret-material",
@@ -65,6 +73,8 @@
     ],
     "validation_refs": [
       "scripts/validate_agentic_service_harness_github_pr_admission_preflight.py",
+      "scripts/validate_agentic_service_harness_non_empty_diff_file_summary_receipt.py",
+      "scripts/validate_agentic_service_harness_github_pr_terminal_closure_certificate_read_model.py",
       "scripts/validate_agentic_service_harness_github_task_receipt_emitter_dry_run.py",
       "scripts/validate_agentic_service_harness_github_repo_task_service.py"
     ],
@@ -75,15 +85,21 @@
     "pr_admitted": false,
     "approval_target_ref": "github-pr://agentic-service-harness/task-run",
     "required_before_pr_refs": [
+      "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json",
       "evidence://operator-approval-for-pr-admission",
       "evidence://branch-write-authority-binding",
+      "evidence://receipt-store-write-path-for-diff-collection",
+      "digest://redacted-diff-bundle",
       "evidence://repository-effect-rollback-plan",
       "evidence://uao-pr-admission",
       "evidence://ci-gate-before-ready-for-review",
-      "evidence://effect-reconciliation-before-terminal-closure"
+      "evidence://effect-reconciliation-before-terminal-closure",
+      "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json"
     ],
     "blocked_reason_refs": [
       "blocked://operator-approval/not-present",
+      "blocked://non-empty-diff-file-summary/not-terminal",
+      "blocked://terminal-certificate-read-model/projection-only",
       "blocked://branch-write-authority/not-bound",
       "blocked://pr-creation/not-admitted",
       "blocked://terminal-closure/not-authorized"
@@ -124,6 +140,10 @@
   },
   "receipt_refs": {
     "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
+    "non_empty_diff_file_summary_receipt_schema": "schemas/agentic_service_harness_non_empty_diff_file_summary_receipt.schema.json",
+    "non_empty_diff_file_summary_receipt_example": "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json",
+    "terminal_closure_certificate_read_model_schema": "schemas/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.schema.json",
+    "terminal_closure_certificate_read_model_example": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json",
     "github_task_receipt_emitter_dry_run_schema": "schemas/agentic_service_harness_github_task_receipt_emitter_dry_run.schema.json",
     "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json",
     "agentic_service_harness_schema": "schemas/agentic_service_harness.schema.json",
@@ -136,7 +156,7 @@
       "required_for_closure": true
     }
   ],
-  "next_action": "Add operator approval request and branch-write authority witness before admitting any GitHub PR creation path.",
+  "next_action": "Keep live GitHub PR creation blocked until admission consumes terminal certificate read-model evidence through a governed execution path without inferring repository mutation authority from the projection.",
   "report_is_not_terminal_closure": true,
   "terminal_closure_required": true
 }

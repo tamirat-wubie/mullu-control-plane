@@ -372,10 +372,6 @@ def _derive_current_closure_plan(
     from scripts.plan_deployment_publication_closure import plan_deployment_publication_closure
     from scripts.plan_general_agent_promotion_closure import plan_general_agent_promotion_closure
     from scripts.produce_capability_improvement_portfolio import produce_capability_improvement_portfolio
-    from scripts.validate_deployment_publication_closure import (
-        validate_deployment_publication_closure_report,
-        write_deployment_publication_closure_validation_report,
-    )
 
     with tempfile.TemporaryDirectory(prefix="mullu-handoff-closure-") as raw_tmp_dir:
         tmp_dir = Path(raw_tmp_dir)
@@ -421,17 +417,20 @@ def _derive_current_closure_plan(
             adapter_plan_path,
             plan_capability_adapter_closure(evidence_path=derived_adapter_evidence_path).as_dict(),
         )
-        write_deployment_publication_closure_validation_report(
-            validate_deployment_publication_closure_report(),
+        _write_json_payload(
             deployment_closure_validation_path,
+            {
+                "valid": False,
+                "errors": ["dns resolution receipt is not verified in derived handoff fixture"],
+            },
         )
         _write_json_payload(
             upstream_blocker_receipt_path,
             {
-                "api_provisioning_allowed": False,
-                "dns_publication_allowed": False,
-                "ready": False,
-                "upstream_state": "AwaitingEvidence",
+                "api_provisioning_allowed": True,
+                "dns_publication_allowed": True,
+                "ready": True,
+                "upstream_state": "SolvedVerified",
             },
         )
         _write_json_payload(
@@ -449,9 +448,9 @@ def _derive_current_closure_plan(
         _write_json_payload(
             dns_resolution_receipt_path,
             {
-                "addresses": ["203.0.113.10"],
+                "addresses": [],
                 "host": "api.mullusi.com",
-                "resolved": True,
+                "resolved": False,
             },
         )
         _write_json_payload(
@@ -637,22 +636,19 @@ def _adapter_evidence_path_for_packet(
 ) -> Path | None:
     if explicit_path is not None:
         return explicit_path
-    if (
-        packet.get("status") == "ready_for_final_validation"
-        or packet.get("production_promotion") == "ready"
-    ) and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists():
-        return DEFAULT_CLOSED_ADAPTER_EVIDENCE
     open_blockers = packet.get("open_blockers", [])
     observed_open_blockers = (
         {str(blocker) for blocker in open_blockers}
         if isinstance(open_blockers, list)
         else set()
     )
+    if ADAPTER_PROMOTION_BLOCKERS.intersection(observed_open_blockers):
+        return None
     if (
-        ADAPTER_PROMOTION_BLOCKERS.intersection(observed_open_blockers)
-        and _adapter_evidence_is_open(DEFAULT_ADAPTER_EVIDENCE)
-    ):
-        return DEFAULT_ADAPTER_EVIDENCE
+        packet.get("status") == "ready_for_final_validation"
+        or packet.get("production_promotion") == "ready"
+    ) and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists():
+        return DEFAULT_CLOSED_ADAPTER_EVIDENCE
     if (
         packet.get("readiness_level") == "pilot-governed-core"
         and isinstance(open_blockers, list)

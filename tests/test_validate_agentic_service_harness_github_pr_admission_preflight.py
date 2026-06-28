@@ -7,6 +7,7 @@ Dependencies: scripts.validate_agentic_service_harness_github_pr_admission_prefl
 Invariants:
   - PR admission never creates branches or pull requests.
   - Operator approval and branch-write authority remain absent.
+  - Terminal certificate read-model evidence is required but grants no PR authority.
   - Mutation routes and secret-like payloads fail closed.
 """
 
@@ -25,6 +26,14 @@ def test_github_pr_admission_preflight_passes() -> None:
     assert validation.errors == ()
     assert validation.example_count == 1
     assert validation.source_receipt_ref == validator.EXPECTED_SOURCE_RECEIPT_REF
+    assert (
+        validation.non_empty_diff_file_summary_receipt_ref
+        == validator.EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF
+    )
+    assert (
+        validation.terminal_certificate_read_model_ref
+        == validator.EXPECTED_TERMINAL_CERTIFICATE_READ_MODEL_REF
+    )
 
 
 def test_github_pr_admission_preflight_rejects_authority_drift() -> None:
@@ -107,6 +116,77 @@ def test_github_pr_admission_preflight_rejects_missing_required_refs() -> None:
     assert "approval_admission_gate.blocked_reason_refs missing required ref" in serialized_errors
 
 
+def test_github_pr_admission_preflight_rejects_missing_non_empty_diff_file_summary_binding() -> None:
+    payload = validator.build_mutated_preflight(
+        source_non_empty_diff_file_summary_receipt_ref="examples/missing-non-empty-diff-file-summary.json",
+    )
+    payload["receipt_refs"]["non_empty_diff_file_summary_receipt_example"] = "examples/missing.json"
+    payload["receipt_refs"]["non_empty_diff_file_summary_receipt_schema"] = "schemas/missing.json"
+
+    errors: list[str] = []
+    validator._validate_preflight_semantics(payload, _source_receipt(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "source_non_empty_diff_file_summary_receipt_ref expected" in serialized_errors
+    assert "receipt_refs.non_empty_diff_file_summary_receipt_example expected" in serialized_errors
+    assert "receipt_refs.non_empty_diff_file_summary_receipt_schema expected" in serialized_errors
+
+
+def test_github_pr_admission_preflight_rejects_missing_terminal_certificate_read_model_binding() -> None:
+    payload = validator.build_mutated_preflight(
+        source_terminal_closure_certificate_read_model_ref="examples/missing-certificate-read-model.json",
+    )
+    payload["receipt_refs"]["terminal_closure_certificate_read_model_example"] = "examples/missing.json"
+    payload["receipt_refs"]["terminal_closure_certificate_read_model_schema"] = "schemas/missing.json"
+
+    errors: list[str] = []
+    validator._validate_preflight_semantics(payload, _source_receipt(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "source_terminal_closure_certificate_read_model_ref expected" in serialized_errors
+    assert "receipt_refs.terminal_closure_certificate_read_model_example expected" in serialized_errors
+    assert "receipt_refs.terminal_closure_certificate_read_model_schema expected" in serialized_errors
+
+
+def test_github_pr_admission_preflight_rejects_non_empty_diff_file_summary_source_drift() -> None:
+    payload = validator.build_mutated_preflight(scope__repository_connection_id="github-installation://wrong")
+    file_summary_receipt = _file_summary_receipt()
+    file_summary_receipt["solver_outcome"] = "SolvedVerified"
+    file_summary_receipt["authority_denials"]["pr_creation_enabled"] = True
+
+    errors: list[str] = []
+    validator._validate_preflight_semantics(payload, _source_receipt(), errors, "mutated", file_summary_receipt)
+    serialized_errors = "\n".join(errors)
+
+    assert "scope.repository_connection_id expected" in serialized_errors
+    assert "solver_outcome expected 'AwaitingEvidence'" in serialized_errors
+    assert "authority_denials.pr_creation_enabled expected False" in serialized_errors
+
+
+def test_github_pr_admission_preflight_rejects_terminal_certificate_read_model_source_drift() -> None:
+    payload = validator.build_mutated_preflight(scope__repository_slug="wrong/repo")
+    read_model = _terminal_certificate_read_model()
+    read_model["authority_denials"]["pull_request_creation_enabled"] = True
+    read_model["effect_boundary"]["repository_written_by_read_model"] = True
+    read_model["operator_view"]["contains_secret_values"] = True
+
+    errors: list[str] = []
+    validator._validate_preflight_semantics(
+        payload,
+        _source_receipt(),
+        errors,
+        "mutated",
+        _file_summary_receipt(),
+        read_model,
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "scope.repository_slug expected" in serialized_errors
+    assert "authority_denials.pull_request_creation_enabled expected False" in serialized_errors
+    assert "effect_boundary.repository_written_by_read_model expected False" in serialized_errors
+    assert "operator_view.contains_secret_values expected False" in serialized_errors
+
+
 def test_github_pr_admission_preflight_rejects_mutation_route_and_secret_like_payload() -> None:
     payload = validator.build_mutated_preflight(next_action="POST /api/github/prs should never be admitted")
     payload["simulated_pr_admission"]["serialized_token_value"] = "github_pat_forbiddencredential"
@@ -133,7 +213,23 @@ def test_github_pr_admission_preflight_cli_writes_report(tmp_path: Path, capsys)
     assert file_payload["ok"] is True
     assert stdout_payload["errors"] == []
     assert file_payload["source_receipt_ref"] == validator.EXPECTED_SOURCE_RECEIPT_REF
+    assert (
+        file_payload["non_empty_diff_file_summary_receipt_ref"]
+        == validator.EXPECTED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_REF
+    )
+    assert (
+        file_payload["terminal_certificate_read_model_ref"]
+        == validator.EXPECTED_TERMINAL_CERTIFICATE_READ_MODEL_REF
+    )
 
 
 def _source_receipt() -> dict[str, object]:
     return json.loads(validator.DEFAULT_SOURCE_RECEIPT_EXAMPLES[0].read_text(encoding="utf-8"))
+
+
+def _file_summary_receipt() -> dict[str, object]:
+    return json.loads(validator.DEFAULT_NON_EMPTY_DIFF_FILE_SUMMARY_EXAMPLES[0].read_text(encoding="utf-8"))
+
+
+def _terminal_certificate_read_model() -> dict[str, object]:
+    return json.loads(validator.DEFAULT_TERMINAL_CERTIFICATE_READ_MODEL_EXAMPLES[0].read_text(encoding="utf-8"))

@@ -26,8 +26,50 @@
     "rollback_plan_request_id": "rollback-plan.github-pr-repository-effect",
     "source_approval_request_id": "approval-request.github-pr-admission",
     "source_response_record_ref": "evidence://operator-pr-approval-response-record",
+    "requires_command_preview_uao_admission_witness": true,
+    "command_preview_uao_admission_witness_ref": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
+    "command_preview_branch_write_binding_ref": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+    "command_preview_operator_response_binding_ref": "examples/agentic_service_harness_github_pr_operator_response_command_preview_binding.foundation.json",
+    "command_preview_operator_response_witness_ref": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json",
+    "command_preview_operator_approval_request_binding_ref": "examples/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.foundation.json",
+    "command_preview_ref": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
+    "redacted_command_preview": "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> --body-file <redacted-body-file-ref>",
+    "argument_vector_template": [
+      "gh",
+      "pr",
+      "create",
+      "--base",
+      "main",
+      "--head",
+      "<branch-ref>",
+      "--title",
+      "<redacted-title-ref>",
+      "--body-file",
+      "<redacted-body-file-ref>"
+    ],
+    "placeholder_refs": [
+      "placeholder://branch-ref",
+      "placeholder://redacted-title-ref",
+      "placeholder://redacted-body-file-ref"
+    ],
+    "requires_actual_diff_uao_admission_witness": true,
+    "actual_diff_uao_admission_witness_ref": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
+    "actual_diff_branch_write_binding_ref": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+    "actual_diff_operator_response_witness_ref": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json",
+    "actual_diff_approval_request_binding_ref": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
+    "actual_non_empty_diff_receipt_ref": "witness://actual-non-empty-diff-receipt",
+    "changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
+    "redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "redacted_output_ref": "witness://filesystem-write-output-redacted",
     "required_witness_kind": "repository_effect_rollback_plan",
     "required_evidence_ref": "evidence://repository-effect-rollback-plan",
+    "command_preview_bound": true,
+    "operator_response_bound": true,
     "uao_admission_witness_required": true,
     "uao_admission_witness_satisfied": false,
     "repository_effect_rollback_plan_required": true,
@@ -78,7 +120,19 @@
   "receipt_refs": {
     "github_pr_repository_effect_rollback_plan_witness_schema": "schemas/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.schema.json",
     "github_pr_uao_admission_witness_schema": "schemas/agentic_service_harness_github_pr_uao_admission_witness.schema.json",
+    "github_pr_uao_admission_witness_example": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
+    "github_pr_operator_response_command_preview_binding_schema": "schemas/agentic_service_harness_github_pr_operator_response_command_preview_binding.schema.json",
+    "github_pr_operator_response_command_preview_binding_example": "examples/agentic_service_harness_github_pr_operator_response_command_preview_binding.foundation.json",
+    "github_pr_operator_approval_request_command_preview_binding_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.schema.json",
+    "github_pr_operator_approval_request_command_preview_binding_example": "examples/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.foundation.json",
+    "github_pr_creation_command_preview_schema": "schemas/agentic_service_harness_github_pr_creation_command_preview.schema.json",
+    "github_pr_creation_command_preview_example": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
     "github_pr_branch_write_authority_binding_schema": "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json",
+    "github_pr_branch_write_authority_binding_example": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+    "github_pr_operator_response_witness_schema": "schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json",
+    "github_pr_operator_response_witness_example": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json",
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json",
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
     "github_pr_operator_approval_request_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json",
     "github_pr_admission_preflight_schema": "schemas/agentic_service_harness_github_pr_admission_preflight.schema.json",
     "github_repo_task_service_schema": "schemas/agentic_service_harness_github_repo_task_service.schema.json"
@@ -90,5 +144,5 @@
       "required_for_closure": true
     }
   ],
-  "next_action": "Collect repository-effect rollback-plan evidence before any CI gate or pull-request creation authority can be considered."
+  "next_action": "Bind CI gate before ready-for-review to the command-preview and actual-diff repository-effect rollback plan after explicit rollback evidence exists."
 }

@@ -396,7 +396,7 @@ def test_readiness_map_rejects_missing_github_pr_admission_ready_row(
     )
 
 
-def test_readiness_map_rejects_missing_github_pr_ci_gate_ready_row(
+def test_readiness_map_rejects_missing_github_pr_branch_write_command_preview_ready_row(
     tmp_path: Path,
 ) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
@@ -405,8 +405,8 @@ def test_readiness_map_rejects_missing_github_pr_ci_gate_ready_row(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR CI gate before ready-for-review witness PR | READY |",
-            "| GitHub PR CI gate before ready-for-review witness PR | PARTIAL |",
+            "| GitHub PR branch-write authority command-preview response binding PR | READY |",
+            "| GitHub PR branch-write authority command-preview response binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -416,7 +416,57 @@ def test_readiness_map_rejects_missing_github_pr_ci_gate_ready_row(
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR CI gate before ready-for-review witness PR"
+        "missing ready row: GitHub PR branch-write authority command-preview response binding PR"
+        in serialized_errors
+    )
+
+
+def test_readiness_map_rejects_missing_github_pr_ci_gate_ready_row(
+    tmp_path: Path,
+) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "| GitHub PR CI gate before ready-for-review command-preview rollback binding PR | READY |",
+            "| GitHub PR CI gate before ready-for-review command-preview rollback binding PR | PARTIAL |",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing ready row: GitHub PR CI gate before ready-for-review command-preview rollback binding PR"
+        in serialized_errors
+    )
+
+
+def test_readiness_map_rejects_missing_github_pr_rollback_actual_diff_uao_ready_row(
+    tmp_path: Path,
+) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "| GitHub PR repository-effect rollback command-preview UAO binding PR | READY |",
+            "| GitHub PR repository-effect rollback command-preview UAO binding PR | PARTIAL |",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing ready row: GitHub PR repository-effect rollback command-preview UAO binding PR"
         in serialized_errors
     )
 
@@ -430,8 +480,8 @@ def test_readiness_map_rejects_missing_github_pr_effect_reconciliation_ready_row
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR effect reconciliation witness PR | READY |",
-            "| GitHub PR effect reconciliation witness PR | PARTIAL |",
+            "| GitHub PR effect reconciliation command-preview CI gate binding PR | READY |",
+            "| GitHub PR effect reconciliation command-preview CI gate binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -441,7 +491,7 @@ def test_readiness_map_rejects_missing_github_pr_effect_reconciliation_ready_row
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR effect reconciliation witness PR"
+        "missing ready row: GitHub PR effect reconciliation command-preview CI gate binding PR"
         in serialized_errors
     )
 
@@ -455,8 +505,8 @@ def test_readiness_map_rejects_missing_github_pr_terminal_closure_ready_row(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR terminal closure certificate witness PR | READY |",
-            "| GitHub PR terminal closure certificate witness PR | PARTIAL |",
+            "| GitHub PR terminal closure certificate command-preview effect reconciliation binding PR | READY |",
+            "| GitHub PR terminal closure certificate command-preview effect reconciliation binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -466,7 +516,32 @@ def test_readiness_map_rejects_missing_github_pr_terminal_closure_ready_row(
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR terminal closure certificate witness PR"
+        "missing ready row: GitHub PR terminal closure certificate command-preview effect reconciliation binding PR"
+        in serialized_errors
+    )
+
+
+def test_readiness_map_rejects_missing_github_pr_terminal_candidate_binding_row(
+    tmp_path: Path,
+) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "| GitHub PR terminal closure certificate candidate command-preview certificate binding PR | READY |",
+            "| GitHub PR terminal closure certificate candidate command-preview certificate binding PR | PARTIAL |",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing ready row: GitHub PR terminal closure certificate candidate command-preview certificate binding PR"
         in serialized_errors
     )
 
@@ -480,8 +555,8 @@ def test_readiness_map_rejects_missing_github_pr_terminal_decision_value_request
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR terminal closure operator decision value request PR | READY |",
-            "| GitHub PR terminal closure operator decision value request PR | PARTIAL |",
+            "| GitHub PR terminal closure operator decision value request actual-diff generic rejection binding PR | READY |",
+            "| GitHub PR terminal closure operator decision value request actual-diff generic rejection binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -491,7 +566,7 @@ def test_readiness_map_rejects_missing_github_pr_terminal_decision_value_request
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR terminal closure operator decision value request PR"
+        "missing ready row: GitHub PR terminal closure operator decision value request actual-diff generic rejection binding PR"
         in serialized_errors
     )
 
@@ -505,8 +580,8 @@ def test_readiness_map_rejects_missing_github_pr_terminal_decision_value_record_
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR terminal closure operator decision value record PR | READY |",
-            "| GitHub PR terminal closure operator decision value record PR | PARTIAL |",
+            "| GitHub PR terminal closure operator decision value record actual-diff request binding PR | READY |",
+            "| GitHub PR terminal closure operator decision value record actual-diff request binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -516,7 +591,7 @@ def test_readiness_map_rejects_missing_github_pr_terminal_decision_value_record_
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR terminal closure operator decision value record PR"
+        "missing ready row: GitHub PR terminal closure operator decision value record actual-diff request binding PR"
         in serialized_errors
     )
 
@@ -530,8 +605,8 @@ def test_readiness_map_rejects_missing_github_pr_terminal_certificate_minting_ro
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR terminal closure certificate minting PR | READY |",
-            "| GitHub PR terminal closure certificate minting PR | PARTIAL |",
+            "| GitHub PR terminal closure certificate minting actual-diff decision value record binding PR | READY |",
+            "| GitHub PR terminal closure certificate minting actual-diff decision value record binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -541,7 +616,7 @@ def test_readiness_map_rejects_missing_github_pr_terminal_certificate_minting_ro
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR terminal closure certificate minting PR"
+        "missing ready row: GitHub PR terminal closure certificate minting actual-diff decision value record binding PR"
         in serialized_errors
     )
 
@@ -555,8 +630,8 @@ def test_readiness_map_rejects_missing_github_pr_terminal_certificate_read_model
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR terminal closure certificate read model PR | READY |",
-            "| GitHub PR terminal closure certificate read model PR | PARTIAL |",
+            "| GitHub PR terminal closure certificate read model actual-diff minting binding PR | READY |",
+            "| GitHub PR terminal closure certificate read model actual-diff minting binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -566,7 +641,7 @@ def test_readiness_map_rejects_missing_github_pr_terminal_certificate_read_model
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR terminal closure certificate read model PR"
+        "missing ready row: GitHub PR terminal closure certificate read model actual-diff minting binding PR"
         in serialized_errors
     )
 
@@ -646,7 +721,7 @@ def test_readiness_map_rejects_missing_actual_diff_collection_receipt_row(
     )
 
 
-def test_readiness_map_rejects_missing_non_empty_diff_file_summary_next_pr(
+def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     tmp_path: Path,
 ) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
@@ -655,7 +730,7 @@ def test_readiness_map_rejects_missing_non_empty_diff_file_summary_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(workspace): add non-empty diff/file summary receipt after filesystem-write evidence`",
+            "1. `harness(pr): bind terminal closure operator approval gate to command-preview candidate`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -666,7 +741,32 @@ def test_readiness_map_rejects_missing_non_empty_diff_file_summary_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(workspace): add non-empty diff/file summary receipt after filesystem-write evidence"
+        "missing next PR marker: harness(pr): bind terminal closure operator approval gate to command-preview candidate"
+        in serialized_errors
+    )
+
+
+def test_readiness_map_rejects_missing_non_empty_diff_file_summary_receipt_row(
+    tmp_path: Path,
+) -> None:
+    map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
+        encoding="utf-8"
+    )
+    map_path = tmp_path / "readiness-map.md"
+    map_path.write_text(
+        map_text.replace(
+            "| Non-empty diff file summary receipt PR | READY |",
+            "| Non-empty diff file summary receipt PR | PARTIAL |",
+        ),
+        encoding="utf-8",
+    )
+
+    validation = validate_readiness_map(map_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert (
+        "missing ready row: Non-empty diff file summary receipt PR"
         in serialized_errors
     )
 

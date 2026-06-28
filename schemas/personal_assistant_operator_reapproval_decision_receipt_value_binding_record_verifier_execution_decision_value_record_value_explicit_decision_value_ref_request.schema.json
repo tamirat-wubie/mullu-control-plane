@@ -1,0 +1,347 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-request:1",
+  "title": "Personal Assistant Operator Reapproval Decision Receipt Value Binding Record Verifier Execution Decision Value Record Value Explicit Decision Value Ref Request",
+  "description": "No-effect request projection for required explicit decision value refs after the missing-ref status ledger.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "explicit_decision_value_ref_request_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_explicit_decision_value_ref_status_ledger_id",
+    "explicit_decision_value_ref_request_state",
+    "decision",
+    "outcome",
+    "required_ref_request_count",
+    "required_ref_request_ids",
+    "required_ref_requests",
+    "receipt",
+    "effect_boundary",
+    "private_payload_policy",
+    "summary",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "explicit_decision_value_ref_request_id": {
+      "type": "string",
+      "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_request_[a-z0-9][a-z0-9_:-]*$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "governed": {
+      "const": true
+    },
+    "source_projection": {
+      "const": "operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_status_ledger"
+    },
+    "source_explicit_decision_value_ref_status_ledger_id": {
+      "$ref": "#/$defs/non_empty_text"
+    },
+    "explicit_decision_value_ref_request_state": {
+      "const": "required_explicit_decision_value_refs_requested_not_collected"
+    },
+    "decision": {
+      "const": "blocked"
+    },
+    "outcome": {
+      "const": "AwaitingEvidence"
+    },
+    "required_ref_request_count": {
+      "const": 4
+    },
+    "required_ref_request_ids": {
+      "$ref": "#/$defs/string_array"
+    },
+    "required_ref_requests": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/ref_request"
+      }
+    },
+    "receipt": {
+      "type": "object"
+    },
+    "effect_boundary": {
+      "$ref": "#/$defs/effect_boundary"
+    },
+    "private_payload_policy": {
+      "$ref": "#/$defs/private_payload_policy"
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "assurance": {
+      "$ref": "#/$defs/assurance"
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    }
+  },
+  "$defs": {
+    "non_empty_text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "string_array": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/non_empty_text"
+      }
+    },
+    "ref_name": {
+      "enum": [
+        "operator_decision_value_ref",
+        "operator_identity_ref",
+        "operator_signature_ref",
+        "operator_reapproval_decision_receipt_ref"
+      ]
+    },
+    "ref_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_ref_request_id",
+        "ref_name",
+        "source_required_ref_status_id",
+        "source_explicit_decision_value_ref_status_ledger_id",
+        "request_status",
+        "request_required",
+        "missing",
+        "present",
+        "bound",
+        "validated",
+        "collected",
+        "accepted",
+        "stored",
+        "grants_authority",
+        "grants_verifier_execution",
+        "operator_value_record_created",
+        "verifier_execution_allowed",
+        "authority_granted",
+        "requested_evidence_uri",
+        "blocking_reason"
+      ],
+      "properties": {
+        "required_ref_request_id": {
+          "type": "string",
+          "pattern": "^pa_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_request_item_[a-z0-9][a-z0-9_:-]*$"
+        },
+        "ref_name": {
+          "$ref": "#/$defs/ref_name"
+        },
+        "source_required_ref_status_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "source_explicit_decision_value_ref_status_ledger_id": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "request_status": {
+          "const": "requested_not_collected"
+        },
+        "request_required": {
+          "const": true
+        },
+        "missing": {
+          "const": true
+        },
+        "present": {
+          "const": false
+        },
+        "bound": {
+          "const": false
+        },
+        "validated": {
+          "const": false
+        },
+        "collected": {
+          "const": false
+        },
+        "accepted": {
+          "const": false
+        },
+        "stored": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        },
+        "grants_verifier_execution": {
+          "const": false
+        },
+        "operator_value_record_created": {
+          "const": false
+        },
+        "verifier_execution_allowed": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        },
+        "requested_evidence_uri": {
+          "$ref": "#/$defs/non_empty_text"
+        },
+        "blocking_reason": {
+          "$ref": "#/$defs/non_empty_text"
+        }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "required_value_refs_declared": {
+          "const": true
+        },
+        "required_value_refs_requested": {
+          "const": true
+        },
+        "required_value_refs_absent": {
+          "const": true
+        },
+        "explicit_decision_value_ref_request_satisfied": {
+          "const": false
+        },
+        "explicit_decision_value_refs_collected": {
+          "const": false
+        },
+        "explicit_decision_value_refs_present": {
+          "const": false
+        },
+        "explicit_operator_decision_value_bound": {
+          "const": false
+        },
+        "operator_decision_value_present": {
+          "const": false
+        },
+        "operator_value_record_created": {
+          "const": false
+        },
+        "verifier_execution_allowed": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        },
+        "live_connector_execution_allowed": {
+          "const": false
+        },
+        "connector_mutation_allowed": {
+          "const": false
+        },
+        "memory_write_allowed": {
+          "const": false
+        },
+        "deployment_mutation_allowed": {
+          "const": false
+        },
+        "nested_mind_live_activation_allowed": {
+          "const": false
+        },
+        "public_readiness_claim_allowed": {
+          "const": false
+        }
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "raw_private_payload_serialized": {
+          "const": false
+        },
+        "secret_values_serialized": {
+          "const": false
+        },
+        "explicit_decision_value_ref_status_projection": {
+          "const": "missing_ref_status_only"
+        },
+        "explicit_decision_value_ref_request_projection": {
+          "const": "request_metadata_only"
+        },
+        "operator_decision_value_projection": {
+          "const": "absent"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "required_ref_request_count": {
+          "const": 4
+        },
+        "required_ref_requested_count": {
+          "const": 4
+        },
+        "required_ref_collected_count": {
+          "const": 0
+        },
+        "required_ref_present_count": {
+          "const": 0
+        },
+        "required_ref_bound_count": {
+          "const": 0
+        },
+        "required_ref_accepted_count": {
+          "const": 0
+        },
+        "required_ref_stored_count": {
+          "const": 0
+        },
+        "operator_value_record_creation_count": {
+          "const": 0
+        },
+        "verifier_execution_allowed_count": {
+          "const": 0
+        },
+        "authority_grant_count": {
+          "const": 0
+        }
+      }
+    },
+    "assurance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "outcome": {
+          "const": "AwaitingEvidence"
+        },
+        "required_value_refs_requested": {
+          "const": true
+        },
+        "required_value_refs_collected": {
+          "const": false
+        },
+        "explicit_decision_value_ref_request_satisfied": {
+          "const": false
+        },
+        "authority_granted": {
+          "const": false
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "runtime_boundary": {
+          "const": "required_explicit_decision_value_refs_requested_not_collected"
+        },
+        "request_projection_only": {
+          "const": true
+        },
+        "authority_granted": {
+          "const": false
+        }
+      }
+    }
+  }
+}

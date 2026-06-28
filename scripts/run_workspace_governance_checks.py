@@ -335,16 +335,100 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "agentic_service_harness_concrete_filesystem_write_evidence_candidate",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_concrete_filesystem_write_evidence_candidate.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_actual_filesystem_write_receipt_admission",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_actual_filesystem_write_receipt_admission.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_redacted_filesystem_write_execution_receipt",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_redacted_filesystem_write_execution_receipt.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_actual_non_empty_diff_receipt_binding",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_actual_non_empty_diff_receipt_binding.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_non_empty_diff_file_summary_receipt",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_non_empty_diff_file_summary_receipt.py",
+            ),
+        ),
+        CheckCommand(
             "agentic_service_harness_github_pr_admission_preflight",
             (python_executable, "scripts/validate_agentic_service_harness_github_pr_admission_preflight.py"),
+        ),
+        CheckCommand(
+            "agentic_service_harness_github_pr_creation_dry_run_receipt",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_creation_dry_run_receipt.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_github_pr_creation_execution_admission",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_creation_execution_admission.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_github_pr_creation_command_preview",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_creation_command_preview.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.py",
+            ),
         ),
         CheckCommand(
             "agentic_service_harness_github_pr_operator_approval_request",
             (python_executable, "scripts/validate_agentic_service_harness_github_pr_operator_approval_request.py"),
         ),
         CheckCommand(
+            "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_github_pr_operator_approval_request_command_preview_binding",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.py",
+            ),
+        ),
+        CheckCommand(
             "agentic_service_harness_github_pr_operator_response_witness",
             (python_executable, "scripts/validate_agentic_service_harness_github_pr_operator_response_witness.py"),
+        ),
+        CheckCommand(
+            "agentic_service_harness_github_pr_operator_response_command_preview_binding",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_github_pr_operator_response_command_preview_binding.py",
+            ),
         ),
         CheckCommand(
             "agentic_service_harness_github_pr_branch_write_authority_binding",

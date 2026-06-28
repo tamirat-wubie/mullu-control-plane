@@ -5,6 +5,8 @@ uncollected, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: scripts.validate_agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.
 Invariants:
+  - Repository-effect rollback planning must consume command-preview UAO evidence.
+  - Repository-effect rollback planning must consume actual-diff UAO evidence.
   - Missing repository-effect rollback plan never grants branch or PR effects.
   - Remaining witnesses block PR admission.
   - Mutation routes and secret-like payloads fail closed.
@@ -25,12 +27,18 @@ def test_github_pr_repository_effect_rollback_plan_witness_passes() -> None:
     assert validation.errors == ()
     assert validation.example_count == 1
     assert validation.source_uao_admission_witness_ref == validator.EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF
+    assert validation.command_preview_uao_admission_witness_ref == validator.EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF
+    assert validation.actual_diff_uao_admission_witness_ref == validator.EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF
 
 
 def test_github_pr_repository_effect_rollback_plan_witness_rejects_collected_authority() -> None:
     payload = validator.build_mutated_repository_effect_rollback_plan_witness(
         rollback_plan_collected=True,
         authority_granted=True,
+        rollback_plan__requires_command_preview_uao_admission_witness=False,
+        rollback_plan__requires_actual_diff_uao_admission_witness=False,
+        rollback_plan__command_preview_bound=False,
+        rollback_plan__operator_response_bound=False,
         rollback_plan__uao_admission_witness_satisfied=True,
         rollback_plan__repository_effect_rollback_plan_collected=True,
         rollback_plan__pr_creation_authorized_after_rollback_plan=True,
@@ -43,6 +51,10 @@ def test_github_pr_repository_effect_rollback_plan_witness_rejects_collected_aut
 
     assert "rollback_plan_collected must be false" in serialized_errors
     assert "authority_granted must be false" in serialized_errors
+    assert "rollback_plan.requires_command_preview_uao_admission_witness must be true" in serialized_errors
+    assert "rollback_plan.requires_actual_diff_uao_admission_witness must be true" in serialized_errors
+    assert "rollback_plan.command_preview_bound must be true" in serialized_errors
+    assert "rollback_plan.operator_response_bound must be true" in serialized_errors
     assert "rollback_plan.uao_admission_witness_satisfied must be false" in serialized_errors
     assert "rollback_plan.repository_effect_rollback_plan_collected must be false" in serialized_errors
     assert "rollback_plan.pr_creation_authorized_after_rollback_plan must be false" in serialized_errors
@@ -94,6 +106,63 @@ def test_github_pr_repository_effect_rollback_plan_witness_rejects_witness_drift
     assert "remaining_witnesses.0.blocks_pr_admission must be true" in serialized_errors
 
 
+def test_github_pr_repository_effect_rollback_plan_witness_rejects_actual_diff_uao_drift() -> None:
+    payload = validator.build_mutated_repository_effect_rollback_plan_witness(
+        rollback_plan__actual_diff_branch_write_binding_ref="examples/drifted-branch-write.json",
+        rollback_plan__actual_diff_operator_response_witness_ref="examples/drifted-response.json",
+        rollback_plan__actual_diff_approval_request_binding_ref="examples/drifted-approval-binding.json",
+        rollback_plan__actual_non_empty_diff_receipt_ref="witness://drifted-actual-diff-receipt",
+        rollback_plan__changed_file_refs=["evidence://drifted-file"],
+        rollback_plan__diff_refs=["evidence://drifted-diff"],
+        rollback_plan__redacted_diff_bundle_ref="digest://drifted-bundle",
+        rollback_plan__redacted_output_ref="witness://drifted-output",
+    )
+
+    errors: list[str] = []
+    validator._validate_repository_effect_rollback_plan_witness_semantics(payload, _source_uao_admission_witness(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "rollback_plan.actual_diff_branch_write_binding_ref" in serialized_errors
+    assert "rollback_plan.actual_diff_operator_response_witness_ref" in serialized_errors
+    assert "rollback_plan.actual_diff_approval_request_binding_ref" in serialized_errors
+    assert "rollback_plan.actual_non_empty_diff_receipt_ref" in serialized_errors
+    assert "rollback_plan.changed_file_refs" in serialized_errors
+    assert "rollback_plan.diff_refs" in serialized_errors
+    assert "rollback_plan.redacted_diff_bundle_ref" in serialized_errors
+    assert "rollback_plan.redacted_output_ref" in serialized_errors
+
+
+def test_github_pr_repository_effect_rollback_plan_witness_rejects_command_preview_uao_drift() -> None:
+    payload = validator.build_mutated_repository_effect_rollback_plan_witness(
+        rollback_plan__command_preview_branch_write_binding_ref="examples/drifted-branch-write.json",
+        rollback_plan__command_preview_operator_response_binding_ref="examples/drifted-command-response.json",
+        rollback_plan__command_preview_operator_response_witness_ref="examples/drifted-response.json",
+        rollback_plan__command_preview_operator_approval_request_binding_ref="examples/drifted-command-approval.json",
+        rollback_plan__command_preview_ref="examples/drifted-command-preview.json",
+        rollback_plan__redacted_command_preview="gh pr create --body leaked",
+        rollback_plan__argument_vector_template=["gh", "pr", "create"],
+        rollback_plan__placeholder_refs=["placeholder://drifted"],
+    )
+
+    errors: list[str] = []
+    validator._validate_repository_effect_rollback_plan_witness_semantics(
+        payload,
+        _source_uao_admission_witness(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "rollback_plan.command_preview_branch_write_binding_ref" in serialized_errors
+    assert "rollback_plan.command_preview_operator_response_binding_ref" in serialized_errors
+    assert "rollback_plan.command_preview_operator_response_witness_ref" in serialized_errors
+    assert "rollback_plan.command_preview_operator_approval_request_binding_ref" in serialized_errors
+    assert "rollback_plan.command_preview_ref" in serialized_errors
+    assert "rollback_plan.redacted_command_preview" in serialized_errors
+    assert "rollback_plan.argument_vector_template" in serialized_errors
+    assert "rollback_plan.placeholder_refs" in serialized_errors
+
+
 def test_github_pr_repository_effect_rollback_plan_witness_rejects_mutation_route_and_secret_like_payload() -> None:
     payload = validator.build_mutated_repository_effect_rollback_plan_witness(
         requested_evidence_ref="POST /api/github/repository-effect rollback plan-authority",
@@ -122,6 +191,8 @@ def test_github_pr_repository_effect_rollback_plan_witness_cli_writes_report(tmp
     assert file_payload["ok"] is True
     assert stdout_payload["errors"] == []
     assert file_payload["source_uao_admission_witness_ref"] == validator.EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF
+    assert file_payload["command_preview_uao_admission_witness_ref"] == validator.EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF
+    assert file_payload["actual_diff_uao_admission_witness_ref"] == validator.EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF
 
 
 def _source_uao_admission_witness() -> dict[str, object]:

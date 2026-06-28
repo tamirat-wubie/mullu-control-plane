@@ -25,6 +25,10 @@ def test_github_pr_terminal_closure_certificate_candidate_passes() -> None:
     assert validation.errors == ()
     assert validation.example_count == 1
     assert validation.source_live_evidence_ref == validator.EXPECTED_SOURCE_LIVE_EVIDENCE_REF
+    assert (
+        validation.source_terminal_closure_certificate_witness_ref
+        == validator.EXPECTED_SOURCE_TERMINAL_CLOSURE_CERTIFICATE_WITNESS_REF
+    )
 
 
 def test_github_pr_terminal_closure_certificate_candidate_rejects_terminal_closure_overclaim() -> None:
@@ -38,7 +42,13 @@ def test_github_pr_terminal_closure_certificate_candidate_rejects_terminal_closu
     )
 
     errors: list[str] = []
-    validator._validate_terminal_closure_certificate_candidate_semantics(payload, _source_live_evidence(), errors, "mutated")
+    validator._validate_terminal_closure_certificate_candidate_semantics(
+        payload,
+        _source_live_evidence(),
+        _source_terminal_witness(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "terminal_closure expected False" in serialized_errors
@@ -59,7 +69,13 @@ def test_github_pr_terminal_closure_certificate_candidate_rejects_live_evidence_
     )
 
     errors: list[str] = []
-    validator._validate_terminal_closure_certificate_candidate_semantics(payload, _source_live_evidence(), errors, "mutated")
+    validator._validate_terminal_closure_certificate_candidate_semantics(
+        payload,
+        _source_live_evidence(),
+        _source_terminal_witness(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "source_live_evidence_ref expected" in serialized_errors
@@ -67,6 +83,94 @@ def test_github_pr_terminal_closure_certificate_candidate_rejects_live_evidence_
     assert "certificate_candidate.source_effect_reconciliation_evidence_ref expected" in serialized_errors
     assert "effect_reconciliation_collected must be true" in serialized_errors
     assert "certificate_candidate.effect_reconciliation_collected must be true" in serialized_errors
+
+
+def test_github_pr_terminal_closure_certificate_candidate_rejects_actual_diff_terminal_witness_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_candidate(
+        source_terminal_closure_certificate_witness_ref="examples/other-terminal-witness.json",
+        certificate_candidate__source_terminal_closure_certificate_witness_ref="examples/other-terminal-witness.json",
+        certificate_candidate__actual_diff_terminal_closure_certificate_witness_ref="examples/other-terminal-witness.json",
+        certificate_candidate__actual_diff_effect_reconciliation_witness_ref="examples/other-effect-witness.json",
+        certificate_candidate__actual_diff_ci_gate_before_ready_for_review_witness_ref="examples/other-ci-witness.json",
+        certificate_candidate__actual_diff_repository_effect_rollback_plan_witness_ref="examples/other-rollback.json",
+        certificate_candidate__actual_diff_uao_admission_witness_ref="examples/other-uao.json",
+        certificate_candidate__actual_diff_branch_write_binding_ref="examples/other-branch-write.json",
+        certificate_candidate__actual_diff_operator_response_witness_ref="examples/other-response.json",
+        certificate_candidate__actual_diff_approval_request_binding_ref="examples/other-approval.json",
+        certificate_candidate__actual_non_empty_diff_receipt_ref="witness://other-non-empty-diff",
+        certificate_candidate__changed_file_refs=["evidence://other-file"],
+        certificate_candidate__diff_refs=["evidence://other-diff"],
+        certificate_candidate__redacted_diff_bundle_ref="digest://other-bundle",
+        certificate_candidate__redacted_output_ref="witness://other-output",
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_candidate_semantics(
+        payload,
+        _source_live_evidence(),
+        _source_terminal_witness(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "source_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.source_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.actual_diff_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.actual_diff_effect_reconciliation_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.actual_diff_ci_gate_before_ready_for_review_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.actual_diff_repository_effect_rollback_plan_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.actual_diff_uao_admission_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.actual_diff_branch_write_binding_ref expected" in serialized_errors
+    assert "certificate_candidate.actual_diff_operator_response_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.actual_diff_approval_request_binding_ref expected" in serialized_errors
+    assert "certificate_candidate.actual_non_empty_diff_receipt_ref expected" in serialized_errors
+    assert "certificate_candidate.changed_file_refs expected" in serialized_errors
+    assert "certificate_candidate.diff_refs expected" in serialized_errors
+    assert "certificate_candidate.redacted_diff_bundle_ref expected" in serialized_errors
+    assert "certificate_candidate.redacted_output_ref expected" in serialized_errors
+
+
+def test_github_pr_terminal_closure_certificate_candidate_rejects_command_preview_certificate_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_candidate(
+        certificate_candidate__requires_command_preview_terminal_closure_certificate_witness=False,
+        certificate_candidate__command_preview_terminal_closure_certificate_witness_ref="examples/other-terminal.json",
+        certificate_candidate__command_preview_effect_reconciliation_witness_ref="examples/other-effect.json",
+        certificate_candidate__command_preview_ci_gate_before_ready_for_review_witness_ref="examples/other-ci.json",
+        certificate_candidate__command_preview_repository_effect_rollback_plan_witness_ref="examples/other-rollback.json",
+        certificate_candidate__command_preview_uao_admission_witness_ref="examples/other-uao.json",
+        certificate_candidate__command_preview_branch_write_binding_ref="examples/other-branch.json",
+        certificate_candidate__command_preview_operator_response_binding_ref="examples/other-command-response.json",
+        certificate_candidate__command_preview_operator_response_witness_ref="examples/other-response.json",
+        certificate_candidate__command_preview_operator_approval_request_binding_ref="examples/other-command-approval.json",
+        certificate_candidate__command_preview_ref="examples/other-command-preview.json",
+        certificate_candidate__redacted_command_preview="gh pr create --body leaked",
+        certificate_candidate__command_preview_bound=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_candidate_semantics(
+        payload,
+        _source_live_evidence(),
+        _source_terminal_witness(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "certificate_candidate.requires_command_preview_terminal_closure_certificate_witness must be true" in serialized_errors
+    assert "certificate_candidate.command_preview_terminal_closure_certificate_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_effect_reconciliation_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_ci_gate_before_ready_for_review_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_repository_effect_rollback_plan_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_uao_admission_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_branch_write_binding_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_operator_response_binding_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_operator_response_witness_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_operator_approval_request_binding_ref expected" in serialized_errors
+    assert "certificate_candidate.command_preview_ref expected" in serialized_errors
+    assert "certificate_candidate.redacted_command_preview expected" in serialized_errors
+    assert "certificate_candidate.command_preview_bound must be true" in serialized_errors
 
 
 def test_github_pr_terminal_closure_certificate_candidate_rejects_mutation_authority() -> None:
@@ -79,7 +183,13 @@ def test_github_pr_terminal_closure_certificate_candidate_rejects_mutation_autho
     )
 
     errors: list[str] = []
-    validator._validate_terminal_closure_certificate_candidate_semantics(payload, _source_live_evidence(), errors, "mutated")
+    validator._validate_terminal_closure_certificate_candidate_semantics(
+        payload,
+        _source_live_evidence(),
+        _source_terminal_witness(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "authority_granted must be false" in serialized_errors
@@ -102,7 +212,13 @@ def test_github_pr_terminal_closure_certificate_candidate_rejects_remaining_witn
     )
 
     errors: list[str] = []
-    validator._validate_terminal_closure_certificate_candidate_semantics(payload, _source_live_evidence(), errors, "mutated")
+    validator._validate_terminal_closure_certificate_candidate_semantics(
+        payload,
+        _source_live_evidence(),
+        _source_terminal_witness(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "remaining_witnesses must contain only the terminal closure certificate witness" in serialized_errors
@@ -117,7 +233,13 @@ def test_github_pr_terminal_closure_certificate_candidate_rejects_mutation_route
     payload["certificate_candidate"]["serialized_token_value"] = "github_pat_forbiddencredential"
 
     errors: list[str] = []
-    validator._validate_terminal_closure_certificate_candidate_semantics(payload, _source_live_evidence(), errors, "mutated")
+    validator._validate_terminal_closure_certificate_candidate_semantics(
+        payload,
+        _source_live_evidence(),
+        _source_terminal_witness(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "mutation route string" in serialized_errors
@@ -138,7 +260,15 @@ def test_github_pr_terminal_closure_certificate_candidate_cli_writes_report(tmp_
     assert file_payload["ok"] is True
     assert stdout_payload["errors"] == []
     assert file_payload["source_live_evidence_ref"] == validator.EXPECTED_SOURCE_LIVE_EVIDENCE_REF
+    assert (
+        file_payload["source_terminal_closure_certificate_witness_ref"]
+        == validator.EXPECTED_SOURCE_TERMINAL_CLOSURE_CERTIFICATE_WITNESS_REF
+    )
 
 
 def _source_live_evidence() -> dict[str, object]:
     return json.loads(validator.DEFAULT_SOURCE_LIVE_EVIDENCE_EXAMPLES[0].read_text(encoding="utf-8"))
+
+
+def _source_terminal_witness() -> dict[str, object]:
+    return json.loads(validator.DEFAULT_SOURCE_TERMINAL_WITNESS_EXAMPLES[0].read_text(encoding="utf-8"))

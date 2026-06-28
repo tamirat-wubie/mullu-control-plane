@@ -1,0 +1,290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-github-pr-creation-command-preview:1",
+  "title": "Agentic Service Harness GitHub PR Creation Command Preview",
+  "description": "Foundation Mode command-preview contract for a future GitHub pull-request creation command. This schema renders only a redacted command shape and keeps adapter execution, branch writes, pull-request creation, repository writes, mutation routes, receipt-store append, deployment, DNS mutation, secret serialization, destructive operations, and terminal closure blocked.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "source_pr_creation_execution_admission_ref",
+    "scope",
+    "source_execution_admission_binding",
+    "command_preview_contract",
+    "command_preview",
+    "execution_decision",
+    "authority_denials",
+    "receipt_refs",
+    "validators",
+    "next_action",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required"
+  ],
+  "properties": {
+    "report_id": { "type": "string", "const": "agentic_service_harness_github_pr_creation_command_preview" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "SolvedVerified" },
+    "source_pr_creation_execution_admission_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_pr_creation_execution_admission.foundation.json"
+    },
+    "scope": { "$ref": "#/$defs/scope" },
+    "source_execution_admission_binding": { "$ref": "#/$defs/source_execution_admission_binding" },
+    "command_preview_contract": { "$ref": "#/$defs/command_preview_contract" },
+    "command_preview": { "$ref": "#/$defs/command_preview" },
+    "execution_decision": { "$ref": "#/$defs/execution_decision" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 },
+    "report_is_not_terminal_closure": { "type": "boolean", "const": true },
+    "terminal_closure_required": { "type": "boolean", "const": true }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#$<>-]*$"
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "organization_id",
+        "project_id",
+        "repository_connection_id",
+        "repository_slug",
+        "task_service_id",
+        "foundation_phase",
+        "read_only",
+        "preview_only",
+        "execution_admitted",
+        "pr_creation_enabled",
+        "repository_write_enabled",
+        "external_adapter_integrated",
+        "receipt_store_append_enabled",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/identifier" },
+        "organization_id": { "$ref": "#/$defs/identifier" },
+        "project_id": { "$ref": "#/$defs/identifier" },
+        "repository_connection_id": { "$ref": "#/$defs/identifier" },
+        "repository_slug": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "task_service_id": { "type": "string", "const": "github-repo-task-service-read-only-foundation" },
+        "foundation_phase": { "type": "string", "const": "foundation_pr_creation_command_preview_blocked" },
+        "read_only": { "type": "boolean", "const": true },
+        "preview_only": { "type": "boolean", "const": true },
+        "execution_admitted": { "type": "boolean", "const": false },
+        "pr_creation_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false }
+      }
+    },
+    "source_execution_admission_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_admission_id",
+        "source_decision",
+        "source_execution_admitted",
+        "source_terminal_closure_allowed",
+        "source_pull_request_creation_enabled",
+        "source_repository_write_enabled",
+        "source_receipt_store_append_enabled",
+        "source_mutation_route_enabled",
+        "source_secret_values_serialized"
+      ],
+      "properties": {
+        "source_admission_id": { "type": "string", "const": "github-pr-creation-execution-admission-foundation" },
+        "source_decision": { "type": "string", "const": "PR_CREATION_EXECUTION_BLOCKED_DRY_RUN_BOUND_AWAITING_LIVE_AUTHORITY" },
+        "source_execution_admitted": { "type": "boolean", "const": false },
+        "source_terminal_closure_allowed": { "type": "boolean", "const": false },
+        "source_pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "source_repository_write_enabled": { "type": "boolean", "const": false },
+        "source_receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "source_mutation_route_enabled": { "type": "boolean", "const": false },
+        "source_secret_values_serialized": { "type": "boolean", "const": false }
+      }
+    },
+    "command_preview_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preview_id",
+        "preview_mode",
+        "source_execution_admission_id",
+        "requested_command_kind",
+        "allowed_action_classes",
+        "forbidden_action_classes",
+        "required_source_refs",
+        "required_gate_refs",
+        "preview_obligations_checked",
+        "validation_refs",
+        "read_only"
+      ],
+      "properties": {
+        "preview_id": { "type": "string", "const": "github-pr-creation-command-preview-foundation" },
+        "preview_mode": { "type": "string", "const": "PR_CREATION_COMMAND_PREVIEW_ONLY" },
+        "source_execution_admission_id": { "type": "string", "const": "github-pr-creation-execution-admission-foundation" },
+        "requested_command_kind": { "type": "string", "const": "future_github_pull_request_creation_command" },
+        "allowed_action_classes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": { "type": "string", "const": "command_preview" }
+        },
+        "forbidden_action_classes": { "$ref": "#/$defs/evidence_ref_list" },
+        "required_source_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "required_gate_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "preview_obligations_checked": { "$ref": "#/$defs/evidence_ref_list" },
+        "validation_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "read_only": { "type": "boolean", "const": true }
+      }
+    },
+    "command_preview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command_id",
+        "command_family",
+        "redacted_command_preview",
+        "argument_vector_template",
+        "placeholder_refs",
+        "preview_rendered",
+        "command_executed",
+        "adapter_executed",
+        "connector_call_executed",
+        "pull_request_opened",
+        "branch_pushed",
+        "repository_written",
+        "receipt_store_appended",
+        "mutation_route_called",
+        "secret_values_serialized",
+        "terminal_closure"
+      ],
+      "properties": {
+        "command_id": { "type": "string", "const": "github-pr-create-command-preview-foundation" },
+        "command_family": { "type": "string", "const": "github-cli-pr-create" },
+        "redacted_command_preview": { "type": "string", "minLength": 1 },
+        "argument_vector_template": {
+          "type": "array",
+          "minItems": 11,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "placeholder_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "preview_rendered": { "type": "boolean", "const": true },
+        "command_executed": { "type": "boolean", "const": false },
+        "adapter_executed": { "type": "boolean", "const": false },
+        "connector_call_executed": { "type": "boolean", "const": false },
+        "pull_request_opened": { "type": "boolean", "const": false },
+        "branch_pushed": { "type": "boolean", "const": false },
+        "repository_written": { "type": "boolean", "const": false },
+        "receipt_store_appended": { "type": "boolean", "const": false },
+        "mutation_route_called": { "type": "boolean", "const": false },
+        "secret_values_serialized": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false }
+      }
+    },
+    "execution_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "execution_admitted",
+        "required_before_execution_refs",
+        "blocked_reason_refs",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "decision": { "type": "string", "const": "PR_CREATION_COMMAND_EXECUTION_BLOCKED_PREVIEW_ONLY" },
+        "execution_admitted": { "type": "boolean", "const": false },
+        "required_before_execution_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "terminal_closure_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "live_adapter_execution_enabled",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "repository_write_enabled",
+        "mutation_route_enabled",
+        "receipt_store_append_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "terminal_closure",
+        "default_high_risk_authority"
+      ],
+      "properties": {
+        "live_adapter_execution_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "repository_write_enabled": { "type": "boolean", "const": false },
+        "mutation_route_enabled": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "terminal_closure": { "type": "boolean", "const": false },
+        "default_high_risk_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "github_pr_creation_command_preview_schema",
+        "github_pr_creation_command_preview_example",
+        "github_pr_creation_execution_admission_schema",
+        "github_pr_creation_execution_admission_example"
+      ],
+      "properties": {
+        "github_pr_creation_command_preview_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_creation_command_preview_example": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_creation_execution_admission_schema": { "$ref": "#/$defs/evidence_ref" },
+        "github_pr_creation_execution_admission_example": { "$ref": "#/$defs/evidence_ref" }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

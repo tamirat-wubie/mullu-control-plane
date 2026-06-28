@@ -120,6 +120,35 @@ REQUIRED_TRUE_FLAGS = (
     "candidate_ready",
     "operator_decision_required",
     "operator_can_approve_terminal_certificate",
+    "requires_actual_diff_terminal_closure_certificate_witness",
+    "effect_reconciliation_collected",
+    "binds_branch_state",
+    "binds_pull_request_state",
+    "binds_check_state",
+    "binds_merge_state",
+    "binds_branch_deletion_state",
+)
+ACTUAL_DIFF_CANDIDATE_EVIDENCE_KEYS = (
+    "requires_actual_diff_terminal_closure_certificate_witness",
+    "actual_diff_terminal_closure_certificate_witness_ref",
+    "actual_diff_effect_reconciliation_witness_ref",
+    "actual_diff_ci_gate_before_ready_for_review_witness_ref",
+    "actual_diff_repository_effect_rollback_plan_witness_ref",
+    "actual_diff_uao_admission_witness_ref",
+    "actual_diff_branch_write_binding_ref",
+    "actual_diff_operator_response_witness_ref",
+    "actual_diff_approval_request_binding_ref",
+    "actual_non_empty_diff_receipt_ref",
+    "changed_file_refs",
+    "diff_refs",
+    "redacted_diff_bundle_ref",
+    "redacted_output_ref",
+    "effect_reconciliation_collected",
+    "binds_branch_state",
+    "binds_pull_request_state",
+    "binds_check_state",
+    "binds_merge_state",
+    "binds_branch_deletion_state",
 )
 ALLOWED_SECRET_KEYS = {
     "dns_mutation_enabled",
@@ -286,6 +315,14 @@ def _validate_terminal_closure_operator_approval_gate_semantics(
             errors,
             label,
         )
+        for key in ACTUAL_DIFF_CANDIDATE_EVIDENCE_KEYS:
+            _require_equal(
+                payload,
+                ("approval_gate", "actual_diff_candidate_evidence", key),
+                _get_nested(source_candidate, ("certificate_candidate", key)),
+                errors,
+                label,
+            )
     observed_witnesses = _get_nested(payload, ("remaining_witnesses",))
     if not isinstance(observed_witnesses, list):
         errors.append(f"{label}: remaining_witnesses must be a list")

@@ -1,0 +1,167 @@
+{
+  "receipt_id": "agentic_service_harness_actual_filesystem_write_receipt_admission",
+  "schema_version": 1,
+  "generated_at": "2026-06-27T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "admission_status": "blocked_until_authority_cleanup_redaction_uao_receipt_store_and_terminal_certificate",
+  "source_concrete_filesystem_write_evidence_candidate_ref": "examples/agentic_service_harness_concrete_filesystem_write_evidence_candidate.foundation.json",
+  "source_filesystem_write_admission_preflight_ref": "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json",
+  "scope": {
+    "project_id": "project.foundation",
+    "task_id": "task.branchwrite",
+    "run_id": "run.branchwrite",
+    "sandbox_id": "sandbox.branchwrite",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "mode": "branch_write",
+    "foundation_phase": "foundation_actual_filesystem_write_receipt_admission",
+    "receipt_only": true,
+    "actual_filesystem_write_receipt_admission_allowed": false
+  },
+  "source_candidate": {
+    "concrete_candidate_verified": true,
+    "filesystem_write_admission_preflight_verified": true,
+    "candidate_status": "candidate_recorded_without_live_write_authority",
+    "candidate_changed_file_count": 1,
+    "changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
+    "redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "source_filesystem_write_executed": false,
+    "source_filesystem_write_admitted": false,
+    "source_receipt_append_enabled": false
+  },
+  "admission_gates": {
+    "concrete_candidate_verified": true,
+    "non_empty_candidate_refs_verified": true,
+    "filesystem_write_receipt_admission_allowed": false,
+    "filesystem_write_executed": false,
+    "branch_write_authority_verified": false,
+    "workspace_write_authority_verified": false,
+    "operator_approval_collected": false,
+    "cleanup_receipt_verified": false,
+    "rollback_plan_verified": false,
+    "redaction_evidence_verified": false,
+    "uao_filesystem_write_verified": false,
+    "receipt_store_write_path_verified": false,
+    "terminal_certificate_verified": false,
+    "required_before_actual_write_receipt_refs": [
+      "examples/agentic_service_harness_concrete_filesystem_write_evidence_candidate.foundation.json",
+      "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json",
+      "approval://operator/filesystem-write-execution",
+      "evidence://branch-write-authority-binding",
+      "evidence://workspace-write-authority",
+      "evidence://cleanup-receipt-after-workspace-use",
+      "evidence://filesystem-write-rollback-plan",
+      "evidence://redaction-policy-for-file-change-collection",
+      "evidence://uao-filesystem-write-admission",
+      "evidence://receipt-store-write-path-for-filesystem-write",
+      "digest://redacted-filesystem-write-diff-bundle-candidate",
+      "evidence://terminal-closure-certificate-required"
+    ],
+    "blocked_reason_refs": [
+      "blocked://actual-filesystem-write-receipt-admission/not-granted",
+      "blocked://live-filesystem-write/not-executed",
+      "blocked://operator-approval/not-collected",
+      "blocked://branch-write-authority/not-verified",
+      "blocked://workspace-write-authority/not-verified",
+      "blocked://cleanup-receipt/not-verified",
+      "blocked://rollback-plan/not-verified",
+      "blocked://redaction-evidence/not-verified",
+      "blocked://uao-filesystem-write/not-verified",
+      "blocked://receipt-store-write-path/not-verified",
+      "blocked://terminal-certificate/not-verified",
+      "blocked://raw-diff-body/not-allowed",
+      "blocked://raw-file-content/not-allowed"
+    ],
+    "next_required_evidence_refs": [
+      "witness://actual-filesystem-write-execution",
+      "witness://filesystem-write-output-redacted",
+      "witness://actual-filesystem-write-receipt",
+      "witness://actual-non-empty-diff-receipt",
+      "evidence://receipt-store-write-path-for-filesystem-write",
+      "evidence://terminal-closure-certificate-required"
+    ]
+  },
+  "filesystem_write_receipt_contract": {
+    "candidate_changed_file_count": 1,
+    "changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
+    "redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "filesystem_write_receipt_emitted": false,
+    "raw_diff_body_serialized": false,
+    "raw_file_content_serialized": false,
+    "absolute_paths_allowed": false,
+    "parent_traversal_allowed": false,
+    "secret_paths_allowed": false,
+    "production_paths_allowed": false,
+    "receipt_append_ref": "blocked://receipt-store-write-path/not-verified"
+  },
+  "path_policy": {
+    "path_allowlist": [
+      "."
+    ],
+    "path_allowlist_bound_to_concrete_candidate": true,
+    "absolute_paths_allowed": false,
+    "parent_traversal_allowed": false,
+    "secret_paths_allowed": false,
+    "production_paths_allowed": false
+  },
+  "redaction_policy": {
+    "secret_redaction_required": true,
+    "diff_redaction_required": true,
+    "credential_value_serialization_allowed": false,
+    "raw_secret_path_serialization_allowed": false,
+    "raw_diff_serialization_allowed": false,
+    "redaction_evidence_ref": "evidence://redaction-policy-for-file-change-collection"
+  },
+  "effect_boundary": {
+    "branch_created": false,
+    "workspace_written": false,
+    "files_written": false,
+    "filesystem_write_executed": false,
+    "filesystem_write_receipt_emitted": false,
+    "commands_executed": false,
+    "tests_executed": false,
+    "pull_request_opened": false,
+    "runtime_state_written": false,
+    "receipt_store_appended": false,
+    "connector_calls_observed": false,
+    "external_effects_observed": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false,
+    "success_claim_allowed": false
+  },
+  "receipt_refs": {
+    "actual_filesystem_write_receipt_admission_schema": "schemas/agentic_service_harness_actual_filesystem_write_receipt_admission.schema.json",
+    "actual_filesystem_write_receipt_admission_example": "examples/agentic_service_harness_actual_filesystem_write_receipt_admission.foundation.json",
+    "concrete_filesystem_write_evidence_candidate_schema": "schemas/agentic_service_harness_concrete_filesystem_write_evidence_candidate.schema.json",
+    "concrete_filesystem_write_evidence_candidate_example": "examples/agentic_service_harness_concrete_filesystem_write_evidence_candidate.foundation.json",
+    "filesystem_write_admission_preflight_schema": "schemas/agentic_service_harness_filesystem_write_admission_preflight.schema.json",
+    "filesystem_write_admission_preflight_example": "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json",
+    "cleanup_receipt_ref": "evidence://cleanup-receipt-after-workspace-use",
+    "rollback_plan_ref": "evidence://filesystem-write-rollback-plan",
+    "redaction_evidence_ref": "evidence://redaction-policy-for-file-change-collection",
+    "redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "uao_filesystem_write_ref": "evidence://uao-filesystem-write-admission",
+    "receipt_store_write_path_ref": "evidence://receipt-store-write-path-for-filesystem-write",
+    "terminal_certificate_required_ref": "evidence://terminal-closure-certificate-required"
+  },
+  "validators": [
+    {
+      "validator_id": "validator.agentic-service-harness-actual-filesystem-write-receipt-admission",
+      "command": "python scripts/validate_agentic_service_harness_actual_filesystem_write_receipt_admission.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect actual filesystem-write execution, cleanup, UAO, redaction, receipt admission, receipt-store write-path, and terminal certificate evidence before any actual filesystem-write receipt admission can be granted.",
+  "receipt_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

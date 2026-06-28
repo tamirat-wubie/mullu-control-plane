@@ -82,9 +82,21 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_actual_diff_collection_receipt",
         "agentic_service_harness_non_empty_diff_receipt_admission_preflight",
         "agentic_service_harness_filesystem_write_admission_preflight",
+        "agentic_service_harness_concrete_filesystem_write_evidence_candidate",
+        "agentic_service_harness_actual_filesystem_write_receipt_admission",
+        "agentic_service_harness_redacted_filesystem_write_execution_receipt",
+        "agentic_service_harness_actual_non_empty_diff_receipt_binding",
+        "agentic_service_harness_non_empty_diff_file_summary_receipt",
         "agentic_service_harness_github_pr_admission_preflight",
+        "agentic_service_harness_github_pr_creation_dry_run_receipt",
+        "agentic_service_harness_github_pr_creation_execution_admission",
+        "agentic_service_harness_github_pr_creation_command_preview",
+        "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding",
         "agentic_service_harness_github_pr_operator_approval_request",
+        "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding",
+        "agentic_service_harness_github_pr_operator_approval_request_command_preview_binding",
         "agentic_service_harness_github_pr_operator_response_witness",
+        "agentic_service_harness_github_pr_operator_response_command_preview_binding",
         "agentic_service_harness_github_pr_branch_write_authority_binding",
         "agentic_service_harness_github_pr_uao_admission_witness",
         "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
@@ -397,7 +409,67 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_filesystem_write_admission_preflight",
+        "agentic_service_harness_concrete_filesystem_write_evidence_candidate",
+    )
+    assert_ordered(
+        "agentic_service_harness_concrete_filesystem_write_evidence_candidate",
+        "agentic_service_harness_actual_filesystem_write_receipt_admission",
+    )
+    assert_ordered(
+        "agentic_service_harness_actual_filesystem_write_receipt_admission",
+        "agentic_service_harness_redacted_filesystem_write_execution_receipt",
+    )
+    assert_ordered(
+        "agentic_service_harness_redacted_filesystem_write_execution_receipt",
+        "agentic_service_harness_actual_non_empty_diff_receipt_binding",
+    )
+    assert_ordered(
+        "agentic_service_harness_actual_non_empty_diff_receipt_binding",
+        "agentic_service_harness_non_empty_diff_file_summary_receipt",
+    )
+    assert_ordered(
+        "agentic_service_harness_non_empty_diff_file_summary_receipt",
         "agentic_service_harness_github_pr_admission_preflight",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_admission_preflight",
+        "agentic_service_harness_github_pr_creation_dry_run_receipt",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_creation_dry_run_receipt",
+        "agentic_service_harness_github_pr_creation_execution_admission",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_creation_execution_admission",
+        "agentic_service_harness_github_pr_creation_command_preview",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_creation_command_preview",
+        "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding",
+        "agentic_service_harness_github_pr_operator_approval_request",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_operator_approval_request",
+        "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding",
+        "agentic_service_harness_github_pr_operator_approval_request_command_preview_binding",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_operator_approval_request_command_preview_binding",
+        "agentic_service_harness_github_pr_operator_response_witness",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_operator_response_witness",
+        "agentic_service_harness_github_pr_operator_response_command_preview_binding",
+    )
+    assert_ordered(
+        "agentic_service_harness_github_pr_operator_response_command_preview_binding",
+        "agentic_service_harness_github_pr_branch_write_authority_binding",
     )
     assert_ordered(
         "agentic_service_harness_executed_test_receipt_admission_preflight",

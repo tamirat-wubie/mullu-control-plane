@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Validate Agentic Service Harness GitHub PR CI gate before ready-for-review witness.
 
-Purpose: prove the GitHub pull-request CI gate witness request is explicit,
-read-only, and non-authorizing.
+Purpose: prove the GitHub pull-request CI gate witness request is command-preview
+and actual-diff rollback-bound, read-only, and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: schemas/agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.schema.json,
 examples/agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.foundation.json,
 scripts.validate_agentic_service_harness_github_pr_repository_effect_rollback_plan_witness, and
 scripts.validate_schemas.
 Invariants:
-  - The binding request binds to the GitHub PR repository-effect rollback-plan witness.
+  - The binding request binds to the command-preview GitHub PR repository-effect rollback-plan witness.
+  - The binding request binds to the actual-diff GitHub PR repository-effect rollback-plan witness.
   - CI gate authority remains AwaitingEvidence and uncollected.
   - Binding request alone grants no branch, PR, ready-for-review, repository,
     connector, network, mutation-route, receipt-store, secret, destructive, or terminal authority.
@@ -32,6 +33,19 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_agentic_service_harness_github_pr_repository_effect_rollback_plan_witness import (  # noqa: E402
+    EXPECTED_ARGUMENT_VECTOR,
+    EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF,
+    EXPECTED_COMMAND_PREVIEW,
+    EXPECTED_PLACEHOLDER_REFS,
+    EXPECTED_REDACTED_DIFF_BUNDLE_REF,
+    EXPECTED_REDACTED_OUTPUT_REF,
+    EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF,
+    EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+    EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+    EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
+    EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
+    EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+    EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
     DEFAULT_EXAMPLES as DEFAULT_SOURCE_ROLLBACK_PLAN_WITNESS_EXAMPLES,
     DEFAULT_SCHEMA as DEFAULT_SOURCE_ROLLBACK_PLAN_WITNESS_SCHEMA,
     validate_agentic_service_harness_github_pr_repository_effect_rollback_plan_witness,
@@ -49,19 +63,6 @@ DEFAULT_OUTPUT = (
 EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF = (
     "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json"
 )
-EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF = "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json"
-EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF = (
-    "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json"
-)
-EXPECTED_SOURCE_RESPONSE_WITNESS_REF = "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
-EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF = (
-    "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
-)
-EXPECTED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_REF = "witness://actual-non-empty-diff-receipt"
-EXPECTED_CHANGED_FILE_REFS = ("evidence://redacted-file-change-candidate/schema-addition",)
-EXPECTED_DIFF_REFS = ("evidence://redacted-diff-candidate/schema-addition",)
-EXPECTED_REDACTED_DIFF_BUNDLE_REF = "digest://redacted-filesystem-write-diff-bundle-candidate"
-EXPECTED_REDACTED_OUTPUT_REF = "witness://filesystem-write-output-redacted"
 EXPECTED_BINDING_ID = "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness"
 EXPECTED_CI_GATE_REQUEST_ID = "ci-gate.github-pr-before-ready-for-review"
 EXPECTED_SOURCE_ROLLBACK_PLAN_REQUEST_ID = "rollback-plan.github-pr-repository-effect"
@@ -75,11 +76,48 @@ REQUIRED_RECEIPT_REFS = {
     "github_pr_repository_effect_rollback_plan_witness_schema": (
         "schemas/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.schema.json"
     ),
+    "github_pr_repository_effect_rollback_plan_witness_example": (
+        "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json"
+    ),
     "github_pr_uao_admission_witness_schema": (
         "schemas/agentic_service_harness_github_pr_uao_admission_witness.schema.json"
     ),
+    "github_pr_uao_admission_witness_example": (
+        "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json"
+    ),
+    "github_pr_operator_response_command_preview_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_response_command_preview_binding.schema.json"
+    ),
+    "github_pr_operator_response_command_preview_binding_example": (
+        EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF
+    ),
+    "github_pr_operator_approval_request_command_preview_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.schema.json"
+    ),
+    "github_pr_operator_approval_request_command_preview_binding_example": (
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF
+    ),
+    "github_pr_creation_command_preview_schema": (
+        "schemas/agentic_service_harness_github_pr_creation_command_preview.schema.json"
+    ),
+    "github_pr_creation_command_preview_example": EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
     "github_pr_branch_write_authority_binding_schema": (
         "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json"
+    ),
+    "github_pr_branch_write_authority_binding_example": (
+        "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json"
+    ),
+    "github_pr_operator_response_witness_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json"
+    ),
+    "github_pr_operator_response_witness_example": (
+        "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
+    ),
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json"
+    ),
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": (
+        "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
     ),
     "github_pr_operator_approval_request_schema": (
         "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json"
@@ -119,6 +157,10 @@ REQUIRED_TRUE_FLAGS = (
     "planning_only",
     "read_only",
     "report_is_not_terminal_closure",
+    "requires_command_preview_repository_effect_rollback_plan_witness",
+    "requires_actual_diff_repository_effect_rollback_plan_witness",
+    "command_preview_bound",
+    "operator_response_bound",
     "repository_effect_rollback_plan_required",
     "ci_gate_before_ready_for_review_required",
     "blocks_terminal_closure",
@@ -159,6 +201,8 @@ class GitHubPrCiGateBeforeReadyForReviewWitnessValidation:
     example_paths: tuple[str, ...]
     example_count: int
     source_repository_effect_rollback_plan_witness_ref: str
+    command_preview_repository_effect_rollback_plan_witness_ref: str
+    actual_diff_repository_effect_rollback_plan_witness_ref: str
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -215,6 +259,8 @@ def validate_agentic_service_harness_github_pr_ci_gate_before_ready_for_review_w
         example_paths=tuple(_path_label(path) for path in example_paths),
         example_count=len(examples),
         source_repository_effect_rollback_plan_witness_ref=EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+        command_preview_repository_effect_rollback_plan_witness_ref=EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+        actual_diff_repository_effect_rollback_plan_witness_ref=EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
     )
 
 
@@ -263,6 +309,88 @@ def _validate_ci_gate_before_ready_for_review_witness_semantics(
     )
     _require_equal(
         payload,
+        ("ci_gate", "requires_command_preview_repository_effect_rollback_plan_witness"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "command_preview_repository_effect_rollback_plan_witness_ref"),
+        EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "command_preview_uao_admission_witness_ref"),
+        EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "command_preview_branch_write_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "command_preview_operator_response_binding_ref"),
+        EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "command_preview_operator_response_witness_ref"),
+        EXPECTED_SOURCE_RESPONSE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "command_preview_operator_approval_request_binding_ref"),
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "command_preview_ref"),
+        EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("ci_gate", "redacted_command_preview"),
+        EXPECTED_COMMAND_PREVIEW,
+        errors,
+        label,
+    )
+    observed_vector = _get_nested(payload, ("ci_gate", "argument_vector_template"))
+    if tuple(observed_vector) != EXPECTED_ARGUMENT_VECTOR:
+        errors.append(
+            f"{label}: ci_gate.argument_vector_template expected "
+            f"{EXPECTED_ARGUMENT_VECTOR!r}, observed {observed_vector!r}"
+        )
+    observed_placeholders = _get_nested(payload, ("ci_gate", "placeholder_refs"))
+    if tuple(observed_placeholders) != EXPECTED_PLACEHOLDER_REFS:
+        errors.append(
+            f"{label}: ci_gate.placeholder_refs expected "
+            f"{EXPECTED_PLACEHOLDER_REFS!r}, observed {observed_placeholders!r}"
+        )
+    _require_equal(
+        payload,
+        ("ci_gate", "requires_actual_diff_repository_effect_rollback_plan_witness"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
         ("ci_gate", "actual_diff_repository_effect_rollback_plan_witness_ref"),
         EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
         errors,
@@ -305,20 +433,6 @@ def _validate_ci_gate_before_ready_for_review_witness_semantics(
     )
     _require_equal(
         payload,
-        ("ci_gate", "changed_file_refs"),
-        list(EXPECTED_CHANGED_FILE_REFS),
-        errors,
-        label,
-    )
-    _require_equal(
-        payload,
-        ("ci_gate", "diff_refs"),
-        list(EXPECTED_DIFF_REFS),
-        errors,
-        label,
-    )
-    _require_equal(
-        payload,
         ("ci_gate", "redacted_diff_bundle_ref"),
         EXPECTED_REDACTED_DIFF_BUNDLE_REF,
         errors,
@@ -352,8 +466,137 @@ def _validate_ci_gate_before_ready_for_review_witness_semantics(
         errors,
         label,
     )
+    _require_equal(payload, ("ci_gate", "command_preview_bound"), True, errors, label)
+    _require_equal(payload, ("ci_gate", "operator_response_bound"), True, errors, label)
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
     if source_rollback_plan_witness:
+        source_rollback_plan = _mapping(_get_nested(source_rollback_plan_witness, ("rollback_plan",)))
+        _require_equal(
+            payload,
+            ("ci_gate", "command_preview_uao_admission_witness_ref"),
+            source_rollback_plan.get("command_preview_uao_admission_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "command_preview_branch_write_binding_ref"),
+            source_rollback_plan.get("command_preview_branch_write_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "command_preview_operator_response_binding_ref"),
+            source_rollback_plan.get("command_preview_operator_response_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "command_preview_operator_response_witness_ref"),
+            source_rollback_plan.get("command_preview_operator_response_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "command_preview_operator_approval_request_binding_ref"),
+            source_rollback_plan.get("command_preview_operator_approval_request_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "command_preview_ref"),
+            source_rollback_plan.get("command_preview_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "redacted_command_preview"),
+            source_rollback_plan.get("redacted_command_preview"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "argument_vector_template"),
+            source_rollback_plan.get("argument_vector_template"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "placeholder_refs"),
+            source_rollback_plan.get("placeholder_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "actual_diff_uao_admission_witness_ref"),
+            source_rollback_plan.get("actual_diff_uao_admission_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "actual_diff_branch_write_binding_ref"),
+            source_rollback_plan.get("actual_diff_branch_write_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "actual_diff_operator_response_witness_ref"),
+            source_rollback_plan.get("actual_diff_operator_response_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "actual_diff_approval_request_binding_ref"),
+            source_rollback_plan.get("actual_diff_approval_request_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "actual_non_empty_diff_receipt_ref"),
+            source_rollback_plan.get("actual_non_empty_diff_receipt_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "changed_file_refs"),
+            source_rollback_plan.get("changed_file_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "diff_refs"),
+            source_rollback_plan.get("diff_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "redacted_diff_bundle_ref"),
+            source_rollback_plan.get("redacted_diff_bundle_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("ci_gate", "redacted_output_ref"),
+            source_rollback_plan.get("redacted_output_ref"),
+            errors,
+            label,
+        )
         _require_equal(
             payload,
             ("scope", "repository_slug"),
@@ -429,6 +672,10 @@ def _get_nested(payload: Mapping[str, Any], path: tuple[str, ...]) -> Any:
             return None
         current = current.get(part)
     return current
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
 
 
 def _walk_leaves(value: Any, path: tuple[str, ...] = ()) -> list[tuple[tuple[str, ...], Any]]:

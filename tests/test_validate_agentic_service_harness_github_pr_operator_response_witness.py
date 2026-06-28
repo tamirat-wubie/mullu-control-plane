@@ -5,6 +5,7 @@ and non-authorizing.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: scripts.validate_agentic_service_harness_github_pr_operator_response_witness.
 Invariants:
+  - Missing operator response binds to the actual-diff approval request binding.
   - Missing operator response never grants PR creation or repository effects.
   - Remaining witnesses block PR admission.
   - Mutation routes and secret-like payloads fail closed.
@@ -25,6 +26,10 @@ def test_github_pr_operator_response_witness_passes() -> None:
     assert validation.errors == ()
     assert validation.example_count == 1
     assert validation.source_approval_request_ref == validator.EXPECTED_SOURCE_APPROVAL_REQUEST_REF
+    assert (
+        validation.source_actual_diff_approval_request_binding_ref
+        == validator.EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF
+    )
 
 
 def test_github_pr_operator_response_witness_rejects_collected_response() -> None:
@@ -39,7 +44,13 @@ def test_github_pr_operator_response_witness_rejects_collected_response() -> Non
     )
 
     errors: list[str] = []
-    validator._validate_response_witness_semantics(payload, _source_approval_request(), errors, "mutated")
+    validator._validate_response_witness_semantics(
+        payload,
+        _source_approval_request(),
+        _source_actual_diff_binding(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "response_record_collected must be false" in serialized_errors
@@ -62,7 +73,13 @@ def test_github_pr_operator_response_witness_rejects_effect_authority() -> None:
     )
 
     errors: list[str] = []
-    validator._validate_response_witness_semantics(payload, _source_approval_request(), errors, "mutated")
+    validator._validate_response_witness_semantics(
+        payload,
+        _source_approval_request(),
+        _source_actual_diff_binding(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "authority_denials.branch_write_enabled must be false" in serialized_errors
@@ -89,12 +106,50 @@ def test_github_pr_operator_response_witness_rejects_witness_drift() -> None:
     )
 
     errors: list[str] = []
-    validator._validate_response_witness_semantics(payload, _source_approval_request(), errors, "mutated")
+    validator._validate_response_witness_semantics(
+        payload,
+        _source_approval_request(),
+        _source_actual_diff_binding(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "remaining_witnesses must preserve canonical witness order" in serialized_errors
     assert "remaining_witnesses.0.blocks_pr_admission must be true" in serialized_errors
     assert "operator_response.required_response_kinds missing required value" in serialized_errors
+
+
+def test_github_pr_operator_response_witness_rejects_actual_diff_binding_drift() -> None:
+    payload = validator.build_mutated_response_witness(
+        source_actual_diff_approval_request_binding_ref="examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json",
+        operator_response__requires_actual_non_empty_diff_approval_request_binding=False,
+        operator_response__actual_diff_approval_request_binding_ref="examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json",
+        operator_response__actual_non_empty_diff_receipt_ref="witness://wrong-diff",
+        operator_response__changed_file_refs=["evidence://wrong-file"],
+        operator_response__diff_refs=["evidence://wrong-diff"],
+        operator_response__redacted_diff_bundle_ref="digest://wrong-bundle",
+        operator_response__redacted_output_ref="witness://wrong-output",
+    )
+
+    errors: list[str] = []
+    validator._validate_response_witness_semantics(
+        payload,
+        _source_approval_request(),
+        _source_actual_diff_binding(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "source_actual_diff_approval_request_binding_ref expected" in serialized_errors
+    assert "operator_response.requires_actual_non_empty_diff_approval_request_binding must be true" in serialized_errors
+    assert "operator_response.actual_diff_approval_request_binding_ref expected" in serialized_errors
+    assert "operator_response.actual_non_empty_diff_receipt_ref expected" in serialized_errors
+    assert "operator_response.changed_file_refs expected" in serialized_errors
+    assert "operator_response.diff_refs expected" in serialized_errors
+    assert "operator_response.redacted_diff_bundle_ref expected" in serialized_errors
+    assert "operator_response.redacted_output_ref expected" in serialized_errors
 
 
 def test_github_pr_operator_response_witness_rejects_mutation_route_and_secret_like_payload() -> None:
@@ -104,7 +159,13 @@ def test_github_pr_operator_response_witness_rejects_mutation_route_and_secret_l
     payload["operator_response"]["serialized_token_value"] = "github_pat_forbiddencredential"
 
     errors: list[str] = []
-    validator._validate_response_witness_semantics(payload, _source_approval_request(), errors, "mutated")
+    validator._validate_response_witness_semantics(
+        payload,
+        _source_approval_request(),
+        _source_actual_diff_binding(),
+        errors,
+        "mutated",
+    )
     serialized_errors = "\n".join(errors)
 
     assert "mutation route string" in serialized_errors
@@ -125,7 +186,15 @@ def test_github_pr_operator_response_witness_cli_writes_report(tmp_path: Path, c
     assert file_payload["ok"] is True
     assert stdout_payload["errors"] == []
     assert file_payload["source_approval_request_ref"] == validator.EXPECTED_SOURCE_APPROVAL_REQUEST_REF
+    assert (
+        file_payload["source_actual_diff_approval_request_binding_ref"]
+        == validator.EXPECTED_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_REF
+    )
 
 
 def _source_approval_request() -> dict[str, object]:
     return json.loads(validator.DEFAULT_SOURCE_APPROVAL_REQUEST_EXAMPLES[0].read_text(encoding="utf-8"))
+
+
+def _source_actual_diff_binding() -> dict[str, object]:
+    return json.loads(validator.DEFAULT_SOURCE_ACTUAL_DIFF_APPROVAL_BINDING_EXAMPLES[0].read_text(encoding="utf-8"))

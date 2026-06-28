@@ -112,7 +112,7 @@ def test_promotion_closure_chain_can_skip_portfolio(tmp_path: Path) -> None:
     assert "terminal_evidence_reconciliation" in run.artifacts
     assert "terminal_minting_gate" in run.artifacts
     assert "portfolio" not in source_plan_types
-    assert source_plan_types == {"adapter"}
+    assert source_plan_types == {"adapter", "deployment"}
 
 
 def test_promotion_closure_chain_cli_strict_and_require_ready(tmp_path: Path, capsys) -> None:

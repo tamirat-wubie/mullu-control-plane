@@ -236,6 +236,7 @@ def _receipt_evidence_index(receipt_paths: tuple[Path, ...]) -> ReceiptEvidenceI
         receipt = _load_json_object(path, "receipt")
         receipt_ref = _path_label(path)
         _index_deployment_publication_evidence_packet(receipt, receipt_ref, matched)
+        _index_deployment_publication_receipt(receipt, receipt_ref, matched)
         if not _receipt_passed(receipt):
             continue
         basename = path.name
@@ -251,6 +252,32 @@ def _receipt_evidence_index(receipt_paths: tuple[Path, ...]) -> ReceiptEvidenceI
         if adapter_id == "communication.email_calendar_worker":
             matched["email_calendar_live_receipt"] = receipt_ref
     return ReceiptEvidenceIndex(matched_by_key=matched, missing_receipt_paths=tuple(missing_paths))
+
+
+def _index_deployment_publication_receipt(
+    receipt: dict[str, Any],
+    receipt_ref: str,
+    matched: dict[str, str],
+) -> None:
+    """Index validated deployment publication receipts by closure evidence key."""
+    receipt_id = str(receipt.get("receipt_id", ""))
+    if receipt_id.startswith("gateway-dns-target-binding-"):
+        if receipt.get("ready") is True:
+            matched["gateway_dns_target_binding_receipt"] = receipt_ref
+        if receipt.get("valid") is True and receipt.get("ready") is True:
+            matched["gateway_dns_target_binding_validation"] = receipt_ref
+        return
+    if receipt_id.startswith("gateway-dns-resolution-"):
+        if receipt.get("resolved") is True or receipt.get("valid") is True:
+            matched["dns_resolution_receipt"] = receipt_ref
+        if receipt.get("valid") is True:
+            matched["dns_resolution_receipt_validation"] = receipt_ref
+        return
+    if receipt.get("ready") is True and (
+        receipt_id.startswith("deployment-witness-preflight-")
+        or ("gateway_url" in receipt and "expected_environment" in receipt)
+    ):
+        matched["deployment_witness_preflight"] = receipt_ref
 
 
 def _index_deployment_publication_evidence_packet(

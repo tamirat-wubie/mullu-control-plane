@@ -216,6 +216,193 @@ def test_protocol_manifest_indexes_agentic_service_harness_filesystem_write_admi
     assert write_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_concrete_filesystem_write_evidence_candidate() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    candidate_entry = entries[
+        "agentic-service-harness-concrete-filesystem-write-evidence-candidate"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert candidate_entry["path"] == (
+        "schemas/agentic_service_harness_concrete_filesystem_write_evidence_candidate.schema.json"
+    )
+    assert candidate_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-concrete-filesystem-write-evidence-candidate:1"
+    )
+    assert candidate_entry["surface"] == "runtime"
+
+
+def test_protocol_manifest_indexes_agentic_service_harness_actual_filesystem_write_receipt_admission() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    admission_entry = entries[
+        "agentic-service-harness-actual-filesystem-write-receipt-admission"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert admission_entry["path"] == (
+        "schemas/agentic_service_harness_actual_filesystem_write_receipt_admission.schema.json"
+    )
+    assert admission_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-actual-filesystem-write-receipt-admission:1"
+    )
+    assert admission_entry["surface"] == "runtime"
+
+
+def test_protocol_manifest_indexes_agentic_service_harness_redacted_filesystem_write_execution_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    receipt_entry = entries[
+        "agentic-service-harness-redacted-filesystem-write-execution-receipt"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert receipt_entry["path"] == (
+        "schemas/agentic_service_harness_redacted_filesystem_write_execution_receipt.schema.json"
+    )
+    assert receipt_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-redacted-filesystem-write-execution-receipt:1"
+    )
+    assert receipt_entry["surface"] == "runtime"
+
+
+def test_protocol_manifest_indexes_agentic_service_harness_actual_non_empty_diff_receipt_binding() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    binding_entry = entries[
+        "agentic-service-harness-actual-non-empty-diff-receipt-binding"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert binding_entry["path"] == (
+        "schemas/agentic_service_harness_actual_non_empty_diff_receipt_binding.schema.json"
+    )
+    assert binding_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-actual-non-empty-diff-receipt-binding:1"
+    )
+    assert binding_entry["surface"] == "runtime"
+
+
+def test_protocol_manifest_indexes_agentic_service_harness_non_empty_diff_file_summary_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    summary_entry = entries[
+        "agentic-service-harness-non-empty-diff-file-summary-receipt"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert summary_entry["path"] == (
+        "schemas/agentic_service_harness_non_empty_diff_file_summary_receipt.schema.json"
+    )
+    assert summary_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-non-empty-diff-file-summary-receipt:1"
+    )
+    assert summary_entry["surface"] == "runtime"
+
+
+def test_protocol_manifest_indexes_agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    binding_entry = entries[
+        "agentic-service-harness-github-pr-actual-non-empty-diff-admission-binding"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert binding_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.schema.json"
+    )
+    assert binding_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-actual-non-empty-diff-admission-binding:1"
+    )
+    assert binding_entry["surface"] == "runtime"
+
+
+def test_protocol_manifest_indexes_agentic_service_harness_github_pr_creation_execution_admission() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    admission_entry = entries[
+        "agentic-service-harness-github-pr-creation-execution-admission"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert admission_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_creation_execution_admission.schema.json"
+    )
+    assert admission_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-creation-execution-admission:1"
+    )
+    assert admission_entry["surface"] == "runtime"
+
+
+def test_protocol_manifest_indexes_agentic_service_harness_github_pr_creation_command_preview() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    preview_entry = entries[
+        "agentic-service-harness-github-pr-creation-command-preview"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert preview_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_creation_command_preview.schema.json"
+    )
+    assert preview_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-creation-command-preview:1"
+    )
+    assert preview_entry["surface"] == "runtime"
+
+
+def test_protocol_manifest_indexes_agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    binding_entry = entries[
+        "agentic-service-harness-github-pr-operator-approval-request-actual-non-empty-diff-binding"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert binding_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json"
+    )
+    assert binding_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-operator-approval-request-actual-non-empty-diff-binding:1"
+    )
+    assert binding_entry["surface"] == "runtime"
+
+
+def test_protocol_manifest_indexes_agentic_service_harness_github_pr_operator_approval_request_command_preview_binding() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    binding_entry = entries[
+        "agentic-service-harness-github-pr-operator-approval-request-command-preview-binding"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert binding_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.schema.json"
+    )
+    assert binding_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-operator-approval-request-command-preview-binding:1"
+    )
+    assert binding_entry["surface"] == "runtime"
+
+
+def test_protocol_manifest_indexes_agentic_service_harness_github_pr_operator_response_command_preview_binding() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    binding_entry = entries[
+        "agentic-service-harness-github-pr-operator-response-command-preview-binding"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert binding_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_operator_response_command_preview_binding.schema.json"
+    )
+    assert binding_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-operator-response-command-preview-binding:1"
+    )
+    assert binding_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_evidence_bundle_projection() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -2932,6 +3119,21 @@ def test_protocol_manifest_indexes_github_pr_terminal_certificate_read_model() -
         "urn:mullusi:schema:agentic-service-harness-github-pr-terminal-closure-certificate-read-model:1"
     )
     assert read_model_entry["surface"] == "runtime"
+
+
+def test_protocol_manifest_indexes_github_pr_creation_dry_run_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    dry_run_entry = entries["agentic-service-harness-github-pr-creation-dry-run-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert dry_run_entry["path"] == (
+        "schemas/agentic_service_harness_github_pr_creation_dry_run_receipt.schema.json"
+    )
+    assert dry_run_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-github-pr-creation-dry-run-receipt:1"
+    )
+    assert dry_run_entry["surface"] == "runtime"
 
 
 def test_protocol_manifest_rejects_missing_deployment_receipt_entry() -> None:

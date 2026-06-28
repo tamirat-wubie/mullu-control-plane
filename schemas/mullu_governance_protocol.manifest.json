@@ -131,10 +131,40 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-non-empty-diff-receipt-admission-preflight:1"
     },
     {
+      "path": "schemas/agentic_service_harness_non_empty_diff_file_summary_receipt.schema.json",
+      "schema_id": "agentic-service-harness-non-empty-diff-file-summary-receipt",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-non-empty-diff-file-summary-receipt:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_filesystem_write_admission_preflight.schema.json",
       "schema_id": "agentic-service-harness-filesystem-write-admission-preflight",
       "surface": "runtime",
       "urn": "urn:mullusi:schema:agentic-service-harness-filesystem-write-admission-preflight:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_concrete_filesystem_write_evidence_candidate.schema.json",
+      "schema_id": "agentic-service-harness-concrete-filesystem-write-evidence-candidate",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-concrete-filesystem-write-evidence-candidate:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_actual_filesystem_write_receipt_admission.schema.json",
+      "schema_id": "agentic-service-harness-actual-filesystem-write-receipt-admission",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-actual-filesystem-write-receipt-admission:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_redacted_filesystem_write_execution_receipt.schema.json",
+      "schema_id": "agentic-service-harness-redacted-filesystem-write-execution-receipt",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-redacted-filesystem-write-execution-receipt:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_actual_non_empty_diff_receipt_binding.schema.json",
+      "schema_id": "agentic-service-harness-actual-non-empty-diff-receipt-binding",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-actual-non-empty-diff-receipt-binding:1"
     },
     {
       "path": "schemas/agentic_service_harness_receipt_evidence_read_models.schema.json",
@@ -153,6 +183,30 @@
       "schema_id": "agentic-service-harness-github-pr-admission-preflight",
       "surface": "runtime",
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-admission-preflight:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_github_pr_creation_dry_run_receipt.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-creation-dry-run-receipt",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-creation-dry-run-receipt:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_github_pr_creation_execution_admission.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-creation-execution-admission",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-creation-execution-admission:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_github_pr_creation_command_preview.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-creation-command-preview",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-creation-command-preview:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-actual-non-empty-diff-admission-binding",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-actual-non-empty-diff-admission-binding:1"
     },
     {
       "path": "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json",
@@ -191,10 +245,28 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-approval-request:1"
     },
     {
+      "path": "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-operator-approval-request-actual-non-empty-diff-binding",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-approval-request-actual-non-empty-diff-binding:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-operator-approval-request-command-preview-binding",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-approval-request-command-preview-binding:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json",
       "schema_id": "agentic-service-harness-github-pr-operator-response-witness",
       "surface": "runtime",
       "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-response-witness:1"
+    },
+    {
+      "path": "schemas/agentic_service_harness_github_pr_operator_response_command_preview_binding.schema.json",
+      "schema_id": "agentic-service-harness-github-pr-operator-response-command-preview-binding",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-github-pr-operator-response-command-preview-binding:1"
     },
     {
       "path": "schemas/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.schema.json",
@@ -2151,6 +2223,84 @@
       "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-template",
       "surface": "approval",
       "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-template:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_collection_gate.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-collection-gate",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-collection-gate:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_path.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-path",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-path:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_preflight.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-preflight",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-preflight:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_admission_gate.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-admission-gate",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-admission-gate:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_request.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-request",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-request:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_template.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-template",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-template:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_collection_gate.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-collection-gate",
+      "surface": "personal-assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-collection-gate:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_absence.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-absence",
+      "surface": "personal-assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-absence:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_generic_continuation_rejection.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-generic-continuation-rejection",
+      "surface": "personal-assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-generic-continuation-rejection:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_candidate.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-candidate",
+      "surface": "personal-assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-candidate:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_preflight.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-preflight",
+      "surface": "personal-assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-preflight:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_status_ledger.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-status-ledger",
+      "surface": "personal-assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-status-ledger:1"
+    },
+    {
+      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_request.schema.json",
+      "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-request",
+      "surface": "personal-assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-request:1"
     },
     {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",

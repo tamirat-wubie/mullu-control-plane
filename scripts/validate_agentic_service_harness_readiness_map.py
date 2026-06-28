@@ -350,6 +350,70 @@ REQUIRED_FILESYSTEM_WRITE_ADMISSION_TERMS = (
     "connector calls",
     "terminal closure remain blocked",
 )
+REQUIRED_CONCRETE_FILESYSTEM_WRITE_EVIDENCE_CANDIDATE_TERMS = (
+    "Concrete filesystem write evidence candidate PR",
+    "agentic_service_harness_concrete_filesystem_write_evidence_candidate",
+    "non-empty redacted changed-file and diff-summary evidence refs",
+    "filesystem-write admission preflight",
+    "non-empty diff admission preflight",
+    "cleanup",
+    "redaction",
+    "UAO admission",
+    "rollback",
+    "receipt-store write-path",
+    "filesystem-write admission",
+    "filesystem write execution",
+    "raw diff bodies",
+    "raw file content",
+    "PR creation",
+    "terminal closure remain blocked",
+)
+REQUIRED_ACTUAL_FILESYSTEM_WRITE_RECEIPT_ADMISSION_TERMS = (
+    "Actual filesystem write receipt admission PR",
+    "agentic_service_harness_actual_filesystem_write_receipt_admission",
+    "concrete filesystem-write evidence candidate",
+    "cleanup",
+    "rollback",
+    "redaction",
+    "UAO",
+    "receipt-store write-path",
+    "terminal certificate",
+    "filesystem write execution",
+    "raw diff bodies",
+    "raw file content",
+    "connector calls",
+    "terminal closure remain blocked",
+)
+REQUIRED_REDACTED_FILESYSTEM_WRITE_EXECUTION_RECEIPT_TERMS = (
+    "Redacted filesystem write execution receipt PR",
+    "agentic_service_harness_redacted_filesystem_write_execution_receipt",
+    "actual filesystem-write receipt admission",
+    "concrete filesystem-write evidence candidate",
+    "redacted execution output",
+    "non-empty changed-file refs",
+    "redacted diff bundle",
+    "receipt-store write-path",
+    "terminal certificate evidence",
+    "filesystem-write receipt emission",
+    "raw command output",
+    "raw diff bodies",
+    "raw file content",
+    "connector calls",
+    "terminal closure remain blocked",
+)
+REQUIRED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_BINDING_TERMS = (
+    "Actual non-empty diff receipt binding PR",
+    "agentic_service_harness_actual_non_empty_diff_receipt_binding",
+    "redacted non-empty changed-file and diff refs",
+    "redacted filesystem-write execution receipt",
+    "non-empty diff file summary receipt",
+    "actual non-empty diff receipt",
+    "raw diff bodies",
+    "raw file content",
+    "receipt append",
+    "PR creation",
+    "terminal closure remain blocked",
+)
 REQUIRED_ACTUAL_DIFF_COLLECTION_RECEIPT_TERMS = (
     "Actual diff collection receipt admission PR",
     "agentic_service_harness_actual_diff_collection_receipt",
@@ -364,6 +428,23 @@ REQUIRED_ACTUAL_DIFF_COLLECTION_RECEIPT_TERMS = (
     "non-empty diff authority",
     "raw diff bodies",
     "raw file content",
+    "terminal closure remain blocked",
+)
+REQUIRED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_TERMS = (
+    "Non-empty diff file summary receipt PR",
+    "agentic_service_harness_non_empty_diff_file_summary_receipt",
+    "non-empty diff admission",
+    "filesystem-write admission",
+    "zero-diff actual diff receipt evidence",
+    "cleanup",
+    "redaction",
+    "UAO admission",
+    "receipt-store write-path",
+    "redacted diff bundle refs",
+    "non-empty file summary emission",
+    "raw diff bodies",
+    "raw file content",
+    "PR creation",
     "terminal closure remain blocked",
 )
 REQUIRED_GITHUB_PR_ADMISSION_TERMS = (
@@ -385,10 +466,155 @@ REQUIRED_GITHUB_PR_ADMISSION_TERMS = (
     "secret material",
     "terminal closure fail closed",
 )
+REQUIRED_GITHUB_PR_ACTUAL_NON_EMPTY_DIFF_ADMISSION_BINDING_TERMS = (
+    "GitHub PR actual non-empty diff admission binding PR",
+    "agentic_service_harness_github_pr_actual_non_empty_diff_admission_binding",
+    "GitHub PR admission preflight",
+    "actual non-empty diff receipt binding",
+    "redacted changed-file and diff refs",
+    "PR admission input",
+    "operator approval",
+    "branch-write authority",
+    "UAO admission",
+    "terminal certificate evidence",
+    "PR creation",
+    "raw diff bodies",
+    "raw file content",
+    "terminal closure fail closed",
+)
+REQUIRED_GITHUB_PR_OPERATOR_APPROVAL_ACTUAL_DIFF_BINDING_TERMS = (
+    "GitHub PR operator approval request actual-diff binding PR",
+    "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding",
+    "agentic_service_harness_github_pr_operator_approval_request",
+    "GitHub PR actual non-empty diff admission binding",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
+    "Approval remains AwaitingEvidence",
+    "PR creation",
+    "receipt-store append",
+    "terminal closure fail closed",
+)
+REQUIRED_GITHUB_PR_OPERATOR_RESPONSE_ACTUAL_DIFF_BINDING_TERMS = (
+    "GitHub PR operator response actual-diff binding PR",
+    "agentic_service_harness_github_pr_operator_response_witness",
+    "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
+    "Operator response remains AwaitingEvidence",
+    "branch-write authority",
+    "PR creation",
+    "raw diff bodies",
+    "raw file content",
+    "terminal closure fail closed",
+)
+REQUIRED_GITHUB_PR_BRANCH_WRITE_ACTUAL_DIFF_RESPONSE_BINDING_TERMS = (
+    "GitHub PR branch-write authority actual-diff response binding PR",
+    "agentic_service_harness_github_pr_branch_write_authority_binding",
+    "actual-diff operator response witness",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
+    "Branch-write authority remains AwaitingEvidence",
+    "response satisfaction",
+    "UAO admission",
+    "PR creation",
+    "raw diff bodies",
+    "raw file content",
+    "terminal closure fail closed",
+)
+REQUIRED_GITHUB_PR_BRANCH_WRITE_COMMAND_PREVIEW_RESPONSE_BINDING_TERMS = (
+    "GitHub PR branch-write authority command-preview response binding PR",
+    "agentic_service_harness_github_pr_branch_write_authority_binding",
+    "command-preview-bound operator response witness",
+    "operator response witness ref",
+    "command-preview approval request binding ref",
+    "redacted command preview",
+    "argument vector template",
+    "placeholder refs",
+    "branch-write evidence ref",
+    "Branch-write authority remains AwaitingEvidence",
+    "PR command execution",
+    "pull-request creation",
+    "repository writes",
+    "connector calls",
+    "mutation routes",
+    "receipt-store append",
+    "secret material",
+    "terminal closure remain blocked",
+)
+REQUIRED_GITHUB_PR_UAO_ACTUAL_DIFF_BRANCH_WRITE_BINDING_TERMS = (
+    "GitHub PR UAO admission command-preview branch-write binding PR",
+    "agentic_service_harness_github_pr_uao_admission_witness",
+    "command-preview branch-write authority binding",
+    "command-preview operator response binding",
+    "redacted command preview",
+    "argument vector template",
+    "placeholder refs",
+    "actual-diff branch-write authority binding",
+    "actual-diff operator response witness",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
+    "UAO PR admission remains AwaitingEvidence",
+    "rollback planning",
+    "PR creation",
+    "raw diff bodies",
+    "raw file content",
+    "terminal closure fail closed",
+)
+REQUIRED_GITHUB_PR_ROLLBACK_ACTUAL_DIFF_UAO_BINDING_TERMS = (
+    "GitHub PR repository-effect rollback command-preview UAO binding PR",
+    "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+    "command-preview UAO admission witness",
+    "command-preview branch-write binding",
+    "command-preview operator response binding",
+    "redacted command preview",
+    "argument vector template",
+    "placeholder refs",
+    "actual-diff UAO admission witness",
+    "actual-diff branch-write authority binding",
+    "actual-diff operator response witness",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
+    "Repository-effect rollback remains AwaitingEvidence",
+    "CI evidence",
+    "PR creation",
+    "raw diff bodies",
+    "raw file content",
+    "terminal closure fail closed",
+)
 REQUIRED_GITHUB_PR_CI_GATE_TERMS = (
-    "GitHub PR CI gate before ready-for-review witness PR",
+    "GitHub PR CI gate before ready-for-review command-preview rollback binding PR",
     "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
-    "repository effect rollback plan",
+    "command-preview repository-effect rollback witness",
+    "command-preview UAO admission witness",
+    "command-preview branch-write binding",
+    "command-preview operator response binding",
+    "redacted command preview",
+    "argument vector template",
+    "placeholder refs",
+    "actual-diff repository-effect rollback witness",
+    "actual-diff UAO admission witness",
+    "actual-diff branch-write authority binding",
+    "actual-diff operator response witness",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
     "requested CI evidence ref",
     "required check result",
     "effect_reconciliation",
@@ -396,8 +622,26 @@ REQUIRED_GITHUB_PR_CI_GATE_TERMS = (
     "no branch, PR, ready-for-review, repository, connector, network, mutation-route, receipt-store, secret, destructive, or terminal authority",
 )
 REQUIRED_GITHUB_PR_EFFECT_RECONCILIATION_TERMS = (
-    "GitHub PR effect reconciliation witness PR",
+    "GitHub PR effect reconciliation command-preview CI gate binding PR",
     "agentic_service_harness_github_pr_effect_reconciliation_witness",
+    "command-preview CI gate before ready-for-review witness",
+    "command-preview repository-effect rollback witness",
+    "command-preview UAO admission witness",
+    "command-preview branch-write binding",
+    "command-preview operator response binding",
+    "redacted command preview",
+    "argument vector template",
+    "placeholder refs",
+    "actual-diff CI gate before ready-for-review witness",
+    "actual-diff repository-effect rollback witness",
+    "actual-diff UAO admission witness",
+    "actual-diff branch-write authority binding",
+    "actual-diff operator response witness",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
     "GitHub PR effect reconciliation evidence contract PR",
     "agentic_service_harness_github_pr_effect_reconciliation_evidence_contract",
     "GitHub PR effect reconciliation live evidence PR",
@@ -409,36 +653,70 @@ REQUIRED_GITHUB_PR_EFFECT_RECONCILIATION_TERMS = (
     "granting no repository mutation, secret, destructive, or terminal closure authority",
 )
 REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
-    "GitHub PR terminal closure certificate witness PR",
+    "GitHub PR terminal closure certificate command-preview effect reconciliation binding PR",
     "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
-    "GitHub PR terminal closure certificate candidate PR",
+    "command-preview effect reconciliation witness",
+    "command-preview CI gate before ready-for-review witness",
+    "command-preview repository-effect rollback witness",
+    "command-preview UAO admission witness",
+    "command-preview branch-write binding",
+    "command-preview operator response binding",
+    "redacted command preview",
+    "argument vector template",
+    "placeholder refs",
+    "actual-diff effect reconciliation witness",
+    "actual-diff CI gate before ready-for-review witness",
+    "actual-diff repository-effect rollback witness",
+    "actual-diff UAO admission witness",
+    "actual-diff branch-write authority binding",
+    "actual-diff operator response witness",
+    "actual non-empty diff receipt ref",
+    "redacted changed-file refs",
+    "redacted diff refs",
+    "redacted output ref",
+    "redacted diff bundle ref",
+    "GitHub PR terminal closure certificate candidate command-preview certificate binding PR",
     "agentic_service_harness_github_pr_terminal_closure_certificate_candidate",
-    "GitHub PR terminal closure operator approval gate PR",
+    "command-preview terminal closure certificate witness",
+    "actual-diff terminal closure certificate witness",
+    "actual-diff approval request binding",
+    "GitHub PR terminal closure operator approval gate actual-diff candidate binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate",
-    "GitHub PR terminal closure operator decision contract PR",
+    "GitHub PR terminal closure operator decision contract actual-diff approval gate binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract",
-    "GitHub PR terminal closure generic continuation rejection PR",
+    "actual-diff operator approval gate evidence",
+    "source approval gate binding id/ref",
+    "GitHub PR terminal closure generic continuation rejection actual-diff decision contract binding PR",
     "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
-    "GitHub PR terminal closure operator decision value request PR",
+    "actual-diff decision contract evidence",
+    "source decision contract binding id/ref",
+    "actual-diff-bound generic rejection evidence",
+    "GitHub PR terminal closure operator decision value request actual-diff generic rejection binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request",
-    "GitHub PR terminal closure operator decision value record PR",
+    "actual-diff-bound decision value request evidence",
+    "GitHub PR terminal closure operator decision value record actual-diff request binding PR",
     "agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record",
-    "GitHub PR terminal closure certificate minting PR",
+    "actual-diff-bound decision value record evidence",
+    "GitHub PR terminal closure certificate minting actual-diff decision value record binding PR",
     "agentic_service_harness_github_pr_terminal_closure_certificate_minting",
     "terminal closure status remains AwaitingEvidence",
-    "certificate minting, operator approval, repository mutation, connector calls, receipt-store append, secret serialization, destructive operation, and terminal closure remain blocked",
-    "operator approval is required, not collected",
+    "Candidate status remains AwaitingEvidence/operator-approval-bound",
+    "certificate minting, repository mutation, connector calls, receipt-store append, secret serialization, destructive operation, and terminal closure remain blocked",
+    "Operator approval remains required and uncollected",
+    "Explicit operator decision remains uncollected",
+    "actual-diff-bound decision contract evidence",
     "approve_terminal_certificate",
     "deny_terminal_certificate",
-    "generic continuation text is rejected as terminal approval",
-    "recording no operator decision value",
+    "Generic continuation remains rejected",
+    "records no operator decision value",
     "records the explicit operator value",
     "satisfies only the operator decision gate",
-    "minting no certificate",
-    "no certificate minting, repository mutation, connector call, receipt-store append, secret serialization, destructive operation, or terminal closure authority is granted",
-    "mints the terminal closure certificate",
-    "limiting authority to this GitHub PR proof thread",
-    "granting no repository mutation, connector call, receipt-store append, deployment, secret serialization, or destructive-operation authority",
+    "mints no certificate",
+    "certificate minting remains blocked",
+    "actual-diff decision value record evidence",
+    "actual-diff-bound certificate minting evidence",
+    "limited to the GitHub PR proof thread",
+    "grants no repository mutation, connector call, receipt-store append, deployment, secret serialization, or destructive-operation authority",
 )
 FORBIDDEN_PATTERNS = (
     ("mutation_route", re.compile(r"\b(?:POST|PUT|PATCH|DELETE)\s+/api\b", re.IGNORECASE)),
@@ -594,14 +872,86 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     )
     _require_all(
         map_text,
+        REQUIRED_CONCRETE_FILESYSTEM_WRITE_EVIDENCE_CANDIDATE_TERMS,
+        "concrete_filesystem_write_evidence_candidate_term",
+        errors,
+    )
+    _require_all(
+        map_text,
+        REQUIRED_ACTUAL_FILESYSTEM_WRITE_RECEIPT_ADMISSION_TERMS,
+        "actual_filesystem_write_receipt_admission_term",
+        errors,
+    )
+    _require_all(
+        map_text,
+        REQUIRED_REDACTED_FILESYSTEM_WRITE_EXECUTION_RECEIPT_TERMS,
+        "redacted_filesystem_write_execution_receipt_term",
+        errors,
+    )
+    _require_all(
+        map_text,
+        REQUIRED_ACTUAL_NON_EMPTY_DIFF_RECEIPT_BINDING_TERMS,
+        "actual_non_empty_diff_receipt_binding_term",
+        errors,
+    )
+    _require_all(
+        map_text,
         REQUIRED_ACTUAL_DIFF_COLLECTION_RECEIPT_TERMS,
         "actual_diff_collection_receipt_term",
         errors,
     )
     _require_all(
         map_text,
+        REQUIRED_NON_EMPTY_DIFF_FILE_SUMMARY_RECEIPT_TERMS,
+        "non_empty_diff_file_summary_receipt_term",
+        errors,
+    )
+    _require_all(
+        map_text,
         REQUIRED_GITHUB_PR_ADMISSION_TERMS,
         "github_pr_admission_term",
+        errors,
+    )
+    _require_all(
+        map_text,
+        REQUIRED_GITHUB_PR_ACTUAL_NON_EMPTY_DIFF_ADMISSION_BINDING_TERMS,
+        "github_pr_actual_non_empty_diff_admission_binding_term",
+        errors,
+    )
+    _require_all(
+        map_text,
+        REQUIRED_GITHUB_PR_OPERATOR_APPROVAL_ACTUAL_DIFF_BINDING_TERMS,
+        "github_pr_operator_approval_actual_diff_binding_term",
+        errors,
+    )
+    _require_all(
+        map_text,
+        REQUIRED_GITHUB_PR_OPERATOR_RESPONSE_ACTUAL_DIFF_BINDING_TERMS,
+        "github_pr_operator_response_actual_diff_binding_term",
+        errors,
+    )
+    _require_all(
+        map_text,
+        REQUIRED_GITHUB_PR_BRANCH_WRITE_ACTUAL_DIFF_RESPONSE_BINDING_TERMS,
+        "github_pr_branch_write_actual_diff_response_binding_term",
+        errors,
+    )
+    _require_all(
+        map_text,
+        REQUIRED_GITHUB_PR_BRANCH_WRITE_COMMAND_PREVIEW_RESPONSE_BINDING_TERMS,
+        "github_pr_branch_write_command_preview_response_binding_term",
+        errors,
+    )
+    _require_all(
+        map_text,
+        REQUIRED_GITHUB_PR_UAO_ACTUAL_DIFF_BRANCH_WRITE_BINDING_TERMS,
+        "github_pr_uao_actual_diff_branch_write_binding_term",
+        errors,
+    )
+    _require_all(
+        map_text,
+        REQUIRED_GITHUB_PR_ROLLBACK_ACTUAL_DIFF_UAO_BINDING_TERMS,
+        "github_pr_rollback_actual_diff_uao_binding_term",
         errors,
     )
     _require_all(
@@ -642,8 +992,20 @@ def validate_readiness_map(map_path: Path = DEFAULT_MAP) -> ReadinessMapValidati
     _validate_executed_test_receipt_admission_ready(map_text, errors)
     _validate_non_empty_diff_receipt_admission_ready(map_text, errors)
     _validate_filesystem_write_admission_ready(map_text, errors)
+    _validate_concrete_filesystem_write_evidence_candidate_ready(map_text, errors)
+    _validate_actual_filesystem_write_receipt_admission_ready(map_text, errors)
+    _validate_redacted_filesystem_write_execution_receipt_ready(map_text, errors)
+    _validate_actual_non_empty_diff_receipt_binding_ready(map_text, errors)
     _validate_actual_diff_collection_receipt_ready(map_text, errors)
+    _validate_non_empty_diff_file_summary_receipt_ready(map_text, errors)
     _validate_github_pr_admission_ready(map_text, errors)
+    _validate_github_pr_actual_non_empty_diff_admission_binding_ready(map_text, errors)
+    _validate_github_pr_operator_approval_actual_diff_binding_ready(map_text, errors)
+    _validate_github_pr_operator_response_actual_diff_binding_ready(map_text, errors)
+    _validate_github_pr_branch_write_actual_diff_response_binding_ready(map_text, errors)
+    _validate_github_pr_branch_write_command_preview_response_binding_ready(map_text, errors)
+    _validate_github_pr_uao_actual_diff_branch_write_binding_ready(map_text, errors)
+    _validate_github_pr_rollback_actual_diff_uao_binding_ready(map_text, errors)
     _validate_github_pr_ci_gate_ready(map_text, errors)
     _validate_github_pr_effect_reconciliation_ready(map_text, errors)
     _validate_github_pr_terminal_closure_ready(map_text, errors)
@@ -901,6 +1263,58 @@ def _validate_filesystem_write_admission_ready(
         errors.append("missing ready row: Filesystem write admission preflight PR")
 
 
+def _validate_concrete_filesystem_write_evidence_candidate_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Concrete filesystem write evidence candidate PR \| READY \| .+non-empty redacted changed-file and diff-summary evidence refs.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Concrete filesystem write evidence candidate PR")
+
+
+def _validate_actual_filesystem_write_receipt_admission_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Actual filesystem write receipt admission PR \| READY \| .+concrete filesystem-write evidence candidate.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Actual filesystem write receipt admission PR")
+
+
+def _validate_redacted_filesystem_write_execution_receipt_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Redacted filesystem write execution receipt PR \| READY \| .+actual filesystem-write receipt admission.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Redacted filesystem write execution receipt PR")
+
+
+def _validate_actual_non_empty_diff_receipt_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Actual non-empty diff receipt binding PR \| READY \| .+redacted non-empty changed-file and diff refs.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Actual non-empty diff receipt binding PR")
+
+
 def _validate_actual_diff_collection_receipt_ready(
     map_text: str,
     errors: list[str],
@@ -912,6 +1326,19 @@ def _validate_actual_diff_collection_receipt_ready(
     )
     if closure_row is None:
         errors.append("missing ready row: Actual diff collection receipt admission PR")
+
+
+def _validate_non_empty_diff_file_summary_receipt_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| Non-empty diff file summary receipt PR \| READY \| .+zero-diff actual diff receipt evidence.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: Non-empty diff file summary receipt PR")
 
 
 def _validate_github_pr_admission_ready(
@@ -927,17 +1354,108 @@ def _validate_github_pr_admission_ready(
         errors.append("missing ready row: GitHub PR admission preflight PR")
 
 
+def _validate_github_pr_actual_non_empty_diff_admission_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR actual non-empty diff admission binding PR \| READY \| .+PR admission input.+terminal closure fail closed\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR actual non-empty diff admission binding PR")
+
+
+def _validate_github_pr_operator_approval_actual_diff_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR operator approval request actual-diff binding PR \| READY \| .+actual non-empty diff receipt ref.+terminal closure fail closed\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR operator approval request actual-diff binding PR")
+
+
+def _validate_github_pr_operator_response_actual_diff_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR operator response actual-diff binding PR \| READY \| .+actual non-empty diff receipt ref.+terminal closure fail closed\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR operator response actual-diff binding PR")
+
+
+def _validate_github_pr_branch_write_actual_diff_response_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR branch-write authority actual-diff response binding PR \| READY \| .+actual non-empty diff receipt ref.+terminal closure fail closed\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR branch-write authority actual-diff response binding PR")
+
+
+def _validate_github_pr_branch_write_command_preview_response_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR branch-write authority command-preview response binding PR \| READY \| .+command-preview-bound operator response witness.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR branch-write authority command-preview response binding PR")
+
+
+def _validate_github_pr_uao_actual_diff_branch_write_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR UAO admission command-preview branch-write binding PR \| READY \| .+command-preview branch-write authority binding.+actual non-empty diff receipt ref.+terminal closure fail closed\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR UAO admission command-preview branch-write binding PR")
+
+
+def _validate_github_pr_rollback_actual_diff_uao_binding_ready(
+    map_text: str,
+    errors: list[str],
+) -> None:
+    closure_row = re.search(
+        r"^\| GitHub PR repository-effect rollback command-preview UAO binding PR \| READY \| .+command-preview UAO admission witness.+actual-diff UAO admission witness.+terminal closure fail closed\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if closure_row is None:
+        errors.append("missing ready row: GitHub PR repository-effect rollback command-preview UAO binding PR")
+
+
 def _validate_github_pr_ci_gate_ready(
     map_text: str,
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| GitHub PR CI gate before ready-for-review witness PR \| READY \| .+CI gate authority remains AwaitingEvidence.+terminal authority is granted\. \|$",
+        r"^\| GitHub PR CI gate before ready-for-review command-preview rollback binding PR \| READY \| .+command-preview repository-effect rollback witness.+actual-diff repository-effect rollback witness.+terminal authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if closure_row is None:
-        errors.append("missing ready row: GitHub PR CI gate before ready-for-review witness PR")
+        errors.append("missing ready row: GitHub PR CI gate before ready-for-review command-preview rollback binding PR")
 
 
 def _validate_github_pr_effect_reconciliation_ready(
@@ -945,12 +1463,12 @@ def _validate_github_pr_effect_reconciliation_ready(
     errors: list[str],
 ) -> None:
     witness_row = re.search(
-        r"^\| GitHub PR effect reconciliation witness PR \| READY \| .+effect reconciliation remains AwaitingEvidence.+terminal authority is granted\. \|$",
+        r"^\| GitHub PR effect reconciliation command-preview CI gate binding PR \| READY \| .+command-preview CI gate before ready-for-review witness.+actual-diff CI gate before ready-for-review witness.+effect reconciliation remains AwaitingEvidence.+terminal authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if witness_row is None:
-        errors.append("missing ready row: GitHub PR effect reconciliation witness PR")
+        errors.append("missing ready row: GitHub PR effect reconciliation command-preview CI gate binding PR")
 
     contract_row = re.search(
         r"^\| GitHub PR effect reconciliation evidence contract PR \| READY \| .+read-only GitHub PR state observation.+terminal authority is granted\. \|$",
@@ -974,81 +1492,157 @@ def _validate_github_pr_terminal_closure_ready(
     errors: list[str],
 ) -> None:
     witness_row = re.search(
-        r"^\| GitHub PR terminal closure certificate witness PR \| READY \| .+terminal closure status remains AwaitingEvidence.+terminal authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure certificate command-preview effect reconciliation binding PR \| READY \| .+command-preview effect reconciliation witness.+actual-diff effect reconciliation witness.+terminal closure status remains AwaitingEvidence.+terminal authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if witness_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure certificate witness PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure certificate command-preview effect reconciliation binding PR"
+        )
 
     candidate_row = re.search(
-        r"^\| GitHub PR terminal closure certificate candidate PR \| READY \| .+certificate minting.+terminal closure remain blocked\. \|$",
+        r"^\| GitHub PR terminal closure certificate candidate command-preview certificate binding PR \| READY \| .+command-preview terminal closure certificate witness.+redacted command preview.+actual-diff terminal closure certificate witness.+actual-diff approval request binding.+Candidate status remains AwaitingEvidence/operator-approval-bound.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
     if candidate_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure certificate candidate PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure certificate candidate command-preview certificate binding PR"
+        )
 
     approval_gate_row = re.search(
-        r"^\| GitHub PR terminal closure operator approval gate PR \| READY \| .+operator approval is required.+authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure operator approval gate actual-diff candidate binding PR \| READY \| .+actual-diff terminal closure certificate witness.+Operator approval remains required and uncollected.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
     if approval_gate_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure operator approval gate PR")
+        errors.append("missing ready row: GitHub PR terminal closure operator approval gate actual-diff candidate binding PR")
 
     decision_contract_row = re.search(
-        r"^\| GitHub PR terminal closure operator decision contract PR \| READY \| .+approve_terminal_certificate.+terminal closure authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure operator decision contract actual-diff approval gate binding PR \| READY \| .+actual-diff operator approval gate evidence.+source approval gate binding id/ref.+Explicit operator decision remains uncollected.+terminal closure authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if decision_contract_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure operator decision contract PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure operator decision contract actual-diff approval gate binding PR"
+        )
 
     generic_rejection_row = re.search(
-        r"^\| GitHub PR terminal closure generic continuation rejection PR \| READY \| .+generic continuation text is rejected.+terminal closure authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure generic continuation rejection actual-diff decision contract binding PR \| READY \| .+actual-diff decision contract evidence.+source decision contract binding id/ref.+Generic continuation remains rejected.+terminal closure authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if generic_rejection_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure generic continuation rejection PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure generic continuation rejection actual-diff decision contract binding PR"
+        )
 
     decision_value_request_row = re.search(
-        r"^\| GitHub PR terminal closure operator decision value request PR \| READY \| .+approve_terminal_certificate.+deny_terminal_certificate.+recording no operator decision value.+terminal closure authority\. \|$",
+        r"^\| GitHub PR terminal closure operator decision value request actual-diff generic rejection binding PR \| READY \| .+actual-diff generic rejection evidence.+source rejection binding id/ref.+approve_terminal_certificate.+deny_terminal_certificate.+records no operator decision value.+terminal closure authority\. \|$",
         map_text,
         re.MULTILINE,
     )
     if decision_value_request_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure operator decision value request PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure operator decision value request actual-diff generic rejection binding PR"
+        )
 
     decision_value_record_row = re.search(
-        r"^\| GitHub PR terminal closure operator decision value record PR \| READY \| .+approve_terminal_certificate.+satisfies only the operator decision gate.+terminal closure authority\. \|$",
+        r"^\| GitHub PR terminal closure operator decision value record actual-diff request binding PR \| READY \| .+actual-diff decision value request evidence.+source request id/ref/status.+approve_terminal_certificate.+satisfies only the operator decision gate.+terminal closure authority\. \|$",
         map_text,
         re.MULTILINE,
     )
     if decision_value_record_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure operator decision value record PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure operator decision value record actual-diff request binding PR"
+        )
 
     certificate_minting_row = re.search(
-        r"^\| GitHub PR terminal closure certificate minting PR \| READY \| .+mints the terminal closure certificate.+GitHub PR proof thread.+destructive-operation authority\. \|$",
+        r"^\| GitHub PR terminal closure certificate minting actual-diff decision value record binding PR \| READY \| .+actual-diff decision value record evidence.+source decision value record id/ref.+source request id/ref/status.+approve_terminal_certificate.+actual non-empty diff receipt ref.+GitHub PR proof thread.+destructive-operation authority\. \|$",
         map_text,
         re.MULTILINE,
     )
     if certificate_minting_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure certificate minting PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure certificate minting actual-diff decision value record binding PR"
+        )
 
     certificate_read_model_row = re.search(
-        r"^\| GitHub PR terminal closure certificate read model PR \| READY \| .+projects the minted terminal closure certificate.+operator inspection.+new terminal-closure authority\. \|$",
+        r"^\| GitHub PR terminal closure certificate read model actual-diff minting binding PR \| READY \| .+actual-diff certificate minting evidence.+source minting id/ref/time.+approve_terminal_certificate.+actual non-empty diff receipt ref.+read-only, projection-only, reference-only.+new terminal-closure authority\. \|$",
         map_text,
         re.MULTILINE,
     )
     if certificate_read_model_row is None:
-        errors.append("missing ready row: GitHub PR terminal closure certificate read model PR")
+        errors.append(
+            "missing ready row: GitHub PR terminal closure certificate read model actual-diff minting binding PR"
+        )
+
+    pr_creation_read_model_binding_row = re.search(
+        r"^\| GitHub PR creation admission terminal certificate read-model binding PR \| READY \| .+agentic_service_harness_github_pr_admission_preflight.+actual-diff terminal certificate read-model evidence.+certificate read-model example ref.+schema ref.+validator ref.+projection-only status.+pull-request creation.+new terminal-closure authority\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if pr_creation_read_model_binding_row is None:
+        errors.append(
+            "missing ready row: GitHub PR creation admission terminal certificate read-model binding PR"
+        )
+
+    pr_creation_dry_run_receipt_row = re.search(
+        r"^\| GitHub PR creation dry-run receipt terminal certificate admission binding PR \| READY \| .+agentic_service_harness_github_pr_creation_dry_run_receipt.+certificate-read-model-bound admission preflight.+terminal certificate read model.+dry-run-only PR creation.+runtime PR execution.+pull-request opened.+branch creation.+repository writes.+receipt-store append.+adapter execution.+connector calls.+mutation routes.+secret material.+terminal closure\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if pr_creation_dry_run_receipt_row is None:
+        errors.append(
+            "missing ready row: GitHub PR creation dry-run receipt terminal certificate admission binding PR"
+        )
+
+    pr_creation_execution_admission_row = re.search(
+        r"^\| GitHub PR creation execution admission dry-run binding PR \| READY \| .+agentic_service_harness_github_pr_creation_execution_admission.+PR creation dry-run receipt.+execution admission.+operator approval.+branch-write authority.+UAO.+rollback.+receipt-store write-path.+effect reconciliation.+pull-request creation.+repository writes.+connector calls.+mutation routes.+secret material.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if pr_creation_execution_admission_row is None:
+        errors.append(
+            "missing ready row: GitHub PR creation execution admission dry-run binding PR"
+        )
+
+    pr_creation_command_preview_row = re.search(
+        r"^\| GitHub PR creation command preview execution-admission binding PR \| READY \| .+agentic_service_harness_github_pr_creation_command_preview.+execution-admission evidence.+redacted `gh pr create` command preview.+command execution.+adapter execution.+branch pushes.+pull-request creation.+repository writes.+receipt-store append.+connector calls.+mutation routes.+secret material.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if pr_creation_command_preview_row is None:
+        errors.append(
+            "missing ready row: GitHub PR creation command preview execution-admission binding PR"
+        )
+
+    pr_operator_approval_command_preview_row = re.search(
+        r"^\| GitHub PR operator approval request command-preview binding PR \| READY \| .+agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.+operator approval request evidence.+command preview.+operator response.+command execution.+branch writes.+pull-request creation.+repository writes.+connector calls.+mutation routes.+receipt-store append.+secret material.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if pr_operator_approval_command_preview_row is None:
+        errors.append(
+            "missing ready row: GitHub PR operator approval request command-preview binding PR"
+        )
+
+    pr_operator_response_command_preview_row = re.search(
+        r"^\| GitHub PR operator response command-preview binding PR \| READY \| .+agentic_service_harness_github_pr_operator_response_command_preview_binding.+operator response witness.+command-preview-bound approval request.+operator response.+command execution.+branch writes.+pull-request creation.+repository writes.+connector calls.+mutation routes.+receipt-store append.+secret material.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if pr_operator_response_command_preview_row is None:
+        errors.append(
+            "missing ready row: GitHub PR operator response command-preview binding PR"
+        )
 
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(workspace): add non-empty diff/file summary receipt after filesystem-write evidence",
+        "harness(pr): bind terminal closure operator approval gate to command-preview candidate",
     )
     positions: list[int] = []
     for marker in sequence_markers:

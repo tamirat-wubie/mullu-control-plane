@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:mullusi:schema:agentic-service-harness-github-pr-admission-preflight:1",
   "title": "Agentic Service Harness GitHub PR Admission Preflight",
-  "description": "Foundation Mode preflight contract for admitting a future GitHub pull-request action. This schema records only approval-gate evaluation and denial evidence; it does not admit branch writes, pull-request creation, repository writes, live adapter execution, connector calls, mutation routes, receipt-store append, deployment, DNS mutation, secret serialization, destructive operations, or terminal closure.",
+  "description": "Foundation Mode preflight contract for admitting a future GitHub pull-request action. This schema records only approval-gate evaluation and denial evidence after binding the read-only GitHub task dry-run, non-empty diff file summary receipt, and terminal closure certificate read model. It does not admit branch writes, pull-request creation, repository writes, live adapter execution, connector calls, mutation routes, receipt-store append, deployment, DNS mutation, secret serialization, destructive operations, or terminal closure.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,6 +11,8 @@
     "generated_at",
     "solver_outcome",
     "source_receipt_emitter_ref",
+    "source_non_empty_diff_file_summary_receipt_ref",
+    "source_terminal_closure_certificate_read_model_ref",
     "scope",
     "preflight_contract",
     "approval_admission_gate",
@@ -42,6 +44,14 @@
     "source_receipt_emitter_ref": {
       "type": "string",
       "const": "examples/agentic_service_harness_github_task_receipt_emitter_dry_run.foundation.json"
+    },
+    "source_non_empty_diff_file_summary_receipt_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json"
+    },
+    "source_terminal_closure_certificate_read_model_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_read_model.foundation.json"
     },
     "scope": {
       "$ref": "#/$defs/scope"
@@ -412,6 +422,10 @@
       "additionalProperties": false,
       "required": [
         "github_pr_admission_preflight_schema",
+        "non_empty_diff_file_summary_receipt_schema",
+        "non_empty_diff_file_summary_receipt_example",
+        "terminal_closure_certificate_read_model_schema",
+        "terminal_closure_certificate_read_model_example",
         "github_task_receipt_emitter_dry_run_schema",
         "github_repo_task_service_schema",
         "agentic_service_harness_schema",
@@ -419,6 +433,10 @@
       ],
       "properties": {
         "github_pr_admission_preflight_schema": { "$ref": "#/$defs/evidence_ref" },
+        "non_empty_diff_file_summary_receipt_schema": { "$ref": "#/$defs/evidence_ref" },
+        "non_empty_diff_file_summary_receipt_example": { "$ref": "#/$defs/evidence_ref" },
+        "terminal_closure_certificate_read_model_schema": { "$ref": "#/$defs/evidence_ref" },
+        "terminal_closure_certificate_read_model_example": { "$ref": "#/$defs/evidence_ref" },
         "github_task_receipt_emitter_dry_run_schema": { "$ref": "#/$defs/evidence_ref" },
         "github_repo_task_service_schema": { "$ref": "#/$defs/evidence_ref" },
         "agentic_service_harness_schema": { "$ref": "#/$defs/evidence_ref" },
