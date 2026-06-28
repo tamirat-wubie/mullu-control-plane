@@ -474,6 +474,7 @@ class AutonomousRequestEpisodeSummaryView:
     stage_repair_bindings: tuple[Mapping[str, object], ...] = ()
     stage_error_bindings: tuple[Mapping[str, object], ...] = ()
     stage_outcome_bindings: tuple[Mapping[str, object], ...] = ()
+    stage_next_action_bindings: tuple[Mapping[str, object], ...] = ()
 
     @staticmethod
     def from_receipt(
@@ -601,6 +602,26 @@ class AutonomousRequestEpisodeSummaryView:
                 for step in receipt.step_receipts
                 if step.plan_stage_id is not None
             ),
+            stage_next_action_bindings=tuple(
+                {
+                    "stage_id": step.plan_stage_id,
+                    "receipt_ref": step.receipt_ref,
+                    "outcome_status": _autonomous_request_outcome_status(
+                        step.dispatched,
+                        step.retry_count,
+                        step.validation_error,
+                        step.structured_error_codes,
+                    ),
+                    "next_action": _autonomous_request_next_action(
+                        step.dispatched,
+                        step.retry_count,
+                        step.validation_error,
+                        step.structured_error_codes,
+                    ),
+                }
+                for step in receipt.step_receipts
+                if step.plan_stage_id is not None
+            ),
             rollback_ref=receipt.rollback_ref,
         )
 
@@ -656,6 +677,32 @@ def _autonomous_request_outcome_status(
     if validation_error is not None or structured_error_codes:
         return "blocked"
     return "settled"
+
+
+def _autonomous_request_next_action(
+    dispatched: bool,
+    retry_count: int,
+    validation_error: str | None,
+    structured_error_codes: tuple[str, ...],
+) -> str:
+    """Classify the next autonomous controller action from per-stage evidence."""
+    outcome_status = _autonomous_request_outcome_status(
+        dispatched,
+        retry_count,
+        validation_error,
+        structured_error_codes,
+    )
+    if outcome_status == "skipped":
+        return "halt_review"
+    if "dependency_blocked" in structured_error_codes:
+        return "unblock_dependency"
+    if outcome_status == "repair_failed":
+        return "halt_review"
+    if outcome_status == "repaired":
+        return "continue"
+    if outcome_status == "blocked":
+        return "repair"
+    return "continue"
 
 
 # ---------------------------------------------------------------------------
