@@ -1,0 +1,18 @@
+{
+  "decision_id": "memory-gate:github-pr-42-review",
+  "event_id": "event:github-pr-42-review",
+  "receipt_id": "receipt:github-pr-42-review",
+  "memory_class": "receipt",
+  "status": "store",
+  "scope_ref": "scope://project/mullusi-control-plane/github-pr-42",
+  "validated": true,
+  "durable": true,
+  "sensitivity": "operational",
+  "reasons": [
+    "validated receipt metadata is useful for future PR audit",
+    "private discussion content was not stored"
+  ],
+  "decided_at": "2026-06-28T12:05:01+00:00",
+  "can_delete": true,
+  "audit_ref": "audit://receipts/github-pr-42-review"
+}

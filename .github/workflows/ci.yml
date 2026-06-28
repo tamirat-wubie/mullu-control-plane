@@ -341,6 +341,9 @@ jobs:
       - name: Test Universal Evidence Graph schema contract
         run: python -m pytest tests/test_universal_evidence_graph_schema.py -q
 
+      - name: Test Universal Capability Fabric contracts
+        run: python -m pytest tests/test_universal_capability_fabric_contracts.py -q
+
       - name: Test Symbolic Simulation Engine schema contract
         run: python -m pytest tests/test_symbolic_simulation_engine_schema.py -q
 

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:memory-gate-decision:1",
+  "title": "Memory Gate Decision",
+  "description": "Decision proving whether episode output may become scoped durable memory.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision_id",
+    "event_id",
+    "receipt_id",
+    "memory_class",
+    "status",
+    "scope_ref",
+    "validated",
+    "durable",
+    "sensitivity",
+    "reasons",
+    "decided_at",
+    "can_delete",
+    "audit_ref"
+  ],
+  "properties": {
+    "decision_id": { "$ref": "#/$defs/identifier" },
+    "event_id": { "$ref": "#/$defs/identifier" },
+    "receipt_id": { "$ref": "#/$defs/identifier" },
+    "memory_class": {
+      "type": "string",
+      "enum": ["ephemeral", "project", "user_preference", "policy", "receipt", "blocked"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["not_required", "store", "block", "defer"]
+    },
+    "scope_ref": { "$ref": "#/$defs/ref" },
+    "validated": { "type": "boolean" },
+    "durable": { "type": "boolean" },
+    "sensitivity": { "$ref": "#/$defs/sensitivity" },
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1, "maxLength": 320 },
+      "uniqueItems": true
+    },
+    "decided_at": { "type": "string", "format": "date-time" },
+    "can_delete": { "type": "boolean" },
+    "audit_ref": { "type": "string", "maxLength": 320 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 220,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 320,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#@+-]*$"
+    },
+    "sensitivity": {
+      "type": "string",
+      "enum": [
+        "public",
+        "operational",
+        "tenant_confidential",
+        "personal",
+        "financial",
+        "security",
+        "regulated"
+      ]
+    }
+  }
+}

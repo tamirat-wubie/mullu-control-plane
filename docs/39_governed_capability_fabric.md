@@ -25,6 +25,241 @@ Command -> Typed Intent -> Capability -> Authority -> Effect -> Evidence -> Clos
 
 A capability registry entry defines one executable action. A domain capsule packages the operating model for one domain. The capsule compiler turns certified capsule inputs into registry entries, policies, fixtures, read models, and operator views.
 
+## Universal Event Spine v2
+
+The fabric is not channel-centered. Slack, GitHub, Gmail, dashboards, documents,
+alerts, and API webhooks are surfaces over one event path:
+
+```text
+Any human/system event
+-> universal governed event
+-> symbolic event compilation
+-> identity and authority resolution
+-> scoped context resolution
+-> risk-tier policy decision
+-> capability passport and registry routing
+-> causal episode plan
+-> Universal Action Orchestration when effect-bearing
+-> verification and causal receipt
+-> memory gate
+```
+
+Canonical contract implementation:
+
+```text
+mcoi/mcoi_runtime/contracts/universal_capability_fabric.py
+```
+
+Schema-backed fixtures:
+
+| Contract | Schema | Fixture |
+| --- | --- | --- |
+| Universal governed event | `schemas/universal_governed_event.schema.json` | `integration/governed_capability_fabric/fixtures/universal_governed_event.json` |
+| Causal capability receipt | `schemas/causal_capability_receipt.schema.json` | `integration/governed_capability_fabric/fixtures/causal_capability_receipt.json` |
+| Memory gate decision | `schemas/memory_gate_decision.schema.json` | `integration/governed_capability_fabric/fixtures/memory_gate_decision.json` |
+
+`UniversalGovernedEvent` binds event identity, actor, workspace, surface,
+channel, intent, target object, requested action, context references, risk
+class, authority reference, timestamp, trace reference, and deterministic
+idempotency key. Surface adapters may normalize to this contract, but they do
+not reason, authorize, or execute.
+
+`FabricContextEvidence` keeps retrieved context bounded by source, permission
+scope, sensitivity, observation time, confidence, and freshness. External
+content can inform the event compiler, but it never becomes authority.
+
+## Risk-Tier Policy
+
+The v2 risk classes preserve speed for low-risk work while failing closed for
+sensitive or external-obligation work:
+
+| Risk class | Meaning | Default decision |
+| --- | --- | --- |
+| `class_0_observe` | Public or non-sensitive read-only observation | `allow_read_only` |
+| `class_1_prepare` | Draft, plan, simulate, recommend | `allow_draft_only` |
+| `class_2_reversible` | Reversible internal action with receipt | `allow` |
+| `class_3_sensitive` | Sensitive action or private data boundary | `require_approval` |
+| `class_4_external_obligation` | Merge, deploy, publish, send, bill, sign, or similar external obligation | `require_approval` |
+| `class_5_blocked` | Unauthorized, unsafe, secret-exposing, destructive, or policy-violating action | `block` |
+
+The default function `default_policy_decision_for_risk` is a guardrail, not a
+complete policy engine. Stronger policy may always block or escalate. Weaker
+policy may not directly allow `class_4_external_obligation`, and `class_5_blocked`
+must remain blocked.
+
+## Universal Capability Passport Standard
+
+`UniversalCapabilityPassport` is the plug-compatible declaration format for a
+capability's domain, inputs, outputs, required evidence, allowed tools, blocked
+actions, risk class, verification rules, receipt fields, and memory policy.
+
+Important boundary:
+
+```text
+capability passport != execution authority
+```
+
+The passport must set `passport_is_not_execution_authority = true`. Execution
+authority still comes from an admitted `CapabilityRegistryEntry`, capsule
+admission, policy decision, UAO when effect-bearing, verification, and terminal
+closure.
+
+## Causal Episode and Receipt
+
+Every universal event episode follows this causal order:
+
+```text
+cause
+-> interpretation
+-> constraint
+-> evidence
+-> options
+-> decision
+-> action
+-> consequence
+-> receipt
+-> memory_gate
+```
+
+`CausalEpisodePlan` rejects plans that reorder these stages. `CausalCapabilityReceipt`
+records actor, surface, intent, target object, risk, evidence, policy decision,
+actions taken, actions blocked, assumptions, verification result, final judgment,
+memory update, timestamp, and partial failure reasons. A non-blocked receipt
+cannot claim completion without evidence.
+
+## Memory Gate
+
+Memory is scoped and governed, not automatic:
+
+```text
+No memory without scope.
+No scope without permission.
+No durable memory without validation.
+```
+
+`MemoryGateDecision` can store, block, defer, or mark memory as not required.
+Durable memory requires validated evidence and an audit reference. Sensitive,
+private, unverified, or temporary material must use `blocked`, `defer`, or
+ephemeral handling instead of silent persistence.
+
+## First Workroom Path
+
+The first product path is the GitHub Operations Workroom:
+
+```text
+GitHub event or dashboard request
+-> UniversalGovernedEvent
+-> PR/CI symbolic compilation
+-> risk-tier decision
+-> GitHub read-only capability passport
+-> causal episode plan
+-> PR or CI evidence inspection
+-> causal receipt
+-> memory gate
+```
+
+This keeps GitHub useful as the first surface while preserving the broader
+fabric invariant: new surfaces attach through adapters, not custom runtimes.
+
+Canonical local projection:
+
+```text
+gateway/github_operations_workroom.py
+```
+
+The projection currently admits only `Class 1 — Prepare` PR safety work. It
+creates a `UniversalGovernedEvent`, symbolic compilation, authority resolution,
+risk policy result, capability passport, causal episode plan, receipt, and
+memory gate. It does not call GitHub, does not post comments, does not merge,
+does not deploy, and stores only receipt metadata.
+
+Operator preview routes:
+
+```text
+GET  /operator/github-operations/pr-safety
+GET  /operator/github-operations/pr-safety/read-model
+POST /operator/github-operations/pr-safety/read-admission/preview
+POST /operator/github-operations/pr-safety/read-evidence
+GET  /operator/github-operations/pr-safety/read-evidence/receipts/{receipt_filename}
+POST /operator/github-operations/pr-safety/preview
+```
+
+The GET read model powers the browser-facing Workroom panel. Missing evidence
+returns `AwaitingEvidence` with required evidence listed; supplied evidence refs
+produce the same governed projection and receipt as the POST preview. All three
+routes preserve the same effect boundary: no GitHub call, no repository read,
+no PR mutation, no branch push, no review submission, and no deployment change.
+
+The read-admission preview binds planned live evidence collection to the
+existing certified `connector.github.read` capability. It admits only
+`pull_request`, `diff`, `checks`, and `changed_files` evidence kinds, requires
+`oauth:github.read`, allows only `connector_worker.github_read` against
+`api.github.com`, and records that no connector call has been performed. It
+cannot grant comment, merge, branch-delete, deployment, or repository-write
+authority.
+
+The read-evidence route is the first bounded live execution path. It accepts an
+operator-provided token for the single request, performs only the admitted
+GET-only reads, returns bounded summaries and hashes, emits a read receipt,
+feeds the receipt into the PR safety projection, and evaluates a non-mutating
+PR safety judgment. The response never returns the token. Its effect boundary
+sets GitHub call and repository read to true while keeping repository mutation,
+PR mutation, branch push, review submission, deployment mutation, and
+system-of-record writes false.
+
+The route also persists a workspace-local receipt bundle under
+`MULLU_GITHUB_WORKROOM_RECEIPT_DIR`, defaulting to
+`.tmp/github-operations-workroom/receipts`. The bundle filename is derived from
+the read receipt identity, the write is confined to the configured receipt
+root, and the payload contains only admission metadata, bounded fetch result,
+read receipt, PR safety projection, PR safety judgment, hashes, and storage
+witness fields. It records `token_persisted=false`,
+`write_authority_granted=false`, and `merge_authority_granted=false`.
+
+The receipt read-back route accepts only a stored GitHub read-evidence bundle
+filename. It rejects path-like names, confines reads to the configured receipt
+root, validates that the stored bundle is JSON, and refuses bundles containing
+credential markers. This gives the Workroom a durable evidence read model
+without turning receipt storage into a generic file reader.
+
+The browser Workroom panel includes a `Read Evidence` control that posts to the
+same route. The token field is a password input, the token is sent in the POST
+body only, and the page clears the input after constructing the request. The UI
+renders the returned receipt and judgment as bounded operator evidence; it does
+not store credentials, expose raw GitHub tools, or add write controls.
+
+`GitHubReadOnlyEvidenceFetcher` is the execution-side companion for this
+admission. It only issues `GET` requests to `https://api.github.com`, returns
+bounded evidence hashes and summaries, does not return the access token, and
+cannot construct a result with write authority. A fetch result is evidence
+collection, not merge safety judgment and not production closure.
+
+Completed fetches emit a `CausalCapabilityReceipt` through
+`build_github_read_only_evidence_fetch_receipt`. The receipt records
+`ALLOW_READ_ONLY`, the collected evidence refs, payload hashes by reference,
+blocked write actions, and any partial evidence gaps. The PR safety Workroom can
+then use `build_pr_safety_projection_from_github_fetch_receipt` to bind that
+receipt into a `Class 1 — Prepare` projection. This keeps the causal chain:
+
+```text
+read admission -> GET-only fetch -> read evidence receipt -> PR safety projection
+```
+
+The final projection still cannot merge, deploy, push, delete a branch, or post
+a review. Read evidence earns inspection context, not execution authority.
+
+`evaluate_github_pr_safety_judgment` converts the read-only fetch result and
+fetch receipt into one bounded status:
+
+| Status | Meaning |
+| --- | --- |
+| `ready_for_review` | Required read-only evidence is present and no blocking PR/check condition is observed. This permits review continuation only, not merge. |
+| `blocked` | Evidence shows a blocking condition such as draft PR, failing checks, closed/merged PR, or GitHub non-mergeable state. |
+| `needs_evidence` | Required evidence is missing, partial, stale, or internally unknown. |
+
+The judgment always keeps `merge_authority_granted=false` and
+`write_authority_granted=false`.
+
 ## Capability Registry Entry
 
 Each registry entry carries the minimum information needed to execute an action without weakening closure law.

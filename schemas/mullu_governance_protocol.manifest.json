@@ -617,6 +617,12 @@
       "urn": "urn:mullusi:schema:capture-policy-decision-ledger:1"
     },
     {
+      "path": "schemas/causal_capability_receipt.schema.json",
+      "schema_id": "causal-capability-receipt",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:causal-capability-receipt:1"
+    },
+    {
       "path": "schemas/cdg_rccm_architecture_contract.schema.json",
       "schema_id": "cdg-rccm-architecture-contract",
       "surface": "governance",
@@ -1725,6 +1731,12 @@
       "schema_id": "math-solver-receipt",
       "surface": "math",
       "urn": "urn:mullusi:schema:math-solver-receipt:1"
+    },
+    {
+      "path": "schemas/memory_gate_decision.schema.json",
+      "schema_id": "memory-gate-decision",
+      "surface": "memory",
+      "urn": "urn:mullusi:schema:memory-gate-decision:1"
     },
     {
       "path": "schemas/memory_lattice.schema.json",
@@ -3327,6 +3339,12 @@
       "schema_id": "universal-construct",
       "surface": "construct",
       "urn": "urn:mullusi:schema:universal-construct:1"
+    },
+    {
+      "path": "schemas/universal_governed_event.schema.json",
+      "schema_id": "universal-governed-event",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:universal-governed-event:1"
     },
     {
       "path": "schemas/universal_evidence_graph.schema.json",
