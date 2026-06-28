@@ -145,6 +145,7 @@ from gateway.governed_operations import (
 )
 from gateway.github_operations_workroom import (
     GitHubActionsFailureEvidenceAdmissionRequest,
+    GitHubPatchPlanDraftRequest,
     GitHubRepoStatusEvidenceAdmissionRequest,
     GitHubReadOnlyEvidenceFetchError,
     GitHubReadOnlyEvidenceFetcher,
@@ -155,6 +156,8 @@ from gateway.github_operations_workroom import (
     admit_github_read_only_evidence_collection,
     build_github_actions_failure_diagnosis_receipt,
     build_github_actions_failure_workroom_read_model,
+    build_github_patch_plan_draft_receipt,
+    build_github_patch_plan_workroom_read_model,
     build_github_repo_status_summary_receipt,
     build_github_repo_status_workroom_read_model,
     build_github_read_only_evidence_fetch_receipt,
@@ -162,11 +165,13 @@ from gateway.github_operations_workroom import (
     build_github_pr_safety_workroom_read_model,
     build_pr_safety_projection_from_github_fetch_receipt,
     evaluate_github_actions_failure_diagnosis,
+    evaluate_github_patch_plan_draft,
     evaluate_github_repo_status_summary,
     evaluate_github_pr_safety_judgment,
     persist_github_read_only_evidence_receipt_bundle,
     read_github_read_only_evidence_receipt_bundle,
     render_github_actions_failure_workroom_html,
+    render_github_patch_plan_workroom_html,
     render_github_repo_status_workroom_html,
     render_github_pr_safety_workroom_html,
 )
@@ -817,6 +822,29 @@ class GatewayGitHubRepoStatusEvidenceExecutionRequest(BaseModel):
     max_items_per_kind: int = 10
     access_token: str = Field(repr=False)
     timeout_seconds: float = 10.0
+
+
+class GatewayGitHubPatchPlanDraftRequest(BaseModel):
+    """Draft a governed local GitHub patch plan from bounded evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    actor_id: str = "operator:gateway"
+    workspace_id: str = "workspace:mullusi-control-plane"
+    repo: str = "tamirat-wubie/mullu-control-plane"
+    objective: str = ""
+    evidence_refs: list[str] = Field(default_factory=list)
+    evidence_summaries: list[str] = Field(default_factory=list)
+    verification_expectations: list[str] = Field(default_factory=list)
+    surface_event_id: str = ""
+    requested_at: str = ""
+    authority_ref: str = "policy.github.patch_plan.local_draft_only"
+    assumptions: list[str] = Field(
+        default_factory=lambda: [
+            "Evidence summaries are bounded and authorized for this actor and workspace.",
+            "Patch planning does not edit repository files, create branches, create pull requests, or write to GitHub.",
+        ]
+    )
 
 
 class GatewayPersonalAssistantResearchSourceSummary(BaseModel):
@@ -9928,6 +9956,116 @@ def create_gateway_app(
             )
         except ValueError as exc:
             raise HTTPException(400, detail=str(exc)) from exc
+
+    @app.get("/operator/github-operations/patch-plan/read-model")
+    def operator_github_operations_patch_plan_read_model(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = surface_event_id or f"operator-github-patch-plan:{repo}:{now}"
+            return build_github_patch_plan_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+
+    @app.get("/operator/github-operations/patch-plan", response_class=HTMLResponse)
+    def operator_github_operations_patch_plan_panel(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = surface_event_id or f"operator-github-patch-plan:{repo}:{now}"
+            read_model = build_github_patch_plan_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return HTMLResponse(render_github_patch_plan_workroom_html(read_model))
+
+    @app.post("/operator/github-operations/patch-plan/draft")
+    def operator_github_operations_patch_plan_draft(
+        request: Request,
+        req: GatewayGitHubPatchPlanDraftRequest,
+    ):
+        _require_authority_operator(request)
+        try:
+            now = req.requested_at or _clock()
+            surface_event_id = req.surface_event_id or f"operator-github-patch-plan-draft:{req.repo}:{now}"
+            draft_request = GitHubPatchPlanDraftRequest(
+                actor_id=req.actor_id,
+                workspace_id=req.workspace_id,
+                repo=req.repo,
+                objective=req.objective,
+                evidence_refs=tuple(req.evidence_refs),
+                evidence_summaries=tuple(req.evidence_summaries),
+                verification_expectations=tuple(req.verification_expectations),
+                surface_event_id=surface_event_id,
+                requested_at=now,
+                authority_ref=req.authority_ref,
+                assumptions=tuple(req.assumptions),
+            )
+            draft = evaluate_github_patch_plan_draft(request=draft_request, clock=lambda: now)
+            receipt = build_github_patch_plan_draft_receipt(
+                request=draft_request,
+                draft=draft,
+                occurred_at=now,
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid GitHub patch plan draft request",
+                    "error_code": "invalid_github_patch_plan_draft",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "github_patch_plan_draft": draft.to_json_dict(),
+            "github_patch_plan_receipt": receipt.to_json_dict(),
+            "outcome": "SolvedUnverified" if draft.status == "drafted" else "AwaitingEvidence",
+            "governed": True,
+            "execution_allowed": True,
+            "live_connector_call_performed": False,
+            "write_authority_granted": False,
+            "effect_boundary": {
+                "execution_allowed": True,
+                "live_connector_execution_allowed": False,
+                "github_call_allowed": False,
+                "repository_read_allowed": False,
+                "repository_mutation_allowed": False,
+                "pull_request_mutation_allowed": False,
+                "branch_push_allowed": False,
+                "issue_creation_allowed": False,
+                "review_submission_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+        }
 
     @app.get("/operator/github-operations/repo-status", response_class=HTMLResponse)
     def operator_github_operations_repo_status_panel(

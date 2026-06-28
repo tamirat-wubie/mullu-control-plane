@@ -48,10 +48,12 @@ from mcoi_runtime.contracts.universal_capability_fabric import (
 GITHUB_PR_SAFETY_CAPABILITY_ID = "github.pr_safety_review.read_only.v1"
 GITHUB_ACTIONS_FAILURE_CAPABILITY_ID = "github.actions_failure_diagnosis.read_only.v1"
 GITHUB_REPO_STATUS_CAPABILITY_ID = "github.repo_status_summary.read_only.v1"
+GITHUB_PATCH_PLAN_CAPABILITY_ID = "github.patch_plan_draft.prepare.v1"
 GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID = "connector.github.read"
 GITHUB_PR_SAFETY_INTENT = "REVIEW_PR_MERGE_SAFETY"
 GITHUB_ACTIONS_FAILURE_INTENT = "DIAGNOSE_GITHUB_ACTIONS_FAILURE"
 GITHUB_REPO_STATUS_INTENT = "SUMMARIZE_GITHUB_REPOSITORY_STATUS"
+GITHUB_PATCH_PLAN_INTENT = "DRAFT_GITHUB_PATCH_PLAN"
 GITHUB_WORKROOM_SURFACE = "github_operations_workroom"
 
 _REQUIRED_EVIDENCE = (
@@ -80,6 +82,14 @@ _REPO_STATUS_BLOCKED_ACTIONS = (
     "trigger_workflow_without_explicit_approval",
     "claim_release_ready_without_required_evidence",
 )
+_PATCH_PLAN_BLOCKED_ACTIONS = (
+    "edit_repository_without_patch_approval",
+    "create_branch_without_explicit_approval",
+    "create_pull_request_without_explicit_approval",
+    "post_github_comment_without_write_admission",
+    "create_issue_without_explicit_approval",
+    "claim_fix_complete_without_verification",
+)
 _ALLOWED_TOOLS = (
     "github.read.pull_request",
     "github.read.diff",
@@ -92,6 +102,11 @@ _LIVE_READ_SECRET_SCOPE = "oauth:github.read"
 _SUPPORTED_LIVE_EVIDENCE_KINDS = ("pull_request", "diff", "checks", "changed_files")
 _SUPPORTED_ACTIONS_FAILURE_EVIDENCE_KINDS = ("workflow_run", "jobs", "failed_job_logs")
 _SUPPORTED_REPO_STATUS_EVIDENCE_KINDS = ("repository", "recent_commits", "open_pull_requests", "open_issues", "workflow_runs")
+_PATCH_PLAN_REQUIRED_EVIDENCE = (
+    "diagnosis_or_problem_summary",
+    "affected_file_or_component_refs",
+    "verification_expectations",
+)
 _EFFECT_BOUNDARY = {
     "execution_allowed": False,
     "live_connector_execution_allowed": False,
@@ -1503,6 +1518,83 @@ class GitHubRepoStatusSummary(ContractRecord):
         object.__setattr__(self, "summarized_at", require_datetime_text(self.summarized_at, "summarized_at"))
 
 
+@dataclass(frozen=True, slots=True)
+class GitHubPatchPlanDraftRequest(ContractRecord):
+    """Input contract for a governed local GitHub patch-plan draft."""
+
+    actor_id: str
+    workspace_id: str
+    repo: str
+    objective: str
+    evidence_refs: tuple[str, ...]
+    evidence_summaries: tuple[str, ...]
+    verification_expectations: tuple[str, ...]
+    surface_event_id: str
+    requested_at: str
+    authority_ref: str = "policy.github.patch_plan.local_draft_only"
+    assumptions: tuple[str, ...] = (
+        "Evidence summaries are bounded and authorized for this actor and workspace.",
+        "Patch planning does not edit repository files, create branches, create pull requests, or write to GitHub.",
+    )
+    write_authority_granted: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in ("actor_id", "workspace_id", "repo", "surface_event_id", "authority_ref"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        object.__setattr__(self, "requested_at", require_datetime_text(self.requested_at, "requested_at"))
+        for field_name in ("evidence_refs", "evidence_summaries", "verification_expectations", "assumptions"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple):
+                raise ValueError(f"{field_name} must be a tuple")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if self.objective:
+            object.__setattr__(self, "objective", require_non_empty_text(self.objective, "objective"))
+        if self.write_authority_granted is not False:
+            raise ValueError("patch-plan draft request cannot grant write authority")
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubPatchPlanDraft(ContractRecord):
+    """Governed draft plan for a future repository patch."""
+
+    plan_id: str
+    repo: str
+    status: str
+    objective: str
+    target_summary: str
+    proposed_steps: tuple[str, ...]
+    verification_commands: tuple[str, ...]
+    risks: tuple[str, ...]
+    assumptions: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    blocked_actions: tuple[str, ...]
+    recommended_next_action: str
+    confidence: float
+    write_authority_granted: bool
+    drafted_at: str
+
+    def __post_init__(self) -> None:
+        for field_name in ("plan_id", "repo", "status", "objective", "target_summary", "recommended_next_action"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if self.status not in {"drafted", "needs_evidence"}:
+            raise ValueError("status must be drafted or needs_evidence")
+        for field_name in ("proposed_steps", "verification_commands", "risks", "assumptions", "evidence_refs", "blocked_actions"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple) or not values:
+                raise ValueError(f"{field_name} must contain at least one item")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if not isinstance(self.confidence, (int, float)) or isinstance(self.confidence, bool):
+            raise ValueError("confidence must be a number")
+        if not 0.0 <= float(self.confidence) <= 1.0:
+            raise ValueError("confidence must be between 0.0 and 1.0")
+        object.__setattr__(self, "confidence", float(self.confidence))
+        if self.write_authority_granted is not False:
+            raise ValueError("patch-plan draft cannot grant write authority")
+        object.__setattr__(self, "drafted_at", require_datetime_text(self.drafted_at, "drafted_at"))
+
+
 def admit_github_repo_status_evidence_collection(
     request: GitHubRepoStatusEvidenceAdmissionRequest,
     *,
@@ -1668,6 +1760,134 @@ def build_github_repo_status_summary_receipt(
         memory_update=FabricMemoryDecisionStatus.STORE,
         timestamp=occurred_at,
         partial_failure_reasons=result.partial_failure_reasons,
+    )
+
+
+def evaluate_github_patch_plan_draft(
+    *,
+    request: GitHubPatchPlanDraftRequest,
+    clock: Callable[[], str],
+) -> GitHubPatchPlanDraft:
+    """Draft a bounded patch plan from prior evidence without mutating GitHub."""
+
+    if not isinstance(request, GitHubPatchPlanDraftRequest):
+        raise ValueError("request must be a GitHubPatchPlanDraftRequest")
+    drafted_at = require_datetime_text(clock(), "drafted_at")
+    missing: list[str] = []
+    if not request.objective.strip():
+        missing.append("missing_objective")
+    if not request.evidence_refs:
+        missing.append("missing_evidence_refs")
+    if not request.evidence_summaries:
+        missing.append("missing_evidence_summaries")
+    if not request.verification_expectations:
+        missing.append("missing_verification_expectations")
+
+    if missing:
+        status = "needs_evidence"
+        objective = request.objective.strip() or "Awaiting bounded patch objective."
+        target_summary = "Patch plan cannot be drafted until objective, evidence, and verification expectations are present."
+        proposed_steps = tuple(missing)
+        verification_commands = ("collect_missing_patch_plan_evidence",)
+        risks = ("false_patch_plan_from_incomplete_evidence",)
+        evidence_refs = tuple(request.evidence_refs or ("missing_patch_plan_evidence",))
+        recommended_next_action = "collect_patch_objective_evidence_refs_and_verification_expectations"
+        confidence = 0.34
+    else:
+        objective = request.objective.strip()
+        evidence_summary = request.evidence_summaries[0].strip()
+        target_summary = f"Draft patch plan for {request.repo}: {objective}. Evidence signal: {evidence_summary}"
+        proposed_steps = (
+            "inspect_referenced_files_and_failure_context",
+            "identify_minimal_code_or_config_boundary_to_change",
+            "prepare_patch_in_local_workspace_after_explicit_operator_approval",
+            "run_declared_verification_commands_before_completion_claim",
+            "emit_receipt_with_changed_files_tests_and_residual_risk",
+        )
+        verification_commands = tuple(dict.fromkeys(request.verification_expectations))
+        risks = (
+            "evidence_may_be_stale_until_rechecked_before_edit",
+            "draft_plan_does_not_prove_fix_complete",
+            "write_actions_remain_blocked_without_explicit_patch_approval",
+        )
+        evidence_refs = tuple(dict.fromkeys(request.evidence_refs))
+        status = "drafted"
+        recommended_next_action = "request_explicit_patch_approval_or_continue_read_only_analysis"
+        confidence = 0.66
+
+    plan_hash = _stable_hash(
+        {
+            "actor_id": request.actor_id,
+            "repo": request.repo,
+            "objective": objective,
+            "evidence_refs": evidence_refs,
+            "status": status,
+            "drafted_at": drafted_at,
+        }
+    )
+    return GitHubPatchPlanDraft(
+        plan_id=f"github-patch-plan-draft:{plan_hash}",
+        repo=request.repo,
+        status=status,
+        objective=objective,
+        target_summary=target_summary,
+        proposed_steps=proposed_steps,
+        verification_commands=verification_commands,
+        risks=risks,
+        assumptions=request.assumptions,
+        evidence_refs=evidence_refs,
+        blocked_actions=_PATCH_PLAN_BLOCKED_ACTIONS,
+        recommended_next_action=recommended_next_action,
+        confidence=confidence,
+        write_authority_granted=False,
+        drafted_at=drafted_at,
+    )
+
+
+def build_github_patch_plan_draft_receipt(
+    *,
+    request: GitHubPatchPlanDraftRequest,
+    draft: GitHubPatchPlanDraft,
+    occurred_at: str,
+) -> CausalCapabilityReceipt:
+    """Emit a Class 1 causal receipt for a local patch-plan draft."""
+
+    if not isinstance(request, GitHubPatchPlanDraftRequest):
+        raise ValueError("request must be a GitHubPatchPlanDraftRequest")
+    if not isinstance(draft, GitHubPatchPlanDraft):
+        raise ValueError("draft must be a GitHubPatchPlanDraft")
+    occurred_at = require_datetime_text(occurred_at, "occurred_at")
+    receipt_hash = _stable_hash(
+        {
+            "actor_id": request.actor_id,
+            "plan_id": draft.plan_id,
+            "surface_event_id": request.surface_event_id,
+            "occurred_at": occurred_at,
+        }
+    )
+    partial_failure_reasons = () if draft.status == "drafted" else tuple(draft.proposed_steps)
+    return CausalCapabilityReceipt(
+        receipt_id=f"github-patch-plan-receipt:{receipt_hash}",
+        event_id=request.surface_event_id,
+        actor_id=request.actor_id,
+        surface=GITHUB_WORKROOM_SURFACE,
+        intent=GITHUB_PATCH_PLAN_INTENT,
+        target_object=f"github_repository:{request.repo}",
+        risk_class=FabricRiskClass.CLASS_1_PREPARE,
+        evidence_used=draft.evidence_refs,
+        policy_decision=FabricPolicyDecision.ALLOW_DRAFT_ONLY,
+        actions_taken=("drafted_patch_plan", "emitted_causal_receipt") if draft.status == "drafted" else ("reported_patch_plan_evidence_gap",),
+        actions_blocked=draft.blocked_actions,
+        assumptions=draft.assumptions,
+        verification_result=(
+            "Patch plan drafted from bounded evidence; no repository or GitHub write was performed."
+            if draft.status == "drafted"
+            else "Patch plan draft is blocked until missing evidence is supplied."
+        ),
+        final_judgment=draft.target_summary,
+        memory_update=FabricMemoryDecisionStatus.STORE if draft.status == "drafted" else FabricMemoryDecisionStatus.DEFER,
+        timestamp=occurred_at,
+        partial_failure_reasons=partial_failure_reasons,
     )
 
 
@@ -2184,6 +2404,61 @@ def build_github_repo_status_workroom_read_model(
     }
 
 
+def build_github_patch_plan_workroom_read_model(
+    *,
+    actor_id: str,
+    workspace_id: str,
+    repo: str,
+    surface_event_id: str,
+    occurred_at: str,
+    clock: Callable[[], str],
+) -> dict[str, Any]:
+    """Build the operator Workroom read model for local patch-plan drafting."""
+
+    generated_at = require_datetime_text(clock(), "generated_at")
+    passport = UniversalCapabilityPassport(
+        passport_id=GITHUB_PATCH_PLAN_CAPABILITY_ID,
+        name="GitHub Patch Plan Draft",
+        domain="software_governance",
+        inputs=("repo", "actor_id", "objective", "evidence_refs", "evidence_summaries", "verification_expectations"),
+        outputs=("target_summary", "proposed_steps", "verification_commands", "risks", "receipt"),
+        required_evidence=_PATCH_PLAN_REQUIRED_EVIDENCE,
+        allowed_tools=("mullusi.local_patch_plan_draft",),
+        blocked_actions=_PATCH_PLAN_BLOCKED_ACTIONS,
+        risk_class=FabricRiskClass.CLASS_1_PREPARE,
+        verification_rules=(
+            "no_patch_plan_without_objective",
+            "no_patch_plan_without_evidence_refs",
+            "no_fix_complete_claim_without_verification",
+            "no_repository_or_github_write_from_patch_plan",
+        ),
+        receipt_fields=("actor", "repo", "objective", "evidence_used", "plan", "actions_blocked"),
+        memory_policy="Store patch-plan receipt metadata only after a drafted plan; defer memory when evidence is missing.",
+    )
+    return {
+        "schema_ref": "urn:mullusi:read-model:github-operations-patch-plan-workroom:1",
+        "generated_at": generated_at,
+        "capability_id": GITHUB_PATCH_PLAN_CAPABILITY_ID,
+        "surface": GITHUB_WORKROOM_SURFACE,
+        "actor_id": require_non_empty_text(actor_id, "actor_id"),
+        "workspace_id": require_non_empty_text(workspace_id, "workspace_id"),
+        "repo": require_non_empty_text(repo, "repo"),
+        "surface_event_id": require_non_empty_text(surface_event_id, "surface_event_id"),
+        "occurred_at": require_datetime_text(occurred_at, "occurred_at"),
+        "status": "awaiting_evidence",
+        "outcome": "AwaitingEvidence",
+        "required_evidence": list(passport.required_evidence),
+        "allowed_tools": list(passport.allowed_tools),
+        "blocked_actions": list(_PATCH_PLAN_BLOCKED_ACTIONS),
+        "passport": passport.to_json_dict(),
+        "effect_boundary": dict(_EFFECT_BOUNDARY),
+        "raw_tool_surface_exposed": False,
+        "governed": True,
+        "execution_allowed": False,
+        "write_authority_granted": False,
+    }
+
+
 def render_github_pr_safety_workroom_html(read_model: Mapping[str, Any]) -> str:
     """Render the browser-facing operator Workroom panel."""
 
@@ -2517,6 +2792,108 @@ document.getElementById("repo-status-read").addEventListener("submit", async (ev
   }});
   const data = await response.json();
   document.getElementById("repo-status-output").textContent = JSON.stringify(data, null, 2);
+}});
+</script>
+</body>
+</html>"""
+
+
+def render_github_patch_plan_workroom_html(read_model: Mapping[str, Any]) -> str:
+    """Render the local patch-plan draft Workroom panel."""
+
+    repo = _html(read_model.get("repo", ""))
+    actor_id = _html(read_model.get("actor_id", "operator:gateway"))
+    workspace_id = _html(read_model.get("workspace_id", "workspace:mullusi-control-plane"))
+    surface_event_id = _html(read_model.get("surface_event_id", ""))
+    occurred_at = _html(read_model.get("occurred_at", ""))
+    status = _html(read_model.get("status", "awaiting_evidence"))
+    outcome = _html(read_model.get("outcome", "AwaitingEvidence"))
+    blocked_actions = "".join(f"<li>{_html(action)}</li>" for action in read_model.get("blocked_actions", ()))
+    required_evidence = "".join(f"<li>{_html(item)}</li>" for item in read_model.get("required_evidence", ()))
+    mutation_allowed = str(read_model.get("effect_boundary", {}).get("repository_mutation_allowed", False)).lower()
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullusi GitHub Patch Plan Draft Workroom</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 2rem; color: #17202a; background: #f7f9fb; }}
+    main {{ max-width: 1080px; margin: 0 auto; }}
+    section, form {{ background: #fff; border: 1px solid #d8dee8; border-radius: 8px; padding: 1rem; margin: 1rem 0; }}
+    label {{ display: block; font-weight: 650; margin-top: .75rem; }}
+    input, textarea {{ width: 100%; box-sizing: border-box; margin-top: .25rem; padding: .55rem; border: 1px solid #aeb8c7; border-radius: 6px; }}
+    textarea {{ min-height: 6rem; }}
+    button {{ margin-top: .9rem; padding: .55rem .85rem; border: 1px solid #1f5f9f; border-radius: 6px; background: #1f5f9f; color: #fff; font-weight: 700; }}
+    pre {{ overflow: auto; background: #0f1720; color: #e8eef7; padding: .85rem; border-radius: 6px; min-height: 4rem; }}
+    dl {{ display: grid; grid-template-columns: 210px 1fr; gap: .5rem 1rem; }}
+    dt {{ font-weight: 700; }}
+    dd {{ margin: 0; }}
+    code {{ background: #eef2f6; padding: .15rem .35rem; border-radius: 4px; }}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mullusi GitHub Patch Plan Draft Workroom</h1>
+  <section>
+    <dl>
+      <dt>Repository</dt><dd><code>{repo}</code></dd>
+      <dt>Status</dt><dd>{status}</dd>
+      <dt>Outcome</dt><dd>{outcome}</dd>
+      <dt>Repository mutation allowed</dt><dd><code>{mutation_allowed}</code></dd>
+    </dl>
+  </section>
+  <form id="patch-plan-draft">
+    <input name="actor_id" type="hidden" value="{actor_id}">
+    <input name="workspace_id" type="hidden" value="{workspace_id}">
+    <input name="surface_event_id" type="hidden" value="{surface_event_id}">
+    <input name="requested_at" type="hidden" value="{occurred_at}">
+    <label>Repository <input name="repo" value="{repo}"></label>
+    <label>Objective <textarea name="objective" placeholder="Describe the patch objective from bounded evidence."></textarea></label>
+    <label>Evidence refs <textarea name="evidence_refs" placeholder="One receipt or evidence reference per line."></textarea></label>
+    <label>Evidence summaries <textarea name="evidence_summaries" placeholder="Bounded diagnosis, repo-status, or PR-safety summaries."></textarea></label>
+    <label>Verification expectations <textarea name="verification_expectations" placeholder="One command or verification expectation per line."></textarea></label>
+    <button type="submit">Draft Patch Plan</button>
+  </form>
+  <section>
+    <h2>Draft Result</h2>
+    <pre id="patch-plan-output">Awaiting local evidence. No GitHub token or write authority is accepted.</pre>
+  </section>
+  <section>
+    <h2>Required Evidence</h2>
+    <ul>{required_evidence}</ul>
+  </section>
+  <section>
+    <h2>Blocked Actions</h2>
+    <ul>{blocked_actions}</ul>
+  </section>
+</main>
+<script>
+const patchPlanForm = document.getElementById("patch-plan-draft");
+const patchPlanOutput = document.getElementById("patch-plan-output");
+function lines(value) {{
+  return value.split("\\n").map((item) => item.trim()).filter(Boolean);
+}}
+patchPlanForm.addEventListener("submit", async (event) => {{
+  event.preventDefault();
+  const form = new FormData(event.target);
+  const payload = {{
+    actor_id: form.get("actor_id"),
+    workspace_id: form.get("workspace_id"),
+    repo: form.get("repo"),
+    objective: form.get("objective"),
+    evidence_refs: lines(form.get("evidence_refs") || ""),
+    evidence_summaries: lines(form.get("evidence_summaries") || ""),
+    verification_expectations: lines(form.get("verification_expectations") || ""),
+    surface_event_id: form.get("surface_event_id"),
+    requested_at: form.get("requested_at")
+  }};
+  const response = await fetch("/operator/github-operations/patch-plan/draft", {{
+    method: "POST",
+    headers: {{ "Content-Type": "application/json" }},
+    body: JSON.stringify(payload)
+  }});
+  const data = await response.json();
+  patchPlanOutput.textContent = JSON.stringify(data, null, 2);
 }});
 </script>
 </body>
