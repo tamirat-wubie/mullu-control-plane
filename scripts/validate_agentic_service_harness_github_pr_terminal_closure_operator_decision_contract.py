@@ -119,6 +119,8 @@ REQUIRED_TRUE_FLAGS = (
     "report_is_not_terminal_closure",
     "explicit_decision_value_required",
     "generic_continuation_rejected",
+    "requires_command_preview_terminal_closure_certificate_witness",
+    "command_preview_bound",
     "requires_actual_diff_terminal_closure_certificate_witness",
     "effect_reconciliation_collected",
     "binds_branch_state",
@@ -126,6 +128,24 @@ REQUIRED_TRUE_FLAGS = (
     "binds_check_state",
     "binds_merge_state",
     "binds_branch_deletion_state",
+)
+COMMAND_PREVIEW_APPROVAL_GATE_EVIDENCE_KEYS = (
+    "source_approval_gate_binding_id",
+    "source_approval_gate_ref",
+    "operator_decision_ref",
+    "requires_command_preview_terminal_closure_certificate_witness",
+    "command_preview_terminal_closure_certificate_witness_ref",
+    "command_preview_effect_reconciliation_witness_ref",
+    "command_preview_ci_gate_before_ready_for_review_witness_ref",
+    "command_preview_repository_effect_rollback_plan_witness_ref",
+    "command_preview_uao_admission_witness_ref",
+    "command_preview_branch_write_binding_ref",
+    "command_preview_operator_response_binding_ref",
+    "command_preview_operator_response_witness_ref",
+    "command_preview_operator_approval_request_binding_ref",
+    "command_preview_ref",
+    "redacted_command_preview",
+    "command_preview_bound",
 )
 ACTUAL_DIFF_APPROVAL_GATE_EVIDENCE_KEYS = (
     "source_approval_gate_binding_id",
@@ -330,6 +350,25 @@ def _validate_terminal_closure_operator_decision_contract_semantics(
             errors,
             label,
         )
+        for key in COMMAND_PREVIEW_APPROVAL_GATE_EVIDENCE_KEYS:
+            if key == "source_approval_gate_binding_id":
+                expected_value = _get_nested(source_approval_gate, ("binding_id",))
+            elif key == "source_approval_gate_ref":
+                expected_value = EXPECTED_SOURCE_APPROVAL_GATE_REF
+            elif key == "operator_decision_ref":
+                expected_value = _get_nested(source_approval_gate, ("approval_gate", "operator_decision_ref"))
+            else:
+                expected_value = _get_nested(
+                    source_approval_gate,
+                    ("approval_gate", "command_preview_candidate_evidence", key),
+                )
+            _require_equal(
+                payload,
+                ("decision_contract", "command_preview_approval_gate_evidence", key),
+                expected_value,
+                errors,
+                label,
+            )
         for key in ACTUAL_DIFF_APPROVAL_GATE_EVIDENCE_KEYS:
             if key == "source_approval_gate_binding_id":
                 expected_value = _get_nested(source_approval_gate, ("binding_id",))
