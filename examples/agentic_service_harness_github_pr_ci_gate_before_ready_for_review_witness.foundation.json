@@ -26,6 +26,33 @@
     "ci_gate_request_id": "ci-gate.github-pr-before-ready-for-review",
     "source_rollback_plan_request_id": "rollback-plan.github-pr-repository-effect",
     "source_rollback_plan_evidence_ref": "evidence://repository-effect-rollback-plan",
+    "requires_command_preview_repository_effect_rollback_plan_witness": true,
+    "command_preview_repository_effect_rollback_plan_witness_ref": "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json",
+    "command_preview_uao_admission_witness_ref": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
+    "command_preview_branch_write_binding_ref": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+    "command_preview_operator_response_binding_ref": "examples/agentic_service_harness_github_pr_operator_response_command_preview_binding.foundation.json",
+    "command_preview_operator_response_witness_ref": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json",
+    "command_preview_operator_approval_request_binding_ref": "examples/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.foundation.json",
+    "command_preview_ref": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
+    "redacted_command_preview": "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> --body-file <redacted-body-file-ref>",
+    "argument_vector_template": [
+      "gh",
+      "pr",
+      "create",
+      "--base",
+      "main",
+      "--head",
+      "<branch-ref>",
+      "--title",
+      "<redacted-title-ref>",
+      "--body-file",
+      "<redacted-body-file-ref>"
+    ],
+    "placeholder_refs": [
+      "placeholder://branch-ref",
+      "placeholder://redacted-title-ref",
+      "placeholder://redacted-body-file-ref"
+    ],
     "requires_actual_diff_repository_effect_rollback_plan_witness": true,
     "actual_diff_repository_effect_rollback_plan_witness_ref": "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json",
     "actual_diff_uao_admission_witness_ref": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
@@ -43,6 +70,8 @@
     "redacted_output_ref": "witness://filesystem-write-output-redacted",
     "required_witness_kind": "ci_gate_before_ready_for_review",
     "required_evidence_ref": "evidence://ci-gate-before-ready-for-review",
+    "command_preview_bound": true,
+    "operator_response_bound": true,
     "repository_effect_rollback_plan_required": true,
     "repository_effect_rollback_plan_satisfied": false,
     "ci_gate_before_ready_for_review_required": true,
@@ -92,6 +121,12 @@
     "github_pr_repository_effect_rollback_plan_witness_example": "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json",
     "github_pr_uao_admission_witness_schema": "schemas/agentic_service_harness_github_pr_uao_admission_witness.schema.json",
     "github_pr_uao_admission_witness_example": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
+    "github_pr_operator_response_command_preview_binding_schema": "schemas/agentic_service_harness_github_pr_operator_response_command_preview_binding.schema.json",
+    "github_pr_operator_response_command_preview_binding_example": "examples/agentic_service_harness_github_pr_operator_response_command_preview_binding.foundation.json",
+    "github_pr_operator_approval_request_command_preview_binding_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.schema.json",
+    "github_pr_operator_approval_request_command_preview_binding_example": "examples/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.foundation.json",
+    "github_pr_creation_command_preview_schema": "schemas/agentic_service_harness_github_pr_creation_command_preview.schema.json",
+    "github_pr_creation_command_preview_example": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
     "github_pr_branch_write_authority_binding_schema": "schemas/agentic_service_harness_github_pr_branch_write_authority_binding.schema.json",
     "github_pr_branch_write_authority_binding_example": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
     "github_pr_operator_response_witness_schema": "schemas/agentic_service_harness_github_pr_operator_response_witness.schema.json",
@@ -109,5 +144,5 @@
       "required_for_closure": true
     }
   ],
-  "next_action": "Bind effect reconciliation to the actual-diff CI gate before terminal closure can be considered."
+  "next_action": "Bind effect reconciliation to the command-preview and actual-diff CI gate before terminal closure can be considered."
 }

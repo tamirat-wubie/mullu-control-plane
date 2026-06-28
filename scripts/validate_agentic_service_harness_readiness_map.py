@@ -597,8 +597,15 @@ REQUIRED_GITHUB_PR_ROLLBACK_ACTUAL_DIFF_UAO_BINDING_TERMS = (
     "terminal closure fail closed",
 )
 REQUIRED_GITHUB_PR_CI_GATE_TERMS = (
-    "GitHub PR CI gate before ready-for-review actual-diff rollback binding PR",
+    "GitHub PR CI gate before ready-for-review command-preview rollback binding PR",
     "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
+    "command-preview repository-effect rollback witness",
+    "command-preview UAO admission witness",
+    "command-preview branch-write binding",
+    "command-preview operator response binding",
+    "redacted command preview",
+    "argument vector template",
+    "placeholder refs",
     "actual-diff repository-effect rollback witness",
     "actual-diff UAO admission witness",
     "actual-diff branch-write authority binding",
@@ -1425,12 +1432,12 @@ def _validate_github_pr_ci_gate_ready(
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| GitHub PR CI gate before ready-for-review actual-diff rollback binding PR \| READY \| .+actual-diff repository-effect rollback witness.+terminal authority is granted\. \|$",
+        r"^\| GitHub PR CI gate before ready-for-review command-preview rollback binding PR \| READY \| .+command-preview repository-effect rollback witness.+actual-diff repository-effect rollback witness.+terminal authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
     if closure_row is None:
-        errors.append("missing ready row: GitHub PR CI gate before ready-for-review actual-diff rollback binding PR")
+        errors.append("missing ready row: GitHub PR CI gate before ready-for-review command-preview rollback binding PR")
 
 
 def _validate_github_pr_effect_reconciliation_ready(
@@ -1617,7 +1624,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind CI gate to command-preview rollback evidence",
+        "harness(pr): bind effect reconciliation to command-preview CI gate",
     )
     positions: list[int] = []
     for marker in sequence_markers:
