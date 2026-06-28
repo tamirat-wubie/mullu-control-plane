@@ -312,7 +312,7 @@ def test_operator_capability_read_model_projects_friction_controls_for_software_
     workflow = read_model["friction_control"]["developer_workflow_v1"]
     sandbox_to_pr = read_model["friction_control"]["sandbox_to_pr_now"]
 
-    assert read_model["capability_count"] == 6
+    assert read_model["capability_count"] == 7
     assert read_model["unlock_level_counts"]["L4"] == 1
     assert read_model["unlock_level_counts"]["L5"] == 1
     assert read_model["friction_control"]["fast_mode_lab_ready_count"] == 2
