@@ -1,0 +1,214 @@
+{
+  "binding_id": "agentic_service_harness_github_pr_operator_approval_request_command_preview_binding",
+  "schema_version": 1,
+  "generated_at": "2026-06-27T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_command_preview_ref": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
+  "source_operator_approval_request_actual_non_empty_diff_binding_ref": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
+  "source_operator_approval_request_ref": "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json",
+  "witness_kind": "github_pr_operator_approval_request_command_preview_binding",
+  "binding_status": "operator_approval_request_bound_to_command_preview_without_execution_authority",
+  "planning_only": true,
+  "read_only": true,
+  "preview_only": true,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "task_service_id": "github-repo-task-service-read-only-foundation",
+    "foundation_phase": "foundation_pr_creation_command_preview_operator_approval_bound",
+    "read_only": true,
+    "preview_only": true,
+    "approval_request_only": true,
+    "execution_admitted": false,
+    "pr_creation_enabled": false,
+    "repository_write_enabled": false,
+    "external_adapter_integrated": false,
+    "receipt_store_append_enabled": false,
+    "secret_values_serialized": false
+  },
+  "approval_command_preview_binding": {
+    "source_command_preview_id": "github-pr-creation-command-preview-foundation",
+    "source_operator_approval_request_binding_id": "agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding",
+    "source_operator_approval_request_id": "agentic_service_harness_github_pr_operator_approval_request",
+    "approval_request_id": "approval-request.github-pr-admission",
+    "requested_evidence_ref": "approval://operator-github-pr-admission-required",
+    "command_preview_ref": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
+    "operator_approval_request_binding_ref": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
+    "operator_approval_request_ref": "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json",
+    "redacted_command_preview": "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> --body-file <redacted-body-file-ref>",
+    "argument_vector_template": [
+      "gh",
+      "pr",
+      "create",
+      "--base",
+      "main",
+      "--head",
+      "<branch-ref>",
+      "--title",
+      "<redacted-title-ref>",
+      "--body-file",
+      "<redacted-body-file-ref>"
+    ],
+    "placeholder_refs": [
+      "placeholder://branch-ref",
+      "placeholder://redacted-title-ref",
+      "placeholder://redacted-body-file-ref"
+    ],
+    "approval_request_bound": true,
+    "command_preview_bound": true,
+    "preview_rendered": true,
+    "operator_response_collected": false,
+    "operator_approval_granted": false,
+    "operator_approval_rejected": false,
+    "command_execution_admitted": false,
+    "adapter_execution_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "repository_write_enabled": false,
+    "connector_call_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "terminal_certificate_verified": false,
+    "required_before_execution_refs": [
+      "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
+      "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
+      "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json",
+      "approval://operator-github-pr-admission-required",
+      "evidence://operator-approval-for-pr-admission",
+      "evidence://operator-approval-for-pr-execution",
+      "evidence://branch-write-authority-binding",
+      "evidence://uao-pr-execution-admission",
+      "evidence://repository-effect-rollback-plan",
+      "evidence://receipt-store-write-path-binding",
+      "evidence://effect-reconciliation-before-terminal-closure",
+      "witness://github-pr-terminal-closure-certificate"
+    ],
+    "blocked_reason_refs": [
+      "blocked://pr-creation/command-preview-only",
+      "blocked://operator-response/not-collected",
+      "blocked://operator-approval/not-granted",
+      "blocked://command-execution/not-admitted",
+      "blocked://branch-write-authority/not-bound",
+      "blocked://uao/pr-execution-not-admitted",
+      "blocked://repository-effect-rollback/not-bound",
+      "blocked://receipt-store-append/not-enabled",
+      "blocked://terminal-certificate/not-verified",
+      "blocked://terminal-closure/not-authorized"
+    ]
+  },
+  "remaining_witnesses": [
+    {
+      "witness_kind": "operator_response_record",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://operator-approval-for-pr-admission",
+      "blocks_command_execution": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "operator_execution_approval",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://operator-approval-for-pr-execution",
+      "blocks_command_execution": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "branch_write_authority",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://branch-write-authority-binding",
+      "blocks_command_execution": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "uao_pr_execution_admission",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://uao-pr-execution-admission",
+      "blocks_command_execution": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "repository_effect_rollback_plan",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://repository-effect-rollback-plan",
+      "blocks_command_execution": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "receipt_store_write_path",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://receipt-store-write-path-binding",
+      "blocks_command_execution": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "effect_reconciliation",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://effect-reconciliation-before-terminal-closure",
+      "blocks_command_execution": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "terminal_certificate",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "witness://github-pr-terminal-closure-certificate",
+      "blocks_command_execution": true,
+      "authority_granted": false
+    }
+  ],
+  "authority_denials": {
+    "operator_response_collected": false,
+    "operator_approval_granted": false,
+    "operator_approval_rejected": false,
+    "command_execution_admitted": false,
+    "live_adapter_execution_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "repository_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "receipt_store_append_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "terminal_closure": false,
+    "default_high_risk_authority": false
+  },
+  "effect_boundary": {
+    "operator_response_recorded": false,
+    "command_executed": false,
+    "adapter_executed": false,
+    "branch_pushed": false,
+    "pull_request_opened": false,
+    "repository_written": false,
+    "connector_called": false,
+    "mutation_route_admitted": false,
+    "receipt_store_appended": false,
+    "raw_diff_body_serialized": false,
+    "raw_file_content_serialized": false,
+    "secret_values_serialized": false,
+    "network_policy": "none"
+  },
+  "receipt_refs": {
+    "github_pr_operator_approval_request_command_preview_binding_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.schema.json",
+    "github_pr_operator_approval_request_command_preview_binding_example": "examples/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.foundation.json",
+    "github_pr_creation_command_preview_schema": "schemas/agentic_service_harness_github_pr_creation_command_preview.schema.json",
+    "github_pr_creation_command_preview_example": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.schema.json",
+    "github_pr_operator_approval_request_actual_non_empty_diff_binding_example": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json",
+    "github_pr_operator_approval_request_schema": "schemas/agentic_service_harness_github_pr_operator_approval_request.schema.json",
+    "github_pr_operator_approval_request_example": "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-github-pr-operator-approval-request-command-preview-binding",
+      "command": "python scripts/validate_agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Bind operator response witness to the command-preview-bound operator approval request before any PR command execution, branch write, connector call, receipt-store append, or terminal closure is considered."
+}
