@@ -145,23 +145,29 @@ from gateway.governed_operations import (
 )
 from gateway.github_operations_workroom import (
     GitHubActionsFailureEvidenceAdmissionRequest,
+    GitHubRepoStatusEvidenceAdmissionRequest,
     GitHubReadOnlyEvidenceFetchError,
     GitHubReadOnlyEvidenceFetcher,
     GitHubReadOnlyEvidenceAdmissionRequest,
     GitHubPrSafetyWorkroomRequest,
     admit_github_actions_failure_evidence_collection,
+    admit_github_repo_status_evidence_collection,
     admit_github_read_only_evidence_collection,
     build_github_actions_failure_diagnosis_receipt,
     build_github_actions_failure_workroom_read_model,
+    build_github_repo_status_summary_receipt,
+    build_github_repo_status_workroom_read_model,
     build_github_read_only_evidence_fetch_receipt,
     build_github_pr_safety_workroom_projection,
     build_github_pr_safety_workroom_read_model,
     build_pr_safety_projection_from_github_fetch_receipt,
     evaluate_github_actions_failure_diagnosis,
+    evaluate_github_repo_status_summary,
     evaluate_github_pr_safety_judgment,
     persist_github_read_only_evidence_receipt_bundle,
     read_github_read_only_evidence_receipt_bundle,
     render_github_actions_failure_workroom_html,
+    render_github_repo_status_workroom_html,
     render_github_pr_safety_workroom_html,
 )
 from gateway.mcp_capabilities import register_mcp_capabilities
@@ -771,6 +777,42 @@ class GatewayGitHubActionsFailureEvidenceExecutionRequest(BaseModel):
     surface_event_id: str = ""
     authority_ref: str = "policy.github.actions_failure.live_read_only"
     max_failed_job_logs: int = 3
+    access_token: str = Field(repr=False)
+    timeout_seconds: float = 10.0
+
+
+class GatewayGitHubRepoStatusAdmissionPreviewRequest(BaseModel):
+    """Stateless live read-only GitHub repository status admission preview."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    actor_id: str = "operator:gateway"
+    workspace_id: str = "workspace:mullusi-control-plane"
+    repo: str = "tamirat-wubie/mullu-control-plane"
+    requested_evidence_kinds: list[str] = Field(
+        default_factory=lambda: ["repository", "recent_commits", "open_pull_requests", "open_issues", "workflow_runs"]
+    )
+    requested_at: str = ""
+    surface_event_id: str = ""
+    authority_ref: str = "policy.github.repo_status.live_read_only"
+    max_items_per_kind: int = 10
+
+
+class GatewayGitHubRepoStatusEvidenceExecutionRequest(BaseModel):
+    """Execute admitted read-only GitHub repository status evidence collection."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    actor_id: str = "operator:gateway"
+    workspace_id: str = "workspace:mullusi-control-plane"
+    repo: str = "tamirat-wubie/mullu-control-plane"
+    requested_evidence_kinds: list[str] = Field(
+        default_factory=lambda: ["repository", "recent_commits", "open_pull_requests", "open_issues", "workflow_runs"]
+    )
+    requested_at: str = ""
+    surface_event_id: str = ""
+    authority_ref: str = "policy.github.repo_status.live_read_only"
+    max_items_per_kind: int = 10
     access_token: str = Field(repr=False)
     timeout_seconds: float = 10.0
 
@@ -9842,6 +9884,181 @@ def create_gateway_app(
             )
         except (RuntimeError, ValueError) as exc:
             raise HTTPException(400, detail=str(exc)) from exc
+
+    @app.get("/operator/github-operations/repo-status/read-model")
+    def operator_github_operations_repo_status_read_model(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = surface_event_id or f"operator-github-repo-status:{repo}:{now}"
+            return build_github_repo_status_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+
+    @app.get("/operator/github-operations/repo-status", response_class=HTMLResponse)
+    def operator_github_operations_repo_status_panel(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = surface_event_id or f"operator-github-repo-status:{repo}:{now}"
+            read_model = build_github_repo_status_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return HTMLResponse(render_github_repo_status_workroom_html(read_model))
+
+    @app.post("/operator/github-operations/repo-status/read-admission/preview")
+    def operator_github_operations_repo_status_read_admission_preview(
+        request: Request,
+        req: GatewayGitHubRepoStatusAdmissionPreviewRequest,
+    ):
+        _require_authority_operator(request)
+        try:
+            now = req.requested_at or _clock()
+            surface_event_id = req.surface_event_id or f"operator-github-repo-status-admission:{req.repo}:{now}"
+            admission = admit_github_repo_status_evidence_collection(
+                GitHubRepoStatusEvidenceAdmissionRequest(
+                    actor_id=req.actor_id,
+                    workspace_id=req.workspace_id,
+                    repo=req.repo,
+                    requested_evidence_kinds=tuple(req.requested_evidence_kinds),
+                    requested_at=now,
+                    surface_event_id=surface_event_id,
+                    authority_ref=req.authority_ref,
+                    max_items_per_kind=req.max_items_per_kind,
+                ),
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid GitHub repository status evidence admission preview",
+                    "error_code": "invalid_github_repo_status_admission_preview",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "github_repo_status_evidence_admission": admission.to_json_dict(),
+            "outcome": "AwaitingEvidence",
+            "governed": True,
+            "execution_allowed": False,
+            "live_connector_call_performed": False,
+            "write_authority_granted": False,
+        }
+
+    @app.post("/operator/github-operations/repo-status/read-evidence")
+    def operator_github_operations_repo_status_read_evidence(
+        request: Request,
+        req: GatewayGitHubRepoStatusEvidenceExecutionRequest,
+    ):
+        _require_authority_operator(request)
+        try:
+            now = req.requested_at or _clock()
+            surface_event_id = req.surface_event_id or f"operator-github-repo-status-read:{req.repo}:{now}"
+            admission = admit_github_repo_status_evidence_collection(
+                GitHubRepoStatusEvidenceAdmissionRequest(
+                    actor_id=req.actor_id,
+                    workspace_id=req.workspace_id,
+                    repo=req.repo,
+                    requested_evidence_kinds=tuple(req.requested_evidence_kinds),
+                    requested_at=now,
+                    surface_event_id=surface_event_id,
+                    authority_ref=req.authority_ref,
+                    max_items_per_kind=req.max_items_per_kind,
+                ),
+                clock=lambda: now,
+            )
+            fetch_result = GitHubReadOnlyEvidenceFetcher(
+                access_token=req.access_token,
+                timeout_seconds=req.timeout_seconds,
+            ).fetch_repo_status(admission, clock=lambda: now)
+            summary = evaluate_github_repo_status_summary(fetch_result=fetch_result, clock=lambda: now)
+            receipt = build_github_repo_status_summary_receipt(
+                fetch_result,
+                summary=summary,
+                actor_id=req.actor_id,
+                surface_event_id=surface_event_id,
+                occurred_at=now,
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid GitHub repository status evidence execution",
+                    "error_code": "invalid_github_repo_status_evidence_execution",
+                    "governed": True,
+                },
+            ) from exc
+        except GitHubReadOnlyEvidenceFetchError as exc:
+            raise HTTPException(
+                502,
+                detail={
+                    "error": "GitHub repository status evidence execution failed",
+                    "error_code": str(exc),
+                    "governed": True,
+                    "actions_blocked": [
+                        "create_issue_without_explicit_approval",
+                        "post_github_comment_without_write_admission",
+                        "mutate_repository_without_write_admission",
+                        "trigger_workflow_without_explicit_approval",
+                        "claim_release_ready_without_required_evidence",
+                    ],
+                },
+            ) from exc
+
+        return {
+            "github_repo_status_evidence_admission": admission.to_json_dict(),
+            "github_repo_status_evidence_fetch_result": fetch_result.to_json_dict(),
+            "github_repo_status_summary": summary.to_json_dict(),
+            "github_repo_status_receipt": receipt.to_json_dict(),
+            "outcome": fetch_result.solver_outcome,
+            "governed": True,
+            "execution_allowed": True,
+            "live_connector_call_performed": True,
+            "write_authority_granted": False,
+            "effect_boundary": {
+                "execution_allowed": True,
+                "live_connector_execution_allowed": True,
+                "github_call_allowed": True,
+                "repository_read_allowed": True,
+                "repository_mutation_allowed": False,
+                "pull_request_mutation_allowed": False,
+                "branch_push_allowed": False,
+                "issue_creation_allowed": False,
+                "review_submission_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+        }
 
     @app.get("/operator/github-operations/actions-failure/read-model")
     def operator_github_operations_actions_failure_read_model(

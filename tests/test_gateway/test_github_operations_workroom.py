@@ -27,20 +27,25 @@ if str(_ROOT) not in sys.path:
 import gateway.server as gateway_server  # noqa: E402
 from gateway.github_operations_workroom import (  # noqa: E402
     GitHubActionsFailureEvidenceAdmissionRequest,
+    GitHubRepoStatusEvidenceAdmissionRequest,
     GitHubReadOnlyEvidenceFetcher,
     GitHubReadOnlyEvidenceAdmissionRequest,
     GITHUB_ACTIONS_FAILURE_CAPABILITY_ID,
     GITHUB_PR_SAFETY_CAPABILITY_ID,
     admit_github_actions_failure_evidence_collection,
+    admit_github_repo_status_evidence_collection,
     admit_github_read_only_evidence_collection,
     build_github_actions_failure_diagnosis_receipt,
     build_github_actions_failure_workroom_read_model,
+    build_github_repo_status_summary_receipt,
+    build_github_repo_status_workroom_read_model,
     build_github_read_only_evidence_fetch_receipt,
     GitHubPrSafetyWorkroomRequest,
     build_pr_safety_projection_from_github_fetch_receipt,
     build_github_pr_safety_workroom_projection,
     build_github_pr_safety_workroom_read_model,
     evaluate_github_actions_failure_diagnosis,
+    evaluate_github_repo_status_summary,
     evaluate_github_pr_safety_judgment,
 )
 from gateway.server import create_gateway_app  # noqa: E402
@@ -191,6 +196,103 @@ class FakeGitHubActionsUrlopen:
                 b"setup complete\nERROR tests/test_gateway/test_github_operations_workroom.py::test_failed\nAssertionError: expected governed receipt\n"
             )
         raise AssertionError(f"unexpected GitHub Actions request path: {path}")
+
+
+class FakeGitHubRepoStatusUrlopen:
+    """Deterministic fake GitHub transport for repository status tests."""
+
+    def __init__(self) -> None:
+        self.requests: list[urllib.request.Request] = []
+
+    def __call__(self, request: urllib.request.Request, timeout: float) -> FakeGitHubResponse:
+        self.requests.append(request)
+        path = request.full_url.removeprefix("https://api.github.com")
+        if path == "/repos/tamiratl/mullu-control-plane":
+            return FakeGitHubResponse(
+                json.dumps(
+                    {
+                        "full_name": "tamiratl/mullu-control-plane",
+                        "default_branch": "main",
+                        "private": True,
+                        "archived": False,
+                        "disabled": False,
+                        "fork": False,
+                        "open_issues_count": 7,
+                        "stargazers_count": 1,
+                        "owner": {"login": "tamiratl"},
+                        "pushed_at": "2026-06-28T12:00:00Z",
+                        "updated_at": "2026-06-28T12:00:00Z",
+                    }
+                ).encode("utf-8")
+            )
+        if path == "/repos/tamiratl/mullu-control-plane/commits":
+            return FakeGitHubResponse(
+                json.dumps(
+                    [
+                        {
+                            "sha": "c" * 40,
+                            "commit": {
+                                "message": "feat: add repository status workroom\n\nbody",
+                                "author": {"name": "Tamirat", "date": "2026-06-28T12:00:00Z"},
+                            },
+                        }
+                    ]
+                ).encode("utf-8")
+            )
+        if path == "/repos/tamiratl/mullu-control-plane/pulls":
+            return FakeGitHubResponse(
+                json.dumps(
+                    [
+                        {
+                            "number": 12,
+                            "title": "Add governed repo status path",
+                            "draft": False,
+                            "state": "open",
+                            "created_at": "2026-06-28T12:00:00Z",
+                            "updated_at": "2026-06-28T12:00:00Z",
+                        }
+                    ]
+                ).encode("utf-8")
+            )
+        if path == "/repos/tamiratl/mullu-control-plane/issues":
+            return FakeGitHubResponse(
+                json.dumps(
+                    [
+                        {
+                            "number": 99,
+                            "title": "Need repo status summary",
+                            "state": "open",
+                            "labels": [{"name": "governance"}],
+                            "created_at": "2026-06-28T12:00:00Z",
+                            "updated_at": "2026-06-28T12:00:00Z",
+                        },
+                        {"number": 12, "title": "PR issue shadow", "pull_request": {}},
+                    ]
+                ).encode("utf-8")
+            )
+        if path == "/repos/tamiratl/mullu-control-plane/actions/runs":
+            return FakeGitHubResponse(
+                json.dumps(
+                    {
+                        "total_count": 1,
+                        "workflow_runs": [
+                            {
+                                "id": 555,
+                                "name": "CI",
+                                "display_title": "repo status",
+                                "status": "completed",
+                                "conclusion": "success",
+                                "event": "pull_request",
+                                "head_branch": "feature/repo-status",
+                                "head_sha": "d" * 40,
+                                "run_number": 10,
+                                "html_url": "https://github.example/actions/runs/555",
+                            }
+                        ],
+                    }
+                ).encode("utf-8")
+            )
+        raise AssertionError(f"unexpected GitHub repo status request path: {path}")
 
 
 def _clock() -> str:
@@ -832,6 +934,167 @@ def test_operator_github_actions_failure_panel_renders_read_only_form() -> None:
     assert 'fetch("/operator/github-operations/actions-failure/read-evidence"' in response.text
     assert 'tokenInput.value = "";' in response.text
     assert "rerun_workflow_without_explicit_approval" in response.text
+
+
+def test_github_repo_status_admission_rejects_write_like_kind() -> None:
+    with pytest.raises(ValueError, match="unsupported GitHub repository status evidence kind"):
+        GitHubRepoStatusEvidenceAdmissionRequest(
+            actor_id="operator:tamirat",
+            workspace_id="workspace:mullusi-control-plane",
+            repo="tamiratl/mullu-control-plane",
+            requested_evidence_kinds=("repository", "create_issue"),
+            requested_at="2026-06-28T12:00:00+00:00",
+            surface_event_id="repo-status-admission",
+        )
+
+
+def test_github_repo_status_fetcher_collects_bounded_status_without_token_disclosure() -> None:
+    admission = admit_github_repo_status_evidence_collection(
+        GitHubRepoStatusEvidenceAdmissionRequest(
+            actor_id="operator:tamirat",
+            workspace_id="workspace:mullu-control-plane",
+            repo="tamiratl/mullu-control-plane",
+            requested_evidence_kinds=("repository", "recent_commits", "open_pull_requests", "open_issues", "workflow_runs"),
+            requested_at="2026-06-28T12:00:00+00:00",
+            surface_event_id="repo-status-read",
+            max_items_per_kind=5,
+        ),
+        clock=_clock,
+    )
+    fake_urlopen = FakeGitHubRepoStatusUrlopen()
+
+    result = GitHubReadOnlyEvidenceFetcher(access_token="ghp_repo_status_token", urlopen=fake_urlopen).fetch_repo_status(
+        admission,
+        clock=_clock,
+    )
+    serialized = json.dumps(result.to_json_dict(), sort_keys=True)
+
+    assert result.solver_outcome == "SolvedVerified"
+    assert result.repository_summary["full_name"] == "tamiratl/mullu-control-plane"
+    assert len(result.open_pull_requests) == 1
+    assert len(result.open_issues) == 1
+    assert "ghp_repo_status_token" not in serialized
+    assert all(request.get_method() == "GET" for request in fake_urlopen.requests)
+
+
+def test_github_repo_status_summary_and_receipt_are_read_only() -> None:
+    admission = admit_github_repo_status_evidence_collection(
+        GitHubRepoStatusEvidenceAdmissionRequest(
+            actor_id="operator:tamirat",
+            workspace_id="workspace:mullu-control-plane",
+            repo="tamiratl/mullu-control-plane",
+            requested_evidence_kinds=("repository",),
+            requested_at="2026-06-28T12:00:00+00:00",
+            surface_event_id="repo-status-read",
+        ),
+        clock=_clock,
+    )
+    result = GitHubReadOnlyEvidenceFetcher(access_token="token", urlopen=FakeGitHubRepoStatusUrlopen()).fetch_repo_status(
+        admission,
+        clock=_clock,
+    )
+    summary = evaluate_github_repo_status_summary(fetch_result=result, clock=_clock)
+    receipt = build_github_repo_status_summary_receipt(
+        result,
+        summary=summary,
+        actor_id="operator:tamirat",
+        surface_event_id="repo-status-read",
+        occurred_at="2026-06-28T12:00:00+00:00",
+    )
+
+    assert summary.status == "summarized"
+    assert summary.write_authority_granted is False
+    assert receipt.policy_decision is FabricPolicyDecision.ALLOW_READ_ONLY
+    assert receipt.intent == "SUMMARIZE_GITHUB_REPOSITORY_STATUS"
+    assert "mutate_repository_without_write_admission" in receipt.actions_blocked
+
+
+def test_github_repo_status_read_model_awaits_evidence() -> None:
+    read_model = build_github_repo_status_workroom_read_model(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        surface_event_id="repo-status-model",
+        occurred_at="2026-06-28T12:00:00+00:00",
+        clock=_clock,
+    )
+
+    assert read_model["status"] == "awaiting_evidence"
+    assert read_model["outcome"] == "AwaitingEvidence"
+    assert read_model["effect_boundary"]["repository_mutation_allowed"] is False
+    assert read_model["live_read_admission"]["write_authority_granted"] is False
+
+
+def test_operator_github_repo_status_admission_preview_endpoint() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.post(
+        "/operator/github-operations/repo-status/read-admission/preview",
+        json={
+            "repo": "tamiratl/mullu-control-plane",
+            "requested_evidence_kinds": ["repository", "workflow_runs"],
+            "requested_at": "2026-06-28T12:00:00+00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    admission = payload["github_repo_status_evidence_admission"]
+    assert payload["outcome"] == "AwaitingEvidence"
+    assert payload["execution_allowed"] is False
+    assert admission["repo"] == "tamiratl/mullu-control-plane"
+    assert admission["write_authority_granted"] is False
+    assert "create_issue_without_explicit_approval" in admission["blocked_actions"]
+
+
+def test_operator_github_repo_status_execution_endpoint_returns_summary_without_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _fetcher_factory(**kwargs):  # noqa: ANN001
+        return GitHubReadOnlyEvidenceFetcher(
+            access_token=kwargs["access_token"],
+            urlopen=FakeGitHubRepoStatusUrlopen(),
+            timeout_seconds=kwargs["timeout_seconds"],
+        )
+
+    monkeypatch.setattr(gateway_server, "GitHubReadOnlyEvidenceFetcher", _fetcher_factory)
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.post(
+        "/operator/github-operations/repo-status/read-evidence",
+        json={
+            "repo": "tamiratl/mullu-control-plane",
+            "requested_evidence_kinds": ["repository", "recent_commits", "open_pull_requests", "open_issues", "workflow_runs"],
+            "requested_at": "2026-06-28T12:00:00+00:00",
+            "access_token": "ghp_repo_status_secret",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    serialized = json.dumps(payload, sort_keys=True)
+    assert payload["github_repo_status_summary"]["status"] == "summarized"
+    assert payload["github_repo_status_receipt"]["policy_decision"] == "allow_read_only"
+    assert payload["effect_boundary"]["repository_mutation_allowed"] is False
+    assert "ghp_repo_status_secret" not in serialized
+
+
+def test_operator_github_repo_status_panel_renders_read_only_form() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get(
+        "/operator/github-operations/repo-status",
+        params={"repo": "tamiratl/mullu-control-plane", "occurred_at": "2026-06-28T12:00:00+00:00"},
+    )
+
+    assert response.status_code == 200
+    assert "Mullusi GitHub Repository Status Workroom" in response.text
+    assert "Repository mutation allowed" in response.text
+    assert 'fetch("/operator/github-operations/repo-status/read-evidence"' in response.text
+    assert 'tokenInput.value = "";' in response.text
 
 
 def test_operator_github_read_only_evidence_execution_endpoint_returns_receipts_without_token(
