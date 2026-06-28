@@ -630,8 +630,8 @@ def test_readiness_map_rejects_missing_github_pr_terminal_certificate_read_model
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR terminal closure certificate read model actual-diff minting binding PR | READY |",
-            "| GitHub PR terminal closure certificate read model actual-diff minting binding PR | PARTIAL |",
+            "| GitHub PR terminal closure certificate read model command-preview minting binding PR | READY |",
+            "| GitHub PR terminal closure certificate read model command-preview minting binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -641,7 +641,7 @@ def test_readiness_map_rejects_missing_github_pr_terminal_certificate_read_model
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR terminal closure certificate read model actual-diff minting binding PR"
+        "missing ready row: GitHub PR terminal closure certificate read model command-preview minting binding PR"
         in serialized_errors
     )
 
@@ -730,7 +730,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind terminal closure certificate read model to command-preview certificate minting evidence`",
+            "1. `harness(pr): bind PR creation dry-run receipt to command-preview certificate read-model evidence`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -741,7 +741,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind terminal closure certificate read model to command-preview certificate minting evidence"
+        "missing next PR marker: harness(pr): bind PR creation dry-run receipt to command-preview certificate read-model evidence"
         in serialized_errors
     )
 

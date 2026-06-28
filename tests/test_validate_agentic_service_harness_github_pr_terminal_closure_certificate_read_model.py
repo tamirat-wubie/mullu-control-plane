@@ -144,6 +144,87 @@ def test_github_pr_terminal_closure_certificate_read_model_rejects_minting_evide
     assert "actual_diff_certificate_minting_evidence.redacted_output_ref expected" in serialized_errors
 
 
+def test_github_pr_terminal_closure_certificate_read_model_rejects_command_preview_minting_evidence_drift(
+    tmp_path: Path,
+) -> None:
+    payload = build_mutated_terminal_closure_certificate_read_model(
+        command_preview_certificate_minting_evidence__source_minting_id="wrong-minting",
+        command_preview_certificate_minting_evidence__source_certificate_id="wrong-certificate",
+        command_preview_certificate_minting_evidence__source_decision_value_record_ref="examples/wrong-record.json",
+        command_preview_certificate_minting_evidence__source_decision_value_record_id="wrong-record",
+        command_preview_certificate_minting_evidence__source_request_id="wrong-request",
+        command_preview_certificate_minting_evidence__source_request_ref="examples/wrong-request.json",
+        command_preview_certificate_minting_evidence__operator_decision_ref="operator-decision://wrong",
+        command_preview_certificate_minting_evidence__decision_value="deny_terminal_certificate",
+        command_preview_certificate_minting_evidence__operator_decision_gate_satisfied=False,
+        command_preview_certificate_minting_evidence__certificate_minting_decision="blocked",
+        command_preview_certificate_minting_evidence__terminal_closure_certificate_minted=False,
+        command_preview_certificate_minting_evidence__terminal_closure_authorized=False,
+        command_preview_certificate_minting_evidence__terminal_closure=False,
+        command_preview_certificate_minting_evidence__authority_scope_kind="wrong-scope",
+        command_preview_certificate_minting_evidence__command_preview_terminal_closure_certificate_witness_ref="examples/wrong-certificate-witness.json",
+        command_preview_certificate_minting_evidence__command_preview_operator_response_binding_ref="examples/wrong-response-binding.json",
+        command_preview_certificate_minting_evidence__command_preview_operator_response_witness_ref="examples/wrong-response.json",
+        command_preview_certificate_minting_evidence__command_preview_operator_approval_request_binding_ref="examples/wrong-request-binding.json",
+        command_preview_certificate_minting_evidence__command_preview_ref="examples/wrong-command-preview.json",
+        command_preview_certificate_minting_evidence__redacted_command_preview="gh pr create --body raw",
+        command_preview_certificate_minting_evidence__command_preview_bound=False,
+    )
+    path = _write_payload(tmp_path, payload)
+
+    validation = validate_agentic_service_harness_github_pr_terminal_closure_certificate_read_model(
+        example_paths=(path,)
+    )
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "command_preview_certificate_minting_evidence.source_minting_id expected" in serialized_errors
+    assert "command_preview_certificate_minting_evidence.source_certificate_id expected" in serialized_errors
+    assert (
+        "command_preview_certificate_minting_evidence.source_decision_value_record_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_certificate_minting_evidence.source_decision_value_record_id expected"
+        in serialized_errors
+    )
+    assert "command_preview_certificate_minting_evidence.source_request_id expected" in serialized_errors
+    assert "command_preview_certificate_minting_evidence.source_request_ref expected" in serialized_errors
+    assert "command_preview_certificate_minting_evidence.operator_decision_ref expected" in serialized_errors
+    assert "command_preview_certificate_minting_evidence.decision_value expected" in serialized_errors
+    assert (
+        "command_preview_certificate_minting_evidence.operator_decision_gate_satisfied expected"
+        in serialized_errors
+    )
+    assert "command_preview_certificate_minting_evidence.certificate_minting_decision expected" in serialized_errors
+    assert (
+        "command_preview_certificate_minting_evidence.terminal_closure_certificate_minted expected"
+        in serialized_errors
+    )
+    assert "command_preview_certificate_minting_evidence.terminal_closure_authorized expected" in serialized_errors
+    assert "command_preview_certificate_minting_evidence.terminal_closure expected" in serialized_errors
+    assert "command_preview_certificate_minting_evidence.authority_scope_kind expected" in serialized_errors
+    assert (
+        "command_preview_certificate_minting_evidence.command_preview_terminal_closure_certificate_witness_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_certificate_minting_evidence.command_preview_operator_response_binding_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_certificate_minting_evidence.command_preview_operator_response_witness_ref expected"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_certificate_minting_evidence.command_preview_operator_approval_request_binding_ref expected"
+        in serialized_errors
+    )
+    assert "command_preview_certificate_minting_evidence.command_preview_ref expected" in serialized_errors
+    assert "command_preview_certificate_minting_evidence.redacted_command_preview expected" in serialized_errors
+    assert "command_preview_certificate_minting_evidence.command_preview_bound expected" in serialized_errors
+
+
 def test_github_pr_terminal_closure_certificate_read_model_rejects_mutation_authority(
     tmp_path: Path,
 ) -> None:

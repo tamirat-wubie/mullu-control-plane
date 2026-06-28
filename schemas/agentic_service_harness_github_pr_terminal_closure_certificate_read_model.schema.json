@@ -12,6 +12,7 @@
     "solver_outcome",
     "source_minting_ref",
     "source_certificate_id",
+    "command_preview_certificate_minting_evidence",
     "actual_diff_certificate_minting_evidence",
     "projection_scope",
     "certificate_summary",
@@ -41,6 +42,9 @@
     },
     "actual_diff_certificate_minting_evidence": {
       "$ref": "#/$defs/actual_diff_certificate_minting_evidence"
+    },
+    "command_preview_certificate_minting_evidence": {
+      "$ref": "#/$defs/command_preview_certificate_minting_evidence"
     },
     "projection_scope": { "$ref": "#/$defs/projection_scope" },
     "certificate_summary": { "$ref": "#/$defs/certificate_summary" },
@@ -73,6 +77,221 @@
       "minLength": 1,
       "maxLength": 420,
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "command_preview_certificate_minting_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_minting_id",
+        "source_minting_ref",
+        "source_minted_at",
+        "source_certificate_id",
+        "source_decision_value_record_ref",
+        "source_certificate_candidate_ref",
+        "source_live_evidence_ref",
+        "source_decision_value_record_id",
+        "source_request_id",
+        "source_request_ref",
+        "source_request_status",
+        "source_rejection_binding_id",
+        "source_rejection_witness_ref",
+        "source_decision_contract_binding_id",
+        "source_decision_contract_ref",
+        "operator_decision_ref",
+        "allowed_decision_values",
+        "decision_value",
+        "operator_decision_gate_satisfied",
+        "certificate_minting_decision",
+        "terminal_closure_certificate_minted",
+        "terminal_closure_authorized",
+        "terminal_closure",
+        "authority_scope_kind",
+        "terminal_certificate_minting_authority_ref",
+        "requires_command_preview_certificate_minting_evidence",
+        "requires_command_preview_decision_value_record_evidence",
+        "requires_command_preview_decision_value_request_evidence",
+        "operator_decision_value_collected",
+        "explicit_operator_decision_value_present",
+        "source_approval_gate_binding_id",
+        "source_approval_gate_ref",
+        "command_preview_terminal_closure_certificate_witness_ref",
+        "command_preview_effect_reconciliation_witness_ref",
+        "command_preview_ci_gate_before_ready_for_review_witness_ref",
+        "command_preview_repository_effect_rollback_plan_witness_ref",
+        "command_preview_uao_admission_witness_ref",
+        "command_preview_branch_write_binding_ref",
+        "command_preview_operator_response_binding_ref",
+        "command_preview_operator_response_witness_ref",
+        "command_preview_operator_approval_request_binding_ref",
+        "command_preview_ref",
+        "redacted_command_preview",
+        "command_preview_bound",
+        "effect_reconciliation_match",
+        "forbidden_effects_checked",
+        "evidence_refs",
+        "graph_refs"
+      ],
+      "properties": {
+        "source_minting_id": {
+          "type": "string",
+          "const": "agentic-service-harness-github-pr-terminal-closure-certificate-minting"
+        },
+        "source_minting_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_minting.foundation.json"
+        },
+        "source_minted_at": { "type": "string", "format": "date-time" },
+        "source_certificate_id": {
+          "type": "string",
+          "const": "terminal-closure-certificate.github-pr-chain.foundation"
+        },
+        "source_decision_value_record_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_record.foundation.json"
+        },
+        "source_certificate_candidate_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_candidate.foundation.json"
+        },
+        "source_live_evidence_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_effect_reconciliation_live_evidence.foundation.json"
+        },
+        "source_decision_value_record_id": {
+          "type": "string",
+          "const": "agentic-service-harness-github-pr-terminal-closure-operator-decision-value-record"
+        },
+        "source_request_id": {
+          "type": "string",
+          "const": "agentic-service-harness-github-pr-terminal-closure-operator-decision-value-request"
+        },
+        "source_request_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_value_request.foundation.json"
+        },
+        "source_request_status": {
+          "type": "string",
+          "const": "awaiting_explicit_operator_decision_value"
+        },
+        "source_rejection_binding_id": {
+          "type": "string",
+          "const": "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection"
+        },
+        "source_rejection_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection.foundation.json"
+        },
+        "source_decision_contract_binding_id": {
+          "type": "string",
+          "const": "agentic_service_harness_github_pr_terminal_closure_operator_decision_contract"
+        },
+        "source_decision_contract_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_operator_decision_contract.foundation.json"
+        },
+        "operator_decision_ref": {
+          "type": "string",
+          "const": "operator-decision://github-pr-terminal-closure/2026-06-26/approve-terminal-certificate"
+        },
+        "allowed_decision_values": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "string", "const": "approve_terminal_certificate" },
+            { "type": "string", "const": "deny_terminal_certificate" }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "decision_value": { "type": "string", "const": "approve_terminal_certificate" },
+        "operator_decision_gate_satisfied": { "type": "boolean", "const": true },
+        "certificate_minting_decision": {
+          "type": "string",
+          "const": "approved_for_next_minting_step"
+        },
+        "terminal_closure_certificate_minted": { "type": "boolean", "const": true },
+        "terminal_closure_authorized": { "type": "boolean", "const": true },
+        "terminal_closure": { "type": "boolean", "const": true },
+        "authority_scope_kind": {
+          "type": "string",
+          "const": "terminal_closure_certificate_for_github_pr_proof_thread_only"
+        },
+        "terminal_certificate_minting_authority_ref": {
+          "type": "string",
+          "const": "operator-decision://github-pr-terminal-closure/2026-06-26/approve-terminal-certificate"
+        },
+        "requires_command_preview_certificate_minting_evidence": { "type": "boolean", "const": true },
+        "requires_command_preview_decision_value_record_evidence": { "type": "boolean", "const": true },
+        "requires_command_preview_decision_value_request_evidence": { "type": "boolean", "const": true },
+        "operator_decision_value_collected": { "type": "boolean", "const": true },
+        "explicit_operator_decision_value_present": { "type": "boolean", "const": true },
+        "source_approval_gate_binding_id": {
+          "type": "string",
+          "const": "agentic_service_harness_github_pr_terminal_closure_operator_approval_gate"
+        },
+        "source_approval_gate_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.foundation.json"
+        },
+        "command_preview_terminal_closure_certificate_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_witness.foundation.json"
+        },
+        "command_preview_effect_reconciliation_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_effect_reconciliation_witness.foundation.json"
+        },
+        "command_preview_ci_gate_before_ready_for_review_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.foundation.json"
+        },
+        "command_preview_repository_effect_rollback_plan_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json"
+        },
+        "command_preview_uao_admission_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json"
+        },
+        "command_preview_branch_write_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json"
+        },
+        "command_preview_operator_response_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_response_command_preview_binding.foundation.json"
+        },
+        "command_preview_operator_response_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json"
+        },
+        "command_preview_operator_approval_request_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.foundation.json"
+        },
+        "command_preview_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json"
+        },
+        "redacted_command_preview": {
+          "type": "string",
+          "const": "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> --body-file <redacted-body-file-ref>"
+        },
+        "command_preview_bound": { "type": "boolean", "const": true },
+        "effect_reconciliation_match": { "type": "boolean", "const": true },
+        "forbidden_effects_checked": { "type": "boolean", "const": true },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 8,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/ref" }
+        },
+        "graph_refs": {
+          "type": "array",
+          "minItems": 4,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/ref" }
+        }
+      }
     },
     "actual_diff_certificate_minting_evidence": {
       "type": "object",

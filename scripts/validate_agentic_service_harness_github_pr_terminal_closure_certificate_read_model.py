@@ -67,6 +67,91 @@ EXPECTED_SOURCE_MINTING_REF = (
 )
 EXPECTED_COMMAND_ID = "github-pr-terminal-closure-chain"
 EXPECTED_TERMINAL_SCOPE = "github_pr_terminal_closure_proof_thread_only"
+COMMAND_PREVIEW_CERTIFICATE_MINTING_EVIDENCE_BINDINGS = (
+    ("source_minting_id", ("minting_id",)),
+    ("source_minting_ref", None),
+    ("source_minted_at", ("minted_at",)),
+    ("source_certificate_id", ("terminal_closure_certificate", "certificate_id")),
+    ("source_decision_value_record_ref", ("source_decision_value_record_ref",)),
+    ("source_certificate_candidate_ref", ("source_certificate_candidate_ref",)),
+    ("source_live_evidence_ref", ("source_live_evidence_ref",)),
+    ("source_decision_value_record_id", ("command_preview_decision_value_record_evidence", "source_decision_value_record_id")),
+    ("source_request_id", ("command_preview_decision_value_record_evidence", "source_request_id")),
+    ("source_request_ref", ("command_preview_decision_value_record_evidence", "source_request_ref")),
+    ("source_request_status", ("command_preview_decision_value_record_evidence", "source_request_status")),
+    ("source_rejection_binding_id", ("command_preview_decision_value_record_evidence", "source_rejection_binding_id")),
+    ("source_rejection_witness_ref", ("command_preview_decision_value_record_evidence", "source_rejection_witness_ref")),
+    ("source_decision_contract_binding_id", ("command_preview_decision_value_record_evidence", "source_decision_contract_binding_id")),
+    ("source_decision_contract_ref", ("command_preview_decision_value_record_evidence", "source_decision_contract_ref")),
+    ("operator_decision_ref", ("terminal_closure_certificate", "response_closure_ref")),
+    ("allowed_decision_values", ("command_preview_decision_value_record_evidence", "allowed_decision_values")),
+    ("decision_value", ("operator_decision_value",)),
+    ("operator_decision_gate_satisfied", ("operator_decision_gate_satisfied",)),
+    ("certificate_minting_decision", ("command_preview_decision_value_record_evidence", "certificate_minting_decision")),
+    ("terminal_closure_certificate_minted", ("terminal_closure_certificate_minted",)),
+    ("terminal_closure_authorized", ("terminal_closure_authorized",)),
+    ("terminal_closure", ("terminal_closure",)),
+    ("authority_scope_kind", ("authority_scope", "authority_scope_kind")),
+    ("terminal_certificate_minting_authority_ref", ("authority_scope", "terminal_certificate_minting_authority_ref")),
+    (
+        "requires_command_preview_decision_value_record_evidence",
+        ("command_preview_decision_value_record_evidence", "requires_command_preview_decision_value_record_evidence"),
+    ),
+    (
+        "requires_command_preview_decision_value_request_evidence",
+        ("command_preview_decision_value_record_evidence", "requires_command_preview_decision_value_request_evidence"),
+    ),
+    ("operator_decision_value_collected", ("command_preview_decision_value_record_evidence", "operator_decision_value_collected")),
+    (
+        "explicit_operator_decision_value_present",
+        ("command_preview_decision_value_record_evidence", "explicit_operator_decision_value_present"),
+    ),
+    ("source_approval_gate_binding_id", ("command_preview_decision_value_record_evidence", "source_approval_gate_binding_id")),
+    ("source_approval_gate_ref", ("command_preview_decision_value_record_evidence", "source_approval_gate_ref")),
+    (
+        "command_preview_terminal_closure_certificate_witness_ref",
+        ("command_preview_decision_value_record_evidence", "command_preview_terminal_closure_certificate_witness_ref"),
+    ),
+    (
+        "command_preview_effect_reconciliation_witness_ref",
+        ("command_preview_decision_value_record_evidence", "command_preview_effect_reconciliation_witness_ref"),
+    ),
+    (
+        "command_preview_ci_gate_before_ready_for_review_witness_ref",
+        ("command_preview_decision_value_record_evidence", "command_preview_ci_gate_before_ready_for_review_witness_ref"),
+    ),
+    (
+        "command_preview_repository_effect_rollback_plan_witness_ref",
+        ("command_preview_decision_value_record_evidence", "command_preview_repository_effect_rollback_plan_witness_ref"),
+    ),
+    (
+        "command_preview_uao_admission_witness_ref",
+        ("command_preview_decision_value_record_evidence", "command_preview_uao_admission_witness_ref"),
+    ),
+    (
+        "command_preview_branch_write_binding_ref",
+        ("command_preview_decision_value_record_evidence", "command_preview_branch_write_binding_ref"),
+    ),
+    (
+        "command_preview_operator_response_binding_ref",
+        ("command_preview_decision_value_record_evidence", "command_preview_operator_response_binding_ref"),
+    ),
+    (
+        "command_preview_operator_response_witness_ref",
+        ("command_preview_decision_value_record_evidence", "command_preview_operator_response_witness_ref"),
+    ),
+    (
+        "command_preview_operator_approval_request_binding_ref",
+        ("command_preview_decision_value_record_evidence", "command_preview_operator_approval_request_binding_ref"),
+    ),
+    ("command_preview_ref", ("command_preview_decision_value_record_evidence", "command_preview_ref")),
+    ("redacted_command_preview", ("command_preview_decision_value_record_evidence", "redacted_command_preview")),
+    ("command_preview_bound", ("command_preview_decision_value_record_evidence", "command_preview_bound")),
+    ("effect_reconciliation_match", ("evidence_bindings", "effect_reconciliation_match")),
+    ("forbidden_effects_checked", ("evidence_bindings", "forbidden_effects_checked")),
+    ("evidence_refs", ("terminal_closure_certificate", "evidence_refs")),
+    ("graph_refs", ("terminal_closure_certificate", "graph_refs")),
+)
 ACTUAL_DIFF_CERTIFICATE_MINTING_EVIDENCE_BINDINGS = (
     ("source_minting_id", ("minting_id",)),
     ("source_minting_ref", None),
@@ -148,6 +233,12 @@ REQUIRED_TRUE_FLAGS = (
     "forbidden_effects_checked",
     "read_model_is_not_terminal_closure",
     "required_for_closure",
+    "requires_command_preview_certificate_minting_evidence",
+    "requires_command_preview_decision_value_record_evidence",
+    "requires_command_preview_decision_value_request_evidence",
+    "operator_decision_value_collected",
+    "explicit_operator_decision_value_present",
+    "command_preview_bound",
     "requires_actual_diff_certificate_minting_evidence",
     "requires_actual_diff_decision_value_record_evidence",
     "operator_decision_gate_satisfied",
@@ -387,6 +478,7 @@ def _validate_source_minting_alignment(
         errors.append("source_minting: operator_decision_value must be approve_terminal_certificate")
     if source_minting.get("terminal_closure_certificate_minted") is not True:
         errors.append("source_minting: terminal_closure_certificate_minted must be true")
+    _validate_command_preview_certificate_minting_evidence(payload, source_minting, errors, label)
     _validate_actual_diff_certificate_minting_evidence(payload, source_minting, errors, label)
     evidence_refs = _get_nested(payload, ("certificate_summary", "evidence_refs"))
     if not isinstance(evidence_refs, list):
@@ -395,6 +487,48 @@ def _validate_source_minting_alignment(
     for required_ref in REQUIRED_EVIDENCE_REFS:
         if required_ref not in evidence_refs:
             errors.append(f"{label}: certificate_summary.evidence_refs missing {required_ref}")
+
+
+def _validate_command_preview_certificate_minting_evidence(
+    payload: Mapping[str, Any],
+    source_minting: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    evidence = _get_nested(payload, ("command_preview_certificate_minting_evidence",))
+    if not isinstance(evidence, Mapping):
+        errors.append(f"{label}: command_preview_certificate_minting_evidence must be an object")
+        return
+    _require_equal(
+        payload,
+        ("command_preview_certificate_minting_evidence", "requires_command_preview_certificate_minting_evidence"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_certificate_minting_evidence", "source_minting_ref"),
+        _get_nested(payload, ("source_minting_ref",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_certificate_minting_evidence", "source_certificate_id"),
+        _get_nested(payload, ("source_certificate_id",)),
+        errors,
+        label,
+    )
+    for evidence_key, source_path in COMMAND_PREVIEW_CERTIFICATE_MINTING_EVIDENCE_BINDINGS:
+        expected = EXPECTED_SOURCE_MINTING_REF if source_path is None else _get_nested(source_minting, source_path)
+        _require_equal(
+            payload,
+            ("command_preview_certificate_minting_evidence", evidence_key),
+            expected,
+            errors,
+            label,
+        )
 
 
 def _validate_actual_diff_certificate_minting_evidence(
