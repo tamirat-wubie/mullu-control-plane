@@ -90,6 +90,24 @@ REQUIRED_RECEIPT_REFS = {
         "schemas/agentic_service_harness_github_pr_terminal_closure_operator_approval_gate.schema.json"
     ),
 }
+COMMAND_PREVIEW_DECISION_CONTRACT_EVIDENCE_KEYS = (
+    "source_approval_gate_binding_id",
+    "source_approval_gate_ref",
+    "operator_decision_ref",
+    "requires_command_preview_terminal_closure_certificate_witness",
+    "command_preview_terminal_closure_certificate_witness_ref",
+    "command_preview_effect_reconciliation_witness_ref",
+    "command_preview_ci_gate_before_ready_for_review_witness_ref",
+    "command_preview_repository_effect_rollback_plan_witness_ref",
+    "command_preview_uao_admission_witness_ref",
+    "command_preview_branch_write_binding_ref",
+    "command_preview_operator_response_binding_ref",
+    "command_preview_operator_response_witness_ref",
+    "command_preview_operator_approval_request_binding_ref",
+    "command_preview_ref",
+    "redacted_command_preview",
+    "command_preview_bound",
+)
 ACTUAL_DIFF_DECISION_CONTRACT_EVIDENCE_KEYS = (
     "source_approval_gate_binding_id",
     "source_approval_gate_ref",
@@ -143,6 +161,9 @@ REQUIRED_TRUE_FLAGS = (
     "generic_continuation_rejected",
     "read_only",
     "report_is_not_terminal_closure",
+    "requires_command_preview_operator_approval_gate_evidence",
+    "requires_command_preview_terminal_closure_certificate_witness",
+    "command_preview_bound",
     "requires_actual_diff_operator_approval_gate_evidence",
     "effect_reconciliation_collected",
     "binds_branch_state",
@@ -321,6 +342,57 @@ def _validate_terminal_closure_generic_continuation_rejection_semantics(
             errors,
             label,
         )
+        _require_equal(
+            payload,
+            (
+                "continuation_rejection",
+                "command_preview_decision_contract_evidence",
+                "source_decision_contract_binding_id",
+            ),
+            _get_nested(source_decision_contract, ("binding_id",)),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            (
+                "continuation_rejection",
+                "command_preview_decision_contract_evidence",
+                "source_decision_contract_ref",
+            ),
+            EXPECTED_SOURCE_DECISION_CONTRACT_REF,
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("continuation_rejection", "command_preview_decision_contract_evidence", "operator_decision_ref"),
+            _get_nested(source_decision_contract, ("decision_contract", "operator_decision_ref")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            (
+                "continuation_rejection",
+                "command_preview_decision_contract_evidence",
+                "requires_command_preview_operator_approval_gate_evidence",
+            ),
+            True,
+            errors,
+            label,
+        )
+        for evidence_key in COMMAND_PREVIEW_DECISION_CONTRACT_EVIDENCE_KEYS:
+            _require_equal(
+                payload,
+                ("continuation_rejection", "command_preview_decision_contract_evidence", evidence_key),
+                _get_nested(
+                    source_decision_contract,
+                    ("decision_contract", "command_preview_approval_gate_evidence", evidence_key),
+                ),
+                errors,
+                label,
+            )
         _require_equal(
             payload,
             ("continuation_rejection", "actual_diff_decision_contract_evidence", "source_decision_contract_binding_id"),
