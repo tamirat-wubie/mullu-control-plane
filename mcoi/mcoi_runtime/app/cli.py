@@ -429,6 +429,7 @@ def _autonomous_demo_summary_envelope(view: AutonomousRequestEpisodeSummaryView)
         "stage_policy_bindings": [dict(binding) for binding in view.stage_policy_bindings],
         "stage_rollback_bindings": [dict(binding) for binding in view.stage_rollback_bindings],
         "stage_dependency_bindings": [dict(binding) for binding in view.stage_dependency_bindings],
+        "stage_repair_bindings": [dict(binding) for binding in view.stage_repair_bindings],
         "rollback_ref": view.rollback_ref,
     }
 
