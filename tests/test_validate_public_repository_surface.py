@@ -18,6 +18,8 @@ import subprocess
 import pytest
 
 from scripts.validate_public_repository_surface import (
+    API_IMAGE_PUBLICATION_WORKFLOW_PATH,
+    API_IMAGE_PUBLICATION_WORKFLOW_REQUIRED_LITERALS,
     DEPLOYMENT_STATUS_REQUIRED_LITERALS,
     DEPLOYMENT_WITNESS_WORKFLOW_PATH,
     DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS,
@@ -225,6 +227,27 @@ def test_gateway_publication_workflow_requires_receipt_validator() -> None:
     assert "actions/upload-artifact@v6" in content
 
 
+def test_api_image_publication_workflow_requires_approval_bound_receipt() -> None:
+    workflow_path = REPO_ROOT / API_IMAGE_PUBLICATION_WORKFLOW_PATH
+    content = workflow_path.read_text(encoding="utf-8")
+
+    errors = validate_required_document_text(
+        document_name=API_IMAGE_PUBLICATION_WORKFLOW_PATH,
+        content=content,
+        required_literals=API_IMAGE_PUBLICATION_WORKFLOW_REQUIRED_LITERALS,
+    )
+
+    assert errors == []
+    assert "operator_approval_ref" in content
+    assert "confirm_publication" in content
+    assert "push: ${{ inputs.confirm_publication }}" in content
+    assert "api-image-publication-receipt" in content
+    assert "secret_values_serialized" in content
+    assert "dns_mutated" in content
+    assert "runtime_mutated" in content
+    assert "CLOUDFLARE_API_TOKEN" not in content
+
+
 def test_ci_workflow_requires_reflex_validator_receipt_artifact() -> None:
     workflow_path = REPO_ROOT / CI_WORKFLOW_PATH
     content = workflow_path.read_text(encoding="utf-8")
@@ -240,6 +263,9 @@ def test_ci_workflow_requires_reflex_validator_receipt_artifact() -> None:
     assert "schemas/reflex_deployment_witness_validator_receipt.schema.json" in content
     assert "reflex-deployment-witness-validator-receipt" in content
     assert ".change_assurance/reflex_deployment_witness_validator_receipt.json" in content
+    assert "Validate API image publication workflow" in content
+    assert "python scripts/validate_api_image_publication_workflow.py" in content
+    assert "python scripts/validate_api_image_publication_workflow.py" in CI_WORKFLOW_REQUIRED_LITERALS
 
 
 def test_deployment_witness_workflow_requires_conformance_secret_handoff() -> None:

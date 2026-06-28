@@ -399,6 +399,9 @@ jobs:
           test -f schemas/deployment_publication_closure_validation.schema.json
           python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json
 
+      - name: Validate API image publication workflow
+        run: python scripts/validate_api_image_publication_workflow.py
+
       - name: Upload deployment publication closure validation
         uses: actions/upload-artifact@v6
         with:

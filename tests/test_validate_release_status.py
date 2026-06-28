@@ -17,6 +17,8 @@ from pathlib import Path
 
 import scripts.validate_release_status as validate_release_status_module
 from scripts.validate_release_status import (
+    API_IMAGE_PUBLICATION_WORKFLOW_PATH,
+    API_IMAGE_PUBLICATION_WORKFLOW_REQUIRED_LITERALS,
     CI_WORKFLOW_PATH,
     DEPLOYMENT_WITNESS_WORKFLOW_PATH,
     GATEWAY_PUBLICATION_WORKFLOW_PATH,
@@ -26,6 +28,7 @@ from scripts.validate_release_status import (
     REPO_ROOT,
     STATUS_DOCUMENT_REQUIRED_LITERALS,
     WORKFLOW_DIR,
+    validate_api_image_publication_workflow_text,
     validate_ci_workflow_text,
     validate_deployment_witness_workflow_text,
     validate_deployment_status_witness_alignment,
@@ -49,6 +52,25 @@ def test_gateway_publication_workflow_carries_receipt_validation_gate() -> None:
     assert "python scripts/validate_deployment_orchestration_receipt.py" in content
     assert "--require-mcp-operator-checklist" in content
     assert ".change_assurance/deployment_witness_orchestration_validation.json" in content
+
+
+def test_api_image_publication_workflow_carries_approval_bound_receipt_gate() -> None:
+    content = API_IMAGE_PUBLICATION_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    errors = validate_api_image_publication_workflow_text(content)
+
+    assert errors == []
+    assert "operator_approval_ref" in content
+    assert "api_image_publication_receipt.json" in API_IMAGE_PUBLICATION_WORKFLOW_REQUIRED_LITERALS
+    assert "confirm_publication" in content
+    assert "push: ${{ inputs.confirm_publication }}" in content
+    assert "ghcr.io/tamirat-wubie/mullu-control-plane" in content
+    assert "api_image_publication_receipt.json" in content
+    assert "secret_values_serialized" in content
+    assert "dns_mutated" in content
+    assert "runtime_mutated" in content
+    assert "api-image-publication-receipt" in content
+    assert "CLOUDFLARE_API_TOKEN" not in content
 
 
 def test_deployment_witness_workflow_carries_conformance_secret_handoff() -> None:

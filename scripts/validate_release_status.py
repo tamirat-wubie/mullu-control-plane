@@ -63,6 +63,7 @@ REQUIRED_RELEASE_DOCUMENTS: tuple[str, ...] = (
 CI_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 DEPLOYMENT_WITNESS_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "deployment-witness.yml"
 GATEWAY_PUBLICATION_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "gateway-publication.yml"
+API_IMAGE_PUBLICATION_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "api-image-publication.yml"
 WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
 
 REQUIRED_CI_LITERALS: tuple[str, ...] = (
@@ -131,6 +132,7 @@ REQUIRED_CI_LITERALS: tuple[str, ...] = (
     "python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md",
     "python scripts/validate_public_naming_readiness.py",
     "python -m pytest tests/test_public_naming_readiness.py -q",
+    "python scripts/validate_api_image_publication_workflow.py",
 )
 
 METADATA_DOCUMENTS: tuple[str, ...] = (
@@ -265,6 +267,10 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "schemas/proof_verification_endpoint.schema.json",
         ".github/workflows/deployment-witness.yml",
         ".github/workflows/gateway-publication.yml",
+        ".github/workflows/api-image-publication.yml",
+        "python scripts/validate_api_image_publication_workflow.py",
+        ".change_assurance/api_image_publication_receipt.json",
+        "api-image-publication-receipt",
         "python scripts/collect_deployment_publication_evidence_packet.py --output-dir .change_assurance\\deployment_publication_evidence_packet --gateway-url \"$env:MULLU_GATEWAY_URL\" --expected-environment \"$env:MULLU_EXPECTED_RUNTIME_ENV\" --upstream-readiness-report \"$env:UPSTREAM_API_READINESS_REPORT\" --dns-record-type \"$env:MULLU_GATEWAY_DNS_RECORD_TYPE\" --dns-target \"$env:MULLU_GATEWAY_DNS_TARGET\" --dns-provider \"$env:MULLU_DNS_PROVIDER\" --dispatch-witness --json",
         "python scripts/validate_deployment_publication_evidence_packet.py --packet .change_assurance\\deployment_publication_evidence_packet\\deployment_publication_evidence_packet.json --output .change_assurance\\deployment_publication_evidence_packet\\deployment_publication_evidence_packet_validation.json --require-ready --json",
         "python scripts/emit_deployment_publication_operator_input_request.py --packet .change_assurance\\deployment_publication_evidence_packet\\deployment_publication_evidence_packet.json --output .change_assurance\\deployment_publication_evidence_packet\\deployment_publication_operator_input_request.json --json",
@@ -396,6 +402,22 @@ GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
     "--accept-conformance-secret-env",
     "--accept-deployment-witness-secret-env",
     "actions/upload-artifact@v6",
+)
+API_IMAGE_PUBLICATION_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
+    "API Image Publication",
+    "workflow_dispatch",
+    "operator_approval_ref",
+    "confirm_publication",
+    "packages: write",
+    "docker/login-action@v3",
+    "docker/build-push-action@v6",
+    "ghcr.io/tamirat-wubie/mullu-control-plane",
+    "push: ${{ inputs.confirm_publication }}",
+    "api_image_publication_receipt.json",
+    "api-image-publication-receipt",
+    "secret_values_serialized",
+    "dns_mutated",
+    "runtime_mutated",
 )
 
 PLACEHOLDER_WORKFLOW_FILENAMES: tuple[str, ...] = (
@@ -574,6 +596,24 @@ def validate_gateway_publication_workflow_text(content: str) -> list[str]:
         errors.append(
             f"gateway publication workflow missing required literals: {list(missing_literals)}"
         )
+    return errors
+
+
+def validate_api_image_publication_workflow_text(content: str) -> list[str]:
+    """Validate the API image publication workflow preserves approval and receipt evidence."""
+    errors: list[str] = []
+    missing_literals = tuple(
+        literal for literal in API_IMAGE_PUBLICATION_WORKFLOW_REQUIRED_LITERALS if literal not in content
+    )
+    if missing_literals:
+        errors.append(
+            f"api image publication workflow missing required literals: {list(missing_literals)}"
+        )
+    if "on:\n  workflow_dispatch:" not in content:
+        errors.append("api image publication workflow must be manual workflow_dispatch only")
+    forbidden_triggers = {"  push:", "  pull_request:"}
+    if any(line.rstrip() in forbidden_triggers for line in content.splitlines()):
+        errors.append("api image publication workflow must not use push or pull_request triggers")
     return errors
 
 
@@ -949,6 +989,11 @@ def validate_release_status(*, strict: bool = False) -> tuple[ReleaseStatusSumma
     else:
         workflow_content = GATEWAY_PUBLICATION_WORKFLOW_PATH.read_text(encoding="utf-8")
         errors.extend(validate_gateway_publication_workflow_text(workflow_content))
+    if not API_IMAGE_PUBLICATION_WORKFLOW_PATH.exists():
+        errors.append("missing required workflow: .github/workflows/api-image-publication.yml")
+    else:
+        workflow_content = API_IMAGE_PUBLICATION_WORKFLOW_PATH.read_text(encoding="utf-8")
+        errors.extend(validate_api_image_publication_workflow_text(workflow_content))
     workflow_texts = {
         path.relative_to(REPO_ROOT).as_posix(): path.read_text(encoding="utf-8")
         for path in sorted(WORKFLOW_DIR.glob("*.y*ml"))
