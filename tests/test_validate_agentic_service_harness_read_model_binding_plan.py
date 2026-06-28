@@ -430,8 +430,8 @@ def test_readiness_map_rejects_missing_github_pr_ci_gate_ready_row(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR CI gate before ready-for-review actual-diff rollback binding PR | READY |",
-            "| GitHub PR CI gate before ready-for-review actual-diff rollback binding PR | PARTIAL |",
+            "| GitHub PR CI gate before ready-for-review command-preview rollback binding PR | READY |",
+            "| GitHub PR CI gate before ready-for-review command-preview rollback binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -441,7 +441,7 @@ def test_readiness_map_rejects_missing_github_pr_ci_gate_ready_row(
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR CI gate before ready-for-review actual-diff rollback binding PR"
+        "missing ready row: GitHub PR CI gate before ready-for-review command-preview rollback binding PR"
         in serialized_errors
     )
 
@@ -730,7 +730,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind CI gate to command-preview rollback evidence`",
+            "1. `harness(pr): bind effect reconciliation to command-preview CI gate`",
             "1. `harness(pr): request terminal closure certificate approval again`",
         ),
         encoding="utf-8",
@@ -741,7 +741,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind CI gate to command-preview rollback evidence"
+        "missing next PR marker: harness(pr): bind effect reconciliation to command-preview CI gate"
         in serialized_errors
     )
 
