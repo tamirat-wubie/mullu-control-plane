@@ -65,6 +65,12 @@ The debt report chooses next evidence work. It does not grant tool authority,
 connector access, external send permission, live action, production readiness,
 or terminal closure.
 
+Approval debt is projected from the evidence passport approval packet. When a
+capability requires `gate.approval.required`, the debt item must name the
+missing approval gate, `approval_decision_receipt`, required approval inputs,
+and the blocked approval action. This keeps approval work actionable while
+remaining a read-only planning record.
+
 ## Validation
 
 Run:

@@ -17,6 +17,7 @@ An Evidence Passport answers these questions for each capability:
 | --- | --- |
 | What evidence exists? | `evidence_exists.present_evidence_refs` |
 | Who approved it? | `approval.approval_refs` |
+| Which approval proof is missing? | `approval.missing_approval_refs` |
 | What is missing? | `missing_evidence` |
 | What was blocked? | `blocked.blocked_actions` |
 | Can it be replayed? | `replay.replayable` |
@@ -60,6 +61,12 @@ Foundation projection is conservative:
 4. non-production capabilities remain `AwaitingEvidence`;
 5. execution authority stays with governed capability packs, UAO, gates,
    approval policy, receipts, and rollback policy.
+
+For approval-gated capabilities, `approval` also records
+`required_approval_gate_ids`, `required_approval_inputs`,
+`required_approval_receipts`, `approval_blocked_actions`,
+`missing_approval_refs`, and `next_approval_action`. These fields explain what
+must be collected, but they do not approve or execute the capability.
 
 ## Governance Boundary
 

@@ -4,11 +4,17 @@
   "evidence_passports": [
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -92,11 +98,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -188,11 +218,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -274,11 +310,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -364,11 +406,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -454,11 +502,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -540,11 +594,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -626,11 +686,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -720,11 +804,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -810,11 +900,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -900,11 +996,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -986,11 +1088,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -1072,11 +1180,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -1158,11 +1272,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -1244,11 +1364,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -1330,11 +1456,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -1420,11 +1552,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -1506,11 +1644,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -1604,11 +1748,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -1698,11 +1848,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -1792,11 +1948,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -1884,11 +2046,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -1988,11 +2174,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -2086,11 +2278,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -2182,11 +2380,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -2284,11 +2506,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -2380,11 +2608,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -2484,11 +2736,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -2586,11 +2862,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -2678,11 +2960,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -2774,11 +3080,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -2862,11 +3174,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -2956,11 +3274,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 6,
@@ -3037,11 +3361,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -3135,11 +3483,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -3231,11 +3585,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -3333,11 +3711,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -3425,11 +3809,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -3523,11 +3931,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -3611,11 +4025,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -3701,11 +4121,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -3791,11 +4217,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -3885,11 +4317,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -3985,11 +4441,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -4081,11 +4543,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -4177,11 +4645,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -4277,11 +4751,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -4377,11 +4857,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -4473,11 +4959,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -4569,11 +5061,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -4668,11 +5166,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -4764,11 +5268,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -4860,11 +5370,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -4956,11 +5472,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -5059,11 +5599,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -5145,11 +5691,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -5233,11 +5785,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -5321,11 +5879,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -5407,11 +5971,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -5509,11 +6097,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -5595,11 +6207,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -5681,11 +6299,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -5767,11 +6391,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 12,
@@ -5872,11 +6520,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -5971,11 +6625,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -6074,11 +6752,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -6173,11 +6857,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -6276,11 +6984,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -6372,11 +7086,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -6463,11 +7183,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -6554,11 +7280,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 16,
@@ -6651,11 +7383,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -6742,11 +7480,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 15,
@@ -6842,11 +7586,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -6931,11 +7681,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 10,
@@ -7024,11 +7780,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 22,
@@ -7133,11 +7895,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -7226,11 +7994,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 14,
@@ -7325,11 +8099,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -7416,11 +8196,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 13,
@@ -7514,11 +8300,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -7616,11 +8426,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -7710,11 +8526,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -7812,11 +8652,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -7908,11 +8754,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -8010,11 +8880,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -8112,11 +9006,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -8214,11 +9132,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -8304,11 +9228,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -8408,11 +9356,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -8498,11 +9452,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -8588,11 +9548,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 10,
@@ -8680,11 +9646,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 10,
@@ -8774,11 +9746,35 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [
+          "execute_without_approval"
+        ],
         "approval_refs": [],
         "approval_required": true,
         "approval_state": "required_missing",
         "approved": false,
-        "missing_approval": true
+        "missing_approval": true,
+        "missing_approval_refs": [
+          "gate.approval.required",
+          "approval_decision_receipt",
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "next_approval_action": "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty",
+        "required_approval_gate_ids": [
+          "gate.approval.required"
+        ],
+        "required_approval_inputs": [
+          "approval_chain",
+          "approval_refs",
+          "actor_id",
+          "separation_of_duty"
+        ],
+        "required_approval_receipts": [
+          "approval_decision_receipt"
+        ]
       },
       "blocked": {
         "blocked_action_count": 9,
@@ -8878,11 +9874,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 7,
@@ -8968,11 +9970,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -9064,11 +10072,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -9164,11 +10178,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -9260,11 +10280,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -9356,11 +10382,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -9452,11 +10484,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -9548,11 +10586,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,
@@ -9644,11 +10688,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 8,

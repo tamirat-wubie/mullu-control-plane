@@ -198,6 +198,28 @@ def _validate_evidence_passport(
         errors.append(f"{label}: {capability_id} non-required approval must have not_required state")
     if approval.get("approved") is not False:
         errors.append(f"{label}: {capability_id} approved must remain false in foundation projection")
+    required_approval_gate_ids = _string_list(approval.get("required_approval_gate_ids"))
+    required_approval_inputs = _string_list(approval.get("required_approval_inputs"))
+    required_approval_receipts = _string_list(approval.get("required_approval_receipts"))
+    missing_approval_refs = _string_list(approval.get("missing_approval_refs"))
+    approval_blocked_actions = _string_list(approval.get("approval_blocked_actions"))
+    if approval.get("approval_required") is True:
+        if required_approval_gate_ids != ["gate.approval.required"]:
+            errors.append(f"{label}: {capability_id} required approval must bind gate.approval.required")
+        if "approval_decision_receipt" not in required_approval_receipts:
+            errors.append(f"{label}: {capability_id} required approval must require approval_decision_receipt")
+        for required_input in ("approval_chain", "approval_refs", "actor_id", "separation_of_duty"):
+            if required_input not in required_approval_inputs:
+                errors.append(f"{label}: {capability_id} required approval missing input {required_input}")
+        if "gate.approval.required" not in missing_approval_refs:
+            errors.append(f"{label}: {capability_id} missing approval refs must include gate.approval.required")
+        if "approval_decision_receipt" not in missing_approval_refs:
+            errors.append(f"{label}: {capability_id} missing approval refs must include approval_decision_receipt")
+        if "execute_without_approval" not in approval_blocked_actions:
+            errors.append(f"{label}: {capability_id} approval must bind execute_without_approval")
+    else:
+        if required_approval_gate_ids or required_approval_inputs or required_approval_receipts or missing_approval_refs:
+            errors.append(f"{label}: {capability_id} non-required approval must not list required approval refs")
 
     blocked = _mapping(evidence_passport.get("blocked"))
     blocked_actions = _string_list(blocked.get("blocked_actions"))

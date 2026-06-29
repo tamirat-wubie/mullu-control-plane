@@ -88,6 +88,17 @@ def test_evidence_passports_project_approval_and_rollback_state() -> None:
     assert payment["approval"]["approval_required"] is True
     assert payment["approval"]["missing_approval"] is True
     assert payment["approval"]["approval_state"] == "required_missing"
+    assert payment["approval"]["required_approval_gate_ids"] == ["gate.approval.required"]
+    assert payment["approval"]["required_approval_receipts"] == ["approval_decision_receipt"]
+    assert payment["approval"]["required_approval_inputs"] == [
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty",
+    ]
+    assert payment["approval"]["approval_blocked_actions"] == ["execute_without_approval"]
+    assert "approval_decision_receipt" in payment["approval"]["missing_approval_refs"]
+    assert "separation_of_duty" in payment["approval"]["missing_approval_refs"]
     assert payment["rollback"]["rollback_status"] == "compensation_only"
     assert payment["rollback"]["can_compensate"] is True
     assert payment["outcome"] == "AwaitingEvidence"

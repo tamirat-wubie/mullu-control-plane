@@ -77,7 +77,17 @@ def test_capability_debt_report_projects_expected_debt_categories() -> None:
     assert "promotion" in categories
     assert "live_action" in categories
     assert payment["live_action_enabled"] is False
-    assert payment["next_action"]
+    approval_item = next(item for item in payment["debt_items"] if item["category"] == "approval")
+    assert approval_item["missing_refs"] == [
+        "gate.approval.required",
+        "approval_decision_receipt",
+        "approval_chain",
+        "approval_refs",
+        "actor_id",
+        "separation_of_duty",
+    ]
+    assert "approval_decision_receipt" in payment["next_action"]
+    assert "separation_of_duty" in approval_item["fix"]
 
 
 def test_capability_debt_report_projects_missing_evidence_for_draft() -> None:

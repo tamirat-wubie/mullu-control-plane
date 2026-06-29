@@ -151,7 +151,8 @@ def _debt_items(
 
     approval = _mapping(evidence.get("approval"))
     if approval.get("missing_approval") is True:
-        items.append(_item(capability_id, "approval", "high", "missing governed approval", ["approval_evidence"]))
+        missing_approval_refs = _string_list(approval.get("missing_approval_refs")) or ["approval_evidence"]
+        items.append(_item(capability_id, "approval", "high", "missing governed approval", missing_approval_refs))
 
     rollback = _mapping(evidence.get("rollback"))
     if rollback.get("rollback_evidence_missing") is True:
@@ -270,7 +271,7 @@ def _next_action(
 
 def _fix(category: str, missing_refs: list[str]) -> str:
     if category == "approval":
-        return "collect governed approval receipt"
+        return f"collect governed approval evidence: {', '.join(missing_refs)}"
     if category == "rollback":
         return "bind rollback, compensation, or recovery evidence"
     if category == "replay":

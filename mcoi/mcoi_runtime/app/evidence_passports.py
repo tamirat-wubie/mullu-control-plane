@@ -104,7 +104,7 @@ def _evidence_passport(
     required_evidence = _required_evidence(passport, templates_by_gate)
     present_evidence_refs = _string_list(passport.get("evidence_refs"))
     production_ready = passport.get("production_ready") is True
-    approval_packet = _approval_packet(passport)
+    approval_packet = _approval_packet(passport, templates_by_gate)
     rollback_packet = _rollback_packet(passport)
     replay_packet = _replay_packet(passport, present_evidence_refs, production_ready)
     missing_evidence = [] if production_ready else required_evidence
@@ -189,15 +189,42 @@ def _required_evidence(
     return _dedupe(required)
 
 
-def _approval_packet(passport: Mapping[str, Any]) -> dict[str, Any]:
+def _approval_packet(
+    passport: Mapping[str, Any],
+    templates_by_gate: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
     required_gates = set(_string_list(passport.get("required_gates")))
     approval_required = "gate.approval.required" in required_gates
+    approval_template = templates_by_gate.get("gate.approval.required", {})
+    required_inputs = _string_list(approval_template.get("required_inputs")) if approval_required else []
+    required_receipts = _string_list(approval_template.get("required_receipts")) if approval_required else []
+    blocked_actions = _string_list(passport.get("blocked_actions"))
+    approval_blocked_actions = [
+        action
+        for action in blocked_actions
+        if action in set(_string_list(approval_template.get("blocks_when_missing")))
+    ]
+    missing_refs = _dedupe([
+        "gate.approval.required",
+        *required_receipts,
+        *required_inputs,
+    ]) if approval_required else []
     return {
         "approval_required": approval_required,
         "approved": False,
         "approval_refs": [],
         "missing_approval": approval_required,
         "approval_state": "required_missing" if approval_required else "not_required",
+        "required_approval_gate_ids": ["gate.approval.required"] if approval_required else [],
+        "required_approval_inputs": required_inputs,
+        "required_approval_receipts": required_receipts,
+        "approval_blocked_actions": approval_blocked_actions,
+        "missing_approval_refs": missing_refs,
+        "next_approval_action": (
+            "collect approval_decision_receipt with approval_chain, approval_refs, actor_id, and separation_of_duty"
+            if approval_required
+            else "no approval evidence required"
+        ),
     }
 
 
