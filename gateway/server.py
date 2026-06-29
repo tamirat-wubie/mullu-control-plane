@@ -193,6 +193,7 @@ from gateway.operator_capability_console import (
 from gateway.operator_control_tower import (
     OperatorControlTowerBuilder,
     OperatorPanelKind,
+    developer_workflow_operator_action_banner,
     operator_control_tower_snapshot_to_json_dict,
     operator_control_tower_status_receipt,
     render_operator_control_tower,
@@ -2502,6 +2503,17 @@ def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[st
     operator_status = _developer_workflow_operator_status_from_generated_receipt(receipt)
     readiness_status = str(operator_status["readiness_status"])
     first_next_evidence = str(operator_status["first_next_evidence"])
+    next_evidence = operator_status.get("next_evidence", ())
+    if not isinstance(next_evidence, list):
+        next_evidence = []
+    evidence_text = ", ".join(str(item) for item in next_evidence if str(item).strip()) or "none"
+    action_banner = developer_workflow_operator_action_banner(
+        external_ready=operator_status["ready_for_external_pr_execution"] is True,
+        external_approval_status=str(operator_status["external_approval_status"]),
+        command_preview_rendered=operator_status["command_preview_rendered"] is True,
+        next_unlock=first_next_evidence,
+        evidence_text=evidence_text,
+    )
     return {
         "read_model_id": "operator_developer_workflow_status.read_model",
         "projection_only": True,
@@ -2520,6 +2532,7 @@ def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[st
             "local_candidate_ready": operator_status["local_candidate_ready"],
             "pr_tool_admitted": operator_status["pr_tool_admitted"],
             "external_approval_status": operator_status["external_approval_status"],
+            "action_banner": action_banner,
             "rollback_required": operator_status["rollback_required"],
             "rollback_command_count": operator_status["rollback_command_count"],
             "command_preview_rendered": operator_status["command_preview_rendered"],

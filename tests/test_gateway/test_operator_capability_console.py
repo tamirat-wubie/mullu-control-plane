@@ -3634,6 +3634,10 @@ def test_operator_control_tower_developer_workflow_status_read_model_route(monke
     assert read_model["summary"]["local_candidate_ready"] is True
     assert read_model["summary"]["pr_tool_admitted"] is True
     assert read_model["summary"]["external_approval_status"] == "pending"
+    assert read_model["summary"]["action_banner"] == (
+        "Action needed before PR execution: provide external_approval_witness; "
+        "external approval is pending."
+    )
     assert read_model["summary"]["command_preview_rendered"] is False
     assert read_model["summary"]["execution_performed"] is False
 
