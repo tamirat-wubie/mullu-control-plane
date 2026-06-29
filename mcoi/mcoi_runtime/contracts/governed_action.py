@@ -107,6 +107,13 @@ class CapabilityPassportRecord(ContractRecord):
     max_estimated_cost: float
     world_mutating: bool
     reconciliation_required: bool
+    repair_template_domain: str = ""
+    repair_template_action_type: str = ""
+    repair_template_effect_class: str = ""
+    repair_template_reversibility_class: str = ""
+    repair_template_snapshot_quality: int | None = None
+    repair_template_evidence: tuple[str, ...] = ()
+    repair_template_external_confirmation_refs: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -126,12 +133,23 @@ class CapabilityPassportRecord(ContractRecord):
                 require_non_empty_text(getattr(self, field_name), field_name),
             )
         for field_name in (
+            "repair_template_domain",
+            "repair_template_action_type",
+            "repair_template_effect_class",
+            "repair_template_reversibility_class",
+        ):
+            value = getattr(self, field_name)
+            if value:
+                object.__setattr__(self, field_name, require_non_empty_text(value, field_name))
+        for field_name in (
             "required_roles",
             "approval_chain",
             "evidence_required",
             "expected_effects",
             "forbidden_effects",
             "network_allowlist",
+            "repair_template_evidence",
+            "repair_template_external_confirmation_refs",
         ):
             raw_values = getattr(self, field_name)
             values = _require_text_tuple(
@@ -146,6 +164,14 @@ class CapabilityPassportRecord(ContractRecord):
                 },
             )
             object.__setattr__(self, field_name, values)
+        if self.repair_template_snapshot_quality is not None:
+            if (
+                not isinstance(self.repair_template_snapshot_quality, int)
+                or isinstance(self.repair_template_snapshot_quality, bool)
+                or self.repair_template_snapshot_quality < 0
+                or self.repair_template_snapshot_quality > 5
+            ):
+                raise ValueError("repair_template_snapshot_quality must be 0 through 5 or null")
         for field_name in ("rollback_capability", "compensation_capability"):
             value = getattr(self, field_name)
             if value:
@@ -294,4 +320,50 @@ def build_capability_passport(
         max_estimated_cost=entry.cost_model.max_estimated_cost,
         world_mutating=record.world_mutating,
         reconciliation_required=entry.effect_model.reconciliation_required,
+        repair_template_domain=_metadata_text(entry.metadata, "causal_repair_template_domain"),
+        repair_template_action_type=_metadata_text(entry.metadata, "causal_repair_template_action_type"),
+        repair_template_effect_class=_metadata_text(entry.metadata, "causal_repair_effect_class"),
+        repair_template_reversibility_class=_metadata_text(entry.metadata, "causal_repair_reversibility_class"),
+        repair_template_snapshot_quality=_metadata_snapshot_quality(entry.metadata),
+        repair_template_evidence=_metadata_text_tuple(
+            entry.metadata,
+            "causal_repair_template_evidence",
+            fallback=entry.evidence_model.required_evidence,
+        ),
+        repair_template_external_confirmation_refs=_metadata_text_tuple(
+            entry.metadata,
+            "causal_repair_external_confirmation_refs",
+        ),
     )
+
+
+def _metadata_text(metadata: Mapping[str, Any], key: str) -> str:
+    value = metadata.get(key)
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return ""
+
+
+def _metadata_text_tuple(
+    metadata: Mapping[str, Any],
+    key: str,
+    *,
+    fallback: tuple[str, ...] = (),
+) -> tuple[str, ...]:
+    value = metadata.get(key, fallback)
+    if isinstance(value, str) and value.strip():
+        return (value.strip(),)
+    if not isinstance(value, (tuple, list)):
+        return ()
+    return tuple(item.strip() for item in value if isinstance(item, str) and item.strip())
+
+
+def _metadata_snapshot_quality(metadata: Mapping[str, Any]) -> int | None:
+    value = metadata.get("causal_repair_snapshot_quality")
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError("causal_repair_snapshot_quality metadata must be an integer")
+    if value < 0 or value > 5:
+        raise ValueError("causal_repair_snapshot_quality metadata must be 0 through 5")
+    return value

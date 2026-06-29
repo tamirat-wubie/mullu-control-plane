@@ -911,6 +911,78 @@ def _validate_recovery_plan(
         "available"
     ]:
         errors.append("recovery_plan_missing decision cannot carry available recovery_plan")
+    errors.extend(_validate_causal_repair_recovery_fields(recovery_plan, decision))
+    return errors
+
+
+def _validate_causal_repair_recovery_fields(
+    recovery_plan: dict[str, Any],
+    decision: dict[str, Any],
+) -> list[str]:
+    errors: list[str] = []
+    status = recovery_plan.get("causal_repair_admission_status")
+    if status is None:
+        return errors
+    if status not in {"not_required", "admitted", "blocked", "approval_required"}:
+        errors.append("recovery_plan.causal_repair_admission_status is invalid")
+    for field_name in (
+        "causal_repair_admission_ref",
+        "causal_repair_admission_reason",
+        "causal_repair_effect_class",
+        "causal_repair_reversibility_class",
+        "causal_repair_template_id",
+        "causal_repair_template_reason",
+        "causal_repair_template_required_strategy",
+    ):
+        value = recovery_plan.get(field_name)
+        if value is not None and (not isinstance(value, str) or not value):
+            errors.append(f"recovery_plan.{field_name} must be null or non-empty string")
+    template_status = recovery_plan.get("causal_repair_template_status")
+    if template_status is not None and template_status not in {
+        "admitted",
+        "blocked",
+        "approval_required",
+        "template_missing",
+    }:
+        errors.append("recovery_plan.causal_repair_template_status is invalid")
+    snapshot_quality = recovery_plan.get("causal_repair_snapshot_quality")
+    if snapshot_quality is not None:
+        if (
+            not isinstance(snapshot_quality, int)
+            or isinstance(snapshot_quality, bool)
+            or snapshot_quality < 0
+            or snapshot_quality > 5
+        ):
+            errors.append("recovery_plan.causal_repair_snapshot_quality must be 0 through 5 or null")
+    for field_name in (
+        "causal_repair_idempotency_required",
+        "causal_repair_idempotency_present",
+    ):
+        value = recovery_plan.get(field_name)
+        if value is not None and not isinstance(value, bool):
+            errors.append(f"recovery_plan.{field_name} must be boolean")
+    if status in {"admitted", "blocked", "approval_required"}:
+        if not recovery_plan.get("causal_repair_admission_ref"):
+            errors.append("causal repair admission status requires admission ref")
+        if not recovery_plan.get("causal_repair_admission_reason"):
+            errors.append("causal repair admission status requires admission reason")
+    if (
+        recovery_plan.get("causal_repair_idempotency_required") is True
+        and recovery_plan.get("causal_repair_idempotency_present") is not True
+        and decision.get("status") == "allow"
+    ):
+        errors.append("allow decision cannot omit required causal repair idempotency")
+    if (
+        isinstance(decision.get("reason_code"), str)
+        and decision["reason_code"].startswith("causal_repair_admission_")
+        and status == "admitted"
+    ):
+        errors.append("causal repair admission block cannot carry admitted status")
+    if (
+        decision.get("status") == "allow"
+        and template_status in {"blocked", "approval_required", "template_missing"}
+    ):
+        errors.append("allow decision cannot carry blocked causal repair template")
     return errors
 
 

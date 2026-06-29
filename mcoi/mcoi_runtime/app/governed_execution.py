@@ -916,6 +916,9 @@ def _recomputed_universal_action_proof_hash(
         "effect_plan_id",
         "recovery_plan_certificate_id",
         "recovery_plan_id",
+        "causal_repair_admission_certificate_id",
+        "causal_repair_admission_status",
+        "causal_repair_admission_reason",
         "intent_certificate_id",
         "intent_hash",
         "operating_substrate_certificate_id",
@@ -970,6 +973,15 @@ def _recomputed_universal_action_proof_hash(
             "recovery_plan_certificate_id"
         ],
         "recovery_plan_id": universal_detail["recovery_plan_id"],
+        "causal_repair_admission_certificate_id": universal_detail[
+            "causal_repair_admission_certificate_id"
+        ],
+        "causal_repair_admission_status": universal_detail[
+            "causal_repair_admission_status"
+        ],
+        "causal_repair_admission_reason": universal_detail[
+            "causal_repair_admission_reason"
+        ],
         "intent_certificate_id": universal_detail["intent_certificate_id"],
         "intent_hash": universal_detail["intent_hash"],
         "operating_substrate_certificate_id": universal_detail[
@@ -996,6 +1008,21 @@ def _recomputed_universal_action_proof_hash(
         "memory_ref": universal_detail["memory_ref"],
         "life_meaning_judgment": dict(life_meaning_judgment),
     }
+    template_status = universal_detail.get("causal_repair_template_status")
+    if isinstance(template_status, str) and template_status:
+        payload.update(
+            {
+                "causal_repair_template_id": universal_detail.get(
+                    "causal_repair_template_id",
+                    "",
+                ),
+                "causal_repair_template_status": template_status,
+                "causal_repair_template_reason": universal_detail.get(
+                    "causal_repair_template_reason",
+                    "",
+                ),
+            }
+        )
     try:
         encoded = json.dumps(
             payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")
@@ -1415,6 +1442,39 @@ def _universal_action_transition_detail(
         "recovery_plan_id": (
             result.recovery_plan_certificate.recovery_plan_id
             if result.recovery_plan_certificate
+            else ""
+        ),
+        "causal_repair_admission_certificate_id": (
+            result.causal_repair_admission_certificate.certificate_id
+            if result.causal_repair_admission_certificate
+            else ""
+        ),
+        "causal_repair_admission_status": (
+            result.causal_repair_admission_certificate.status
+            if result.causal_repair_admission_certificate
+            else ""
+        ),
+        "causal_repair_admission_reason": (
+            result.causal_repair_admission_certificate.reason
+            if result.causal_repair_admission_certificate
+            else ""
+        ),
+        "causal_repair_template_id": (
+            result.causal_repair_admission_certificate.template_id
+            if result.causal_repair_admission_certificate
+            and result.causal_repair_admission_certificate.template_id
+            else ""
+        ),
+        "causal_repair_template_status": (
+            result.causal_repair_admission_certificate.template_status
+            if result.causal_repair_admission_certificate
+            and result.causal_repair_admission_certificate.template_status
+            else ""
+        ),
+        "causal_repair_template_reason": (
+            result.causal_repair_admission_certificate.template_reason
+            if result.causal_repair_admission_certificate
+            and result.causal_repair_admission_certificate.template_reason
             else ""
         ),
         "intent_certificate_id": result.intent_certificate.certificate_id
