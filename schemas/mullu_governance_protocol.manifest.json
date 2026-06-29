@@ -605,6 +605,12 @@
       "urn": "urn:mullusi:schema:capability-registry-entry:1"
     },
     {
+      "path": "schemas/capability_success_contract_registry.schema.json",
+      "schema_id": "capability-success-contract-registry",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:capability-success-contract-registry:1"
+    },
+    {
       "path": "schemas/capability_upgrade_plan.schema.json",
       "schema_id": "capability-upgrade-plan",
       "surface": "capability",
@@ -1863,6 +1869,12 @@
       "schema_id": "operator-sandbox-patch-readiness-compact-read-model",
       "surface": "operator",
       "urn": "urn:mullusi:schema:operator-sandbox-patch-readiness-compact-read-model:1"
+    },
+    {
+      "path": "schemas/operator_developer_workflow_status_read_model.schema.json",
+      "schema_id": "operator-developer-workflow-status-read-model",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:operator-developer-workflow-status-read-model:1"
     },
     {
       "path": "schemas/sandbox_to_pr_preparation_packet.schema.json",

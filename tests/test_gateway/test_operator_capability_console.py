@@ -31,6 +31,12 @@ from gateway.operator_capability_console import (  # noqa: E402
     build_developer_workflow_v1_run_read_model,
     build_operator_capability_read_model,
 )
+from gateway.operator_control_tower import (  # noqa: E402
+    developer_workflow_capability_summary,
+    developer_workflow_control_summary,
+    developer_workflow_operator_action_banner,
+    operator_dashboard_control_summary,
+)
 from gateway.operator_sandbox_patch_readiness import (  # noqa: E402
     SANDBOX_PATCH_READINESS_REGISTRY,
     sandbox_patch_readiness_compact_summary,
@@ -39,6 +45,7 @@ from gateway.operator_sandbox_patch_readiness import (  # noqa: E402
 )
 import gateway.server as server_module  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
+from scripts.build_developer_workflow_operator_receipt import canonical_hash as operator_receipt_hash  # noqa: E402
 from mcoi_runtime.contracts.software_dev_loop import (  # noqa: E402
     SoftwareChangeReceipt,
     SoftwareChangeReceiptStage,
@@ -50,6 +57,9 @@ SANDBOX_TO_PR_PACKET_SCHEMA_PATH = _ROOT / "schemas" / "sandbox_to_pr_preparatio
 CONTROL_TOWER_STATUS_RECEIPT_SCHEMA_PATH = _ROOT / "schemas" / "operator_control_tower_status_receipt.schema.json"
 SANDBOX_PATCH_READINESS_COMPACT_SCHEMA_PATH = (
     _ROOT / "schemas" / "operator_sandbox_patch_readiness_compact_read_model.schema.json"
+)
+DEVELOPER_WORKFLOW_STATUS_SCHEMA_PATH = (
+    _ROOT / "schemas" / "operator_developer_workflow_status_read_model.schema.json"
 )
 
 
@@ -204,6 +214,63 @@ def _local_rollback_execution_receipt() -> dict[str, object]:
             encoding="utf-8"
         )
     )
+
+
+def _developer_workflow_operator_receipt() -> dict[str, object]:
+    receipt: dict[str, object] = {
+        "receipt_id": "developer_workflow_operator_receipt.v1",
+        "workflow_id": "mullu_developer_workflow.v1",
+        "workflow_run_id": "developer_workflow_v1_foundation_run",
+        "solver_outcome": "AwaitingEvidence",
+        "execution_boundary": "local_lab_to_external_pr_preview",
+        "execution_performed": False,
+        "readiness_status": "awaiting_external_pr_approval",
+        "sandbox_receipts": {
+            "bundle_status": "receipts_complete",
+            "completed_count": 4,
+            "required_count": 4,
+            "bundle_hash": "a" * 64,
+        },
+        "approvals": {
+            "pr_preparation": {"status": "approved", "ready": True},
+            "external_pr_execution": {"status": "pending", "ready": False},
+        },
+        "local_pr_candidate": {
+            "candidate_status": "ready_for_pr_tool",
+            "candidate_ready": True,
+            "pr_tool_admitted": True,
+        },
+        "external_handoff": {
+            "ready_for_external_pr_execution": False,
+            "command_preview_rendered": False,
+            "external_effects_allowed": False,
+            "pr_creation_allowed": False,
+            "branch_push_allowed": False,
+        },
+        "next_evidence": ["external_approval_witness", "command_preview"],
+        "rollback": {
+            "required": True,
+            "evidence_refs": ["sandbox_patch_receipt"],
+            "commands": [
+                "git push origin --delete codex/developer-workflow-local-readiness",
+                "gh pr close <pr-number> --comment 'Closing by governed rollback witness'",
+            ],
+        },
+        "source_refs": {
+            "sandbox_receipt_bundle_path": ".change_assurance/developer_workflow_sandbox_receipt_bundle.generated.json",
+            "approval_packet_path": ".change_assurance/pr_preparation_approval_packet.approved.json",
+            "local_candidate_packet_path": ".change_assurance/local_pr_candidate_packet.generated.json",
+            "pr_tool_admission_packet_path": ".change_assurance/pr_tool_admission_packet.generated.json",
+            "external_approval_witness_path": ".change_assurance/external_pr_execution_approval_witness.pending.json",
+            "command_preview_packet_path": ".change_assurance/pr_command_preview_packet.blocked.json",
+            "metadata_packet_path": ".change_assurance/pr_metadata_packet.generated.json",
+            "pr_readiness_bundle_path": ".change_assurance/pr_readiness_bundle.generated.json",
+            "receipt_builder": "python scripts/build_developer_workflow_operator_receipt.py",
+        },
+        "receipt_hash": "",
+    }
+    receipt["receipt_hash"] = operator_receipt_hash(receipt)
+    return receipt
 
 
 def _receipt(receipt_id: str, stage: SoftwareChangeReceiptStage) -> SoftwareChangeReceipt:
@@ -643,6 +710,22 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert lab_real_world["lab_execution_boundary"] == "local_lab_only"
     assert lab_real_world["real_world_execution_boundary"] == "real_world"
     assert lab_real_world["external_effects_allowed"] is False
+    assert lab_real_world["control_summary"] == {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": "lab_real_world.control_summary.v1",
+        "operator_message": lab_real_world["operator_message"],
+        "action_banner": lab_real_world["operator_message"],
+        "capability_id": "lab_real_world.boundary",
+        "mode": "lab",
+        "current_level": "L3",
+        "next_level": "L9",
+        "status": "blocked",
+        "blocked_reason": "real_world_effect_boundary",
+        "next_unlock": "approval",
+        "next_evidence_count": lab_real_world["dangerous_approval_required_count"],
+        "external_effects_allowed": False,
+        "rollback_required": True,
+    }
     approval_boundary = capability_panel["metadata"]["approval_boundary_summary"]
     assert approval_boundary["summary_id"] == "approval_boundary.foundation"
     assert approval_boundary["local_auto_candidate_count"] == len(safe_action_candidates)
@@ -654,6 +737,22 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert "local automatic candidates" in approval_boundary["operator_message"]
     assert approval_boundary["execution_boundary"] == "local_lab_only"
     assert approval_boundary["external_effects_allowed"] is False
+    assert approval_boundary["control_summary"] == {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": "approval_boundary.control_summary.v1",
+        "operator_message": approval_boundary["operator_message"],
+        "action_banner": approval_boundary["operator_message"],
+        "capability_id": approval_boundary["next_approval_capability_id"],
+        "mode": "lab",
+        "current_level": "L3",
+        "next_level": "L5",
+        "status": "approval_required",
+        "blocked_reason": "before_pr_or_real_world_effect",
+        "next_unlock": "approval",
+        "next_evidence_count": approval_boundary["approval_unlock_count"],
+        "external_effects_allowed": False,
+        "rollback_required": True,
+    }
     rollback_control = capability_panel["metadata"]["rollback_control_summary"]
     assert rollback_control["summary_id"] == "rollback_control.foundation"
     assert rollback_control["rollback_default_count"] == rollback["rollback_default_count"]
@@ -707,6 +806,22 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert "pending unlocks; next evidence" in unlock_readiness["operator_message"]
     assert unlock_readiness["execution_boundary"] == "local_lab_only"
     assert unlock_readiness["external_effects_allowed"] is False
+    assert unlock_readiness["control_summary"] == {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": "unlock_readiness.control_summary.v1",
+        "operator_message": unlock_readiness["operator_message"],
+        "action_banner": unlock_readiness["operator_message"],
+        "capability_id": unlock_readiness["next_capability_id"],
+        "mode": "lab",
+        "current_level": "L4",
+        "next_level": "L5",
+        "status": "approval_required",
+        "blocked_reason": unlock_readiness["next_unlock"],
+        "next_unlock": unlock_readiness["next_unlock"],
+        "next_evidence_count": unlock_readiness["next_required_evidence_count"],
+        "external_effects_allowed": False,
+        "rollback_required": True,
+    }
     control_system = capability_panel["metadata"]["control_system_summary"]
     assert control_system["summary_id"] == "control_system.foundation"
     assert control_system["task"] == "Mullu Developer Workflow v1"
@@ -724,6 +839,28 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert "Control system in fast mode" in control_system["operator_message"]
     assert control_system["execution_boundary"] == "local_lab_only"
     assert control_system["external_effects_allowed"] is False
+    assert control_system["control_summary"] == {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": "control_system.control_summary.v1",
+        "operator_message": (
+            "Control system in fast mode; 7 safe local candidates; "
+            "next unlock approval"
+        ),
+        "action_banner": (
+            "Control system in fast mode; 7 safe local candidates; "
+            "next unlock approval"
+        ),
+        "capability_id": "control_system.foundation",
+        "mode": "lab",
+        "current_level": "L4",
+        "next_level": "L5",
+        "status": "preflight_ready",
+        "blocked_reason": "none",
+        "next_unlock": "approval",
+        "next_evidence_count": control_system["next_required_evidence_count"],
+        "external_effects_allowed": False,
+        "rollback_required": True,
+    }
     assert capability_panel["metadata"]["next_unlock_queue_count"] >= 1
     assert capability_panel["metadata"]["capability_passport_count"] == 10
     pr_unlock = next(item for item in unlock_queue if item["capability_id"] == "software_dev.pr_candidate.prepare")
@@ -775,6 +912,28 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
             "7 safe local actions queued for fast mode; "
             "approval not required for local preparation"
         ),
+        "control_summary": {
+            "contract_id": "operator_dashboard_control_summary.v1",
+            "summary_id": "safe_local_action_queue.control_summary.v1",
+            "operator_message": (
+                "7 safe local actions queued for fast mode; "
+                "approval not required for local preparation"
+            ),
+            "action_banner": (
+                "7 safe local actions queued for fast mode; "
+                "approval not required for local preparation"
+            ),
+            "capability_id": "safe_local_action_queue.foundation",
+            "mode": "lab",
+            "current_level": "L3",
+            "next_level": "L4",
+            "status": "preflight_ready",
+            "blocked_reason": "none",
+            "next_unlock": "none",
+            "next_evidence_count": 0,
+            "external_effects_allowed": False,
+            "rollback_required": False,
+        },
     }
     assert capability_panel["metadata"]["dangerous_action_blocker_summary"] == {
         "summary_id": "dangerous_action_blocker.foundation",
@@ -796,6 +955,28 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
             "7 dangerous real-world zones blocked; "
             "approval, rollback, and effect receipt required before execution"
         ),
+        "control_summary": {
+            "contract_id": "operator_dashboard_control_summary.v1",
+            "summary_id": "dangerous_action_blocker.control_summary.v1",
+            "operator_message": (
+                "7 dangerous real-world zones blocked; "
+                "approval, rollback, and effect receipt required before execution"
+            ),
+            "action_banner": (
+                "7 dangerous real-world zones blocked; "
+                "approval, rollback, and effect receipt required before execution"
+            ),
+            "capability_id": "dangerous_action_blocker.foundation",
+            "mode": "real_world",
+            "current_level": "L0",
+            "next_level": "L9",
+            "status": "blocked",
+            "blocked_reason": "dangerous_zone_requires_explicit_approval",
+            "next_unlock": "approval",
+            "next_evidence_count": 3,
+            "external_effects_allowed": False,
+            "rollback_required": True,
+        },
     }
     assert rollback["rollback_default_count"] >= 1
     assert rollback["rollback_required_count"] >= 1
@@ -1145,6 +1326,12 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
         "ready_for_external_pr_execution": False,
         "command_preview_rendered": False,
         "next_evidence_count": 7,
+        "local_candidate_ready": False,
+        "pr_tool_admitted": False,
+        "external_approval_status": "pending",
+        "rollback_required": True,
+        "rollback_command_count": 0,
+        "evidence_chain_count": 4,
         "execution_performed": False,
         "external_effects_allowed": False,
     }
@@ -1321,6 +1508,12 @@ def test_operator_control_tower_can_opt_into_local_sandbox_receipt_bundle(
         "ready_for_external_pr_execution": False,
         "command_preview_rendered": False,
         "next_evidence_count": 7,
+        "local_candidate_ready": False,
+        "pr_tool_admitted": False,
+        "external_approval_status": "pending",
+        "rollback_required": True,
+        "rollback_command_count": 0,
+        "evidence_chain_count": 4,
         "execution_performed": False,
         "external_effects_allowed": False,
     }
@@ -1565,6 +1758,8 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert response.status_code == 200
     assert "Mullu Operator Control Tower" in response.text
     assert "/operator/control-tower/status-receipt" in response.text
+    assert "/operator/control-tower/developer-workflow-status/read-model" in response.text
+    assert "/operator/control-tower?include_developer_workflow_operator_receipt=true" in response.text
     assert "Control Tower Headline" in response.text
     assert "Control tower headline: local lab can continue" in response.text
     assert "Local Lab Readiness" in response.text
@@ -1581,20 +1776,35 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Decision collect_sandbox_receipts can continue in local lab" in response.text
     assert "Friction Reduction Summary" in response.text
     assert "Friction reduced to collect_sandbox_receipts" in response.text
+    assert "Developer Workflow Operator Receipt" in response.text
+    assert "reload with generated receipt" in response.text
+    assert "Action needed before PR execution:" in response.text
+    assert "External approval:" in response.text
+    assert "Local candidate ready:" in response.text
+    assert "PR tool admitted:" in response.text
+    assert "External effects allowed: false" in response.text
     assert "Safe Automatic Action Candidates" in response.text
     assert "Safe Local Action Queue" in response.text
     assert "7 safe local actions queued for fast mode" in response.text
+    assert "safe_local_action_queue.control_summary.v1" in response.text
+    assert "Control level</strong>L3 -> L4" in response.text
+    assert "Control next unlock</strong>none" in response.text
     assert "Prepare documentation update" in response.text
     assert "Prepare documentation update in local sandbox" in response.text
     assert "Dangerous Zone Blockers" in response.text
     assert "dangerous real-world zones blocked" in response.text
+    assert "dangerous_action_blocker.control_summary.v1" in response.text
+    assert "Control level</strong>L0 -> L9" in response.text
+    assert "Control next unlock</strong>approval" in response.text
     assert "approval, rollback, and effect receipt required before execution" in response.text
     assert "dangerous_zone_requires_explicit_approval" in response.text
     assert "high, real-world boundary" in response.text
     assert "Lab vs Real-world Summary" in response.text
     assert "Lab mode can prepare 7 local candidates" in response.text
+    assert "lab_real_world.control_summary.v1" in response.text
     assert "Real-world write status" in response.text
     assert "Approval Boundary Summary" in response.text
+    assert "approval_boundary.control_summary.v1" in response.text
     assert "PR approval required" in response.text
     assert "before_pr_or_real_world_effect" in response.text
     assert "Rollback Control Summary" in response.text
@@ -1610,9 +1820,11 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "7 local-lab candidates available; 7 real-world zones blocked pending explicit approval" in response.text
     assert "Unlock Readiness Summary" in response.text
     assert "pending unlocks; next evidence" in response.text
+    assert "unlock_readiness.control_summary.v1" in response.text
     assert "Approval blockers" in response.text
     assert "Control System Summary" in response.text
     assert "Control system in fast mode" in response.text
+    assert "control_system.control_summary.v1" in response.text
     assert "Next developer workflow action" in response.text
     assert "Developer Workflow Milestone" in response.text
     assert "collect_sandbox_receipts" in response.text
@@ -3532,6 +3744,313 @@ def test_operator_control_tower_sandbox_patch_readiness_read_model_route() -> No
     assert summary["next_evidence_id"] == "sandbox_patch_receipt_bundle_generated"
     assert summary["missing_prerequisite_count"] == 2
     assert summary["external_effects_allowed"] is False
+
+
+def test_operator_control_tower_developer_workflow_status_read_model_route(monkeypatch, tmp_path: Path) -> None:
+    receipt_path = tmp_path / "developer_workflow_operator_receipt.generated.json"
+    receipt_path.write_text(
+        json.dumps(_developer_workflow_operator_receipt(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server_module, "LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH", receipt_path)
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/operator/control-tower/developer-workflow-status/read-model")
+
+    assert response.status_code == 200
+    read_model = response.json()
+    schema = json.loads(DEVELOPER_WORKFLOW_STATUS_SCHEMA_PATH.read_text(encoding="utf-8"))
+    Draft202012Validator(schema).validate(read_model)
+    assert read_model["read_model_id"] == "operator_developer_workflow_status.read_model"
+    assert read_model["projection_only"] is True
+    assert read_model["external_effects_allowed"] is False
+    assert read_model["task"] == "Governed Developer Workflow v1"
+    assert read_model["status"] == "awaiting_external_pr_approval"
+    assert read_model["reason"] == "operator external PR approval missing"
+    assert read_model["next_unlock"] == "external_approval_witness"
+    assert read_model["risk"] == "external repository write"
+    assert read_model["action_needed"] == "approve or defer external PR execution"
+    assert read_model["summary"]["sandbox_receipts_completed"] == 4
+    assert read_model["summary"]["local_candidate_ready"] is True
+    assert read_model["summary"]["pr_tool_admitted"] is True
+    assert read_model["summary"]["external_approval_status"] == "pending"
+    assert read_model["summary"]["action_banner"] == (
+        "Action needed before PR execution: provide external_approval_witness; "
+        "external approval is pending."
+    )
+    assert read_model["summary"]["command_preview_rendered"] is False
+    assert read_model["summary"]["execution_performed"] is False
+    capability_summary = read_model["capability_summary"]
+    assert capability_summary["capability_id"] == "mullu_developer_workflow.v1"
+    assert capability_summary["mode"] == "lab"
+    assert capability_summary["current_level"] == "L4"
+    assert capability_summary["next_level"] == "L5"
+    assert capability_summary["status"] == "approval_required"
+    assert capability_summary["blocked_reason"] == "external approval pending"
+    assert capability_summary["next_evidence"] == ["external_approval_witness", "command_preview"]
+    assert capability_summary["next_evidence_count"] == 2
+    assert capability_summary["external_effects_allowed"] is False
+    assert capability_summary["rollback_required"] is True
+    assert "prepare PR candidate" in capability_summary["allowed_actions"]
+    assert "create PR" in capability_summary["blocked_actions"]
+    assert "push branch" in capability_summary["blocked_actions"]
+    control_summary = read_model["control_summary"]
+    assert control_summary["summary_id"] == "developer_workflow_control_summary.v1"
+    assert control_summary["contract_id"] == "operator_dashboard_control_summary.v1"
+    assert control_summary["operator_message"] == read_model["summary"]["action_banner"]
+    assert control_summary["action_banner"] == read_model["summary"]["action_banner"]
+    assert control_summary["capability_id"] == capability_summary["capability_id"]
+    assert control_summary["mode"] == capability_summary["mode"]
+    assert control_summary["current_level"] == capability_summary["current_level"]
+    assert control_summary["next_level"] == capability_summary["next_level"]
+    assert control_summary["status"] == capability_summary["status"]
+    assert control_summary["blocked_reason"] == capability_summary["blocked_reason"]
+    assert control_summary["next_unlock"] == "external_approval_witness"
+    assert control_summary["next_evidence_count"] == capability_summary["next_evidence_count"]
+    assert control_summary["external_effects_allowed"] is False
+    assert control_summary["rollback_required"] is True
+
+
+def test_operator_control_tower_read_model_surfaces_generated_operator_receipt(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "developer_workflow_operator_receipt.generated.json"
+    receipt_path.write_text(
+        json.dumps(_developer_workflow_operator_receipt(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server_module, "LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH", receipt_path)
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/operator/control-tower/read-model?include_developer_workflow_operator_receipt=true")
+
+    assert response.status_code == 200
+    panels = {item["panel"]: item for item in response.json()["panels"]}
+    workflow_metadata = panels["workflow_monitor"]["metadata"]
+    operator_receipt = workflow_metadata["developer_workflow_operator_receipt"]
+    operator_summary = workflow_metadata["developer_workflow_operator_receipt_summary"]
+    assert operator_receipt["readiness_status"] == "awaiting_external_pr_approval"
+    assert operator_receipt["solver_outcome"] == "AwaitingEvidence"
+    assert operator_receipt["next_evidence"] == ["external_approval_witness", "command_preview"]
+    assert operator_receipt["external_approval_status"] == "pending"
+    assert operator_receipt["local_candidate_ready"] is True
+    assert operator_receipt["pr_tool_admitted"] is True
+    assert operator_receipt["external_effects_allowed"] is False
+    assert operator_receipt["rollback_required"] is True
+    assert operator_receipt["rollback_command_count"] == 2
+    assert operator_receipt["rollback_command_preview"] == (
+        "git push origin --delete codex/developer-workflow-local-readiness"
+    )
+    assert operator_receipt["evidence_chain"] == [
+        {
+            "stage": "sandbox_receipts",
+            "status": "receipts_complete",
+            "ref": ".change_assurance/developer_workflow_sandbox_receipt_bundle.generated.json",
+        },
+        {
+            "stage": "pr_preparation_approval",
+            "status": "approved",
+            "ref": ".change_assurance/pr_preparation_approval_packet.approved.json",
+        },
+        {
+            "stage": "local_pr_candidate",
+            "status": "ready_for_pr_tool",
+            "ref": ".change_assurance/local_pr_candidate_packet.generated.json",
+        },
+        {
+            "stage": "external_approval",
+            "status": "pending",
+            "ref": ".change_assurance/external_pr_execution_approval_witness.pending.json",
+        },
+    ]
+    assert operator_receipt["execution_performed"] is False
+    assert operator_receipt["command_preview_rendered"] is False
+    assert operator_summary["readiness_status"] == "awaiting_external_pr_approval"
+    assert operator_summary["external_approval_status"] == "pending"
+    assert operator_summary["local_candidate_ready"] is True
+    assert operator_summary["pr_tool_admitted"] is True
+    assert operator_summary["rollback_required"] is True
+    assert operator_summary["rollback_command_count"] == 2
+    assert operator_summary["evidence_chain_count"] == 4
+    assert operator_summary["execution_performed"] is False
+    assert operator_summary["external_effects_allowed"] is False
+
+
+def test_operator_control_tower_html_action_banner_uses_generated_receipt(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "developer_workflow_operator_receipt.generated.json"
+    receipt_path.write_text(
+        json.dumps(_developer_workflow_operator_receipt(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server_module, "LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH", receipt_path)
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/operator/control-tower?include_developer_workflow_operator_receipt=true")
+
+    assert response.status_code == 200
+    assert "Action needed before PR execution: provide external_approval_witness" in response.text
+    assert "external approval is pending" in response.text
+    assert "Control contract: operator_dashboard_control_summary.v1" in response.text
+    assert "Control summary: developer_workflow_control_summary.v1" in response.text
+    assert "Capability: mullu_developer_workflow.v1" in response.text
+    assert "Mode: lab" in response.text
+    assert "Current level: L4" in response.text
+    assert "Next level: L5" in response.text
+    assert "Capability status: approval_required" in response.text
+    assert "Blocked reason: external approval pending" in response.text
+    assert "Allowed actions: prepare diff, validate evidence, write sandbox files, run tests, prepare PR candidate" in response.text
+    assert "Blocked actions: create PR, push branch, connector call, merge, deploy" in response.text
+    assert "External approval: pending" in response.text
+    assert "PR tool admitted: true" in response.text
+    assert "Rollback required: true" in response.text
+    assert "Rollback commands: 2" in response.text
+    assert "Rollback preview: git push origin --delete codex/developer-workflow-local-readiness" in response.text
+    assert (
+        "Evidence chain: sandbox_receipts=receipts_complete -&gt; "
+        "pr_preparation_approval=approved -&gt; "
+        "local_pr_candidate=ready_for_pr_tool -&gt; external_approval=pending"
+    ) in response.text
+    assert "External effects allowed: false" in response.text
+
+
+def test_developer_workflow_operator_action_banner_cases() -> None:
+    pending = developer_workflow_operator_action_banner(
+        external_ready=False,
+        external_approval_status="pending",
+        command_preview_rendered=False,
+        next_unlock="external_approval_witness",
+        evidence_text="external_approval_witness, command_preview",
+    )
+    preview_missing = developer_workflow_operator_action_banner(
+        external_ready=False,
+        external_approval_status="approved",
+        command_preview_rendered=False,
+        next_unlock="command_preview",
+        evidence_text="command_preview",
+    )
+    approved_external = developer_workflow_operator_action_banner(
+        external_ready=True,
+        external_approval_status="approved",
+        command_preview_rendered=True,
+        next_unlock="none",
+        evidence_text="none",
+    )
+
+    assert pending == (
+        "Action needed before PR execution: provide external_approval_witness; "
+        "external approval is pending."
+    )
+    assert preview_missing == "Action needed before PR execution: render command preview."
+    assert approved_external == (
+        "PR execution remains disabled in this dashboard; use the approved external path only."
+    )
+
+
+def test_developer_workflow_capability_summary_cases() -> None:
+    summary = developer_workflow_capability_summary(
+        {
+            "ready_for_external_pr_execution": False,
+            "external_approval_status": "pending",
+            "local_candidate_ready": True,
+            "pr_tool_admitted": True,
+            "sandbox_receipts_completed": 4,
+            "sandbox_receipts_required": 4,
+            "next_evidence": ["external_approval_witness", "command_preview"],
+            "rollback_required": True,
+        }
+    )
+
+    assert summary["capability_id"] == "mullu_developer_workflow.v1"
+    assert summary["mode"] == "lab"
+    assert summary["current_level"] == "L4"
+    assert summary["next_level"] == "L5"
+    assert summary["status"] == "approval_required"
+    assert summary["blocked_reason"] == "external approval pending"
+    assert summary["next_evidence"] == ["external_approval_witness", "command_preview"]
+    assert summary["next_evidence_count"] == 2
+    assert summary["external_effects_allowed"] is False
+    assert summary["rollback_required"] is True
+    assert "prepare PR candidate" in summary["allowed_actions"]
+    assert "create PR" in summary["blocked_actions"]
+    assert "push branch" in summary["blocked_actions"]
+
+
+def test_operator_dashboard_control_summary_contract_cases() -> None:
+    summary = operator_dashboard_control_summary(
+        summary_id="example_control_summary.v1",
+        operator_message="Action needed: provide approval",
+        next_unlock="approval",
+        capability_summary={
+            "capability_id": "example.capability",
+            "mode": "lab",
+            "current_level": "L2",
+            "next_level": "L3",
+            "status": "approval_required",
+            "blocked_reason": "approval pending",
+            "next_evidence_count": 1,
+            "external_effects_allowed": False,
+            "rollback_required": True,
+        },
+    )
+
+    assert summary["contract_id"] == "operator_dashboard_control_summary.v1"
+    assert summary["summary_id"] == "example_control_summary.v1"
+    assert summary["operator_message"] == "Action needed: provide approval"
+    assert summary["action_banner"] == "Action needed: provide approval"
+    assert summary["capability_id"] == "example.capability"
+    assert summary["mode"] == "lab"
+    assert summary["current_level"] == "L2"
+    assert summary["next_level"] == "L3"
+    assert summary["status"] == "approval_required"
+    assert summary["blocked_reason"] == "approval pending"
+    assert summary["next_unlock"] == "approval"
+    assert summary["next_evidence_count"] == 1
+    assert summary["external_effects_allowed"] is False
+    assert summary["rollback_required"] is True
+    assert summary["capability_summary"]["capability_id"] == "example.capability"
+
+
+def test_developer_workflow_control_summary_cases() -> None:
+    summary = developer_workflow_control_summary(
+        {
+            "ready_for_external_pr_execution": False,
+            "external_approval_status": "pending",
+            "command_preview_rendered": False,
+            "first_next_evidence": "",
+            "local_candidate_ready": True,
+            "pr_tool_admitted": True,
+            "sandbox_receipts_completed": 4,
+            "sandbox_receipts_required": 4,
+            "next_evidence": ["external_approval_witness", "command_preview"],
+            "rollback_required": True,
+        }
+    )
+
+    assert summary["contract_id"] == "operator_dashboard_control_summary.v1"
+    assert summary["summary_id"] == "developer_workflow_control_summary.v1"
+    assert summary["operator_message"] == (
+        "Action needed before PR execution: provide external_approval_witness; "
+        "external approval is pending."
+    )
+    assert summary["action_banner"] == summary["operator_message"]
+    assert summary["capability_id"] == "mullu_developer_workflow.v1"
+    assert summary["mode"] == "lab"
+    assert summary["current_level"] == "L4"
+    assert summary["next_level"] == "L5"
+    assert summary["status"] == "approval_required"
+    assert summary["blocked_reason"] == "external approval pending"
+    assert summary["next_unlock"] == "external_approval_witness"
+    assert summary["next_evidence_count"] == 2
+    assert summary["external_effects_allowed"] is False
+    assert summary["rollback_required"] is True
+    assert summary["capability_summary"]["next_evidence"] == ["external_approval_witness", "command_preview"]
 
 
 def test_operator_control_tower_projects_rollback_receipt_visibility() -> None:

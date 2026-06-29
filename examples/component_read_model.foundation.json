@@ -1,41 +1,59 @@
 {
-  "schema_version": 1,
-  "read_model_id": "component_read_model.foundation.v1",
-  "route": "/api/v1/components/read-model",
-  "mode": "foundation",
-  "governed": true,
-  "read_model_is_not_execution_authority": true,
-  "live_execution_enabled": false,
-  "live_connector_send_enabled": false,
-  "terminal_closure_required": true,
-  "source_refs": {
-    "registry": "examples/component_registry.foundation.json",
-    "router_inventory": "examples/component_router_inventory.foundation.json",
-    "proof_binding": "examples/component_proof_binding.foundation.json",
-    "lifecycle_transition_receipts": "examples/component_lifecycle_transition_receipts.foundation.json",
-    "authority_envelope_witnesses": "examples/component_authority_envelope_witnesses.foundation.json"
-  },
-  "summary": {
-    "component_count": 10,
-    "bundle_count": 3,
-    "lifecycle_receipt_count": 10,
-    "authority_witness_count": 10,
-    "proof_bound_count": 9,
-    "awaiting_binding_count": 1,
-    "bound_route_count": 35,
-    "route_family_classification_count": 80,
-    "classified_declared_route_count": 455,
-    "blocked_component_count": 1
-  },
+  "bundles": [
+    {
+      "allowed_mode": "demo_v0",
+      "blocked_actions": [
+        "calendar_write",
+        "connector_call",
+        "external_send",
+        "mailbox_mutation",
+        "memory_topology_activation",
+        "send_email",
+        "terminal_closure"
+      ],
+      "bundle_id": "personal_assistant_v0",
+      "bundle_is_not_execution_route": true,
+      "component_count": 5,
+      "receipt_required": true,
+      "terminal_closure_required": true
+    },
+    {
+      "allowed_mode": "read_only",
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "bundle_id": "symbolic_reasoning_read_only",
+      "bundle_is_not_execution_route": true,
+      "component_count": 3,
+      "receipt_required": true,
+      "terminal_closure_required": true
+    },
+    {
+      "allowed_mode": "foundation",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "filesystem_write",
+        "live_dispatch",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "bundle_id": "worker_runtime_foundation",
+      "bundle_is_not_execution_route": true,
+      "component_count": 3,
+      "receipt_required": true,
+      "terminal_closure_required": true
+    }
+  ],
   "components": [
     {
-      "component_id": "governance_core",
-      "name": "Governance Core",
-      "type": "governance_core",
-      "mode": "foundation",
-      "state": "registered",
-      "wiring_state": "present",
-      "authority_level": "read_only_advisory",
       "authority": {
         "can_call_connector": false,
         "can_claim_terminal_closure": false,
@@ -48,94 +66,23 @@
         "can_send_external_message": false,
         "can_write_files": false
       },
-      "receipt_required": true,
-      "lifecycle_receipt": {
-        "receipt_id": "component_lifecycle_transition.governance_core.present_to_registered.v1",
-        "from_state": "present",
-        "to_state": "registered",
-        "proof_state": "Pass",
-        "evidence_refs": [
-          "examples/component_registry.foundation.json",
-          "scripts/validate_component_registry.py",
-          "tests/test_validate_component_registry.py"
-        ],
-        "validator_refs": [
-          "component_registry_validator"
-        ],
-        "operator_approval_required": false,
-        "external_effect": false,
-        "transition_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
-        "next_transition_candidates": [
-          {
-            "from_state": "registered",
-            "to_state": "validated",
-            "requires_evidence": true,
-            "operator_approval_required": false,
-            "external_effect": false
-          }
-        ]
-      },
+      "authority_level": "read_only_advisory",
       "authority_witness": {
-        "witness_id": "component_authority_envelope.governance_core.foundation.v1",
-        "proof_state": "Pass",
         "authority_matches_registry": true,
-        "witness_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
         "authority_upgrade_requires_separate_witness": true,
-        "external_effect": false,
+        "can_claim_terminal_closure": false,
         "evidence_refs": [
           "docs/40_proof_coverage_matrix.md#gateway_capability_fabric"
         ],
+        "external_effect": false,
+        "proof_state": "Pass",
         "validator_refs": [
           "component_registry_validator",
           "component_authority_envelope_witnesses_validator"
-        ]
-      },
-      "health": {
-        "status": "known",
-        "source": {
-          "ref": "scripts/run_workspace_governance_checks.py",
-          "type": "validator"
-        }
-      },
-      "proof_surface": {
-        "status": "proof_bound",
-        "surface_id": "gateway_capability_fabric"
-      },
-      "route_binding": {
-        "state": "bound",
-        "proof_surface_ids": [
-          "authority_obligation_mesh",
-          "component_autopsy",
-          "component_harness_read_model",
-          "component_request_simulator",
-          "component_symbol_read_model",
-          "gateway_approval_resolution",
-          "gateway_capability_fabric",
-          "gateway_webhook_ingress"
         ],
-        "route_count": 24
+        "witness_id": "component_authority_envelope.governance_core.foundation.v1",
+        "witness_is_not_execution_authority": true
       },
-      "proof_binding": {
-        "state": "proof_bound",
-        "required_surface_ids": [
-          "gateway_capability_fabric"
-        ],
-        "inventory_surface_ids": [
-          "authority_obligation_mesh",
-          "component_autopsy",
-          "component_harness_read_model",
-          "component_request_simulator",
-          "component_symbol_read_model",
-          "gateway_approval_resolution",
-          "gateway_capability_fabric",
-          "gateway_webhook_ingress"
-        ],
-        "runtime_witness_count": 11,
-        "evidence_file_count": 19
-      },
-      "dependencies": [],
       "blocked_actions": [
         "autonomous_execution",
         "connector_call",
@@ -150,16 +97,87 @@
         "secret_mutation",
         "terminal_closure"
       ],
-      "owner_surface": "governance"
+      "component_id": "governance_core",
+      "dependencies": [],
+      "health": {
+        "source": {
+          "ref": "scripts/run_workspace_governance_checks.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "scripts/validate_component_registry.py",
+          "tests/test_validate_component_registry.py"
+        ],
+        "external_effect": false,
+        "from_state": "present",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "registered",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "validated"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.governance_core.present_to_registered.v1",
+        "to_state": "registered",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
+      "mode": "foundation",
+      "name": "Governance Core",
+      "owner_surface": "governance",
+      "proof_binding": {
+        "evidence_file_count": 19,
+        "inventory_surface_ids": [
+          "authority_obligation_mesh",
+          "component_autopsy",
+          "component_harness_read_model",
+          "component_request_simulator",
+          "component_symbol_read_model",
+          "gateway_approval_resolution",
+          "gateway_capability_fabric",
+          "gateway_webhook_ingress"
+        ],
+        "required_surface_ids": [
+          "gateway_capability_fabric"
+        ],
+        "runtime_witness_count": 11,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "gateway_capability_fabric"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "authority_obligation_mesh",
+          "component_autopsy",
+          "component_harness_read_model",
+          "component_request_simulator",
+          "component_symbol_read_model",
+          "gateway_approval_resolution",
+          "gateway_capability_fabric",
+          "gateway_webhook_ingress"
+        ],
+        "route_count": 24,
+        "state": "bound"
+      },
+      "state": "registered",
+      "type": "governance_core",
+      "wiring_state": "present"
     },
     {
-      "component_id": "agentic_service_harness",
-      "name": "Agentic Service Harness",
-      "type": "runtime_core",
-      "mode": "read_only",
-      "state": "mounted",
-      "wiring_state": "mounted",
-      "authority_level": "read_only",
       "authority": {
         "can_call_connector": false,
         "can_claim_terminal_closure": false,
@@ -172,89 +190,23 @@
         "can_send_external_message": false,
         "can_write_files": false
       },
-      "receipt_required": true,
-      "lifecycle_receipt": {
-        "receipt_id": "component_lifecycle_transition.agentic_service_harness.bootstrapped_to_mounted.v1",
-        "from_state": "bootstrapped",
-        "to_state": "mounted",
-        "proof_state": "Pass",
-        "evidence_refs": [
-          "examples/component_registry.foundation.json",
-          "schemas/component_registry.schema.json",
-          "scripts/validate_component_registry.py"
-        ],
-        "validator_refs": [
-          "component_registry_validator"
-        ],
-        "operator_approval_required": false,
-        "external_effect": false,
-        "transition_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
-        "next_transition_candidates": [
-          {
-            "from_state": "mounted",
-            "to_state": "read_only",
-            "requires_evidence": true,
-            "operator_approval_required": false,
-            "external_effect": false
-          },
-          {
-            "from_state": "mounted",
-            "to_state": "draft_only",
-            "requires_evidence": true,
-            "operator_approval_required": false,
-            "external_effect": false
-          }
-        ]
-      },
+      "authority_level": "read_only",
       "authority_witness": {
-        "witness_id": "component_authority_envelope.agentic_service_harness.foundation.v1",
-        "proof_state": "Pass",
         "authority_matches_registry": true,
-        "witness_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
         "authority_upgrade_requires_separate_witness": true,
-        "external_effect": false,
+        "can_claim_terminal_closure": false,
         "evidence_refs": [
           "docs/40_proof_coverage_matrix.md#agentic_service_harness_status_read_model"
         ],
+        "external_effect": false,
+        "proof_state": "Pass",
         "validator_refs": [
           "component_registry_validator",
           "component_authority_envelope_witnesses_validator"
-        ]
-      },
-      "health": {
-        "status": "known",
-        "source": {
-          "ref": "/api/v1/harness/status",
-          "type": "route"
-        }
-      },
-      "proof_surface": {
-        "status": "proof_bound",
-        "surface_id": "agentic_service_harness_status_read_model"
-      },
-      "route_binding": {
-        "state": "bound",
-        "proof_surface_ids": [
-          "agentic_service_harness_status_read_model"
         ],
-        "route_count": 1
+        "witness_id": "component_authority_envelope.agentic_service_harness.foundation.v1",
+        "witness_is_not_execution_authority": true
       },
-      "proof_binding": {
-        "state": "proof_bound",
-        "required_surface_ids": [
-          "agentic_service_harness_status_read_model"
-        ],
-        "inventory_surface_ids": [
-          "agentic_service_harness_status_read_model"
-        ],
-        "runtime_witness_count": 1,
-        "evidence_file_count": 2
-      },
-      "dependencies": [
-        "governance_core"
-      ],
       "blocked_actions": [
         "autonomous_execution",
         "connector_call",
@@ -264,16 +216,82 @@
         "runtime_mutation",
         "terminal_closure"
       ],
-      "owner_surface": "runtime"
+      "component_id": "agentic_service_harness",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "/api/v1/harness/status",
+          "type": "route"
+        },
+        "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "schemas/component_registry.schema.json",
+          "scripts/validate_component_registry.py"
+        ],
+        "external_effect": false,
+        "from_state": "bootstrapped",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "mounted",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "read_only"
+          },
+          {
+            "external_effect": false,
+            "from_state": "mounted",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "draft_only"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.agentic_service_harness.bootstrapped_to_mounted.v1",
+        "to_state": "mounted",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
+      "mode": "read_only",
+      "name": "Agentic Service Harness",
+      "owner_surface": "runtime",
+      "proof_binding": {
+        "evidence_file_count": 2,
+        "inventory_surface_ids": [
+          "agentic_service_harness_status_read_model"
+        ],
+        "required_surface_ids": [
+          "agentic_service_harness_status_read_model"
+        ],
+        "runtime_witness_count": 1,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "agentic_service_harness_status_read_model"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "agentic_service_harness_status_read_model"
+        ],
+        "route_count": 1,
+        "state": "bound"
+      },
+      "state": "mounted",
+      "type": "runtime_core",
+      "wiring_state": "mounted"
     },
     {
-      "component_id": "snet",
-      "name": "SNet Symbolic Mesh",
-      "type": "reasoning_symbolic_core",
-      "mode": "read_only",
-      "state": "mounted",
-      "wiring_state": "mounted",
-      "authority_level": "read_only_advisory",
       "authority": {
         "can_call_connector": false,
         "can_claim_terminal_closure": false,
@@ -286,109 +304,109 @@
         "can_send_external_message": false,
         "can_write_files": false
       },
-      "receipt_required": true,
-      "lifecycle_receipt": {
-        "receipt_id": "component_lifecycle_transition.snet.bootstrapped_to_mounted.v1",
-        "from_state": "bootstrapped",
-        "to_state": "mounted",
+      "authority_level": "read_only_advisory",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/73_snet_operator_read_model.md",
+          "docs/40_proof_coverage_matrix.md#snet_operator_read_model"
+        ],
+        "external_effect": false,
         "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.snet.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
+      "blocked_actions": [
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "snet",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_snet_operator_read_model.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
         "evidence_refs": [
           "examples/component_registry.foundation.json",
           "docs/73_snet_operator_read_model.md",
           "examples/snet_operator_read_model.json"
         ],
-        "validator_refs": [
-          "component_registry_validator"
-        ],
-        "operator_approval_required": false,
         "external_effect": false,
-        "transition_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
+        "from_state": "bootstrapped",
         "next_transition_candidates": [
           {
+            "external_effect": false,
             "from_state": "mounted",
-            "to_state": "read_only",
-            "requires_evidence": true,
             "operator_approval_required": false,
-            "external_effect": false
+            "requires_evidence": true,
+            "to_state": "read_only"
           },
           {
+            "external_effect": false,
             "from_state": "mounted",
-            "to_state": "draft_only",
-            "requires_evidence": true,
             "operator_approval_required": false,
-            "external_effect": false
+            "requires_evidence": true,
+            "to_state": "draft_only"
           }
-        ]
-      },
-      "authority_witness": {
-        "witness_id": "component_authority_envelope.snet.foundation.v1",
-        "proof_state": "Pass",
-        "authority_matches_registry": true,
-        "witness_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
-        "authority_upgrade_requires_separate_witness": true,
-        "external_effect": false,
-        "evidence_refs": [
-          "docs/73_snet_operator_read_model.md",
-          "docs/40_proof_coverage_matrix.md#snet_operator_read_model"
         ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.snet.bootstrapped_to_mounted.v1",
+        "to_state": "mounted",
+        "transition_is_not_execution_authority": true,
         "validator_refs": [
-          "component_registry_validator",
-          "component_authority_envelope_witnesses_validator"
+          "component_registry_validator"
         ]
       },
-      "health": {
-        "status": "known",
-        "source": {
-          "ref": "scripts/validate_snet_operator_read_model.py",
-          "type": "validator"
-        }
+      "mode": "read_only",
+      "name": "SNet Symbolic Mesh",
+      "owner_surface": "reasoning",
+      "proof_binding": {
+        "evidence_file_count": 2,
+        "inventory_surface_ids": [
+          "snet_operator_read_model"
+        ],
+        "required_surface_ids": [
+          "snet_operator_read_model"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
       },
       "proof_surface": {
         "status": "proof_bound",
         "surface_id": "snet_operator_read_model"
       },
+      "receipt_required": true,
       "route_binding": {
-        "state": "no_declared_route",
         "proof_surface_ids": [
           "snet_operator_read_model"
         ],
-        "route_count": 0
+        "route_count": 0,
+        "state": "no_declared_route"
       },
-      "proof_binding": {
-        "state": "proof_bound",
-        "required_surface_ids": [
-          "snet_operator_read_model"
-        ],
-        "inventory_surface_ids": [
-          "snet_operator_read_model"
-        ],
-        "runtime_witness_count": 2,
-        "evidence_file_count": 2
-      },
-      "dependencies": [
-        "governance_core"
-      ],
-      "blocked_actions": [
-        "connector_call",
-        "external_send",
-        "filesystem_write",
-        "live_dispatch",
-        "route_execution",
-        "runtime_mutation",
-        "terminal_closure"
-      ],
-      "owner_surface": "reasoning"
+      "state": "mounted",
+      "type": "reasoning_symbolic_core",
+      "wiring_state": "mounted"
     },
     {
-      "component_id": "inceptadive_shadow",
-      "name": "InceptaDive Shadow",
-      "type": "reasoning_symbolic_core",
-      "mode": "read_only_advisory",
-      "state": "mounted",
-      "wiring_state": "mounted",
-      "authority_level": "read_only_advisory",
       "authority": {
         "can_call_connector": false,
         "can_claim_terminal_closure": false,
@@ -401,93 +419,24 @@
         "can_send_external_message": false,
         "can_write_files": false
       },
-      "receipt_required": true,
-      "lifecycle_receipt": {
-        "receipt_id": "component_lifecycle_transition.inceptadive_shadow.bootstrapped_to_mounted.v1",
-        "from_state": "bootstrapped",
-        "to_state": "mounted",
-        "proof_state": "Pass",
-        "evidence_refs": [
-          "examples/component_registry.foundation.json",
-          "docs/inceptadive-shadow-pass.md",
-          "mcoi/tests/test_inceptadive_shadow_routes.py"
-        ],
-        "validator_refs": [
-          "component_registry_validator"
-        ],
-        "operator_approval_required": false,
-        "external_effect": false,
-        "transition_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
-        "next_transition_candidates": [
-          {
-            "from_state": "mounted",
-            "to_state": "read_only",
-            "requires_evidence": true,
-            "operator_approval_required": false,
-            "external_effect": false
-          },
-          {
-            "from_state": "mounted",
-            "to_state": "draft_only",
-            "requires_evidence": true,
-            "operator_approval_required": false,
-            "external_effect": false
-          }
-        ]
-      },
+      "authority_level": "read_only_advisory",
       "authority_witness": {
-        "witness_id": "component_authority_envelope.inceptadive_shadow.foundation.v1",
-        "proof_state": "Pass",
         "authority_matches_registry": true,
-        "witness_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
         "authority_upgrade_requires_separate_witness": true,
-        "external_effect": false,
+        "can_claim_terminal_closure": false,
         "evidence_refs": [
           "docs/inceptadive-shadow-pass.md",
           "docs/40_proof_coverage_matrix.md#operator_console_read_models"
         ],
+        "external_effect": false,
+        "proof_state": "Pass",
         "validator_refs": [
           "component_registry_validator",
           "component_authority_envelope_witnesses_validator"
-        ]
-      },
-      "health": {
-        "status": "known",
-        "source": {
-          "ref": "/api/v1/console/shadow",
-          "type": "route"
-        }
-      },
-      "proof_surface": {
-        "status": "proof_bound",
-        "surface_id": "operator_console_read_models"
-      },
-      "route_binding": {
-        "state": "bound",
-        "proof_surface_ids": [
-          "inceptadive_shadow_inspection_routes",
-          "operator_console_read_models"
         ],
-        "route_count": 4
+        "witness_id": "component_authority_envelope.inceptadive_shadow.foundation.v1",
+        "witness_is_not_execution_authority": true
       },
-      "proof_binding": {
-        "state": "proof_bound",
-        "required_surface_ids": [
-          "inceptadive_shadow_inspection_routes",
-          "operator_console_read_models"
-        ],
-        "inventory_surface_ids": [
-          "inceptadive_shadow_inspection_routes",
-          "operator_console_read_models"
-        ],
-        "runtime_witness_count": 6,
-        "evidence_file_count": 7
-      },
-      "dependencies": [
-        "governance_core"
-      ],
       "blocked_actions": [
         "connector_call",
         "external_send",
@@ -497,16 +446,85 @@
         "runtime_mutation",
         "terminal_closure"
       ],
-      "owner_surface": "reasoning"
+      "component_id": "inceptadive_shadow",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "/api/v1/console/shadow",
+          "type": "route"
+        },
+        "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "docs/inceptadive-shadow-pass.md",
+          "mcoi/tests/test_inceptadive_shadow_routes.py"
+        ],
+        "external_effect": false,
+        "from_state": "bootstrapped",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "mounted",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "read_only"
+          },
+          {
+            "external_effect": false,
+            "from_state": "mounted",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "draft_only"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.inceptadive_shadow.bootstrapped_to_mounted.v1",
+        "to_state": "mounted",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
+      "mode": "read_only_advisory",
+      "name": "InceptaDive Shadow",
+      "owner_surface": "reasoning",
+      "proof_binding": {
+        "evidence_file_count": 7,
+        "inventory_surface_ids": [
+          "inceptadive_shadow_inspection_routes",
+          "operator_console_read_models"
+        ],
+        "required_surface_ids": [
+          "inceptadive_shadow_inspection_routes",
+          "operator_console_read_models"
+        ],
+        "runtime_witness_count": 6,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "operator_console_read_models"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "inceptadive_shadow_inspection_routes",
+          "operator_console_read_models"
+        ],
+        "route_count": 4,
+        "state": "bound"
+      },
+      "state": "mounted",
+      "type": "reasoning_symbolic_core",
+      "wiring_state": "mounted"
     },
     {
-      "component_id": "personal_assistant",
-      "name": "Personal Assistant",
-      "type": "assistant_product_core",
-      "mode": "draft_only",
-      "state": "draft_only",
-      "wiring_state": "draft_only",
-      "authority_level": "draft_only",
       "authority": {
         "can_call_connector": false,
         "can_claim_terminal_closure": false,
@@ -519,86 +537,24 @@
         "can_send_external_message": false,
         "can_write_files": false
       },
-      "receipt_required": true,
-      "lifecycle_receipt": {
-        "receipt_id": "component_lifecycle_transition.personal_assistant.mounted_to_draft_only.v1",
-        "from_state": "mounted",
-        "to_state": "draft_only",
-        "proof_state": "Pass",
-        "evidence_refs": [
-          "examples/component_registry.foundation.json",
-          "schemas/personal_assistant_plan.schema.json",
-          "tests/test_personal_assistant_drafts.py"
-        ],
-        "validator_refs": [
-          "component_registry_validator"
-        ],
-        "operator_approval_required": false,
-        "external_effect": false,
-        "transition_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
-        "next_transition_candidates": [
-          {
-            "from_state": "draft_only",
-            "to_state": "live_probe",
-            "requires_evidence": true,
-            "operator_approval_required": false,
-            "external_effect": false
-          }
-        ]
-      },
+      "authority_level": "draft_only",
       "authority_witness": {
-        "witness_id": "component_authority_envelope.personal_assistant.foundation.v1",
-        "proof_state": "Pass",
         "authority_matches_registry": true,
-        "witness_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
         "authority_upgrade_requires_separate_witness": true,
-        "external_effect": false,
+        "can_claim_terminal_closure": false,
         "evidence_refs": [
           "docs/PERSONAL_ASSISTANT_SKILL_ARCHITECTURE.md",
           "docs/40_proof_coverage_matrix.md#assistant_kernel_planning"
         ],
+        "external_effect": false,
+        "proof_state": "Pass",
         "validator_refs": [
           "component_registry_validator",
           "component_authority_envelope_witnesses_validator"
-        ]
-      },
-      "health": {
-        "status": "known",
-        "source": {
-          "ref": "docs/PERSONAL_ASSISTANT_MVP_ROADMAP.md",
-          "type": "doc"
-        }
-      },
-      "proof_surface": {
-        "status": "proof_bound",
-        "surface_id": "assistant_kernel_planning"
-      },
-      "route_binding": {
-        "state": "bound",
-        "proof_surface_ids": [
-          "assistant_kernel_planning",
-          "operator_console_read_models"
         ],
-        "route_count": 4
+        "witness_id": "component_authority_envelope.personal_assistant.foundation.v1",
+        "witness_is_not_execution_authority": true
       },
-      "proof_binding": {
-        "state": "proof_bound",
-        "required_surface_ids": [
-          "assistant_kernel_planning"
-        ],
-        "inventory_surface_ids": [
-          "assistant_kernel_planning",
-          "operator_console_read_models"
-        ],
-        "runtime_witness_count": 2,
-        "evidence_file_count": 3
-      },
-      "dependencies": [
-        "governance_core",
-        "gmail_account_binding_gate"
-      ],
       "blocked_actions": [
         "calendar_write",
         "connector_call",
@@ -608,16 +564,78 @@
         "send_email",
         "terminal_closure"
       ],
-      "owner_surface": "assistant"
+      "component_id": "personal_assistant",
+      "dependencies": [
+        "governance_core",
+        "gmail_account_binding_gate"
+      ],
+      "health": {
+        "source": {
+          "ref": "docs/PERSONAL_ASSISTANT_MVP_ROADMAP.md",
+          "type": "doc"
+        },
+        "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "schemas/personal_assistant_plan.schema.json",
+          "tests/test_personal_assistant_drafts.py"
+        ],
+        "external_effect": false,
+        "from_state": "mounted",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "draft_only",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "live_probe"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.personal_assistant.mounted_to_draft_only.v1",
+        "to_state": "draft_only",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
+      "mode": "draft_only",
+      "name": "Personal Assistant",
+      "owner_surface": "assistant",
+      "proof_binding": {
+        "evidence_file_count": 3,
+        "inventory_surface_ids": [
+          "assistant_kernel_planning",
+          "operator_console_read_models"
+        ],
+        "required_surface_ids": [
+          "assistant_kernel_planning"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "assistant_kernel_planning"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "assistant_kernel_planning",
+          "operator_console_read_models"
+        ],
+        "route_count": 4,
+        "state": "bound"
+      },
+      "state": "draft_only",
+      "type": "assistant_product_core",
+      "wiring_state": "draft_only"
     },
     {
-      "component_id": "teamops_shared_inbox",
-      "name": "TeamOps Shared Inbox",
-      "type": "assistant_product_core",
-      "mode": "live_probe",
-      "state": "live_probe",
-      "wiring_state": "live_probe",
-      "authority_level": "live_probe",
       "authority": {
         "can_call_connector": false,
         "can_claim_terminal_closure": false,
@@ -630,83 +648,23 @@
         "can_send_external_message": false,
         "can_write_files": false
       },
-      "receipt_required": true,
-      "lifecycle_receipt": {
-        "receipt_id": "component_lifecycle_transition.teamops_shared_inbox.draft_only_to_live_probe.v1",
-        "from_state": "draft_only",
-        "to_state": "live_probe",
-        "proof_state": "Pass",
-        "evidence_refs": [
-          "examples/component_registry.foundation.json",
-          "schemas/team_ops_shared_inbox_live_probe_authority.schema.json",
-          "scripts/validate_team_ops_shared_inbox_live_probe_authority.py"
-        ],
-        "validator_refs": [
-          "component_registry_validator"
-        ],
-        "operator_approval_required": true,
-        "external_effect": false,
-        "transition_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
-        "next_transition_candidates": [
-          {
-            "from_state": "live_probe",
-            "to_state": "approval_required",
-            "requires_evidence": true,
-            "operator_approval_required": false,
-            "external_effect": false
-          }
-        ]
-      },
+      "authority_level": "live_probe",
       "authority_witness": {
-        "witness_id": "component_authority_envelope.teamops_shared_inbox.foundation.v1",
-        "proof_state": "Pass",
         "authority_matches_registry": true,
-        "witness_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
         "authority_upgrade_requires_separate_witness": true,
-        "external_effect": false,
+        "can_claim_terminal_closure": false,
         "evidence_refs": [
           "docs/40_proof_coverage_matrix.md#governed_connector_framework"
         ],
+        "external_effect": false,
+        "proof_state": "Pass",
         "validator_refs": [
           "component_registry_validator",
           "component_authority_envelope_witnesses_validator"
-        ]
-      },
-      "health": {
-        "status": "known",
-        "source": {
-          "ref": "scripts/validate_team_ops_shared_inbox_live_probe_authority.py",
-          "type": "validator"
-        }
-      },
-      "proof_surface": {
-        "status": "proof_bound",
-        "surface_id": "governed_connector_framework"
-      },
-      "route_binding": {
-        "state": "bound",
-        "proof_surface_ids": [
-          "assistant_kernel_planning"
         ],
-        "route_count": 1
+        "witness_id": "component_authority_envelope.teamops_shared_inbox.foundation.v1",
+        "witness_is_not_execution_authority": true
       },
-      "proof_binding": {
-        "state": "proof_bound",
-        "required_surface_ids": [
-          "governed_connector_framework"
-        ],
-        "inventory_surface_ids": [
-          "assistant_kernel_planning"
-        ],
-        "runtime_witness_count": 2,
-        "evidence_file_count": 3
-      },
-      "dependencies": [
-        "governance_core",
-        "gmail_account_binding_gate"
-      ],
       "blocked_actions": [
         "external_send",
         "mailbox_mutation",
@@ -714,16 +672,76 @@
         "send_email",
         "terminal_closure"
       ],
-      "owner_surface": "assistant"
+      "component_id": "teamops_shared_inbox",
+      "dependencies": [
+        "governance_core",
+        "gmail_account_binding_gate"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_team_ops_shared_inbox_live_probe_authority.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "schemas/team_ops_shared_inbox_live_probe_authority.schema.json",
+          "scripts/validate_team_ops_shared_inbox_live_probe_authority.py"
+        ],
+        "external_effect": false,
+        "from_state": "draft_only",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "live_probe",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "approval_required"
+          }
+        ],
+        "operator_approval_required": true,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.teamops_shared_inbox.draft_only_to_live_probe.v1",
+        "to_state": "live_probe",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
+      "mode": "live_probe",
+      "name": "TeamOps Shared Inbox",
+      "owner_surface": "assistant",
+      "proof_binding": {
+        "evidence_file_count": 3,
+        "inventory_surface_ids": [
+          "assistant_kernel_planning"
+        ],
+        "required_surface_ids": [
+          "governed_connector_framework"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "governed_connector_framework"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "assistant_kernel_planning"
+        ],
+        "route_count": 1,
+        "state": "bound"
+      },
+      "state": "live_probe",
+      "type": "assistant_product_core",
+      "wiring_state": "live_probe"
     },
     {
-      "component_id": "gmail_account_binding_gate",
-      "name": "Gmail Account Binding Gate",
-      "type": "connector_action_core",
-      "mode": "approval_required",
-      "state": "approval_required",
-      "wiring_state": "approval_required",
-      "authority_level": "approval_required",
       "authority": {
         "can_call_connector": false,
         "can_claim_terminal_closure": false,
@@ -736,83 +754,24 @@
         "can_send_external_message": false,
         "can_write_files": false
       },
-      "receipt_required": true,
-      "lifecycle_receipt": {
-        "receipt_id": "component_lifecycle_transition.gmail_account_binding_gate.live_probe_to_approval_required.v1",
-        "from_state": "live_probe",
-        "to_state": "approval_required",
-        "proof_state": "Pass",
-        "evidence_refs": [
-          "examples/component_registry.foundation.json",
-          "schemas/durable_gmail_oauth_operator_handoff.schema.json",
-          "scripts/validate_durable_gmail_oauth_operator_handoff.py"
-        ],
-        "validator_refs": [
-          "component_registry_validator"
-        ],
-        "operator_approval_required": true,
-        "external_effect": false,
-        "transition_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
-        "next_transition_candidates": [
-          {
-            "from_state": "approval_required",
-            "to_state": "blocked",
-            "requires_evidence": true,
-            "operator_approval_required": false,
-            "external_effect": false
-          }
-        ]
-      },
+      "authority_level": "approval_required",
       "authority_witness": {
-        "witness_id": "component_authority_envelope.gmail_account_binding_gate.foundation.v1",
-        "proof_state": "Pass",
         "authority_matches_registry": true,
-        "witness_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
         "authority_upgrade_requires_separate_witness": true,
-        "external_effect": false,
+        "can_claim_terminal_closure": false,
         "evidence_refs": [
           "docs/64_durable_gmail_connector_runtime_plan.md",
           "docs/40_proof_coverage_matrix.md#governed_connector_framework"
         ],
+        "external_effect": false,
+        "proof_state": "Pass",
         "validator_refs": [
           "component_registry_validator",
           "component_authority_envelope_witnesses_validator"
-        ]
-      },
-      "health": {
-        "status": "known",
-        "source": {
-          "ref": "scripts/validate_durable_gmail_oauth_operator_handoff.py",
-          "type": "validator"
-        }
-      },
-      "proof_surface": {
-        "status": "proof_bound",
-        "surface_id": "governed_connector_framework"
-      },
-      "route_binding": {
-        "state": "no_declared_route",
-        "proof_surface_ids": [
-          "governed_connector_framework"
         ],
-        "route_count": 0
+        "witness_id": "component_authority_envelope.gmail_account_binding_gate.foundation.v1",
+        "witness_is_not_execution_authority": true
       },
-      "proof_binding": {
-        "state": "proof_bound",
-        "required_surface_ids": [
-          "governed_connector_framework"
-        ],
-        "inventory_surface_ids": [
-          "governed_connector_framework"
-        ],
-        "runtime_witness_count": 2,
-        "evidence_file_count": 2
-      },
-      "dependencies": [
-        "governance_core"
-      ],
       "blocked_actions": [
         "account_binding_claim",
         "connector_call",
@@ -822,16 +781,75 @@
         "send_email",
         "terminal_closure"
       ],
-      "owner_surface": "connector"
+      "component_id": "gmail_account_binding_gate",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_durable_gmail_oauth_operator_handoff.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "schemas/durable_gmail_oauth_operator_handoff.schema.json",
+          "scripts/validate_durable_gmail_oauth_operator_handoff.py"
+        ],
+        "external_effect": false,
+        "from_state": "live_probe",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "approval_required",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "blocked"
+          }
+        ],
+        "operator_approval_required": true,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.gmail_account_binding_gate.live_probe_to_approval_required.v1",
+        "to_state": "approval_required",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
+      "mode": "approval_required",
+      "name": "Gmail Account Binding Gate",
+      "owner_surface": "connector",
+      "proof_binding": {
+        "evidence_file_count": 2,
+        "inventory_surface_ids": [
+          "governed_connector_framework"
+        ],
+        "required_surface_ids": [
+          "governed_connector_framework"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "governed_connector_framework"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "governed_connector_framework"
+        ],
+        "route_count": 0,
+        "state": "no_declared_route"
+      },
+      "state": "approval_required",
+      "type": "connector_action_core",
+      "wiring_state": "approval_required"
     },
     {
-      "component_id": "worker_runtime",
-      "name": "Worker Runtime",
-      "type": "execution_tooling_core",
-      "mode": "approval_required",
-      "state": "bootstrapped",
-      "wiring_state": "bootstrapped",
-      "authority_level": "approval_required",
       "authority": {
         "can_call_connector": false,
         "can_claim_terminal_closure": false,
@@ -844,82 +862,23 @@
         "can_send_external_message": false,
         "can_write_files": false
       },
-      "receipt_required": true,
-      "lifecycle_receipt": {
-        "receipt_id": "component_lifecycle_transition.worker_runtime.validated_to_bootstrapped.v1",
-        "from_state": "validated",
-        "to_state": "bootstrapped",
-        "proof_state": "Pass",
-        "evidence_refs": [
-          "examples/component_registry.foundation.json",
-          "schemas/worker_mesh.schema.json",
-          "tests/test_gateway/test_worker_mesh.py"
-        ],
-        "validator_refs": [
-          "component_registry_validator"
-        ],
-        "operator_approval_required": false,
-        "external_effect": false,
-        "transition_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
-        "next_transition_candidates": [
-          {
-            "from_state": "bootstrapped",
-            "to_state": "mounted",
-            "requires_evidence": true,
-            "operator_approval_required": false,
-            "external_effect": false
-          }
-        ]
-      },
+      "authority_level": "approval_required",
       "authority_witness": {
-        "witness_id": "component_authority_envelope.worker_runtime.foundation.v1",
-        "proof_state": "Pass",
         "authority_matches_registry": true,
-        "witness_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
         "authority_upgrade_requires_separate_witness": true,
-        "external_effect": false,
+        "can_claim_terminal_closure": false,
         "evidence_refs": [
           "docs/40_proof_coverage_matrix.md#networked_worker_mesh"
         ],
+        "external_effect": false,
+        "proof_state": "Pass",
         "validator_refs": [
           "component_registry_validator",
           "component_authority_envelope_witnesses_validator"
-        ]
-      },
-      "health": {
-        "status": "known",
-        "source": {
-          "ref": "gateway/worker_mesh.py",
-          "type": "read_model"
-        }
-      },
-      "proof_surface": {
-        "status": "proof_bound",
-        "surface_id": "networked_worker_mesh"
-      },
-      "route_binding": {
-        "state": "no_declared_route",
-        "proof_surface_ids": [
-          "networked_worker_mesh"
         ],
-        "route_count": 0
+        "witness_id": "component_authority_envelope.worker_runtime.foundation.v1",
+        "witness_is_not_execution_authority": true
       },
-      "proof_binding": {
-        "state": "proof_bound",
-        "required_surface_ids": [
-          "networked_worker_mesh"
-        ],
-        "inventory_surface_ids": [
-          "networked_worker_mesh"
-        ],
-        "runtime_witness_count": 2,
-        "evidence_file_count": 2
-      },
-      "dependencies": [
-        "governance_core"
-      ],
       "blocked_actions": [
         "autonomous_execution",
         "filesystem_write",
@@ -927,16 +886,75 @@
         "runtime_mutation",
         "terminal_closure"
       ],
-      "owner_surface": "execution"
+      "component_id": "worker_runtime",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "gateway/worker_mesh.py",
+          "type": "read_model"
+        },
+        "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "schemas/worker_mesh.schema.json",
+          "tests/test_gateway/test_worker_mesh.py"
+        ],
+        "external_effect": false,
+        "from_state": "validated",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "bootstrapped",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "mounted"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.worker_runtime.validated_to_bootstrapped.v1",
+        "to_state": "bootstrapped",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
+      "mode": "approval_required",
+      "name": "Worker Runtime",
+      "owner_surface": "execution",
+      "proof_binding": {
+        "evidence_file_count": 2,
+        "inventory_surface_ids": [
+          "networked_worker_mesh"
+        ],
+        "required_surface_ids": [
+          "networked_worker_mesh"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "networked_worker_mesh"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "networked_worker_mesh"
+        ],
+        "route_count": 0,
+        "state": "no_declared_route"
+      },
+      "state": "bootstrapped",
+      "type": "execution_tooling_core",
+      "wiring_state": "bootstrapped"
     },
     {
-      "component_id": "capability_workers",
-      "name": "Capability Workers",
-      "type": "execution_tooling_core",
-      "mode": "approval_required",
-      "state": "bootstrapped",
-      "wiring_state": "bootstrapped",
-      "authority_level": "approval_required",
       "authority": {
         "can_call_connector": false,
         "can_claim_terminal_closure": false,
@@ -949,84 +967,24 @@
         "can_send_external_message": false,
         "can_write_files": false
       },
-      "receipt_required": true,
-      "lifecycle_receipt": {
-        "receipt_id": "component_lifecycle_transition.capability_workers.validated_to_bootstrapped.v1",
-        "from_state": "validated",
-        "to_state": "bootstrapped",
-        "proof_state": "Pass",
-        "evidence_refs": [
-          "examples/component_registry.foundation.json",
-          "gateway/capability_worker.py",
-          "tests/test_gateway/test_capability_worker.py"
-        ],
-        "validator_refs": [
-          "component_registry_validator"
-        ],
-        "operator_approval_required": false,
-        "external_effect": false,
-        "transition_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
-        "next_transition_candidates": [
-          {
-            "from_state": "bootstrapped",
-            "to_state": "mounted",
-            "requires_evidence": true,
-            "operator_approval_required": false,
-            "external_effect": false
-          }
-        ]
-      },
+      "authority_level": "approval_required",
       "authority_witness": {
-        "witness_id": "component_authority_envelope.capability_workers.foundation.v1",
-        "proof_state": "Pass",
         "authority_matches_registry": true,
-        "witness_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
         "authority_upgrade_requires_separate_witness": true,
-        "external_effect": false,
+        "can_claim_terminal_closure": false,
         "evidence_refs": [
           "docs/40_proof_coverage_matrix.md#capability_worker_execution",
           "docs/40_proof_coverage_matrix.md#restricted_adapter_worker_boundaries"
         ],
+        "external_effect": false,
+        "proof_state": "Pass",
         "validator_refs": [
           "component_registry_validator",
           "component_authority_envelope_witnesses_validator"
-        ]
-      },
-      "health": {
-        "status": "known",
-        "source": {
-          "ref": "gateway/capability_worker.py",
-          "type": "read_model"
-        }
-      },
-      "proof_surface": {
-        "status": "proof_bound",
-        "surface_id": "capability_worker_execution"
-      },
-      "route_binding": {
-        "state": "bound",
-        "proof_surface_ids": [
-          "capability_worker_execution"
         ],
-        "route_count": 1
+        "witness_id": "component_authority_envelope.capability_workers.foundation.v1",
+        "witness_is_not_execution_authority": true
       },
-      "proof_binding": {
-        "state": "proof_bound",
-        "required_surface_ids": [
-          "capability_worker_execution"
-        ],
-        "inventory_surface_ids": [
-          "capability_worker_execution"
-        ],
-        "runtime_witness_count": 2,
-        "evidence_file_count": 2
-      },
-      "dependencies": [
-        "governance_core",
-        "worker_runtime"
-      ],
       "blocked_actions": [
         "autonomous_execution",
         "connector_call",
@@ -1035,16 +993,76 @@
         "provider_write",
         "terminal_closure"
       ],
-      "owner_surface": "execution"
+      "component_id": "capability_workers",
+      "dependencies": [
+        "governance_core",
+        "worker_runtime"
+      ],
+      "health": {
+        "source": {
+          "ref": "gateway/capability_worker.py",
+          "type": "read_model"
+        },
+        "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "examples/component_registry.foundation.json",
+          "gateway/capability_worker.py",
+          "tests/test_gateway/test_capability_worker.py"
+        ],
+        "external_effect": false,
+        "from_state": "validated",
+        "next_transition_candidates": [
+          {
+            "external_effect": false,
+            "from_state": "bootstrapped",
+            "operator_approval_required": false,
+            "requires_evidence": true,
+            "to_state": "mounted"
+          }
+        ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.capability_workers.validated_to_bootstrapped.v1",
+        "to_state": "bootstrapped",
+        "transition_is_not_execution_authority": true,
+        "validator_refs": [
+          "component_registry_validator"
+        ]
+      },
+      "mode": "approval_required",
+      "name": "Capability Workers",
+      "owner_surface": "execution",
+      "proof_binding": {
+        "evidence_file_count": 2,
+        "inventory_surface_ids": [
+          "capability_worker_execution"
+        ],
+        "required_surface_ids": [
+          "capability_worker_execution"
+        ],
+        "runtime_witness_count": 2,
+        "state": "proof_bound"
+      },
+      "proof_surface": {
+        "status": "proof_bound",
+        "surface_id": "capability_worker_execution"
+      },
+      "receipt_required": true,
+      "route_binding": {
+        "proof_surface_ids": [
+          "capability_worker_execution"
+        ],
+        "route_count": 1,
+        "state": "bound"
+      },
+      "state": "bootstrapped",
+      "type": "execution_tooling_core",
+      "wiring_state": "bootstrapped"
     },
     {
-      "component_id": "nested_mind_bridge",
-      "name": "Nested Mind Bridge",
-      "type": "data_memory_core",
-      "mode": "blocked",
-      "state": "present",
-      "wiring_state": "blocked",
-      "authority_level": "blocked",
       "authority": {
         "can_call_connector": false,
         "can_claim_terminal_closure": false,
@@ -1057,140 +1075,122 @@
         "can_send_external_message": false,
         "can_write_files": false
       },
-      "receipt_required": false,
-      "lifecycle_receipt": {
-        "receipt_id": "component_lifecycle_transition.nested_mind_bridge.not_present_to_present.v1",
-        "from_state": "not_present",
-        "to_state": "present",
+      "authority_level": "blocked",
+      "authority_witness": {
+        "authority_matches_registry": true,
+        "authority_upgrade_requires_separate_witness": true,
+        "can_claim_terminal_closure": false,
+        "evidence_refs": [
+          "docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md",
+          "docs/runbooks/nested-mind-record-observation-staging.md"
+        ],
+        "external_effect": false,
         "proof_state": "Pass",
+        "validator_refs": [
+          "component_registry_validator",
+          "component_authority_envelope_witnesses_validator"
+        ],
+        "witness_id": "component_authority_envelope.nested_mind_bridge.foundation.v1",
+        "witness_is_not_execution_authority": true
+      },
+      "blocked_actions": [
+        "external_send",
+        "memory_topology_activation",
+        "provider_write",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "component_id": "nested_mind_bridge",
+      "dependencies": [
+        "governance_core"
+      ],
+      "health": {
+        "source": {
+          "ref": "scripts/validate_nested_mind_p3_readiness.py",
+          "type": "validator"
+        },
+        "status": "known"
+      },
+      "lifecycle_receipt": {
+        "can_claim_terminal_closure": false,
         "evidence_refs": [
           "examples/component_registry.foundation.json",
           "docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md",
           "schemas/p3_memory_topology_read_model.schema.json"
         ],
-        "validator_refs": [
-          "component_registry_validator"
-        ],
-        "operator_approval_required": false,
         "external_effect": false,
-        "transition_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
+        "from_state": "not_present",
         "next_transition_candidates": [
           {
+            "external_effect": false,
             "from_state": "present",
-            "to_state": "registered",
-            "requires_evidence": true,
             "operator_approval_required": false,
-            "external_effect": false
+            "requires_evidence": true,
+            "to_state": "registered"
           }
-        ]
-      },
-      "authority_witness": {
-        "witness_id": "component_authority_envelope.nested_mind_bridge.foundation.v1",
-        "proof_state": "Pass",
-        "authority_matches_registry": true,
-        "witness_is_not_execution_authority": true,
-        "can_claim_terminal_closure": false,
-        "authority_upgrade_requires_separate_witness": true,
-        "external_effect": false,
-        "evidence_refs": [
-          "docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md",
-          "docs/runbooks/nested-mind-record-observation-staging.md"
         ],
+        "operator_approval_required": false,
+        "proof_state": "Pass",
+        "receipt_id": "component_lifecycle_transition.nested_mind_bridge.not_present_to_present.v1",
+        "to_state": "present",
+        "transition_is_not_execution_authority": true,
         "validator_refs": [
-          "component_registry_validator",
-          "component_authority_envelope_witnesses_validator"
+          "component_registry_validator"
         ]
       },
-      "health": {
-        "status": "known",
-        "source": {
-          "ref": "scripts/validate_nested_mind_p3_readiness.py",
-          "type": "validator"
-        }
+      "mode": "blocked",
+      "name": "Nested Mind Bridge",
+      "owner_surface": "memory",
+      "proof_binding": {
+        "evidence_file_count": 0,
+        "inventory_surface_ids": [],
+        "required_surface_ids": [],
+        "runtime_witness_count": 0,
+        "state": "awaiting_binding"
       },
       "proof_surface": {
         "status": "awaiting_binding",
         "surface_id": null
       },
+      "receipt_required": false,
       "route_binding": {
-        "state": "no_declared_route",
         "proof_surface_ids": [],
-        "route_count": 0
+        "route_count": 0,
+        "state": "no_declared_route"
       },
-      "proof_binding": {
-        "state": "awaiting_binding",
-        "required_surface_ids": [],
-        "inventory_surface_ids": [],
-        "runtime_witness_count": 0,
-        "evidence_file_count": 0
-      },
-      "dependencies": [
-        "governance_core"
-      ],
-      "blocked_actions": [
-        "external_send",
-        "memory_topology_activation",
-        "provider_write",
-        "runtime_mutation",
-        "terminal_closure"
-      ],
-      "owner_surface": "memory"
+      "state": "present",
+      "type": "data_memory_core",
+      "wiring_state": "blocked"
     }
   ],
-  "bundles": [
-    {
-      "bundle_id": "personal_assistant_v0",
-      "allowed_mode": "demo_v0",
-      "component_count": 5,
-      "blocked_actions": [
-        "calendar_write",
-        "connector_call",
-        "external_send",
-        "mailbox_mutation",
-        "memory_topology_activation",
-        "send_email",
-        "terminal_closure"
-      ],
-      "receipt_required": true,
-      "bundle_is_not_execution_route": true,
-      "terminal_closure_required": true
-    },
-    {
-      "bundle_id": "symbolic_reasoning_read_only",
-      "allowed_mode": "read_only",
-      "component_count": 3,
-      "blocked_actions": [
-        "connector_call",
-        "external_send",
-        "filesystem_write",
-        "live_dispatch",
-        "route_execution",
-        "runtime_mutation",
-        "terminal_closure"
-      ],
-      "receipt_required": true,
-      "bundle_is_not_execution_route": true,
-      "terminal_closure_required": true
-    },
-    {
-      "bundle_id": "worker_runtime_foundation",
-      "allowed_mode": "foundation",
-      "component_count": 3,
-      "blocked_actions": [
-        "autonomous_execution",
-        "connector_call",
-        "filesystem_write",
-        "live_dispatch",
-        "provider_write",
-        "runtime_mutation",
-        "terminal_closure"
-      ],
-      "receipt_required": true,
-      "bundle_is_not_execution_route": true,
-      "terminal_closure_required": true
-    }
-  ],
+  "governed": true,
+  "live_connector_send_enabled": false,
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "read_model_id": "component_read_model.foundation.v1",
+  "read_model_is_not_execution_authority": true,
+  "route": "/api/v1/components/read-model",
+  "schema_version": 1,
+  "source_refs": {
+    "authority_envelope_witnesses": "examples/component_authority_envelope_witnesses.foundation.json",
+    "lifecycle_transition_receipts": "examples/component_lifecycle_transition_receipts.foundation.json",
+    "proof_binding": "examples/component_proof_binding.foundation.json",
+    "registry": "examples/component_registry.foundation.json",
+    "router_inventory": "examples/component_router_inventory.foundation.json"
+  },
+  "summary": {
+    "authority_witness_count": 10,
+    "awaiting_binding_count": 1,
+    "blocked_component_count": 1,
+    "bound_route_count": 35,
+    "bundle_count": 3,
+    "classified_declared_route_count": 456,
+    "component_count": 10,
+    "lifecycle_receipt_count": 10,
+    "proof_bound_count": 9,
+    "route_family_classification_count": 81
+  },
+  "terminal_closure_required": true,
   "validators": [
     "component_registry_validator",
     "component_lifecycle_transition_receipts_validator",

@@ -42,11 +42,11 @@ def test_component_route_family_ownership_schema_valid_and_write(tmp_path: Path)
     written_path = write_component_route_family_ownership_validation(validation, output_path)
     written_payload = json.loads(written_path.read_text(encoding="utf-8"))
 
-    assert validation.route_family_count == 80
-    assert validation.declared_route_count == 455
+    assert validation.route_family_count == 81
+    assert validation.declared_route_count == 456
     assert validation.selected_component_bound_count == 13
-    assert validation.promotion_blocked_count == 67
-    assert validation.proof_binding_gap_count == 65
+    assert validation.promotion_blocked_count == 68
+    assert validation.proof_binding_gap_count == 66
     assert written_payload["errors"] == []
     assert DEFAULT_OUTPUT.name == "component_route_family_ownership_validation.json"
 

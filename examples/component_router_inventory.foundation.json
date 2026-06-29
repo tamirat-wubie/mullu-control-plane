@@ -562,6 +562,31 @@
       "surface_id": "audit_chain_api"
     },
     {
+      "binding_level": "platform_family_classified",
+      "blocked_actions": [
+        "autonomous_execution",
+        "connector_call",
+        "external_send",
+        "filesystem_write",
+        "live_dispatch",
+        "route_execution",
+        "runtime_mutation",
+        "terminal_closure"
+      ],
+      "can_enable_live_action": false,
+      "classification_is_not_execution_authority": true,
+      "component_ids": [
+        "governance_core"
+      ],
+      "component_lane": "governance_core",
+      "declared_route_count": 1,
+      "notes": "Evidence-ledger read model is a Foundation Mode proof projection only; this classification records governance-core ownership without granting evidence append or execution authority.",
+      "sample_routes": [
+        "/api/v1/evidence-ledger/read-model"
+      ],
+      "surface_id": "causal_evidence_ledger_read_model"
+    },
+    {
       "binding_level": "selected_component_bound",
       "blocked_actions": [
         "autonomous_execution",

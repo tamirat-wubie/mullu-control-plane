@@ -1,0 +1,562 @@
+{
+  "registry_id": "mullusi.capability_success_contract_registry.foundation.v1",
+  "registry_version": "1.0.0",
+  "generated_from": "capability_fabric_entries",
+  "loaded_capability_pack_refs": [
+    "capabilities/agentic_control/capability_pack.json",
+    "capabilities/browser/capability_pack.json",
+    "capabilities/communication/capability_pack.json",
+    "capabilities/computer/capability_pack.json",
+    "capabilities/connector/capability_pack.json",
+    "capabilities/creative/capability_pack.json",
+    "capabilities/deployment/capability_pack.json",
+    "capabilities/document/capability_pack.json",
+    "capabilities/enterprise/capability_pack.json",
+    "capabilities/financial/capability_pack.json",
+    "capabilities/messaging/capability_pack.json",
+    "capabilities/phone/capability_pack.json",
+    "capabilities/voice/capability_pack.json",
+    "capabilities/software_dev/capability_pack.json"
+  ],
+  "coverage_policy": {
+    "require_contract_for_every_loaded_capability": true,
+    "minimum_proof_level_by_risk": {
+      "low": "P2",
+      "medium": "P3",
+      "high": "P4",
+      "critical": "P5"
+    }
+  },
+  "default_rule_refs": [
+    "capability_effect_model.expected_effects -> expected_delta.required_changes",
+    "capability_effect_model.forbidden_effects -> expected_delta.forbidden_changes",
+    "capability_evidence_model.required_evidence -> mandatory proof obligations",
+    "terminal_certificate_required -> receipt hash chain required",
+    "risk_tier -> minimum proof level and freshness window",
+    "approval_chain -> human confirmation and authority proof required"
+  ],
+  "contract_overrides": [
+    {
+      "contract_id": "capability-success-contract-financial-send-payment-v1",
+      "capability_id": "financial.send_payment",
+      "domain": "financial",
+      "claim_type": "payment",
+      "risk_level": "high",
+      "proof_level_required": "P5",
+      "scope_bindings": ["actor_id", "capability_id", "environment_id", "account_id", "recipient_id", "time_window"],
+      "authority": {
+        "required_permissions": ["role:finance_operator", "approval:finance_approver"],
+        "block_on_unknown_authority": true,
+        "human_confirmation_required": true
+      },
+      "expected_delta": {
+        "required_changes": ["payment_request_created", "payment_settlement_recorded"],
+        "forbidden_changes": ["payment_without_approval", "payment_without_idempotency_key", "payment_without_named_recipient"],
+        "optional_changes": ["provider_delivery_receipt_recorded"]
+      },
+      "invariants": {
+        "must_remain_true": [
+          "approved_amount_matches_settled_amount",
+          "approved_recipient_matches_settled_recipient",
+          "idempotency_key_unique",
+          "ledger_balance_reconciles",
+          "receipt_emitted_before_success_claim"
+        ],
+        "must_not_happen": ["payment_without_approval", "payment_without_idempotency_key", "payment_without_named_recipient"]
+      },
+      "proof_obligations": [
+        {
+          "obligation_id": "payment_provider_state",
+          "what_must_be_proven": "Payment provider returned the exact transaction identity and state for the approved recipient.",
+          "evidence_fields": ["tx_id", "payment_state"],
+          "evidence_type": "provider_receipt",
+          "verifier": "payment_provider_observer",
+          "freshness_window_seconds": 60,
+          "scope_binding": ["account_id", "recipient_id", "amount", "currency", "observed_at"],
+          "mandatory": true,
+          "failure_effect": "PENDING_EXTERNAL_SETTLEMENT"
+        },
+        {
+          "obligation_id": "payment_ledger_hash",
+          "what_must_be_proven": "Payment ledger contains a hash-bound settlement or pending-settlement record.",
+          "evidence_fields": ["ledger_hash"],
+          "evidence_type": "ledger_integrity",
+          "verifier": "finance_ledger_verifier",
+          "freshness_window_seconds": 60,
+          "scope_binding": ["tx_id", "account_id", "ledger_record_id"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_FALSE_SUCCESS"
+        },
+        {
+          "obligation_id": "payment_authority_and_idempotency",
+          "what_must_be_proven": "Approval, actor authority, and idempotency key are bound to the payment trace.",
+          "evidence_fields": ["approval_id", "authority_verdict", "idempotency_key_hash"],
+          "evidence_type": "authority_receipt",
+          "verifier": "finance_authority_gate",
+          "freshness_window_seconds": 60,
+          "scope_binding": ["actor_id", "approval_id", "account_id", "recipient_id"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_AUTHORITY_MISMATCH"
+        },
+        {
+          "obligation_id": "payment_no_hidden_damage",
+          "what_must_be_proven": "Forbidden payment effects and duplicate execution are absent.",
+          "evidence_fields": ["forbidden_delta_scan", "duplicate_payment_scan"],
+          "evidence_type": "invariant_scan",
+          "verifier": "finance_invariant_verifier",
+          "freshness_window_seconds": 60,
+          "scope_binding": ["tx_id", "account_id", "recipient_id", "observed_at"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_INVARIANT_DAMAGE"
+        },
+        {
+          "obligation_id": "payment_receipt_hash_chain",
+          "what_must_be_proven": "Receipt binds evidence hashes to the previous and current ledger hashes.",
+          "evidence_fields": ["previous_receipt_hash", "current_receipt_hash", "evidence_hashes"],
+          "evidence_type": "receipt_integrity",
+          "verifier": "receipt_hash_chain_verifier",
+          "freshness_window_seconds": 60,
+          "scope_binding": ["receipt_id", "tx_id", "ledger_record_id"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_FALSE_SUCCESS"
+        }
+      ],
+      "independent_evidence_required": true,
+      "freshness": {
+        "max_age_seconds": 60,
+        "recheck_required": true,
+        "durability_window_seconds": 300
+      },
+      "acceptance_predicate": {
+        "all_mandatory_evidence_present": true,
+        "expected_delta_verified": true,
+        "forbidden_delta_absent": true,
+        "invariants_preserved": true,
+        "causal_trace_valid": true,
+        "contradictions_absent": true,
+        "durability_satisfied": true
+      },
+      "verdict_policy": {
+        "allow_partial_success": true,
+        "allow_pending_success": false,
+        "block_on_stale_evidence": true,
+        "block_on_scope_mismatch": true,
+        "block_on_unknown_authority": true
+      },
+      "repair_policy": {
+        "retry_allowed": false,
+        "rollback_required_on_contamination": true,
+        "escalate_on_high_risk": true
+      },
+      "receipt_requirements": {
+        "required_fields": [
+          "claim.claim_id",
+          "claim.capability_id",
+          "authority.verdict",
+          "scope.account_id",
+          "scope.recipient_id",
+          "evidence.tx_id",
+          "evidence.ledger_hash",
+          "evidence.payment_state",
+          "causality.status",
+          "invariants.status",
+          "settled_verdict",
+          "residual_gaps",
+          "repair_plan",
+          "ledger.previous_receipt_hash",
+          "ledger.current_receipt_hash",
+          "ledger.evidence_hashes"
+        ],
+        "hash_chain_required": true,
+        "residual_gaps_required": true
+      },
+      "metadata": {
+        "hardening_reason": "financial settlement cannot be claimed from request acceptance alone"
+      }
+    },
+    {
+      "contract_id": "capability-success-contract-email-send-with-approval-v1",
+      "capability_id": "email.send.with_approval",
+      "domain": "communication",
+      "claim_type": "email_send",
+      "risk_level": "high",
+      "proof_level_required": "P4",
+      "scope_bindings": ["actor_id", "capability_id", "environment_id", "connector_id", "recipient_hashes", "time_window"],
+      "authority": {
+        "required_permissions": ["role:communication_operator", "approval:platform_approver"],
+        "block_on_unknown_authority": true,
+        "human_confirmation_required": true
+      },
+      "expected_delta": {
+        "required_changes": ["external_email_sent"],
+        "forbidden_changes": ["message_sent_without_approval", "credential_scope_exceeded", "recipient_unapproved"],
+        "optional_changes": ["delivery_status_confirmed"]
+      },
+      "invariants": {
+        "must_remain_true": [
+          "approved_recipient_hashes_match_provider_receipt",
+          "credential_scope_not_exceeded",
+          "message_body_hash_matches_approved_draft",
+          "receipt_emitted_before_success_claim"
+        ],
+        "must_not_happen": ["message_sent_without_approval", "credential_scope_exceeded", "recipient_unapproved"]
+      },
+      "proof_obligations": [
+        {
+          "obligation_id": "email_provider_acceptance",
+          "what_must_be_proven": "Provider accepted the approved message for the scoped recipients.",
+          "evidence_fields": ["connector_id", "recipient_hashes", "approval_id", "provider_receipt"],
+          "evidence_type": "provider_receipt",
+          "verifier": "email_calendar_worker_observer",
+          "freshness_window_seconds": 300,
+          "scope_binding": ["connector_id", "recipient_hashes", "message_hash", "observed_at"],
+          "mandatory": true,
+          "failure_effect": "PENDING_EXTERNAL_SETTLEMENT"
+        },
+        {
+          "obligation_id": "email_authority_scope",
+          "what_must_be_proven": "Operator approval and mail-send authority are present for this recipient set.",
+          "evidence_fields": ["authority_verdict", "approval_id"],
+          "evidence_type": "authority_receipt",
+          "verifier": "communication_authority_gate",
+          "freshness_window_seconds": 300,
+          "scope_binding": ["actor_id", "approval_id", "connector_id"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_AUTHORITY_MISMATCH"
+        },
+        {
+          "obligation_id": "email_forbidden_delta_absent",
+          "what_must_be_proven": "No unapproved recipient, credential-scope expansion, or duplicate send occurred.",
+          "evidence_fields": ["forbidden_delta_scan"],
+          "evidence_type": "invariant_scan",
+          "verifier": "communication_invariant_verifier",
+          "freshness_window_seconds": 300,
+          "scope_binding": ["connector_id", "message_hash", "observed_at"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_INVARIANT_DAMAGE"
+        },
+        {
+          "obligation_id": "email_receipt_hash_chain",
+          "what_must_be_proven": "Receipt hashes bind the provider receipt and approval evidence.",
+          "evidence_fields": ["previous_receipt_hash", "current_receipt_hash", "evidence_hashes"],
+          "evidence_type": "receipt_integrity",
+          "verifier": "receipt_hash_chain_verifier",
+          "freshness_window_seconds": 300,
+          "scope_binding": ["receipt_id", "connector_id", "message_hash"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_FALSE_SUCCESS"
+        }
+      ],
+      "independent_evidence_required": true,
+      "freshness": {
+        "max_age_seconds": 300,
+        "recheck_required": true,
+        "durability_window_seconds": 120
+      },
+      "acceptance_predicate": {
+        "all_mandatory_evidence_present": true,
+        "expected_delta_verified": true,
+        "forbidden_delta_absent": true,
+        "invariants_preserved": true,
+        "causal_trace_valid": true,
+        "contradictions_absent": true,
+        "durability_satisfied": true
+      },
+      "verdict_policy": {
+        "allow_partial_success": true,
+        "allow_pending_success": false,
+        "block_on_stale_evidence": true,
+        "block_on_scope_mismatch": true,
+        "block_on_unknown_authority": true
+      },
+      "repair_policy": {
+        "retry_allowed": false,
+        "rollback_required_on_contamination": true,
+        "escalate_on_high_risk": true
+      },
+      "receipt_requirements": {
+        "required_fields": [
+          "claim.claim_id",
+          "claim.capability_id",
+          "scope.connector_id",
+          "scope.recipient_hashes",
+          "authority.verdict",
+          "evidence.provider_receipt",
+          "observed_delta.confirmed",
+          "causality.status",
+          "invariants.status",
+          "settled_verdict",
+          "residual_gaps",
+          "repair_plan",
+          "ledger.previous_receipt_hash",
+          "ledger.current_receipt_hash",
+          "ledger.evidence_hashes"
+        ],
+        "hash_chain_required": true,
+        "residual_gaps_required": true
+      },
+      "metadata": {
+        "hardening_reason": "provider acceptance is not final delivery confirmation"
+      }
+    },
+    {
+      "contract_id": "capability-success-contract-deployment-witness-publish-v1",
+      "capability_id": "deployment.witness.publish.with_approval",
+      "domain": "deployment",
+      "claim_type": "deployment_witness",
+      "risk_level": "high",
+      "proof_level_required": "P5",
+      "scope_bindings": ["actor_id", "capability_id", "environment_id", "service_id", "version", "time_window"],
+      "authority": {
+        "required_permissions": ["role:deployment_operator", "approval:platform_owner"],
+        "block_on_unknown_authority": true,
+        "human_confirmation_required": true
+      },
+      "expected_delta": {
+        "required_changes": ["deployment_state_published", "public_health_claim_created"],
+        "forbidden_changes": ["unverified_health_claim_created", "unsigned_witness_published", "secret_value_exposed"],
+        "optional_changes": ["runtime_conformance_rechecked_after_publication"]
+      },
+      "invariants": {
+        "must_remain_true": [
+          "runtime_conformance_certificate_matches_published_version",
+          "public_health_endpoint_is_fresh",
+          "witness_signature_valid",
+          "secret_values_redacted",
+          "rollback_or_compensation_boundary_known"
+        ],
+        "must_not_happen": ["unverified_health_claim_created", "unsigned_witness_published", "secret_value_exposed"]
+      },
+      "proof_obligations": [
+        {
+          "obligation_id": "deployment_publication_evidence",
+          "what_must_be_proven": "Published witness, public health endpoint, runtime certificate, and approval exist for one deployment scope.",
+          "evidence_fields": ["published_deployment_witness", "public_health_endpoint", "runtime_conformance_certificate", "operator_approval_id"],
+          "evidence_type": "deployment_publication_evidence",
+          "verifier": "deployment_publication_verifier",
+          "freshness_window_seconds": 60,
+          "scope_binding": ["service_id", "version", "environment_id", "observed_at"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_FALSE_SUCCESS"
+        },
+        {
+          "obligation_id": "deployment_public_health_durability",
+          "what_must_be_proven": "Public health and version checks remain valid across the durability window.",
+          "evidence_fields": ["durability_probe_refs", "version_endpoint_proof"],
+          "evidence_type": "durability_observation",
+          "verifier": "deployment_durability_witness",
+          "freshness_window_seconds": 60,
+          "scope_binding": ["service_id", "version", "environment_id", "probe_window"],
+          "mandatory": true,
+          "failure_effect": "PENDING_EVIDENCE"
+        },
+        {
+          "obligation_id": "deployment_forbidden_delta_absent",
+          "what_must_be_proven": "No unverified health claim, unsigned witness, or secret exposure occurred.",
+          "evidence_fields": ["forbidden_delta_scan"],
+          "evidence_type": "invariant_scan",
+          "verifier": "deployment_invariant_verifier",
+          "freshness_window_seconds": 60,
+          "scope_binding": ["service_id", "version", "observed_at"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_INVARIANT_DAMAGE"
+        },
+        {
+          "obligation_id": "deployment_receipt_hash_chain",
+          "what_must_be_proven": "Publication receipt hash chain binds the witness and runtime certificate evidence.",
+          "evidence_fields": ["previous_receipt_hash", "current_receipt_hash", "evidence_hashes"],
+          "evidence_type": "receipt_integrity",
+          "verifier": "receipt_hash_chain_verifier",
+          "freshness_window_seconds": 60,
+          "scope_binding": ["receipt_id", "service_id", "version"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_FALSE_SUCCESS"
+        }
+      ],
+      "independent_evidence_required": true,
+      "freshness": {
+        "max_age_seconds": 60,
+        "recheck_required": true,
+        "durability_window_seconds": 300
+      },
+      "acceptance_predicate": {
+        "all_mandatory_evidence_present": true,
+        "expected_delta_verified": true,
+        "forbidden_delta_absent": true,
+        "invariants_preserved": true,
+        "causal_trace_valid": true,
+        "contradictions_absent": true,
+        "durability_satisfied": true
+      },
+      "verdict_policy": {
+        "allow_partial_success": true,
+        "allow_pending_success": false,
+        "block_on_stale_evidence": true,
+        "block_on_scope_mismatch": true,
+        "block_on_unknown_authority": true
+      },
+      "repair_policy": {
+        "retry_allowed": false,
+        "rollback_required_on_contamination": true,
+        "escalate_on_high_risk": true
+      },
+      "receipt_requirements": {
+        "required_fields": [
+          "claim.claim_id",
+          "claim.capability_id",
+          "scope.environment_id",
+          "scope.service_id",
+          "scope.version",
+          "authority.verdict",
+          "evidence.published_deployment_witness",
+          "evidence.public_health_endpoint",
+          "evidence.runtime_conformance_certificate",
+          "evidence.operator_approval_id",
+          "durability.window_result",
+          "settled_verdict",
+          "residual_gaps",
+          "repair_plan",
+          "ledger.previous_receipt_hash",
+          "ledger.current_receipt_hash",
+          "ledger.evidence_hashes"
+        ],
+        "hash_chain_required": true,
+        "residual_gaps_required": true
+      },
+      "metadata": {
+        "hardening_reason": "publication claims require durable public witness evidence"
+      }
+    },
+    {
+      "contract_id": "capability-success-contract-software-dev-change-run-v1",
+      "capability_id": "software_dev.change.run",
+      "domain": "software_dev",
+      "claim_type": "software_change",
+      "risk_level": "high",
+      "proof_level_required": "P4",
+      "scope_bindings": ["actor_id", "capability_id", "repository_ref", "workspace_snapshot_ref", "time_window"],
+      "authority": {
+        "required_permissions": ["role:developer", "approval:developer_reviewer"],
+        "block_on_unknown_authority": true,
+        "human_confirmation_required": true
+      },
+      "expected_delta": {
+        "required_changes": ["workspace_patch_applied", "quality_gates_executed", "software_change_receipt_emitted"],
+        "forbidden_changes": ["path_outside_workspace_written", "network_enabled_by_default", "production_deployment_started"],
+        "optional_changes": ["diff_summary_recorded"]
+      },
+      "invariants": {
+        "must_remain_true": [
+          "changed_paths_stay_inside_workspace",
+          "quality_gate_summary_matches_executed_commands",
+          "rollback_snapshot_ref_is_replayable",
+          "production_deployment_not_started"
+        ],
+        "must_not_happen": ["path_outside_workspace_written", "network_enabled_by_default", "production_deployment_started"]
+      },
+      "proof_obligations": [
+        {
+          "obligation_id": "software_change_terminal_receipt",
+          "what_must_be_proven": "Software change receipt, quality gate summary, and rollback snapshot are present.",
+          "evidence_fields": ["software_change_receipt_id", "quality_gate_summary", "rollback_snapshot_ref"],
+          "evidence_type": "software_change_receipt",
+          "verifier": "software_change_receipt_verifier",
+          "freshness_window_seconds": 300,
+          "scope_binding": ["repository_ref", "workspace_snapshot_ref", "receipt_id"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_FALSE_SUCCESS"
+        },
+        {
+          "obligation_id": "software_change_forbidden_delta_absent",
+          "what_must_be_proven": "No out-of-workspace write, default network enablement, or production deployment occurred.",
+          "evidence_fields": ["forbidden_delta_scan"],
+          "evidence_type": "invariant_scan",
+          "verifier": "software_change_invariant_verifier",
+          "freshness_window_seconds": 300,
+          "scope_binding": ["repository_ref", "workspace_snapshot_ref", "observed_at"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_INVARIANT_DAMAGE"
+        },
+        {
+          "obligation_id": "software_change_causal_trace",
+          "what_must_be_proven": "Executed patch and gate trace caused the observed workspace delta.",
+          "evidence_fields": ["action_trace_hash", "observed_delta", "diff_hash"],
+          "evidence_type": "causal_trace",
+          "verifier": "software_change_trace_verifier",
+          "freshness_window_seconds": 300,
+          "scope_binding": ["repository_ref", "workspace_snapshot_ref", "trace_id"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_FALSE_SUCCESS"
+        },
+        {
+          "obligation_id": "software_change_receipt_hash_chain",
+          "what_must_be_proven": "Receipt hashes bind change, gate, and rollback evidence.",
+          "evidence_fields": ["previous_receipt_hash", "current_receipt_hash", "evidence_hashes"],
+          "evidence_type": "receipt_integrity",
+          "verifier": "receipt_hash_chain_verifier",
+          "freshness_window_seconds": 300,
+          "scope_binding": ["receipt_id", "repository_ref", "workspace_snapshot_ref"],
+          "mandatory": true,
+          "failure_effect": "BLOCKED_FALSE_SUCCESS"
+        }
+      ],
+      "independent_evidence_required": true,
+      "freshness": {
+        "max_age_seconds": 300,
+        "recheck_required": true,
+        "durability_window_seconds": 120
+      },
+      "acceptance_predicate": {
+        "all_mandatory_evidence_present": true,
+        "expected_delta_verified": true,
+        "forbidden_delta_absent": true,
+        "invariants_preserved": true,
+        "causal_trace_valid": true,
+        "contradictions_absent": true,
+        "durability_satisfied": true
+      },
+      "verdict_policy": {
+        "allow_partial_success": true,
+        "allow_pending_success": false,
+        "block_on_stale_evidence": true,
+        "block_on_scope_mismatch": true,
+        "block_on_unknown_authority": true
+      },
+      "repair_policy": {
+        "retry_allowed": true,
+        "rollback_required_on_contamination": true,
+        "escalate_on_high_risk": true
+      },
+      "receipt_requirements": {
+        "required_fields": [
+          "claim.claim_id",
+          "claim.capability_id",
+          "scope.repository_ref",
+          "scope.workspace_snapshot_ref",
+          "authority.verdict",
+          "evidence.software_change_receipt_id",
+          "evidence.quality_gate_summary",
+          "evidence.rollback_snapshot_ref",
+          "causality.status",
+          "invariants.status",
+          "settled_verdict",
+          "residual_gaps",
+          "repair_plan",
+          "ledger.previous_receipt_hash",
+          "ledger.current_receipt_hash",
+          "ledger.evidence_hashes"
+        ],
+        "hash_chain_required": true,
+        "residual_gaps_required": true
+      },
+      "metadata": {
+        "hardening_reason": "software change completion requires actual patch, executed gates, rollback evidence, and no deployment overclaim"
+      }
+    }
+  ],
+  "metadata": {
+    "posture": "Foundation Mode",
+    "source_kernel": "Universal Causal Proof-of-Success Integrity Firewall",
+    "outcome_taxonomy": "SolvedVerified requires causal closure; partial proof remains partial success"
+  }
+}

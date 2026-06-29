@@ -1483,7 +1483,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 138,
+      "action_proof": 139,
       "audit_chain": 1,
       "gap": 0,
       "read_model": 57,
@@ -1491,13 +1491,13 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 195,
+      "audit_chain": 196,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
-      "proven": 81,
+      "proven": 82,
       "unproven": 0,
       "witnessed": 117
     },
@@ -1506,14 +1506,14 @@
       "audit_chain": 1,
       "gap": 0,
       "read_model": 57,
-      "request_proof": 139
+      "request_proof": 140
     },
-    "surface_count": 198
+    "surface_count": 199
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 198,
+      "strong": 199,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -1522,11 +1522,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 292,
+      "proven": 293,
       "unproven": 0,
       "witnessed": 163
     },
-    "route_count": 455,
+    "route_count": 456,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2272,6 +2272,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/events/summary",
         "surface_id": "event_bus_operations"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/evidence-ledger/read-model",
+        "surface_id": "causal_evidence_ledger_read_model"
       },
       {
         "coverage_state": "proven",
@@ -3970,6 +3975,32 @@
         "physical_capsule_admission_runs_promotion_preflight"
       ],
       "surface_id": "gateway_capability_fabric"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "proven",
+      "evidence_files": [
+        "gateway/evidence_ledger.py",
+        "gateway/evidence_ledger_read_model.py",
+        "gateway/server.py",
+        "examples/evidence_ledger/foundation_evidence_source.json",
+        "tests/test_gateway/test_evidence_ledger.py"
+      ],
+      "notes": "Causal evidence continuity ledger exposes a Foundation Mode proof-only read model from repository-local evidence source material; it does not append live evidence, grant route execution authority, or claim terminal closure.",
+      "representative_paths": [
+        "/api/v1/evidence-ledger/read-model"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witnesses": [
+        "evidence_ledger_judges_claim_strongly_when_required_evidence_is_present",
+        "evidence_ledger_blocks_premature_judgment_when_required_evidence_is_missing",
+        "evidence_ledger_exposes_proof_only_view_without_raw_payload",
+        "evidence_ledger_read_model_projection_is_foundation_bound",
+        "evidence_ledger_gateway_route_is_read_only",
+        "evidence_ledger_repository_source_rejects_missing_foundation_marker"
+      ],
+      "surface_id": "causal_evidence_ledger_read_model"
     },
     {
       "action_proof": "action_proof",
@@ -15780,8 +15811,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1996,
-    "runtime_witness_count": 1996,
+    "exact_test_anchor_count": 2002,
+    "runtime_witness_count": 2002,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -15961,6 +15992,51 @@
         "exact_test_anchor_count": 28,
         "runtime_witness_count": 28,
         "surface_id": "gateway_capability_fabric",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_ledger.py::test_evidence_ledger_judges_claim_strongly_when_required_evidence_is_present"
+            ],
+            "witness": "evidence_ledger_judges_claim_strongly_when_required_evidence_is_present"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_ledger.py::test_evidence_ledger_blocks_premature_judgment_when_required_evidence_is_missing"
+            ],
+            "witness": "evidence_ledger_blocks_premature_judgment_when_required_evidence_is_missing"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_ledger.py::test_evidence_ledger_exposes_proof_only_view_without_raw_payload"
+            ],
+            "witness": "evidence_ledger_exposes_proof_only_view_without_raw_payload"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_ledger.py::test_evidence_ledger_read_model_projection_is_foundation_bound"
+            ],
+            "witness": "evidence_ledger_read_model_projection_is_foundation_bound"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_ledger.py::test_evidence_ledger_gateway_route_is_read_only"
+            ],
+            "witness": "evidence_ledger_gateway_route_is_read_only"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_evidence_ledger.py::test_evidence_ledger_repository_source_rejects_missing_foundation_marker"
+            ],
+            "witness": "evidence_ledger_repository_source_rejects_missing_foundation_marker"
+          }
+        ],
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
+        "surface_id": "causal_evidence_ledger_read_model",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },

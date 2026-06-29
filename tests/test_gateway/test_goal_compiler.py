@@ -57,6 +57,27 @@ def test_goal_compiler_compiles_high_risk_payment_with_controls() -> None:
     assert {"transaction_id", "amount", "currency", "recipient_hash", "ledger_hash"}.issubset(evidence_types)
 
 
+def test_goal_compiler_emits_usccgc_r2_audit_kernel_for_high_risk_payment() -> None:
+    compiler = GoalCompiler()
+
+    compiled = compiler.compile(
+        message='/run financial.send_payment {"amount": "2500", "recipient": "vendor-a"}',
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        world_state=_world_state(),
+    )
+    graph_relations = {edge.relation for edge in compiled.causal_chain_graph.edges}
+
+    assert compiled.goal_normal_form.actor_id == "identity-1"
+    assert "payment_provider_request_created" in compiled.goal_normal_form.target_state
+    assert compiled.operator_contracts[0].risk_tier == "tier_5_high_stakes"
+    assert "approval:financial_admin" in compiled.gap_theorem.missing_permissions
+    assert "post_step_evidence_pending:transaction_id" in compiled.verification_bundle.unresolved
+    assert "REQUIRES_PERMISSION" in graph_relations
+    assert compiled.compile_receipt.receipt_id.startswith("goal-compile-receipt-")
+    assert compiled.judgment == "needs_permission"
+
+
 def test_goal_compiler_blocks_message_without_capability_plan() -> None:
     compiler = GoalCompiler()
 
@@ -73,6 +94,26 @@ def test_goal_compiler_blocks_message_without_capability_plan() -> None:
     assert compiled.certificate.status == "blocked"
     assert compiled.certificate.reason == "no_capability_plan"
     assert compiled.plan_dag.step_ids == ()
+
+
+def test_goal_compiler_records_r2_blocked_receipt_without_capability_plan() -> None:
+    compiler = GoalCompiler()
+
+    compiled = compiler.compile(
+        message="hello there",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+    graph_relations = {edge.relation for edge in compiled.causal_chain_graph.edges}
+
+    assert compiled.judgment == "blocked"
+    assert compiled.gap_theorem.missing_tools == ("typed_capability_plan",)
+    assert compiled.verification_bundle.failures == ("no_capability_plan",)
+    assert compiled.world_facts[0].status == "unknown"
+    assert compiled.compile_receipt.blocked_reasons == ("no_capability_plan",)
+    assert "BLOCKS" in graph_relations
+    assert compiled.goal_normal_form.required_evidence == ("typed_capability_plan",)
+    assert compiled.causal_chain_graph.proof_state == "Fail"
 
 
 def test_goal_compiler_projects_dependencies_into_plan_dag() -> None:

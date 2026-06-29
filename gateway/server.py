@@ -136,6 +136,7 @@ from gateway.command_spine import build_command_ledger_from_env, canonical_hash
 from gateway.conformance import issue_conformance_certificate
 from gateway.enterprise_authority import AuthorityDecision
 from gateway.evidence_bundle import build_command_trust_bundle
+from gateway.evidence_ledger_read_model import build_foundation_evidence_ledger_read_model
 from gateway.event_log import WebhookEventLog
 from gateway.federated_control import FederatedControlPlane, federated_control_snapshot_to_json_dict
 from gateway.governed_operations import (
@@ -198,6 +199,8 @@ from gateway.operator_capability_console import (
 from gateway.operator_control_tower import (
     OperatorControlTowerBuilder,
     OperatorPanelKind,
+    developer_workflow_control_summary,
+    operator_dashboard_control_summary,
     operator_control_tower_snapshot_to_json_dict,
     operator_control_tower_status_receipt,
     render_operator_control_tower,
@@ -275,6 +278,9 @@ from scripts.validate_developer_workflow_local_rollback_approval_packet import (
 from scripts.validate_developer_workflow_local_rollback_execution_receipt import (
     validate_developer_workflow_local_rollback_execution_receipt,
 )
+from scripts.build_developer_workflow_operator_receipt import (
+    validate_developer_workflow_operator_receipt,
+)
 from gateway.physical_capability_promotion_store import build_physical_capability_promotion_receipt_store_from_env
 from gateway.signature_verification import (
     ChannelVerifierConfig, VerificationMethod, WebhookVerifier,
@@ -295,6 +301,9 @@ LOCAL_ROLLBACK_APPROVAL_PACKET_PATH = (
 )
 LOCAL_ROLLBACK_EXECUTION_RECEIPT_PATH = (
     Path(".change_assurance") / "developer_workflow_local_rollback_execution_receipt.generated.json"
+)
+LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH = (
+    Path(".change_assurance") / "developer_workflow_operator_receipt.generated.json"
 )
 LOCAL_ROLLBACK_RECEIPT_HREF_BASE = "/operator/control-tower/local-rollback-receipt"
 PHYSICAL_ACTION_RECEIPT_SCHEMA_REF = "urn:mullusi:schema:physical-action-receipt:1"
@@ -1723,6 +1732,27 @@ def _capability_friction_control_panel_read_model(friction_control: Mapping[str,
         f"{control_system_summary['safe_candidate_count']} safe local candidates; "
         f"next unlock {control_system_summary['next_unlock']}"
     )
+    final_control_summary = operator_dashboard_control_summary(
+        summary_id="control_system.control_summary.v1",
+        operator_message=str(control_system_summary["operator_message"]),
+        next_unlock=str(control_system_summary["next_unlock"]),
+        capability_summary={
+            "capability_id": "control_system.foundation",
+            "mode": "lab",
+            "current_level": "L4" if workflow_status == "preflight_ready" else "L2",
+            "next_level": "L5",
+            "status": workflow_status,
+            "blocked_reason": "none" if workflow_status == "preflight_ready" else str(control_system_summary["next_unlock"]),
+            "next_evidence_count": int(control_system_summary["next_required_evidence_count"]),
+            "external_effects_allowed": False,
+            "rollback_required": True,
+        },
+    )
+    control_system_summary["control_summary"] = {
+        key: value
+        for key, value in final_control_summary.items()
+        if key != "capability_summary"
+    }
     return {
         "source_surface": "capability_friction_control",
         "item_count": int(summary.get("capability_count", len(capability_cards)) or 0),
@@ -1869,9 +1899,30 @@ def _safe_local_action_queue_summary(
     first_candidate = safe_candidates[0] if safe_candidates else {}
     recommended_mode = str(friction_mode_summary.get("foundation_recommended_mode") or "fast")
     candidate_count = len(safe_candidates)
+    queue_status = "ready" if candidate_count else "empty"
+    operator_message = (
+        f"{candidate_count} safe local actions queued for {recommended_mode} mode; "
+        "approval not required for local preparation"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="safe_local_action_queue.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock="none" if candidate_count else "safe_local_candidate",
+        capability_summary={
+            "capability_id": "safe_local_action_queue.foundation",
+            "mode": "lab",
+            "current_level": "L3" if candidate_count else "L2",
+            "next_level": "L4",
+            "status": "preflight_ready" if candidate_count else "evidence_required",
+            "blocked_reason": "none" if candidate_count else "safe local candidate missing",
+            "next_evidence_count": 0 if candidate_count else 1,
+            "external_effects_allowed": False,
+            "rollback_required": False,
+        },
+    )
     return {
         "summary_id": "safe_local_action_queue.foundation",
-        "queue_status": "ready" if candidate_count else "empty",
+        "queue_status": queue_status,
         "candidate_count": candidate_count,
         "first_candidate_id": str(first_candidate.get("candidate_id") or ""),
         "first_zone": str(first_candidate.get("zone") or ""),
@@ -1880,10 +1931,12 @@ def _safe_local_action_queue_summary(
         "approval_required": False,
         "local_execution_boundary": "local_lab_only",
         "external_effects_allowed": False,
-        "operator_message": (
-            f"{candidate_count} safe local actions queued for {recommended_mode} mode; "
-            "approval not required for local preparation"
-        ),
+        "operator_message": operator_message,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 
@@ -1899,9 +1952,34 @@ def _dangerous_action_blocker_summary(
     if not isinstance(required_evidence, list):
         required_evidence = []
     required_evidence_ids = [str(item) for item in required_evidence if str(item).strip()][:8]
+    blocker_status = "blocked" if blocker_count else "clear"
+    operator_message = (
+        f"{blocker_count} dangerous real-world zones blocked; "
+        "approval, rollback, and effect receipt required before execution"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="dangerous_action_blocker.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock="approval" if blocker_count else "none",
+        capability_summary={
+            "capability_id": "dangerous_action_blocker.foundation",
+            "mode": "real_world",
+            "current_level": "L0",
+            "next_level": "L9",
+            "status": "blocked" if blocker_count else "preflight_ready",
+            "blocked_reason": (
+                "dangerous_zone_requires_explicit_approval"
+                if blocker_count
+                else "none"
+            ),
+            "next_evidence_count": len(required_evidence_ids),
+            "external_effects_allowed": False,
+            "rollback_required": blocker_count > 0,
+        },
+    )
     return {
         "summary_id": "dangerous_action_blocker.foundation",
-        "blocker_status": "blocked" if blocker_count else "clear",
+        "blocker_status": blocker_status,
         "blocker_count": blocker_count,
         "first_blocker_id": str(first_blocker.get("blocker_id") or ""),
         "first_zone": str(first_blocker.get("zone") or ""),
@@ -1913,10 +1991,12 @@ def _dangerous_action_blocker_summary(
         "rollback_required": blocker_count > 0,
         "real_world_execution_boundary": "real_world",
         "external_effects_allowed": False,
-        "operator_message": (
-            f"{blocker_count} dangerous real-world zones blocked; "
-            "approval, rollback, and effect receipt required before execution"
-        ),
+        "operator_message": operator_message,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 
@@ -1974,10 +2054,31 @@ def _control_system_summary(
     safe_candidate_count = int(safe_vs_dangerous_summary.get("safe_candidate_count") or 0)
     dangerous_blocker_count = int(safe_vs_dangerous_summary.get("dangerous_blocker_count") or 0)
     next_unlock = str(unlock_readiness_summary.get("next_unlock") or workflow.get("next_unlock") or "approval")
+    status = workflow_status or "awaiting_evidence"
+    operator_message = (
+        f"Control system in {recommended_mode} mode; "
+        f"{safe_candidate_count} safe local candidates; next unlock {next_unlock}"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="control_system.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock=next_unlock,
+        capability_summary={
+            "capability_id": "control_system.foundation",
+            "mode": "lab",
+            "current_level": "L4" if status == "preflight_ready" else "L2",
+            "next_level": "L5",
+            "status": status,
+            "blocked_reason": "none" if status == "preflight_ready" else next_unlock,
+            "next_evidence_count": len(next_required_evidence),
+            "external_effects_allowed": False,
+            "rollback_required": True,
+        },
+    )
     return {
         "summary_id": "control_system.foundation",
         "task": "Mullu Developer Workflow v1",
-        "status": workflow_status or "awaiting_evidence",
+        "status": status,
         "recommended_mode": recommended_mode,
         "lab_mode_allowed": lab_real_world_summary.get("lab_mode_allowed") is True,
         "capability_count": int(capability_registry_summary.get("capability_count") or 0),
@@ -1990,12 +2091,14 @@ def _control_system_summary(
         "next_required_evidence_count": len(next_required_evidence),
         "risk": "low, local lab only",
         "action_needed": action_needed or "inspect workflow receipts",
-        "operator_message": (
-            f"Control system in {recommended_mode} mode; "
-            f"{safe_candidate_count} safe local candidates; next unlock {next_unlock}"
-        ),
+        "operator_message": operator_message,
         "execution_boundary": "local_lab_only",
         "external_effects_allowed": False,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 
@@ -2069,6 +2172,27 @@ def _lab_real_world_summary(
         if isinstance(item, Mapping) and item.get("approval_required") is True
     )
     real_world_status = real_world_write_status or "blocked"
+    operator_message = (
+        f"Lab mode can prepare {len(safe_candidates)} local candidates; "
+        f"real-world writes remain {real_world_status}; "
+        f"{dangerous_approval_count} dangerous zones need approval"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="lab_real_world.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock="approval" if dangerous_approval_count else "none",
+        capability_summary={
+            "capability_id": "lab_real_world.boundary",
+            "mode": "lab",
+            "current_level": "L3" if lab_mode_allowed else "L1",
+            "next_level": "L9",
+            "status": "blocked" if real_world_status != "allowed" else "preflight_ready",
+            "blocked_reason": "real_world_effect_boundary" if real_world_status != "allowed" else "none",
+            "next_evidence_count": dangerous_approval_count,
+            "external_effects_allowed": False,
+            "rollback_required": dangerous_approval_count > 0,
+        },
+    )
     return {
         "summary_id": "lab_real_world.foundation",
         "lab_mode_allowed": lab_mode_allowed,
@@ -2078,14 +2202,15 @@ def _lab_real_world_summary(
         "real_world_write_status": real_world_status,
         "dangerous_blocker_count": len(dangerous_blockers),
         "dangerous_approval_required_count": dangerous_approval_count,
-        "operator_message": (
-            f"Lab mode can prepare {len(safe_candidates)} local candidates; "
-            f"real-world writes remain {real_world_status}; "
-            f"{dangerous_approval_count} dangerous zones need approval"
-        ),
+        "operator_message": operator_message,
         "lab_execution_boundary": "local_lab_only",
         "real_world_execution_boundary": "real_world",
         "external_effects_allowed": False,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 
@@ -2109,6 +2234,38 @@ def _approval_boundary_summary(
         if isinstance(item, Mapping) and item.get("approval_required") is True
     )
     pr_approval_required = sandbox_to_pr_policy.get("approval_required") is True
+    next_approval_capability_id = str(
+        next(
+            (
+                item.get("capability_id")
+                for item in next_unlock_queue
+                if isinstance(item, Mapping) and str(item.get("next_unlock") or "") == "approval"
+            ),
+            "",
+        )
+        or ""
+    )
+    operator_message = (
+        f"{len(safe_candidates)} local automatic candidates; "
+        f"{approval_unlock_count} capability unlocks need approval; "
+        f"{dangerous_approval_count} dangerous zones remain approval-bound"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="approval_boundary.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock="approval" if approval_unlock_count or pr_approval_required else "none",
+        capability_summary={
+            "capability_id": next_approval_capability_id or "approval_boundary.local_lab",
+            "mode": "lab",
+            "current_level": "L3",
+            "next_level": "L5",
+            "status": "approval_required" if approval_unlock_count or pr_approval_required else "preflight_ready",
+            "blocked_reason": "before_pr_or_real_world_effect" if pr_approval_required else "none",
+            "next_evidence_count": approval_unlock_count,
+            "external_effects_allowed": False,
+            "rollback_required": pr_approval_required,
+        },
+    )
     return {
         "summary_id": "approval_boundary.foundation",
         "local_auto_candidate_count": len(safe_candidates),
@@ -2116,24 +2273,15 @@ def _approval_boundary_summary(
         "dangerous_approval_required_count": dangerous_approval_count,
         "pr_approval_required": pr_approval_required,
         "approval_boundary": "before_pr_or_real_world_effect",
-        "next_approval_capability_id": str(
-            next(
-                (
-                    item.get("capability_id")
-                    for item in next_unlock_queue
-                    if isinstance(item, Mapping) and str(item.get("next_unlock") or "") == "approval"
-                ),
-                "",
-            )
-            or ""
-        ),
-        "operator_message": (
-            f"{len(safe_candidates)} local automatic candidates; "
-            f"{approval_unlock_count} capability unlocks need approval; "
-            f"{dangerous_approval_count} dangerous zones remain approval-bound"
-        ),
+        "next_approval_capability_id": next_approval_capability_id,
+        "operator_message": operator_message,
         "execution_boundary": "local_lab_only",
         "external_effects_allowed": False,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 
@@ -2189,6 +2337,27 @@ def _unlock_readiness_summary(
     )
     next_capability_id = str(first_unlock.get("capability_id") or "") if isinstance(first_unlock, Mapping) else ""
     next_unlock = str(first_unlock.get("next_unlock") or "approval") if isinstance(first_unlock, Mapping) else "approval"
+    operator_message = (
+        f"{len(next_unlock_queue)} pending unlocks; next evidence for "
+        f"{next_capability_id or 'capability review'} is {next_unlock}; "
+        f"{approval_blocker_count} dangerous zones require explicit approval"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="unlock_readiness.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock=next_unlock,
+        capability_summary={
+            "capability_id": next_capability_id or "unlock_readiness.local_lab",
+            "mode": "lab",
+            "current_level": "L4" if next_unlock_queue else "L3",
+            "next_level": "L5",
+            "status": "approval_required" if next_unlock_queue else "preflight_ready",
+            "blocked_reason": next_unlock if next_unlock_queue else "none",
+            "next_evidence_count": len(next_required_evidence),
+            "external_effects_allowed": False,
+            "rollback_required": next_unlock_queue != [],
+        },
+    )
     return {
         "summary_id": "unlock_readiness.local_lab",
         "pending_unlock_count": len(next_unlock_queue),
@@ -2200,13 +2369,14 @@ def _unlock_readiness_summary(
         "next_required_evidence_count": len(next_required_evidence),
         "safe_candidates_ready": len(safe_candidates),
         "dangerous_blockers_requiring_approval": approval_blocker_count,
-        "operator_message": (
-            f"{len(next_unlock_queue)} pending unlocks; next evidence for "
-            f"{next_capability_id or 'capability review'} is {next_unlock}; "
-            f"{approval_blocker_count} dangerous zones require explicit approval"
-        ),
+        "operator_message": operator_message,
         "execution_boundary": "local_lab_only",
         "external_effects_allowed": False,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 
@@ -2498,6 +2668,99 @@ def _load_local_sandbox_proof_report(*, include_local_sandbox_receipts: bool) ->
     return payload
 
 
+def _load_local_developer_workflow_operator_receipt() -> dict[str, Any]:
+    """Load the generated Developer Workflow operator receipt for read-only status."""
+
+    path = LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="developer_workflow_operator_receipt_missing")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=422, detail="developer_workflow_operator_receipt_invalid_json") from exc
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=422, detail="developer_workflow_operator_receipt_root_must_be_object")
+    validation = validate_developer_workflow_operator_receipt(receipt=payload, receipt_path=path)
+    if not validation.ok:
+        raise HTTPException(status_code=422, detail="developer_workflow_operator_receipt_contract_invalid")
+    if payload.get("execution_performed") is not False:
+        raise HTTPException(status_code=422, detail="developer_workflow_operator_receipt_execution_overclaim")
+    return payload
+
+
+def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the compact product status row for Developer Workflow v1."""
+
+    operator_status = _developer_workflow_operator_status_from_generated_receipt(receipt)
+    readiness_status = str(operator_status["readiness_status"])
+    first_next_evidence = str(operator_status["first_next_evidence"])
+    control_summary = developer_workflow_control_summary(operator_status)
+    action_banner = str(control_summary["action_banner"])
+    capability_summary = control_summary["capability_summary"]
+    return {
+        "read_model_id": "operator_developer_workflow_status.read_model",
+        "projection_only": True,
+        "external_effects_allowed": False,
+        "task": "Governed Developer Workflow v1",
+        "status": readiness_status,
+        "reason": _developer_workflow_status_reason(readiness_status, first_next_evidence),
+        "next_unlock": first_next_evidence,
+        "risk": _developer_workflow_status_risk(readiness_status),
+        "action_needed": _developer_workflow_status_action(readiness_status, first_next_evidence),
+        "summary": {
+            "solver_outcome": operator_status["solver_outcome"],
+            "workflow_run_id": operator_status["workflow_run_id"],
+            "sandbox_receipts_completed": operator_status["sandbox_receipts_completed"],
+            "sandbox_receipts_required": operator_status["sandbox_receipts_required"],
+            "local_candidate_ready": operator_status["local_candidate_ready"],
+            "pr_tool_admitted": operator_status["pr_tool_admitted"],
+            "external_approval_status": operator_status["external_approval_status"],
+            "action_banner": action_banner,
+            "rollback_required": operator_status["rollback_required"],
+            "rollback_command_count": operator_status["rollback_command_count"],
+            "command_preview_rendered": operator_status["command_preview_rendered"],
+            "execution_performed": False,
+            "receipt_hash": operator_status["receipt_hash"],
+        },
+        "capability_summary": capability_summary,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
+        "source_ref": str(LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH.as_posix()),
+    }
+
+def _developer_workflow_status_reason(readiness_status: str, next_evidence: str) -> str:
+    if readiness_status == "awaiting_external_pr_approval":
+        return "operator external PR approval missing"
+    if readiness_status == "awaiting_operator_approval":
+        return "local PR candidate approval missing"
+    if readiness_status == "awaiting_sandbox_receipts":
+        return "sandbox receipt evidence incomplete"
+    if readiness_status == "ready_for_external_pr_execution":
+        return "external PR execution evidence is prepared but not executed by this read model"
+    return f"next evidence required: {next_evidence}"
+
+
+def _developer_workflow_status_risk(readiness_status: str) -> str:
+    if readiness_status in {"awaiting_external_pr_approval", "ready_for_external_pr_execution"}:
+        return "external repository write"
+    return "low, local lab only"
+
+
+def _developer_workflow_status_action(readiness_status: str, next_evidence: str) -> str:
+    if readiness_status == "awaiting_external_pr_approval":
+        return "approve or defer external PR execution"
+    if readiness_status == "awaiting_operator_approval":
+        return "approve local PR candidate preparation"
+    if readiness_status == "awaiting_sandbox_receipts":
+        return "complete sandbox receipt bundle"
+    if readiness_status == "ready_for_external_pr_execution":
+        return "execute external PR commands only through explicit approved path"
+    return f"provide {next_evidence}"
+
+
 def _load_local_rollback_summary_packet(*, include_local_sandbox_receipts: bool) -> dict[str, Any] | None:
     """Load the last local rollback summary packet when explicitly requested."""
 
@@ -2662,6 +2925,7 @@ def _workflow_monitor_panel_read_model(
     current_task: Mapping[str, Any],
     plan_review: Mapping[str, Any],
     developer_workflow_run: Mapping[str, Any],
+    developer_workflow_operator_receipt: Mapping[str, Any] | None = None,
     local_sandbox_proof_report: Mapping[str, Any] | None = None,
     local_rollback_summary_packet: Mapping[str, Any] | None = None,
     local_rollback_approval_packet: Mapping[str, Any] | None = None,
@@ -2736,10 +3000,14 @@ def _workflow_monitor_panel_read_model(
         developer_workflow_summary=developer_workflow_summary,
     )
     pr_readiness_summary = _pr_readiness_summary(pr_readiness_bundle)
-    developer_workflow_operator_receipt = _developer_workflow_operator_receipt_projection(
+    generated_operator_receipt = _developer_workflow_operator_receipt_projection(
         pr_readiness_bundle=pr_readiness_bundle,
         developer_workflow_summary=developer_workflow_summary,
     )
+    if developer_workflow_operator_receipt is not None:
+        generated_operator_receipt = _developer_workflow_operator_receipt_from_generated_receipt(
+            developer_workflow_operator_receipt
+        )
     proof_report_summary = _local_sandbox_proof_report_summary(local_sandbox_proof_report)
     rollback_summary = _local_rollback_summary_packet_summary(local_rollback_summary_packet)
     rollback_approval = _local_rollback_approval_packet_summary(local_rollback_approval_packet)
@@ -2814,9 +3082,9 @@ def _workflow_monitor_panel_read_model(
             "pr_readiness_bundle": pr_readiness_bundle,
             "pr_readiness_summary": pr_readiness_summary,
             "evidence_progress_summary": evidence_progress_summary,
-            "developer_workflow_operator_receipt": developer_workflow_operator_receipt,
+            "developer_workflow_operator_receipt": generated_operator_receipt,
             "developer_workflow_operator_receipt_summary": (
-                _developer_workflow_operator_receipt_summary(developer_workflow_operator_receipt)
+                _developer_workflow_operator_receipt_summary(generated_operator_receipt)
             ),
             "local_sandbox_proof_report": proof_report_summary,
             "local_sandbox_proof_readiness_summary": _local_sandbox_proof_readiness_summary(
@@ -4260,12 +4528,25 @@ def _developer_workflow_operator_receipt_projection(
         "readiness_status": readiness_status,
         "execution_performed": False,
         "ready_for_external_pr_execution": ready_for_external,
+        "external_approval_status": "pending",
+        "local_candidate_ready": ready_for_external,
+        "pr_tool_admitted": ready_for_external,
+        "rollback_required": True,
+        "rollback_command_preview": "external PR rollback command unavailable until generated operator receipt is loaded",
+        "rollback_command_count": 0,
+        "evidence_chain": [
+            {"stage": "sandbox_receipts", "status": "unknown", "ref": "workflow_monitor.metadata.developer_workflow_run"},
+            {"stage": "pr_preparation_approval", "status": "pending", "ref": "workflow_monitor.metadata.pr_readiness_bundle"},
+            {"stage": "local_pr_candidate", "status": "pending", "ref": "workflow_monitor.metadata.pr_readiness_bundle"},
+            {"stage": "external_approval", "status": "pending", "ref": "external_approval_witness"},
+        ],
         "command_preview_rendered": command_preview.get("ready") is True,
         "next_evidence": [
             str(item)
             for item in pr_readiness_bundle.get("next_evidence", ())
             if str(item).strip()
         ][:8],
+        "external_effects_allowed": False,
         "source_refs": {
             "pr_readiness": "workflow_monitor.metadata.pr_readiness_bundle",
             "schema": "schemas/developer_workflow_operator_receipt.schema.json",
@@ -4274,6 +4555,122 @@ def _developer_workflow_operator_receipt_projection(
     }
     receipt["receipt_hash"] = canonical_hash(receipt)
     return receipt
+
+
+def _developer_workflow_operator_receipt_from_generated_receipt(
+    receipt: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Return dashboard-safe fields from a validated generated operator receipt."""
+
+    operator_status = _developer_workflow_operator_status_from_generated_receipt(receipt)
+    return {
+        "receipt_id": operator_status["receipt_id"],
+        "schema_ref": "schemas/developer_workflow_operator_receipt.schema.json",
+        "workflow_id": operator_status["workflow_id"],
+        "workflow_run_id": operator_status["workflow_run_id"],
+        "solver_outcome": operator_status["solver_outcome"],
+        "readiness_status": operator_status["readiness_status"],
+        "execution_performed": False,
+        "ready_for_external_pr_execution": operator_status["ready_for_external_pr_execution"],
+        "external_approval_status": operator_status["external_approval_status"],
+        "local_candidate_ready": operator_status["local_candidate_ready"],
+        "pr_tool_admitted": operator_status["pr_tool_admitted"],
+        "rollback_required": operator_status["rollback_required"],
+        "rollback_command_preview": operator_status["rollback_command_preview"],
+        "rollback_command_count": operator_status["rollback_command_count"],
+        "evidence_chain": operator_status["evidence_chain"],
+        "command_preview_rendered": operator_status["command_preview_rendered"],
+        "next_evidence": operator_status["next_evidence"],
+        "external_effects_allowed": False,
+        "source_refs": operator_status["source_refs"],
+        "receipt_hash": operator_status["receipt_hash"],
+    }
+
+
+def _developer_workflow_operator_status_from_generated_receipt(
+    receipt: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Normalize generated Developer Workflow operator receipt fields for projections."""
+
+    external_handoff = receipt.get("external_handoff", {})
+    if not isinstance(external_handoff, Mapping):
+        external_handoff = {}
+    approvals = receipt.get("approvals", {})
+    if not isinstance(approvals, Mapping):
+        approvals = {}
+    external_approval = approvals.get("external_pr_execution", {})
+    if not isinstance(external_approval, Mapping):
+        external_approval = {}
+    local_candidate = receipt.get("local_pr_candidate", {})
+    if not isinstance(local_candidate, Mapping):
+        local_candidate = {}
+    rollback = receipt.get("rollback", {})
+    if not isinstance(rollback, Mapping):
+        rollback = {}
+    rollback_commands = rollback.get("commands", ())
+    if not isinstance(rollback_commands, list):
+        rollback_commands = []
+    rollback_command_preview = next(
+        (str(command) for command in rollback_commands if str(command).strip()),
+        "rollback command unavailable",
+    )
+    sandbox_receipts = receipt.get("sandbox_receipts", {})
+    if not isinstance(sandbox_receipts, Mapping):
+        sandbox_receipts = {}
+    pr_preparation = approvals.get("pr_preparation", {})
+    if not isinstance(pr_preparation, Mapping):
+        pr_preparation = {}
+    source_refs = receipt.get("source_refs", {})
+    if not isinstance(source_refs, Mapping):
+        source_refs = {}
+    evidence_chain = [
+        {
+            "stage": "sandbox_receipts",
+            "status": str(sandbox_receipts.get("bundle_status") or "unknown"),
+            "ref": str(source_refs.get("sandbox_receipt_bundle_path") or "sandbox_receipts"),
+        },
+        {
+            "stage": "pr_preparation_approval",
+            "status": str(pr_preparation.get("status") or "pending"),
+            "ref": str(source_refs.get("approval_packet_path") or "pr_preparation_approval"),
+        },
+        {
+            "stage": "local_pr_candidate",
+            "status": str(local_candidate.get("candidate_status") or "pending"),
+            "ref": str(source_refs.get("local_candidate_packet_path") or "local_pr_candidate"),
+        },
+        {
+            "stage": "external_approval",
+            "status": str(external_approval.get("status") or "pending"),
+            "ref": str(source_refs.get("external_approval_witness_path") or "external_approval_witness"),
+        },
+    ]
+    next_evidence = receipt.get("next_evidence", ())
+    if not isinstance(next_evidence, list):
+        next_evidence = []
+    normalized_next_evidence = [str(item) for item in next_evidence if str(item).strip()][:8]
+    return {
+        "receipt_id": str(receipt.get("receipt_id") or "developer_workflow_operator_receipt.v1"),
+        "workflow_id": str(receipt.get("workflow_id") or "mullu_developer_workflow.v1"),
+        "workflow_run_id": str(receipt.get("workflow_run_id") or "developer_workflow_v1_foundation_run"),
+        "solver_outcome": str(receipt.get("solver_outcome") or "AwaitingEvidence"),
+        "readiness_status": str(receipt.get("readiness_status") or "awaiting_sandbox_receipts"),
+        "ready_for_external_pr_execution": external_handoff.get("ready_for_external_pr_execution") is True,
+        "external_approval_status": str(external_approval.get("status") or "pending"),
+        "local_candidate_ready": local_candidate.get("candidate_ready") is True,
+        "pr_tool_admitted": local_candidate.get("pr_tool_admitted") is True,
+        "sandbox_receipts_completed": int(sandbox_receipts.get("completed_count", 0) or 0),
+        "sandbox_receipts_required": int(sandbox_receipts.get("required_count", 0) or 0),
+        "rollback_required": rollback.get("required") is True,
+        "rollback_command_preview": rollback_command_preview,
+        "rollback_command_count": len([command for command in rollback_commands if str(command).strip()]),
+        "evidence_chain": evidence_chain,
+        "command_preview_rendered": external_handoff.get("command_preview_rendered") is True,
+        "next_evidence": normalized_next_evidence,
+        "first_next_evidence": normalized_next_evidence[0] if normalized_next_evidence else "none",
+        "source_refs": dict(source_refs),
+        "receipt_hash": str(receipt.get("receipt_hash") or ""),
+    }
 
 
 def _developer_workflow_operator_receipt_summary(receipt: Mapping[str, Any]) -> dict[str, Any]:
@@ -4286,6 +4683,12 @@ def _developer_workflow_operator_receipt_summary(receipt: Mapping[str, Any]) -> 
         "solver_outcome": str(receipt.get("solver_outcome") or "AwaitingEvidence"),
         "readiness_status": str(receipt.get("readiness_status") or "awaiting_sandbox_receipts"),
         "ready_for_external_pr_execution": receipt.get("ready_for_external_pr_execution") is True,
+        "external_approval_status": str(receipt.get("external_approval_status") or "pending"),
+        "local_candidate_ready": receipt.get("local_candidate_ready") is True,
+        "pr_tool_admitted": receipt.get("pr_tool_admitted") is True,
+        "rollback_required": receipt.get("rollback_required") is True,
+        "rollback_command_count": int(receipt.get("rollback_command_count", 0) or 0),
+        "evidence_chain_count": len(receipt.get("evidence_chain", ())) if isinstance(receipt.get("evidence_chain"), list) else 0,
         "command_preview_rendered": receipt.get("command_preview_rendered") is True,
         "next_evidence_count": len([item for item in next_evidence if str(item).strip()]),
         "execution_performed": False,
@@ -5736,6 +6139,10 @@ def create_gateway_app(
         return build_agentic_service_harness_status_projection(
             read_model_source=agentic_service_harness_read_model_source,
         )
+
+    @app.get("/api/v1/evidence-ledger/read-model")
+    def evidence_ledger_read_model():
+        return build_foundation_evidence_ledger_read_model(generated_at=_clock())
 
     @app.get("/api/v1/personal-assistant/skills")
     def personal_assistant_skill_read_model():
@@ -9768,6 +10175,7 @@ def create_gateway_app(
         domain: str,
         risk_level: str,
         include_local_sandbox_receipts: bool = False,
+        include_developer_workflow_operator_receipt: bool = False,
     ):
         sandbox_receipt_bundle = _load_local_sandbox_receipt_bundle(
             include_local_sandbox_receipts=include_local_sandbox_receipts,
@@ -9784,6 +10192,15 @@ def create_gateway_app(
         local_rollback_execution_receipt = _load_local_rollback_execution_receipt(
             include_local_sandbox_receipts=include_local_sandbox_receipts,
         )
+        local_developer_workflow_operator_receipt = None
+        if include_developer_workflow_operator_receipt:
+            try:
+                local_developer_workflow_operator_receipt = _load_local_developer_workflow_operator_receipt()
+            except HTTPException as exc:
+                if exc.status_code == 404:
+                    local_developer_workflow_operator_receipt = None
+                else:
+                    raise
         friction_control = build_capability_friction_control_read_model(
             capability_admission_gate=capability_admission_gate,
             domain=domain,
@@ -9845,6 +10262,7 @@ def create_gateway_app(
                 current_task=current_task,
                 plan_review=plan_review,
                 developer_workflow_run=developer_workflow_run,
+                developer_workflow_operator_receipt=local_developer_workflow_operator_receipt,
                 local_sandbox_proof_report=local_sandbox_proof_report,
                 local_rollback_summary_packet=local_rollback_summary_packet,
                 local_rollback_approval_packet=local_rollback_approval_packet,
@@ -9861,6 +10279,7 @@ def create_gateway_app(
         domain: str = "software_dev",
         risk_level: str = "",
         include_local_sandbox_receipts: bool = False,
+        include_developer_workflow_operator_receipt: bool = False,
     ):
         _require_authority_operator(request)
         snapshot = _operator_control_tower_snapshot(
@@ -9868,6 +10287,7 @@ def create_gateway_app(
             domain=domain,
             risk_level=risk_level,
             include_local_sandbox_receipts=include_local_sandbox_receipts,
+            include_developer_workflow_operator_receipt=include_developer_workflow_operator_receipt,
         )
         return operator_control_tower_snapshot_to_json_dict(snapshot)
 
@@ -9878,6 +10298,7 @@ def create_gateway_app(
         domain: str = "software_dev",
         risk_level: str = "",
         include_local_sandbox_receipts: bool = False,
+        include_developer_workflow_operator_receipt: bool = False,
     ):
         _require_authority_operator(request)
         snapshot = _operator_control_tower_snapshot(
@@ -9885,6 +10306,7 @@ def create_gateway_app(
             domain=domain,
             risk_level=risk_level,
             include_local_sandbox_receipts=include_local_sandbox_receipts,
+            include_developer_workflow_operator_receipt=include_developer_workflow_operator_receipt,
         )
         return operator_control_tower_status_receipt(snapshot)
 
@@ -9903,6 +10325,13 @@ def create_gateway_app(
                 "compact first-blocker projection"
             ),
         }
+
+    @app.get("/operator/control-tower/developer-workflow-status/read-model")
+    def operator_control_tower_developer_workflow_status_read_model(
+        request: Request,
+    ):
+        _require_authority_operator(request)
+        return _developer_workflow_status_read_model(_load_local_developer_workflow_operator_receipt())
 
     @app.get("/operator/control-tower/local-rollback-receipt/read-model")
     def operator_control_tower_local_rollback_receipt_read_model(
@@ -9927,6 +10356,7 @@ def create_gateway_app(
         domain: str = "software_dev",
         risk_level: str = "",
         include_local_sandbox_receipts: bool = False,
+        include_developer_workflow_operator_receipt: bool = False,
     ):
         _require_authority_operator(request)
         snapshot = _operator_control_tower_snapshot(
@@ -9934,6 +10364,7 @@ def create_gateway_app(
             domain=domain,
             risk_level=risk_level,
             include_local_sandbox_receipts=include_local_sandbox_receipts,
+            include_developer_workflow_operator_receipt=include_developer_workflow_operator_receipt,
         )
         return HTMLResponse(render_operator_control_tower(snapshot))
 

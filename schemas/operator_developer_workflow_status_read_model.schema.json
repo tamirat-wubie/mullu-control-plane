@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:operator-developer-workflow-status-read-model:1",
+  "title": "OperatorDeveloperWorkflowStatusReadModel",
+  "description": "Projection-only dashboard row for Developer Workflow v1 status from the generated operator receipt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "read_model_id",
+    "projection_only",
+    "external_effects_allowed",
+    "task",
+    "status",
+    "reason",
+    "next_unlock",
+    "risk",
+    "action_needed",
+    "summary",
+    "capability_summary",
+    "control_summary",
+    "source_ref"
+  ],
+  "properties": {
+    "read_model_id": {
+      "type": "string",
+      "const": "operator_developer_workflow_status.read_model"
+    },
+    "projection_only": {"type": "boolean", "const": true},
+    "external_effects_allowed": {"type": "boolean", "const": false},
+    "task": {"type": "string", "const": "Governed Developer Workflow v1"},
+    "status": {"type": "string", "minLength": 1, "maxLength": 120},
+    "reason": {"type": "string", "minLength": 1, "maxLength": 240},
+    "next_unlock": {"type": "string", "minLength": 1, "maxLength": 120},
+    "risk": {"type": "string", "minLength": 1, "maxLength": 160},
+    "action_needed": {"type": "string", "minLength": 1, "maxLength": 240},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "solver_outcome",
+        "workflow_run_id",
+        "sandbox_receipts_completed",
+        "sandbox_receipts_required",
+        "local_candidate_ready",
+        "pr_tool_admitted",
+        "external_approval_status",
+        "action_banner",
+        "rollback_required",
+        "rollback_command_count",
+        "command_preview_rendered",
+        "execution_performed",
+        "receipt_hash"
+      ],
+      "properties": {
+        "solver_outcome": {"type": "string", "minLength": 1, "maxLength": 80},
+        "workflow_run_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "sandbox_receipts_completed": {"type": "integer", "minimum": 0, "maximum": 4},
+        "sandbox_receipts_required": {"type": "integer", "minimum": 0, "maximum": 4},
+        "local_candidate_ready": {"type": "boolean"},
+        "pr_tool_admitted": {"type": "boolean"},
+        "external_approval_status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "action_banner": {"type": "string", "minLength": 1, "maxLength": 260},
+        "rollback_required": {"type": "boolean"},
+        "rollback_command_count": {"type": "integer", "minimum": 0, "maximum": 16},
+        "command_preview_rendered": {"type": "boolean"},
+        "execution_performed": {"type": "boolean", "const": false},
+        "receipt_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "capability_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "current_level",
+        "next_level",
+        "status",
+        "mode",
+        "allowed_actions",
+        "blocked_actions",
+        "blocked_reason",
+        "next_evidence",
+        "next_evidence_count",
+        "external_effects_allowed",
+        "rollback_required"
+      ],
+      "properties": {
+        "capability_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+        "current_level": {"type": "string", "enum": ["L2", "L4"]},
+        "next_level": {"type": "string", "const": "L5"},
+        "status": {
+          "type": "string",
+          "enum": ["prepare_only", "evidence_required", "approval_required", "preflight_ready"]
+        },
+        "mode": {"type": "string", "const": "lab"},
+        "allowed_actions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "blocked_reason": {"type": "string", "minLength": 1, "maxLength": 160},
+        "next_evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 160}
+        },
+        "next_evidence_count": {"type": "integer", "minimum": 0, "maximum": 8},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "rollback_required": {"type": "boolean"}
+      }
+    },
+    "control_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id",
+        "summary_id",
+        "operator_message",
+        "action_banner",
+        "capability_id",
+        "mode",
+        "current_level",
+        "next_level",
+        "status",
+        "blocked_reason",
+        "next_unlock",
+        "next_evidence_count",
+        "external_effects_allowed",
+        "rollback_required"
+      ],
+      "properties": {
+        "contract_id": {"type": "string", "const": "operator_dashboard_control_summary.v1"},
+        "summary_id": {"type": "string", "const": "developer_workflow_control_summary.v1"},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 260},
+        "action_banner": {"type": "string", "minLength": 1, "maxLength": 260},
+        "capability_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+        "mode": {"type": "string", "const": "lab"},
+        "current_level": {"type": "string", "enum": ["L2", "L4"]},
+        "next_level": {"type": "string", "const": "L5"},
+        "status": {
+          "type": "string",
+          "enum": ["prepare_only", "evidence_required", "approval_required", "preflight_ready"]
+        },
+        "blocked_reason": {"type": "string", "minLength": 1, "maxLength": 160},
+        "next_unlock": {"type": "string", "minLength": 1, "maxLength": 160},
+        "next_evidence_count": {"type": "integer", "minimum": 0, "maximum": 8},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "rollback_required": {"type": "boolean"}
+      }
+    },
+    "source_ref": {"type": "string", "minLength": 1, "maxLength": 260}
+  }
+}

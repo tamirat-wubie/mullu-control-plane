@@ -52,6 +52,9 @@ DEFAULT_OUTPUT = (
 EXPECTED_SOURCE_EXECUTION_ADMISSION_REF = (
     "examples/agentic_service_harness_github_pr_creation_execution_admission.foundation.json"
 )
+EXPECTED_COMMAND_PREVIEW_REF = "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json"
+EXPECTED_OPERATOR_DECISION_REF = "operator-decision://github-pr-terminal-closure/2026-06-26/approve-terminal-certificate"
+EXPECTED_OPERATOR_DECISION_VALUE = "approve_terminal_certificate"
 EXPECTED_PREVIEW_ID = "github-pr-creation-command-preview-foundation"
 EXPECTED_PREVIEW_MODE = "PR_CREATION_COMMAND_PREVIEW_ONLY"
 EXPECTED_COMMAND_ID = "github-pr-create-command-preview-foundation"
@@ -158,22 +161,16 @@ EXECUTION_ADMISSION_EVIDENCE_BINDINGS = (
     ("source_terminal_closure_allowed", ("execution_admission_decision", "terminal_closure_allowed")),
     ("source_required_before_execution_refs", ("execution_admission_decision", "required_before_execution_refs")),
     ("source_blocked_reason_refs", ("execution_admission_decision", "blocked_reason_refs")),
-    ("source_dry_run_ref", ("command_preview_dry_run_receipt_evidence", "source_dry_run_ref")),
-    ("source_dry_run_receipt_recorded", ("command_preview_dry_run_receipt_evidence", "source_dry_run_receipt_recorded")),
-    ("source_command_preview_bound", ("command_preview_dry_run_receipt_evidence", "command_preview_bound")),
-    ("source_command_preview_ref", ("command_preview_dry_run_receipt_evidence", "command_preview_ref")),
-    ("source_redacted_command_preview", ("command_preview_dry_run_receipt_evidence", "redacted_command_preview")),
-    ("source_operator_decision_ref", ("command_preview_dry_run_receipt_evidence", "source_operator_decision_ref")),
-    ("source_decision_value", ("command_preview_dry_run_receipt_evidence", "source_decision_value")),
-    ("source_pull_request_creation_enabled", ("command_preview_dry_run_receipt_evidence", "pull_request_creation_enabled")),
-    ("source_repository_write_enabled", ("command_preview_dry_run_receipt_evidence", "repository_write_enabled")),
-    ("source_receipt_store_append_enabled", ("command_preview_dry_run_receipt_evidence", "source_receipt_store_appended")),
+    ("source_dry_run_receipt_recorded", ("source_dry_run_binding", "dry_run_receipt_recorded")),
+    ("source_pull_request_creation_enabled", ("authority_denials", "pull_request_creation_enabled")),
+    ("source_repository_write_enabled", ("authority_denials", "repository_write_enabled")),
+    ("source_receipt_store_append_enabled", ("authority_denials", "receipt_store_append_enabled")),
     ("source_mutation_route_enabled", ("authority_denials", "mutation_route_enabled")),
     ("source_secret_values_serialized", ("scope", "secret_values_serialized")),
-    ("source_adapter_executed", ("command_preview_dry_run_receipt_evidence", "source_adapter_executed")),
-    ("source_connector_calls_observed", ("command_preview_dry_run_receipt_evidence", "source_connector_calls_observed")),
-    ("source_terminal_closure", ("command_preview_dry_run_receipt_evidence", "source_terminal_closure")),
-    ("source_success_claim_allowed", ("command_preview_dry_run_receipt_evidence", "source_success_claim_allowed")),
+    ("source_adapter_executed", ("source_dry_run_binding", "source_adapter_executed")),
+    ("source_connector_calls_observed", ("source_dry_run_binding", "source_connector_calls_observed")),
+    ("source_terminal_closure", ("source_dry_run_binding", "source_terminal_closure")),
+    ("source_success_claim_allowed", ("source_dry_run_binding", "source_success_claim_allowed")),
 )
 REQUIRED_FALSE_FLAGS = (
     "execution_admitted",
@@ -423,8 +420,43 @@ def _validate_execution_admission_evidence(
         )
     _require_equal(
         payload,
+        ("execution_admission_evidence", "source_dry_run_ref"),
+        _get_nested(source_execution_admission, ("source_pr_creation_dry_run_receipt_ref",)),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("execution_admission_evidence", "source_command_preview_bound"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("execution_admission_evidence", "source_command_preview_ref"),
+        EXPECTED_COMMAND_PREVIEW_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
         ("execution_admission_evidence", "source_redacted_command_preview"),
         _get_nested(payload, ("command_preview", "redacted_command_preview")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("execution_admission_evidence", "source_operator_decision_ref"),
+        EXPECTED_OPERATOR_DECISION_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("execution_admission_evidence", "source_decision_value"),
+        EXPECTED_OPERATOR_DECISION_VALUE,
         errors,
         label,
     )
