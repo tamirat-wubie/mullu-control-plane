@@ -21,6 +21,7 @@
     "terminal_closure",
     "scope",
     "response_command_preview_binding",
+    "command_preview_approval_request_evidence",
     "remaining_witnesses",
     "authority_denials",
     "effect_boundary",
@@ -53,6 +54,9 @@
     "terminal_closure": { "type": "boolean", "const": false },
     "scope": { "$ref": "#/$defs/scope" },
     "response_command_preview_binding": { "$ref": "#/$defs/response_command_preview_binding" },
+    "command_preview_approval_request_evidence": {
+      "$ref": "#/$defs/command_preview_approval_request_evidence"
+    },
     "remaining_witnesses": {
       "type": "array",
       "minItems": 1,
@@ -213,6 +217,109 @@
         "terminal_certificate_verified": { "type": "boolean", "const": false },
         "required_before_execution_refs": { "$ref": "#/$defs/evidence_ref_list" },
         "blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" }
+      }
+    },
+    "command_preview_approval_request_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_operator_approval_request_command_preview_binding_ref",
+        "source_binding_id",
+        "source_command_preview_ref",
+        "source_operator_approval_request_actual_non_empty_diff_binding_ref",
+        "source_operator_approval_request_ref",
+        "source_approval_request_id",
+        "source_requested_evidence_ref",
+        "source_redacted_command_preview",
+        "source_argument_vector_template",
+        "source_placeholder_refs",
+        "source_required_before_execution_refs",
+        "source_blocked_reason_refs",
+        "source_approval_request_bound",
+        "source_command_preview_bound",
+        "source_preview_rendered",
+        "source_operator_response_collected",
+        "source_operator_approval_granted",
+        "source_operator_approval_rejected",
+        "source_command_execution_admitted",
+        "source_adapter_execution_enabled",
+        "source_branch_write_enabled",
+        "source_pull_request_creation_enabled",
+        "source_repository_write_enabled",
+        "source_connector_call_enabled",
+        "source_mutation_route_enabled",
+        "source_receipt_store_append_enabled",
+        "source_terminal_certificate_verified",
+        "source_command_preview_execution_admission_bound",
+        "source_operator_approval_request_consumes_execution_admission_evidence",
+        "source_operator_approval_request_remains_request_only",
+        "source_contains_secret_values",
+        "operator_response_consumes_approval_request_evidence",
+        "operator_response_remains_uncollected",
+        "command_preview_response_remains_preview_only"
+      ],
+      "properties": {
+        "source_operator_approval_request_command_preview_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.foundation.json"
+        },
+        "source_binding_id": {
+          "type": "string",
+          "const": "agentic_service_harness_github_pr_operator_approval_request_command_preview_binding"
+        },
+        "source_command_preview_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json"
+        },
+        "source_operator_approval_request_actual_non_empty_diff_binding_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding.foundation.json"
+        },
+        "source_operator_approval_request_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_operator_approval_request.foundation.json"
+        },
+        "source_approval_request_id": {
+          "type": "string",
+          "const": "approval-request.github-pr-admission"
+        },
+        "source_requested_evidence_ref": {
+          "type": "string",
+          "const": "approval://operator-github-pr-admission-required"
+        },
+        "source_redacted_command_preview": { "type": "string", "minLength": 1 },
+        "source_argument_vector_template": { "$ref": "#/$defs/string_list" },
+        "source_placeholder_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "source_required_before_execution_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "source_blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "source_approval_request_bound": { "type": "boolean", "const": true },
+        "source_command_preview_bound": { "type": "boolean", "const": true },
+        "source_preview_rendered": { "type": "boolean", "const": true },
+        "source_operator_response_collected": { "type": "boolean", "const": false },
+        "source_operator_approval_granted": { "type": "boolean", "const": false },
+        "source_operator_approval_rejected": { "type": "boolean", "const": false },
+        "source_command_execution_admitted": { "type": "boolean", "const": false },
+        "source_adapter_execution_enabled": { "type": "boolean", "const": false },
+        "source_branch_write_enabled": { "type": "boolean", "const": false },
+        "source_pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "source_repository_write_enabled": { "type": "boolean", "const": false },
+        "source_connector_call_enabled": { "type": "boolean", "const": false },
+        "source_mutation_route_enabled": { "type": "boolean", "const": false },
+        "source_receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "source_terminal_certificate_verified": { "type": "boolean", "const": false },
+        "source_command_preview_execution_admission_bound": { "type": "boolean", "const": true },
+        "source_operator_approval_request_consumes_execution_admission_evidence": {
+          "type": "boolean",
+          "const": true
+        },
+        "source_operator_approval_request_remains_request_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "source_contains_secret_values": { "type": "boolean", "const": false },
+        "operator_response_consumes_approval_request_evidence": { "type": "boolean", "const": true },
+        "operator_response_remains_uncollected": { "type": "boolean", "const": true },
+        "command_preview_response_remains_preview_only": { "type": "boolean", "const": true }
       }
     },
     "remaining_witness": {
