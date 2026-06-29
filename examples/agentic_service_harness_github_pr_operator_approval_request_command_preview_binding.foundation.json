@@ -109,6 +109,23 @@
     "source_execution_admitted": false,
     "source_execution_target_ref": "github-pr://agentic-service-harness/task-run",
     "source_terminal_closure_allowed": false,
+    "source_required_before_execution_refs": [
+      "examples/agentic_service_harness_github_pr_creation_dry_run_receipt.foundation.json",
+      "evidence://operator-approval-for-pr-execution",
+      "evidence://branch-write-authority-binding",
+      "evidence://uao-pr-execution-admission",
+      "evidence://repository-effect-rollback-plan",
+      "evidence://receipt-store-write-path-binding",
+      "evidence://effect-reconciliation-before-terminal-closure"
+    ],
+    "source_blocked_reason_refs": [
+      "blocked://pr-creation/execution-admission-preflight-only",
+      "blocked://operator-approval/not-present",
+      "blocked://branch-write-authority/not-bound",
+      "blocked://uao/pr-execution-not-admitted",
+      "blocked://repository-effect-rollback/not-bound",
+      "blocked://terminal-closure/not-authorized"
+    ],
     "source_dry_run_ref": "examples/agentic_service_harness_github_pr_creation_dry_run_receipt.foundation.json",
     "source_dry_run_receipt_recorded": true,
     "source_command_preview_bound": true,

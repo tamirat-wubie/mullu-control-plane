@@ -53,9 +53,17 @@
           "category": "replay",
           "debt_id": "agentic_control.code_change.plan.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, change_boundary, code_change_physics_packet, test_contract, rollback_plan, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "change_boundary",
+            "code_change_physics_packet",
+            "test_contract",
+            "rollback_plan",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -148,9 +156,16 @@
           "category": "replay",
           "debt_id": "agentic_control.evidence.append.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, ledger_record_id, ledger_record_hash, lineage_ref, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "ledger_record_id",
+            "ledger_record_hash",
+            "lineage_ref",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -223,9 +238,16 @@
           "category": "replay",
           "debt_id": "agentic_control.governance_gate.evaluate.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, proof_state, policy_refs, blocked_actions, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "proof_state",
+            "policy_refs",
+            "blocked_actions",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -300,9 +322,16 @@
           "category": "replay",
           "debt_id": "agentic_control.incident_recovery.plan.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, rollback_plan_hash, containment_actions, verification_steps, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "rollback_plan_hash",
+            "containment_actions",
+            "verification_steps",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -377,9 +406,16 @@
           "category": "replay",
           "debt_id": "agentic_control.interrogation.plan.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, question_set_hash, unknowns, evidence_requests, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "question_set_hash",
+            "unknowns",
+            "evidence_requests",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -452,9 +488,16 @@
           "category": "replay",
           "debt_id": "agentic_control.math_algorithm.analyze.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, complexity_bound, invariant_refs, failure_modes, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "complexity_bound",
+            "invariant_refs",
+            "failure_modes",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -527,9 +570,16 @@
           "category": "replay",
           "debt_id": "agentic_control.memory_admission.plan.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, learning_admission_policy_ref, redaction_plan, forget_path, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "learning_admission_policy_ref",
+            "redaction_plan",
+            "forget_path",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -621,9 +671,16 @@
           "category": "replay",
           "debt_id": "agentic_control.mission.define.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, mission_contract_hash, halt_conditions, success_criteria, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "mission_contract_hash",
+            "halt_conditions",
+            "success_criteria",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -698,9 +755,16 @@
           "category": "replay",
           "debt_id": "agentic_control.priority.rank.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, ranking_hash, dependency_blockers, risk_weights, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "ranking_hash",
+            "dependency_blockers",
+            "risk_weights",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -775,9 +839,16 @@
           "category": "replay",
           "debt_id": "agentic_control.product_management.plan.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, roadmap_hash, success_metrics, handoff_risks, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "roadmap_hash",
+            "success_metrics",
+            "handoff_risks",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -850,9 +921,16 @@
           "category": "replay",
           "debt_id": "agentic_control.release_handoff.plan.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, commit_boundary, ci_gate_plan, rollback_path, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "commit_boundary",
+            "ci_gate_plan",
+            "rollback_path",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -925,9 +1003,16 @@
           "category": "replay",
           "debt_id": "agentic_control.resource_budget.bound.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, budget_envelope_hash, halt_thresholds, resource_floor, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "budget_envelope_hash",
+            "halt_thresholds",
+            "resource_floor",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1000,9 +1085,16 @@
           "category": "replay",
           "debt_id": "agentic_control.security_threat_model.build.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, threat_model_hash, mitigation_refs, residual_risk, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "threat_model_hash",
+            "mitigation_refs",
+            "residual_risk",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1075,9 +1167,16 @@
           "category": "replay",
           "debt_id": "agentic_control.self_audit.refine.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, weakness_refs, gap_closure_plan, residual_risk, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "weakness_refs",
+            "gap_closure_plan",
+            "residual_risk",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1150,9 +1249,16 @@
           "category": "replay",
           "debt_id": "agentic_control.swarm.coordinate.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, role_assignment_hash, shard_boundaries, consensus_rule, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "role_assignment_hash",
+            "shard_boundaries",
+            "consensus_rule",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1227,9 +1333,16 @@
           "category": "replay",
           "debt_id": "agentic_control.telemetry_triage.plan.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, telemetry_window, threshold_contract, remediation_order, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "telemetry_window",
+            "threshold_contract",
+            "remediation_order",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1302,9 +1415,16 @@
           "category": "replay",
           "debt_id": "agentic_control.verification.plan.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, verification_plan_hash, required_gates, closure_rule, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "verification_plan_hash",
+            "required_gates",
+            "closure_rule",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1397,9 +1517,16 @@
           "category": "replay",
           "debt_id": "browser.click.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, url_before, url_after, element_selector_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "url_before",
+            "url_after",
+            "element_selector_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1475,9 +1602,15 @@
           "category": "replay",
           "debt_id": "browser.extract_text.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, url_after, text_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "url_after",
+            "text_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1553,9 +1686,15 @@
           "category": "replay",
           "debt_id": "browser.open.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, url_after, screenshot_after_ref, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "url_after",
+            "screenshot_after_ref",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1630,9 +1769,14 @@
           "category": "replay",
           "debt_id": "browser.screenshot.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, screenshot_after_ref, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "screenshot_after_ref",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1743,9 +1887,17 @@
           "category": "replay",
           "debt_id": "browser.submit.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, url_before, url_after, element_selector_hash, approval_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "url_before",
+            "url_after",
+            "element_selector_hash",
+            "approval_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1838,9 +1990,16 @@
           "category": "replay",
           "debt_id": "browser.type.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, url_before, url_after, element_selector_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "url_before",
+            "url_after",
+            "element_selector_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -1917,9 +2076,16 @@
           "category": "replay",
           "debt_id": "calendar.conflict_check.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, conflict_digest, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "query_hash",
+            "conflict_digest",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2014,9 +2180,17 @@
           "category": "replay",
           "debt_id": "calendar.invite.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, attendee_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "attendee_hashes",
+            "approval_id",
+            "provider_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2093,9 +2267,16 @@
           "category": "replay",
           "debt_id": "calendar.read.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, response_digest, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "query_hash",
+            "response_digest",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2191,9 +2372,17 @@
           "category": "replay",
           "debt_id": "calendar.reschedule.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, event_id, approval_id, before_after_event_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "event_id",
+            "approval_id",
+            "before_after_event_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2288,9 +2477,17 @@
           "category": "replay",
           "debt_id": "calendar.schedule.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, attendee_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "attendee_hashes",
+            "approval_id",
+            "provider_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2366,9 +2563,15 @@
           "category": "replay",
           "debt_id": "computer.code.patch.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, patch_id, patch_status, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "patch_id",
+            "patch_status",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2476,9 +2679,15 @@
           "category": "replay",
           "debt_id": "computer.command.run.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, sandbox_receipt_id, verification_status, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "sandbox_receipt_id",
+            "verification_status",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2552,9 +2761,15 @@
           "category": "replay",
           "debt_id": "computer.filesystem.observe.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, workspace_root_hash, file_count, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "workspace_root_hash",
+            "file_count",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2630,9 +2845,17 @@
           "category": "replay",
           "debt_id": "computer.workspace_file.preflight.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, workspace_file_preflight_receipt_id, risk_level, decision, autonomy_mode, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "workspace_file_preflight_receipt_id",
+            "risk_level",
+            "decision",
+            "autonomy_mode",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2681,9 +2904,16 @@
           "category": "replay",
           "debt_id": "connector.github.read.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, resource_digest, scope_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "resource_digest",
+            "scope_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2776,9 +3006,16 @@
           "category": "replay",
           "debt_id": "connector.github.write.with_approval.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, before_after_resource_hash, approval_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "before_after_resource_hash",
+            "approval_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2855,9 +3092,16 @@
           "category": "replay",
           "debt_id": "connector.google_drive.read.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, resource_digest, scope_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "resource_digest",
+            "scope_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -2952,9 +3196,16 @@
           "category": "replay",
           "debt_id": "connector.google_drive.write.with_approval.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, before_after_resource_hash, approval_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "before_after_resource_hash",
+            "approval_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3029,9 +3280,16 @@
           "category": "replay",
           "debt_id": "connector.postgres.query.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, result_digest, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "query_hash",
+            "result_digest",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3124,9 +3382,16 @@
           "category": "replay",
           "debt_id": "connector.postgres.write.with_approval.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, before_after_row_hash, approval_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "before_after_row_hash",
+            "approval_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3200,9 +3465,15 @@
           "category": "replay",
           "debt_id": "creative.data_analyze.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, row_count, column_count, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "row_count",
+            "column_count",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3277,9 +3548,15 @@
           "category": "replay",
           "debt_id": "creative.document_generate.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, document_id, content_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "document_id",
+            "content_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3354,9 +3631,15 @@
           "category": "replay",
           "debt_id": "creative.translate.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, translation_prompt, target_lang, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "translation_prompt",
+            "target_lang",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3432,9 +3715,17 @@
           "category": "replay",
           "debt_id": "deployment.witness.collect.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, gateway_health_status, runtime_witness_signature_status, runtime_conformance_signature_status, deployment_witness_json, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "gateway_health_status",
+            "runtime_witness_signature_status",
+            "runtime_conformance_signature_status",
+            "deployment_witness_json",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3528,9 +3819,17 @@
           "category": "replay",
           "debt_id": "deployment.witness.publish.with_approval.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, published_deployment_witness, public_health_endpoint, runtime_conformance_certificate, operator_approval_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "published_deployment_witness",
+            "public_health_endpoint",
+            "runtime_conformance_certificate",
+            "operator_approval_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3607,9 +3906,16 @@
           "category": "replay",
           "debt_id": "document.extract_tables.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, document_id, table_count, parser_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "document_id",
+            "table_count",
+            "parser_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3686,9 +3992,16 @@
           "category": "replay",
           "debt_id": "document.extract_text.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, document_id, text_hash, parser_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "document_id",
+            "text_hash",
+            "parser_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3767,9 +4080,15 @@
           "category": "replay",
           "debt_id": "document.generate_docx.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, artifact_ref, artifact_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "artifact_ref",
+            "artifact_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3848,9 +4167,15 @@
           "category": "replay",
           "debt_id": "document.generate_pdf.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, artifact_ref, artifact_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "artifact_ref",
+            "artifact_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -3927,9 +4252,16 @@
           "category": "replay",
           "debt_id": "document.summarize.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, document_id, summary_hash, parser_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "document_id",
+            "summary_hash",
+            "parser_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4006,9 +4338,16 @@
           "category": "replay",
           "debt_id": "email.classify.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, classification_digest, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "query_hash",
+            "classification_digest",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4101,9 +4440,16 @@
           "category": "replay",
           "debt_id": "email.draft.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, draft_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "recipient_hashes",
+            "draft_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4180,9 +4526,16 @@
           "category": "replay",
           "debt_id": "email.read.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, response_digest, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "query_hash",
+            "response_digest",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4259,9 +4612,16 @@
           "category": "replay",
           "debt_id": "email.reply_suggest.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, message_digest, suggestion_digest, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "message_digest",
+            "suggestion_digest",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4338,9 +4698,16 @@
           "category": "replay",
           "debt_id": "email.search.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, response_digest, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "query_hash",
+            "response_digest",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4450,9 +4817,17 @@
           "category": "replay",
           "debt_id": "email.send.with_approval.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "recipient_hashes",
+            "approval_id",
+            "provider_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4525,9 +4900,14 @@
           "category": "replay",
           "debt_id": "enterprise.knowledge_search.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, total_chunks_searched, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "total_chunks_searched",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4601,9 +4981,14 @@
           "category": "replay",
           "debt_id": "enterprise.notification_send.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, receipt_status, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "receipt_status",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4677,9 +5062,14 @@
           "category": "replay",
           "debt_id": "enterprise.task_schedule.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, task_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "task_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4752,9 +5142,14 @@
           "category": "replay",
           "debt_id": "financial.balance_check.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, receipt_status, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "receipt_status",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4864,9 +5259,16 @@
           "category": "replay",
           "debt_id": "financial.refund.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, refund_id, ledger_hash, payment_state, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "refund_id",
+            "ledger_hash",
+            "payment_state",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -4932,9 +5334,16 @@
           "category": "replay",
           "debt_id": "financial.send_payment.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, tx_id, ledger_hash, payment_state, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "tx_id",
+            "ledger_hash",
+            "payment_state",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5007,9 +5416,14 @@
           "category": "replay",
           "debt_id": "financial.spending_insights.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, receipt_status, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "receipt_status",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5082,9 +5496,14 @@
           "category": "replay",
           "debt_id": "financial.transaction_history.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, receipt_status, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "receipt_status",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5179,9 +5598,18 @@
           "category": "replay",
           "debt_id": "github.open_pull_request.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, approval_id, base_branch, head_branch, repository, review_packet_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "approval_id",
+            "base_branch",
+            "head_branch",
+            "repository",
+            "review_packet_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5274,9 +5702,16 @@
           "category": "replay",
           "debt_id": "messaging.chat.draft.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, draft_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "recipient_hashes",
+            "draft_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5386,9 +5821,17 @@
           "category": "replay",
           "debt_id": "messaging.chat.send.with_approval.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "recipient_hashes",
+            "approval_id",
+            "provider_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5481,9 +5924,16 @@
           "category": "replay",
           "debt_id": "messaging.sms.draft.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, draft_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "recipient_hashes",
+            "draft_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5593,9 +6043,17 @@
           "category": "replay",
           "debt_id": "messaging.sms.send.with_approval.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "recipient_hashes",
+            "approval_id",
+            "provider_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5672,9 +6130,16 @@
           "category": "replay",
           "debt_id": "messaging.thread.read.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, response_digest, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "query_hash",
+            "response_digest",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5750,9 +6215,16 @@
           "category": "replay",
           "debt_id": "personal_assistant.approval.classify.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, plan_id, risk_level, approval_matrix_ref, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "plan_id",
+            "risk_level",
+            "approval_matrix_ref",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5828,9 +6300,16 @@
           "category": "replay",
           "debt_id": "personal_assistant.clarification.request.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, missing_bindings, clarification_request_ids, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "request_id",
+            "missing_bindings",
+            "clarification_request_ids",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5905,9 +6384,17 @@
           "category": "replay",
           "debt_id": "personal_assistant.github_codex.review.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, github_connector_proof_ref, operator_supplied_change_summary, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "request_id",
+            "github_connector_proof_ref",
+            "operator_supplied_change_summary",
+            "receipt_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -5983,9 +6470,16 @@
           "category": "replay",
           "debt_id": "personal_assistant.intent.interpret.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, governance_refs, risk_level, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "request_id",
+            "governance_refs",
+            "risk_level",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6062,9 +6556,17 @@
           "category": "replay",
           "debt_id": "personal_assistant.math.reasoning_plan.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, operator_supplied_known_value, unit_check, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "request_id",
+            "operator_supplied_known_value",
+            "unit_check",
+            "receipt_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6139,9 +6641,17 @@
           "category": "replay",
           "debt_id": "personal_assistant.memory_observation.prepare.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, receipt_id, source_ref, confidence, scope, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "receipt_id",
+            "source_ref",
+            "confidence",
+            "scope",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6217,9 +6727,18 @@
           "category": "replay",
           "debt_id": "personal_assistant.memory_observation.review.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, review_id, memory_observation_id, reviewer_ref, reason_codes, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "review_id",
+            "memory_observation_id",
+            "reviewer_ref",
+            "reason_codes",
+            "receipt_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6297,9 +6816,18 @@
           "category": "replay",
           "debt_id": "personal_assistant.planning.schedule_preview.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, operator_supplied_time_window, operator_supplied_work_item, capacity_summary, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "request_id",
+            "operator_supplied_time_window",
+            "operator_supplied_work_item",
+            "capacity_summary",
+            "receipt_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6376,9 +6904,17 @@
           "category": "replay",
           "debt_id": "personal_assistant.receipt.project.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, plan_id, actions_taken, actions_not_taken, redaction_policy, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "plan_id",
+            "actions_taken",
+            "actions_not_taken",
+            "redaction_policy",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6455,9 +6991,17 @@
           "category": "replay",
           "debt_id": "personal_assistant.research.source_compare.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, operator_supplied_source_summary, citation_ref, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "request_id",
+            "operator_supplied_source_summary",
+            "citation_ref",
+            "receipt_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6533,9 +7077,16 @@
           "category": "replay",
           "debt_id": "personal_assistant.skill_plan.build.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, skill_registry_ref, approval_matrix_ref, plan_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "skill_registry_ref",
+            "approval_matrix_ref",
+            "plan_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6612,9 +7163,17 @@
           "category": "replay",
           "debt_id": "personal_assistant.teamops_shared_inbox.plan.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, gmail_connector_proof_ref, operator_handoff_projection, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "request_id",
+            "gmail_connector_proof_ref",
+            "operator_handoff_projection",
+            "receipt_id",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6709,9 +7268,17 @@
           "category": "replay",
           "debt_id": "phone.call.place.with_approval.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, callee_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "callee_hashes",
+            "approval_id",
+            "provider_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6787,9 +7354,16 @@
           "category": "replay",
           "debt_id": "phone.call.receive.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, caller_hashes, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "caller_hashes",
+            "provider_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6899,9 +7473,17 @@
           "category": "replay",
           "debt_id": "phone.call.terminate.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, call_id, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "call_id",
+            "approval_id",
+            "provider_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -6978,9 +7560,16 @@
           "category": "replay",
           "debt_id": "phone.call.transcript_record.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, call_id, transcript_hash, redaction_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "call_id",
+            "transcript_hash",
+            "redaction_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -7075,9 +7664,18 @@
           "category": "replay",
           "debt_id": "phone.call.transfer.with_approval.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, call_id, transferee_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "connector_id",
+            "call_id",
+            "transferee_hashes",
+            "approval_id",
+            "provider_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -7256,9 +7854,17 @@
           "category": "replay",
           "debt_id": "physical.unlock_door.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, physical_action_receipt, simulation_ref, operator_approval_ref, sensor_confirmation_ref, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "physical_action_receipt",
+            "simulation_ref",
+            "operator_approval_ref",
+            "sensor_confirmation_ref",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -7333,9 +7939,16 @@
           "category": "replay",
           "debt_id": "software_dev.app_task_graph.plan.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, product_spec_hash, task_graph_hash, software_request_count, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "product_spec_hash",
+            "task_graph_hash",
+            "software_request_count",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -7429,9 +8042,16 @@
           "category": "replay",
           "debt_id": "software_dev.change.run.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, software_change_receipt_id, quality_gate_summary, rollback_snapshot_ref, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "software_change_receipt_id",
+            "quality_gate_summary",
+            "rollback_snapshot_ref",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -7506,9 +8126,16 @@
           "category": "replay",
           "debt_id": "software_dev.context_bundle.build.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, context_bundle_hash, affected_file_count, token_estimate, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "context_bundle_hash",
+            "affected_file_count",
+            "token_estimate",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -7583,9 +8210,16 @@
           "category": "replay",
           "debt_id": "software_dev.gate_plan.select.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, gate_plan_hash, affected_file_count, risk_level, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "gate_plan_hash",
+            "affected_file_count",
+            "risk_level",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -7659,9 +8293,16 @@
           "category": "replay",
           "debt_id": "software_dev.github_actions_failure.diagnose_read_only.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, workflow_run_hash, workflow_jobs_hash, failed_job_log_digest, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "workflow_run_hash",
+            "workflow_jobs_hash",
+            "failed_job_log_digest",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -7682,6 +8323,88 @@
       "family": "software_dev",
       "live_action_enabled": false,
       "next_action": "collect evidence: workflow_run_hash, workflow_jobs_hash, failed_job_log_digest, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, connector_lease_receipt, production_evidence_receipt",
+      "operator_status": "Live action disabled"
+    },
+    {
+      "capability_id": "software_dev.github_issue.draft",
+      "capability_name": "Draft GitHub issue",
+      "current_stage": "local_demo",
+      "current_unlock_level": "C3",
+      "debt_item_count": 4,
+      "debt_items": [
+        {
+          "category": "evidence",
+          "debt_id": "software_dev.github_issue.draft.evidence.missing_required_evidence",
+          "description": "missing required evidence",
+          "fix": "collect evidence: problem_summary, evidence_refs, acceptance_criteria, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, production_evidence_receipt",
+          "missing_refs": [
+            "problem_summary",
+            "evidence_refs",
+            "acceptance_criteria",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt",
+            "universal_action_orchestration_validation_receipt",
+            "capability_registry_entry",
+            "evidence_intake_receipt",
+            "evidence_verification_receipt",
+            "production_evidence_receipt"
+          ],
+          "severity": "high"
+        },
+        {
+          "category": "promotion",
+          "debt_id": "software_dev.github_issue.draft.promotion.blocked_promotion_stages",
+          "description": "blocked promotion stages",
+          "fix": "close promotion controls: sandbox_receipt_evidence, required_evidence, production_readiness_evidence, safe_live_action_evidence, operator_pilot_authorization, bounded_live_receipts, active_monitoring_receipt, approved_live_action_receipt, terminal_closure_certificate, production_witness, release_handoff_receipt",
+          "missing_refs": [
+            "sandbox_receipt_evidence",
+            "required_evidence",
+            "production_readiness_evidence",
+            "safe_live_action_evidence",
+            "operator_pilot_authorization",
+            "bounded_live_receipts",
+            "active_monitoring_receipt",
+            "approved_live_action_receipt",
+            "terminal_closure_certificate",
+            "production_witness",
+            "release_handoff_receipt"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "replay",
+          "debt_id": "software_dev.github_issue.draft.replay.missing_deterministic_replay_proof",
+          "description": "missing deterministic replay proof",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, problem_summary, evidence_refs, acceptance_criteria, terminal_closure_certificate, effect_reconciliation_receipt",
+          "missing_refs": [
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "problem_summary",
+            "evidence_refs",
+            "acceptance_criteria",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "live_action",
+          "debt_id": "software_dev.github_issue.draft.live_action.live_action_disabled",
+          "description": "live action disabled",
+          "fix": "keep live action disabled until promotion evidence is complete",
+          "missing_refs": [
+            "live_action_authority"
+          ],
+          "severity": "low"
+        }
+      ],
+      "debt_row_id": "capability_debt.software_dev.github_issue.draft.foundation.v1",
+      "debt_row_is_not_execution_authority": true,
+      "debt_severity": "high",
+      "family": "software_dev",
+      "live_action_enabled": false,
+      "next_action": "collect evidence: problem_summary, evidence_refs, acceptance_criteria, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, production_evidence_receipt",
       "operator_status": "Live action disabled"
     },
     {
@@ -7736,9 +8459,16 @@
           "category": "replay",
           "debt_id": "software_dev.github_patch_plan.draft.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, diagnosis_or_problem_summary, affected_file_or_component_refs, verification_expectations, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "diagnosis_or_problem_summary",
+            "affected_file_or_component_refs",
+            "verification_expectations",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -7813,9 +8543,17 @@
           "category": "replay",
           "debt_id": "software_dev.github_repo_status.summarize_read_only.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, repository_metadata_hash, recent_commits_hash, open_pull_requests_hash, workflow_runs_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "repository_metadata_hash",
+            "recent_commits_hash",
+            "open_pull_requests_hash",
+            "workflow_runs_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -7909,9 +8647,16 @@
           "category": "replay",
           "debt_id": "software_dev.pr_candidate.prepare.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, review_packet_hash, software_change_receipt_ids, approval_status, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "review_packet_hash",
+            "software_change_receipt_ids",
+            "approval_status",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -7986,9 +8731,16 @@
           "category": "replay",
           "debt_id": "software_dev.repo_map.read.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, repository_ref, commit_sha, repo_map_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "repository_ref",
+            "commit_sha",
+            "repo_map_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -8065,9 +8817,16 @@
           "category": "replay",
           "debt_id": "spreadsheet.analyze.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, row_count, column_count, analysis_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "row_count",
+            "column_count",
+            "analysis_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -8146,9 +8905,15 @@
           "category": "replay",
           "debt_id": "spreadsheet.generate.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, artifact_ref, artifact_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "artifact_ref",
+            "artifact_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -8225,9 +8990,16 @@
           "category": "replay",
           "debt_id": "voice.action_items_extract.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, transcript_hash, action_items_hash, redaction_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "transcript_hash",
+            "action_items_hash",
+            "redaction_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -8304,9 +9076,16 @@
           "category": "replay",
           "debt_id": "voice.intent_classification.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, transcript_hash, intent_summary_hash, confirmation_requirement, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "transcript_hash",
+            "intent_summary_hash",
+            "confirmation_requirement",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -8383,9 +9162,16 @@
           "category": "replay",
           "debt_id": "voice.intent_confirm.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, transcript_hash, intent_summary_hash, confirmation_status, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "transcript_hash",
+            "intent_summary_hash",
+            "confirmation_status",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -8462,9 +9248,16 @@
           "category": "replay",
           "debt_id": "voice.meeting_summarize.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, transcript_hash, meeting_summary_hash, redaction_hash, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "transcript_hash",
+            "meeting_summary_hash",
+            "redaction_hash",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -8541,9 +9334,16 @@
           "category": "replay",
           "debt_id": "voice.speech_to_text.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, transcript_hash, redaction_hash, transcript_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "transcript_hash",
+            "redaction_hash",
+            "transcript_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -8620,9 +9420,16 @@
           "category": "replay",
           "debt_id": "voice.text_to_speech.replay.missing_deterministic_replay_proof",
           "description": "missing deterministic replay proof",
-          "fix": "collect deterministic replay receipt",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, text_hash, audio_ref, synthesis_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
           "missing_refs": [
-            "replay_evidence"
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "text_hash",
+            "audio_ref",
+            "synthesis_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
           ],
           "severity": "medium"
         },
@@ -8657,17 +9464,17 @@
     "promotion_path_set_id": "sandbox_to_live_promotion_paths.foundation.v1"
   },
   "summary": {
-    "capabilities_with_debt_count": 104,
-    "capability_count": 104,
+    "capabilities_with_debt_count": 105,
+    "capability_count": 105,
     "category_counts": {
       "approval": 24,
-      "evidence": 102,
-      "live_action": 104,
-      "promotion": 104,
-      "replay": 103,
+      "evidence": 103,
+      "live_action": 105,
+      "promotion": 105,
+      "replay": 104,
       "rollback": 12
     },
-    "debt_row_count": 104,
+    "debt_row_count": 105,
     "family_counts": {
       "agentic_control": 17,
       "browser": 6,
@@ -8683,17 +9490,17 @@
       "personal_assistant": 12,
       "phone": 5,
       "physical": 2,
-      "software_dev": 9,
+      "software_dev": 10,
       "voice": 6
     },
     "live_action_enabled_count": 0,
     "severity_counts": {
       "critical": 0,
-      "high": 103,
+      "high": 104,
       "low": 0,
       "medium": 1
     },
-    "total_debt_item_count": 449
+    "total_debt_item_count": 453
   },
   "top_debt_items": [
     {

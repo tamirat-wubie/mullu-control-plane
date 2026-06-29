@@ -168,8 +168,8 @@ gateway/github_operations_workroom.py
 ```
 
 The projection currently admits bounded GitHub Operations Workroom paths for
-PR safety, Actions failure diagnosis, repository status summary, and patch-plan
-drafting. The
+PR safety, Actions failure diagnosis, repository status summary, patch-plan
+drafting, and issue drafting. The
 preview path creates a `UniversalGovernedEvent`, symbolic compilation,
 authority resolution, risk policy result, capability passport, causal episode
 plan, receipt, and memory gate. Live paths are constrained to GET-only GitHub
@@ -198,16 +198,19 @@ POST /operator/github-operations/repo-status/read-evidence
 GET  /operator/github-operations/patch-plan/read-model
 GET  /operator/github-operations/patch-plan
 POST /operator/github-operations/patch-plan/draft
+GET  /operator/github-operations/issue-draft/read-model
+GET  /operator/github-operations/issue-draft
+POST /operator/github-operations/issue-draft/draft
 ```
 
 The GET read model powers the browser-facing Workroom panel. Missing evidence
 returns `AwaitingEvidence` with required evidence listed; supplied evidence refs
 produce the same governed projection and receipt as the POST preview. The PR
-safety, Actions failure, repository status, and patch-plan surfaces preserve a
-closed effect boundary by default: no GitHub call, no repository read, no PR
-mutation, no branch push, no review submission, and no deployment change. Live
-read routes open GitHub read authority only for the admitted GET-only connector
-call.
+safety, Actions failure, repository status, patch-plan, and issue-draft surfaces
+preserve a closed effect boundary by default: no GitHub call, no repository
+read, no issue creation, no PR mutation, no branch push, no review submission,
+and no deployment change. Live read routes open GitHub read authority only for
+the admitted GET-only connector call.
 
 The read-admission preview binds planned live evidence collection to the
 existing certified `connector.github.read` capability. It admits only
@@ -373,6 +376,40 @@ refs, target summary, proposed steps, verification commands, risks, assumptions,
 and blocked actions. Missing objective, evidence refs, evidence summaries, or
 verification expectations returns `AwaitingEvidence` and defers memory update.
 Drafting earns a plan, not write authority.
+
+## GitHub Issue Draft
+
+The issue-draft path is the fifth narrow Workroom capability. It is a
+`Class 1 - Prepare` path that converts bounded diagnosis, status, PR safety, or
+patch-plan evidence refs into local issue title/body/label suggestions. It does
+not read GitHub, accept an access token, create issues, apply labels, assign
+users, post comments, mutate repository state, or claim that an issue exists on
+GitHub.
+
+Required evidence:
+
+```text
+problem_summary
+evidence_refs
+acceptance_criteria
+```
+
+Blocked actions:
+
+```text
+create_github_issue_without_explicit_approval
+apply_github_labels_without_write_admission
+assign_github_issue_without_write_admission
+post_github_comment_without_write_admission
+mutate_repository_without_write_admission
+claim_issue_created_without_live_receipt
+```
+
+The result is a draft-only causal receipt containing the issue title, issue
+body, suggested labels, evidence refs, acceptance criteria, and blocked actions.
+Missing problem summary, evidence refs, or acceptance criteria returns
+`AwaitingEvidence` and defers memory update. Drafting earns an issue proposal,
+not GitHub write authority.
 
 `evaluate_github_pr_safety_judgment` converts the read-only fetch result and
 fetch receipt into one bounded status:

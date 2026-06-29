@@ -100,6 +100,18 @@ def test_capability_debt_report_projects_missing_evidence_for_draft() -> None:
     assert "promotion" in categories
     assert draft["debt_row_is_not_execution_authority"] is True
     assert draft["live_action_enabled"] is False
+    replay_item = next(item for item in draft["debt_items"] if item["category"] == "replay")
+    assert replay_item["missing_refs"] == [
+        "replay_record",
+        "replay_input_digest",
+        "replay_output_digest",
+        "connector_id",
+        "recipient_hashes",
+        "draft_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+    ]
+    assert "replay_output_digest" in replay_item["fix"]
     rollback_item = next(item for item in draft["debt_items"] if item["category"] == "rollback")
     assert rollback_item["missing_refs"] == [
         "recovery_evidence_missing",

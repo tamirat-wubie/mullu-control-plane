@@ -78,6 +78,12 @@ such as `recovery_evidence_missing`, `rollback_capability`,
 `rollback_or_recovery_evidence`. This keeps recovery work actionable while
 remaining a read-only planning record.
 
+Replay debt is projected from the evidence passport replay packet. When
+deterministic replay evidence is missing, the debt item must name concrete refs
+such as `replay_record`, `replay_input_digest`, `replay_output_digest`, and the
+capability-specific receipts required to reproduce the action. This keeps replay
+work actionable while remaining a read-only planning record.
+
 ## Validation
 
 Run:

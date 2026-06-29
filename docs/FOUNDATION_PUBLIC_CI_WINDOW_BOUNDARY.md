@@ -89,6 +89,13 @@ After a public CI window is observed, build a window-specific receipt:
 python scripts/build_public_ci_window_receipt.py --pull-request 2391 --branch codex/public-ci-window-command-packet-fixture-20260629 --head-sha f6daa95ea7d45f8669401120411b191c6372903a --opened-at 2026-06-29T06:46:05Z --workflow-run-url https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28355217313 --workflow-run-url https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28355219685 --status closed --closed-at 2026-06-29T07:32:49Z --merged-at 2026-06-29T07:32:49Z --merge-commit a6b99615fc22f861b08369c2045658d5a04564c3 --repo-visibility-restored-at 2026-06-29T07:31:00Z --branch-deleted
 ```
 
+To prefill branch, SHA, merge, and workflow-run evidence from read-only GitHub
+metadata, use:
+
+```powershell
+python scripts/prefill_public_ci_window_receipt.py --pull-request 2400 --opened-at 2026-06-29T07:46:00Z --status closed --repo-visibility-restored-at 2026-06-29T08:06:00Z --branch-deleted
+```
+
 When the repository is public and live metadata is intentionally available, the
 remote surface check may also run:
 

@@ -1624,17 +1624,17 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     pr_operator_approval_command_preview_row = re.search(
-        r"^\| GitHub PR operator approval request command-preview binding PR \| READY \| .+agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.+operator approval request evidence.+command preview.+operator response.+command execution.+branch writes.+pull-request creation.+repository writes.+connector calls.+mutation routes.+receipt-store append.+secret material.+terminal closure remain blocked\. \|$",
+        r"^\| GitHub PR operator approval request command-preview execution-admission evidence binding PR \| READY \| .+agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.+operator approval request evidence.+command-preview execution-admission evidence.+source command preview ref.+source execution admission ref.+source admission id.+source decision.+source execution target ref.+source dry-run ref.+source dry-run receipt status.+source required-before-execution refs.+source blocked reason refs.+source command-preview-bound dry-run receipt evidence.+source redacted `gh pr create` command preview.+source operator decision ref.+source decision value.+no-adapter-execution evidence.+no-connector-call evidence.+no-pull-request-creation evidence.+no-repository-write evidence.+no-receipt-store-append evidence.+no-mutation-route evidence.+no-terminal-closure evidence.+no-success-claim evidence.+no-secret-value evidence.+operator response.+command execution.+branch writes.+pull-request creation.+repository writes.+connector calls.+mutation routes.+receipt-store append.+secret material.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
     if pr_operator_approval_command_preview_row is None:
         errors.append(
-            "missing ready row: GitHub PR operator approval request command-preview binding PR"
+            "missing ready row: GitHub PR operator approval request command-preview execution-admission evidence binding PR"
         )
 
     pr_operator_response_command_preview_row = re.search(
-        r"^\| GitHub PR operator response command-preview binding PR \| READY \| .+agentic_service_harness_github_pr_operator_response_command_preview_binding.+operator response witness.+command-preview-bound approval request.+operator response.+command execution.+branch writes.+pull-request creation.+repository writes.+connector calls.+mutation routes.+receipt-store append.+secret material.+terminal closure remain blocked\. \|$",
+        r"^\| GitHub PR operator response command-preview binding PR \| READY \| .+agentic_service_harness_github_pr_operator_response_command_preview_binding.+operator response witness.+command-preview approval request evidence.+source approval request binding ref.+source command-preview execution-admission binding.+no-secret-value evidence.+operator response.+command execution.+branch writes.+pull-request creation.+repository writes.+connector calls.+mutation routes.+receipt-store append.+secret material.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
@@ -1646,7 +1646,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind operator approval request to command-preview execution admission evidence",
+        "harness(pr): bind branch-write authority to command-preview operator response evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:

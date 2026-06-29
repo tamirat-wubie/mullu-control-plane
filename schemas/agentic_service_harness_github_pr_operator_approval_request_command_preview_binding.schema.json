@@ -243,6 +243,8 @@
         "source_execution_admitted",
         "source_execution_target_ref",
         "source_terminal_closure_allowed",
+        "source_required_before_execution_refs",
+        "source_blocked_reason_refs",
         "source_dry_run_ref",
         "source_dry_run_receipt_recorded",
         "source_command_preview_bound",
@@ -280,6 +282,8 @@
         "source_execution_admitted": { "type": "boolean", "const": false },
         "source_execution_target_ref": { "$ref": "#/$defs/evidence_ref" },
         "source_terminal_closure_allowed": { "type": "boolean", "const": false },
+        "source_required_before_execution_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "source_blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
         "source_dry_run_ref": {
           "type": "string",
           "const": "examples/agentic_service_harness_github_pr_creation_dry_run_receipt.foundation.json"

@@ -169,7 +169,8 @@ def _debt_items(
 
     replay = _mapping(evidence.get("replay"))
     if replay.get("missing_replay_evidence") is True:
-        items.append(_item(capability_id, "replay", "medium", "missing deterministic replay proof", ["replay_evidence"]))
+        missing_replay_refs = _string_list(replay.get("missing_replay_refs")) or ["replay_evidence"]
+        items.append(_item(capability_id, "replay", "medium", "missing deterministic replay proof", missing_replay_refs))
 
     blocked_stage_ids = _string_list(promotion.get("blocked_stage_ids"))
     if blocked_stage_ids:
@@ -276,7 +277,7 @@ def _fix(category: str, missing_refs: list[str]) -> str:
     if category == "rollback":
         return f"bind rollback, compensation, or recovery evidence: {', '.join(missing_refs)}"
     if category == "replay":
-        return "collect deterministic replay receipt"
+        return f"collect deterministic replay evidence: {', '.join(missing_refs)}"
     if category == "promotion":
         return f"close promotion controls: {', '.join(missing_refs)}"
     if category == "live_action":

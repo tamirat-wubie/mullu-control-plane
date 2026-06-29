@@ -139,6 +139,53 @@ REQUIRED_RECEIPT_REFS = {
     ),
     "github_pr_creation_command_preview_example": EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
 }
+COMMAND_PREVIEW_APPROVAL_REQUEST_EVIDENCE_BINDINGS = (
+    ("source_binding_id", ("binding_id",)),
+    ("source_command_preview_ref", ("source_command_preview_ref",)),
+    (
+        "source_operator_approval_request_actual_non_empty_diff_binding_ref",
+        ("source_operator_approval_request_actual_non_empty_diff_binding_ref",),
+    ),
+    ("source_operator_approval_request_ref", ("source_operator_approval_request_ref",)),
+    ("source_approval_request_id", ("approval_command_preview_binding", "approval_request_id")),
+    ("source_requested_evidence_ref", ("approval_command_preview_binding", "requested_evidence_ref")),
+    ("source_redacted_command_preview", ("approval_command_preview_binding", "redacted_command_preview")),
+    ("source_argument_vector_template", ("approval_command_preview_binding", "argument_vector_template")),
+    ("source_placeholder_refs", ("approval_command_preview_binding", "placeholder_refs")),
+    ("source_required_before_execution_refs", ("approval_command_preview_binding", "required_before_execution_refs")),
+    ("source_blocked_reason_refs", ("approval_command_preview_binding", "blocked_reason_refs")),
+    ("source_approval_request_bound", ("approval_command_preview_binding", "approval_request_bound")),
+    ("source_command_preview_bound", ("approval_command_preview_binding", "command_preview_bound")),
+    ("source_preview_rendered", ("approval_command_preview_binding", "preview_rendered")),
+    ("source_operator_response_collected", ("approval_command_preview_binding", "operator_response_collected")),
+    ("source_operator_approval_granted", ("approval_command_preview_binding", "operator_approval_granted")),
+    ("source_operator_approval_rejected", ("approval_command_preview_binding", "operator_approval_rejected")),
+    ("source_command_execution_admitted", ("approval_command_preview_binding", "command_execution_admitted")),
+    ("source_adapter_execution_enabled", ("approval_command_preview_binding", "adapter_execution_enabled")),
+    ("source_branch_write_enabled", ("approval_command_preview_binding", "branch_write_enabled")),
+    ("source_pull_request_creation_enabled", ("approval_command_preview_binding", "pull_request_creation_enabled")),
+    ("source_repository_write_enabled", ("approval_command_preview_binding", "repository_write_enabled")),
+    ("source_connector_call_enabled", ("approval_command_preview_binding", "connector_call_enabled")),
+    ("source_mutation_route_enabled", ("approval_command_preview_binding", "mutation_route_enabled")),
+    ("source_receipt_store_append_enabled", ("approval_command_preview_binding", "receipt_store_append_enabled")),
+    ("source_terminal_certificate_verified", ("approval_command_preview_binding", "terminal_certificate_verified")),
+    (
+        "source_command_preview_execution_admission_bound",
+        ("command_preview_execution_admission_evidence", "command_preview_execution_admission_bound"),
+    ),
+    (
+        "source_operator_approval_request_consumes_execution_admission_evidence",
+        (
+            "command_preview_execution_admission_evidence",
+            "operator_approval_request_consumes_execution_admission_evidence",
+        ),
+    ),
+    (
+        "source_operator_approval_request_remains_request_only",
+        ("command_preview_execution_admission_evidence", "operator_approval_request_remains_request_only"),
+    ),
+    ("source_contains_secret_values", ("command_preview_execution_admission_evidence", "contains_secret_values")),
+)
 REQUIRED_FALSE_FLAGS = (
     "terminal_closure",
     "execution_admitted",
@@ -178,6 +225,19 @@ REQUIRED_FALSE_FLAGS = (
     "receipt_store_appended",
     "raw_diff_body_serialized",
     "raw_file_content_serialized",
+    "source_operator_response_collected",
+    "source_operator_approval_granted",
+    "source_operator_approval_rejected",
+    "source_command_execution_admitted",
+    "source_adapter_execution_enabled",
+    "source_branch_write_enabled",
+    "source_pull_request_creation_enabled",
+    "source_repository_write_enabled",
+    "source_connector_call_enabled",
+    "source_mutation_route_enabled",
+    "source_receipt_store_append_enabled",
+    "source_terminal_certificate_verified",
+    "source_contains_secret_values",
 )
 REQUIRED_TRUE_FLAGS = (
     "planning_only",
@@ -190,11 +250,21 @@ REQUIRED_TRUE_FLAGS = (
     "preview_rendered",
     "blocks_command_execution",
     "required_for_closure",
+    "source_approval_request_bound",
+    "source_command_preview_bound",
+    "source_preview_rendered",
+    "source_command_preview_execution_admission_bound",
+    "source_operator_approval_request_consumes_execution_admission_evidence",
+    "source_operator_approval_request_remains_request_only",
+    "operator_response_consumes_approval_request_evidence",
+    "operator_response_remains_uncollected",
+    "command_preview_response_remains_preview_only",
 )
 ALLOWED_SECRET_KEYS = {
     "dns_mutation_enabled",
     "secret_mutation_enabled",
     "secret_values_serialized",
+    "source_contains_secret_values",
 }
 FORBIDDEN_SECRET_KEY_TOKENS = (
     "access_token",
@@ -338,6 +408,7 @@ def _validate_response_command_preview_binding_semantics(
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
     _validate_source_operator_response(payload, source_operator_response, errors, label)
     _validate_source_command_approval_binding(payload, source_command_approval_binding, errors, label)
+    _validate_command_preview_approval_request_evidence(payload, source_command_approval_binding, errors, label)
     _validate_command_shape(payload, errors, label)
     _validate_refs(payload, errors, label)
     _validate_remaining_witnesses(payload, errors, label)
@@ -409,6 +480,63 @@ def _validate_source_command_approval_binding(
         (("approval_command_preview_binding", "placeholder_refs"), ("response_command_preview_binding", "placeholder_refs")),
     ):
         _require_equal(payload, target_path, _get_nested(source_command_approval_binding, source_path), errors, label)
+
+
+def _validate_command_preview_approval_request_evidence(
+    payload: Mapping[str, Any],
+    source_command_approval_binding: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    evidence = _get_nested(payload, ("command_preview_approval_request_evidence",))
+    if not isinstance(evidence, Mapping):
+        errors.append(f"{label}: command_preview_approval_request_evidence must be an object")
+        return
+    if not source_command_approval_binding:
+        return
+    _require_equal(
+        payload,
+        ("command_preview_approval_request_evidence", "source_operator_approval_request_command_preview_binding_ref"),
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+        errors,
+        label,
+    )
+    for evidence_key, source_path in COMMAND_PREVIEW_APPROVAL_REQUEST_EVIDENCE_BINDINGS:
+        _require_equal(
+            payload,
+            ("command_preview_approval_request_evidence", evidence_key),
+            _get_nested(source_command_approval_binding, source_path),
+            errors,
+            label,
+        )
+    _require_equal(
+        payload,
+        ("command_preview_approval_request_evidence", "source_redacted_command_preview"),
+        _get_nested(payload, ("response_command_preview_binding", "redacted_command_preview")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_approval_request_evidence", "operator_response_consumes_approval_request_evidence"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_approval_request_evidence", "operator_response_remains_uncollected"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_approval_request_evidence", "command_preview_response_remains_preview_only"),
+        True,
+        errors,
+        label,
+    )
 
 
 def _validate_command_shape(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
