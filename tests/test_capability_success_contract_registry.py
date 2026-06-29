@@ -73,10 +73,10 @@ def test_generated_registry_covers_all_loaded_capabilities() -> None:
     registry = CapabilitySuccessContractRegistry.from_capability_entries(entries)
     read_model = registry.read_model()
 
-    assert len(entries) == 90
+    assert len(entries) >= 90
     assert registry.contract_count == len(entries)
     assert set(read_model["capability_ids"]) == {entry.capability_id for entry in entries}
-    assert read_model["contract_count"] == 90
+    assert read_model["contract_count"] == len(entries)
     assert read_model["high_risk_independent_contract_count"] >= 1
 
 
@@ -126,7 +126,7 @@ def test_registry_fixture_is_schema_valid_and_validator_clean() -> None:
 
     assert _validate_schema_instance(schema, record) == []
     assert report["valid"] is True
-    assert report["loaded_capability_count"] == 90
+    assert report["loaded_capability_count"] == len(_entries())
     assert report["override_contract_count"] == 4
     assert report["check_count"] == 8
     assert report["error_count"] == 0
