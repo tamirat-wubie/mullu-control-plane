@@ -388,7 +388,7 @@ jobs:
         run: python scripts/validate_public_ci_window_operator_command_packet.py
 
       - name: Test public CI window boundary
-        run: python -m pytest tests/test_validate_foundation_public_ci_window_boundary.py tests/test_generate_public_ci_window_operator_commands.py tests/test_validate_public_ci_window_operator_command_packet.py -q
+        run: python -m pytest tests/test_validate_foundation_public_ci_window_boundary.py tests/test_generate_public_ci_window_operator_commands.py tests/test_validate_public_ci_window_operator_command_packet.py tests/test_build_public_ci_window_receipt.py -q
 
       - name: Validate tenant-scope coverage (cross-tenant IDOR guard)
         run: python scripts/validate_tenant_scope_coverage.py
