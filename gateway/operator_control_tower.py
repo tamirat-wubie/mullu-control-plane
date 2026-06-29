@@ -4015,6 +4015,19 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     approval_boundary_next_capability = str(approval_boundary_summary.get("next_approval_capability_id") or "")
     approval_boundary_execution = str(approval_boundary_summary.get("execution_boundary") or "local_lab_only")
     approval_boundary_external_effects = approval_boundary_summary.get("external_effects_allowed") is True
+    approval_boundary_control = approval_boundary_summary.get("control_summary", {})
+    if not isinstance(approval_boundary_control, Mapping):
+        approval_boundary_control = {}
+    approval_boundary_control_contract = str(
+        approval_boundary_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    )
+    approval_boundary_control_summary_id = str(
+        approval_boundary_control.get("summary_id") or "approval_boundary.control_summary.v1"
+    )
+    approval_boundary_control_status = str(approval_boundary_control.get("status") or "approval_required")
+    approval_boundary_control_level = str(approval_boundary_control.get("current_level") or "L3")
+    approval_boundary_control_next_level = str(approval_boundary_control.get("next_level") or "L5")
+    approval_boundary_control_next_unlock = str(approval_boundary_control.get("next_unlock") or "approval")
     rollback_control_message = str(
         rollback_control_summary.get("operator_message")
         or "0 capabilities carry rollback default; 0 unlocks require rollback evidence; rollback execution remains receipt-bound"
@@ -4096,6 +4109,21 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     )
     unlock_readiness_boundary = str(unlock_readiness_summary.get("execution_boundary") or "local_lab_only")
     unlock_readiness_external_effects = unlock_readiness_summary.get("external_effects_allowed") is True
+    unlock_readiness_control = unlock_readiness_summary.get("control_summary", {})
+    if not isinstance(unlock_readiness_control, Mapping):
+        unlock_readiness_control = {}
+    unlock_readiness_control_contract = str(
+        unlock_readiness_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    )
+    unlock_readiness_control_summary_id = str(
+        unlock_readiness_control.get("summary_id") or "unlock_readiness.control_summary.v1"
+    )
+    unlock_readiness_control_status = str(unlock_readiness_control.get("status") or "approval_required")
+    unlock_readiness_control_level = str(unlock_readiness_control.get("current_level") or "L4")
+    unlock_readiness_control_next_level = str(unlock_readiness_control.get("next_level") or "L5")
+    unlock_readiness_control_next_unlock = str(
+        unlock_readiness_control.get("next_unlock") or unlock_readiness_next_unlock
+    )
     control_system_evidence = control_system_summary.get("next_required_evidence", ())
     if not isinstance(control_system_evidence, list):
         control_system_evidence = []
@@ -5623,6 +5651,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <h2>Approval Boundary Summary</h2>
     <div class="task">
       <span class="field"><strong>Message</strong>{escape(approval_boundary_message)}</span>
+      <span class="field"><strong>Control contract</strong>{escape(approval_boundary_control_contract)}</span>
+      <span class="field"><strong>Control summary</strong>{escape(approval_boundary_control_summary_id)}</span>
+      <span class="field"><strong>Control status</strong>{escape(approval_boundary_control_status)}</span>
+      <span class="field"><strong>Control level</strong>{escape(approval_boundary_control_level)} -> {escape(approval_boundary_control_next_level)}</span>
+      <span class="field"><strong>Control next unlock</strong>{escape(approval_boundary_control_next_unlock)}</span>
       <span class="field"><strong>Local automatic candidates</strong>{approval_boundary_local_auto}</span>
       <span class="field"><strong>Approval unlocks</strong>{approval_boundary_unlock_count}</span>
       <span class="field"><strong>Dangerous approvals</strong>{approval_boundary_dangerous_count}</span>
@@ -5697,6 +5730,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <h2>Unlock Readiness Summary</h2>
     <div class="task">
       <span class="field"><strong>Message</strong>{escape(unlock_readiness_message)}</span>
+      <span class="field"><strong>Control contract</strong>{escape(unlock_readiness_control_contract)}</span>
+      <span class="field"><strong>Control summary</strong>{escape(unlock_readiness_control_summary_id)}</span>
+      <span class="field"><strong>Control status</strong>{escape(unlock_readiness_control_status)}</span>
+      <span class="field"><strong>Control level</strong>{escape(unlock_readiness_control_level)} -> {escape(unlock_readiness_control_next_level)}</span>
+      <span class="field"><strong>Control next unlock</strong>{escape(unlock_readiness_control_next_unlock)}</span>
       <span class="field"><strong>Pending unlocks</strong>{unlock_readiness_pending_count}</span>
       <span class="field"><strong>Safe candidates</strong>{unlock_readiness_safe_count}</span>
       <span class="field"><strong>Dangerous blockers</strong>{unlock_readiness_dangerous_count}</span>

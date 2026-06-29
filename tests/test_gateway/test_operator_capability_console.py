@@ -721,6 +721,22 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert "local automatic candidates" in approval_boundary["operator_message"]
     assert approval_boundary["execution_boundary"] == "local_lab_only"
     assert approval_boundary["external_effects_allowed"] is False
+    assert approval_boundary["control_summary"] == {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": "approval_boundary.control_summary.v1",
+        "operator_message": approval_boundary["operator_message"],
+        "action_banner": approval_boundary["operator_message"],
+        "capability_id": approval_boundary["next_approval_capability_id"],
+        "mode": "lab",
+        "current_level": "L3",
+        "next_level": "L5",
+        "status": "approval_required",
+        "blocked_reason": "before_pr_or_real_world_effect",
+        "next_unlock": "approval",
+        "next_evidence_count": approval_boundary["approval_unlock_count"],
+        "external_effects_allowed": False,
+        "rollback_required": True,
+    }
     rollback_control = capability_panel["metadata"]["rollback_control_summary"]
     assert rollback_control["summary_id"] == "rollback_control.foundation"
     assert rollback_control["rollback_default_count"] == rollback["rollback_default_count"]
@@ -774,6 +790,22 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert "pending unlocks; next evidence" in unlock_readiness["operator_message"]
     assert unlock_readiness["execution_boundary"] == "local_lab_only"
     assert unlock_readiness["external_effects_allowed"] is False
+    assert unlock_readiness["control_summary"] == {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": "unlock_readiness.control_summary.v1",
+        "operator_message": unlock_readiness["operator_message"],
+        "action_banner": unlock_readiness["operator_message"],
+        "capability_id": unlock_readiness["next_capability_id"],
+        "mode": "lab",
+        "current_level": "L4",
+        "next_level": "L5",
+        "status": "approval_required",
+        "blocked_reason": unlock_readiness["next_unlock"],
+        "next_unlock": unlock_readiness["next_unlock"],
+        "next_evidence_count": unlock_readiness["next_required_evidence_count"],
+        "external_effects_allowed": False,
+        "rollback_required": True,
+    }
     control_system = capability_panel["metadata"]["control_system_summary"]
     assert control_system["summary_id"] == "control_system.foundation"
     assert control_system["task"] == "Mullu Developer Workflow v1"
@@ -1755,6 +1787,7 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Lab mode can prepare 7 local candidates" in response.text
     assert "Real-world write status" in response.text
     assert "Approval Boundary Summary" in response.text
+    assert "approval_boundary.control_summary.v1" in response.text
     assert "PR approval required" in response.text
     assert "before_pr_or_real_world_effect" in response.text
     assert "Rollback Control Summary" in response.text
@@ -1770,6 +1803,7 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "7 local-lab candidates available; 7 real-world zones blocked pending explicit approval" in response.text
     assert "Unlock Readiness Summary" in response.text
     assert "pending unlocks; next evidence" in response.text
+    assert "unlock_readiness.control_summary.v1" in response.text
     assert "Approval blockers" in response.text
     assert "Control System Summary" in response.text
     assert "Control system in fast mode" in response.text

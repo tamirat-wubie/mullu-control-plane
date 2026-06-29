@@ -136,6 +136,7 @@ from gateway.command_spine import build_command_ledger_from_env, canonical_hash
 from gateway.conformance import issue_conformance_certificate
 from gateway.enterprise_authority import AuthorityDecision
 from gateway.evidence_bundle import build_command_trust_bundle
+from gateway.evidence_ledger_read_model import build_foundation_evidence_ledger_read_model
 from gateway.event_log import WebhookEventLog
 from gateway.federated_control import FederatedControlPlane, federated_control_snapshot_to_json_dict
 from gateway.governed_operations import (
@@ -2183,6 +2184,38 @@ def _approval_boundary_summary(
         if isinstance(item, Mapping) and item.get("approval_required") is True
     )
     pr_approval_required = sandbox_to_pr_policy.get("approval_required") is True
+    next_approval_capability_id = str(
+        next(
+            (
+                item.get("capability_id")
+                for item in next_unlock_queue
+                if isinstance(item, Mapping) and str(item.get("next_unlock") or "") == "approval"
+            ),
+            "",
+        )
+        or ""
+    )
+    operator_message = (
+        f"{len(safe_candidates)} local automatic candidates; "
+        f"{approval_unlock_count} capability unlocks need approval; "
+        f"{dangerous_approval_count} dangerous zones remain approval-bound"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="approval_boundary.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock="approval" if approval_unlock_count or pr_approval_required else "none",
+        capability_summary={
+            "capability_id": next_approval_capability_id or "approval_boundary.local_lab",
+            "mode": "lab",
+            "current_level": "L3",
+            "next_level": "L5",
+            "status": "approval_required" if approval_unlock_count or pr_approval_required else "preflight_ready",
+            "blocked_reason": "before_pr_or_real_world_effect" if pr_approval_required else "none",
+            "next_evidence_count": approval_unlock_count,
+            "external_effects_allowed": False,
+            "rollback_required": pr_approval_required,
+        },
+    )
     return {
         "summary_id": "approval_boundary.foundation",
         "local_auto_candidate_count": len(safe_candidates),
@@ -2190,24 +2223,15 @@ def _approval_boundary_summary(
         "dangerous_approval_required_count": dangerous_approval_count,
         "pr_approval_required": pr_approval_required,
         "approval_boundary": "before_pr_or_real_world_effect",
-        "next_approval_capability_id": str(
-            next(
-                (
-                    item.get("capability_id")
-                    for item in next_unlock_queue
-                    if isinstance(item, Mapping) and str(item.get("next_unlock") or "") == "approval"
-                ),
-                "",
-            )
-            or ""
-        ),
-        "operator_message": (
-            f"{len(safe_candidates)} local automatic candidates; "
-            f"{approval_unlock_count} capability unlocks need approval; "
-            f"{dangerous_approval_count} dangerous zones remain approval-bound"
-        ),
+        "next_approval_capability_id": next_approval_capability_id,
+        "operator_message": operator_message,
         "execution_boundary": "local_lab_only",
         "external_effects_allowed": False,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 
@@ -2263,6 +2287,27 @@ def _unlock_readiness_summary(
     )
     next_capability_id = str(first_unlock.get("capability_id") or "") if isinstance(first_unlock, Mapping) else ""
     next_unlock = str(first_unlock.get("next_unlock") or "approval") if isinstance(first_unlock, Mapping) else "approval"
+    operator_message = (
+        f"{len(next_unlock_queue)} pending unlocks; next evidence for "
+        f"{next_capability_id or 'capability review'} is {next_unlock}; "
+        f"{approval_blocker_count} dangerous zones require explicit approval"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="unlock_readiness.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock=next_unlock,
+        capability_summary={
+            "capability_id": next_capability_id or "unlock_readiness.local_lab",
+            "mode": "lab",
+            "current_level": "L4" if next_unlock_queue else "L3",
+            "next_level": "L5",
+            "status": "approval_required" if next_unlock_queue else "preflight_ready",
+            "blocked_reason": next_unlock if next_unlock_queue else "none",
+            "next_evidence_count": len(next_required_evidence),
+            "external_effects_allowed": False,
+            "rollback_required": next_unlock_queue != [],
+        },
+    )
     return {
         "summary_id": "unlock_readiness.local_lab",
         "pending_unlock_count": len(next_unlock_queue),
@@ -2274,13 +2319,14 @@ def _unlock_readiness_summary(
         "next_required_evidence_count": len(next_required_evidence),
         "safe_candidates_ready": len(safe_candidates),
         "dangerous_blockers_requiring_approval": approval_blocker_count,
-        "operator_message": (
-            f"{len(next_unlock_queue)} pending unlocks; next evidence for "
-            f"{next_capability_id or 'capability review'} is {next_unlock}; "
-            f"{approval_blocker_count} dangerous zones require explicit approval"
-        ),
+        "operator_message": operator_message,
         "execution_boundary": "local_lab_only",
         "external_effects_allowed": False,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 
@@ -6043,6 +6089,10 @@ def create_gateway_app(
         return build_agentic_service_harness_status_projection(
             read_model_source=agentic_service_harness_read_model_source,
         )
+
+    @app.get("/api/v1/evidence-ledger/read-model")
+    def evidence_ledger_read_model():
+        return build_foundation_evidence_ledger_read_model(generated_at=_clock())
 
     @app.get("/api/v1/personal-assistant/skills")
     def personal_assistant_skill_read_model():
