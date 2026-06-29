@@ -1902,9 +1902,34 @@ def _dangerous_action_blocker_summary(
     if not isinstance(required_evidence, list):
         required_evidence = []
     required_evidence_ids = [str(item) for item in required_evidence if str(item).strip()][:8]
+    blocker_status = "blocked" if blocker_count else "clear"
+    operator_message = (
+        f"{blocker_count} dangerous real-world zones blocked; "
+        "approval, rollback, and effect receipt required before execution"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="dangerous_action_blocker.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock="approval" if blocker_count else "none",
+        capability_summary={
+            "capability_id": "dangerous_action_blocker.foundation",
+            "mode": "real_world",
+            "current_level": "L0",
+            "next_level": "L9",
+            "status": "blocked" if blocker_count else "preflight_ready",
+            "blocked_reason": (
+                "dangerous_zone_requires_explicit_approval"
+                if blocker_count
+                else "none"
+            ),
+            "next_evidence_count": len(required_evidence_ids),
+            "external_effects_allowed": False,
+            "rollback_required": blocker_count > 0,
+        },
+    )
     return {
         "summary_id": "dangerous_action_blocker.foundation",
-        "blocker_status": "blocked" if blocker_count else "clear",
+        "blocker_status": blocker_status,
         "blocker_count": blocker_count,
         "first_blocker_id": str(first_blocker.get("blocker_id") or ""),
         "first_zone": str(first_blocker.get("zone") or ""),
@@ -1916,10 +1941,12 @@ def _dangerous_action_blocker_summary(
         "rollback_required": blocker_count > 0,
         "real_world_execution_boundary": "real_world",
         "external_effects_allowed": False,
-        "operator_message": (
-            f"{blocker_count} dangerous real-world zones blocked; "
-            "approval, rollback, and effect receipt required before execution"
-        ),
+        "operator_message": operator_message,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 

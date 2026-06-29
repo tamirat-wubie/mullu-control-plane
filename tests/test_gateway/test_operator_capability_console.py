@@ -885,6 +885,28 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
             "7 dangerous real-world zones blocked; "
             "approval, rollback, and effect receipt required before execution"
         ),
+        "control_summary": {
+            "contract_id": "operator_dashboard_control_summary.v1",
+            "summary_id": "dangerous_action_blocker.control_summary.v1",
+            "operator_message": (
+                "7 dangerous real-world zones blocked; "
+                "approval, rollback, and effect receipt required before execution"
+            ),
+            "action_banner": (
+                "7 dangerous real-world zones blocked; "
+                "approval, rollback, and effect receipt required before execution"
+            ),
+            "capability_id": "dangerous_action_blocker.foundation",
+            "mode": "real_world",
+            "current_level": "L0",
+            "next_level": "L9",
+            "status": "blocked",
+            "blocked_reason": "dangerous_zone_requires_explicit_approval",
+            "next_unlock": "approval",
+            "next_evidence_count": 3,
+            "external_effects_allowed": False,
+            "rollback_required": True,
+        },
     }
     assert rollback["rollback_default_count"] >= 1
     assert rollback["rollback_required_count"] >= 1
@@ -1694,10 +1716,16 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Safe Automatic Action Candidates" in response.text
     assert "Safe Local Action Queue" in response.text
     assert "7 safe local actions queued for fast mode" in response.text
+    assert "safe_local_action_queue.control_summary.v1" in response.text
+    assert "Control level</strong>L3 -> L4" in response.text
+    assert "Control next unlock</strong>none" in response.text
     assert "Prepare documentation update" in response.text
     assert "Prepare documentation update in local sandbox" in response.text
     assert "Dangerous Zone Blockers" in response.text
     assert "dangerous real-world zones blocked" in response.text
+    assert "dangerous_action_blocker.control_summary.v1" in response.text
+    assert "Control level</strong>L0 -> L9" in response.text
+    assert "Control next unlock</strong>approval" in response.text
     assert "approval, rollback, and effect receipt required before execution" in response.text
     assert "dangerous_zone_requires_explicit_approval" in response.text
     assert "high, real-world boundary" in response.text

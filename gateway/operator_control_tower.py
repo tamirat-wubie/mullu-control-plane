@@ -3901,6 +3901,19 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
         safe_local_action_queue_summary.get("local_execution_boundary") or "local_lab_only"
     )
     safe_local_queue_external_effects = safe_local_action_queue_summary.get("external_effects_allowed") is True
+    safe_local_queue_control = safe_local_action_queue_summary.get("control_summary", {})
+    if not isinstance(safe_local_queue_control, Mapping):
+        safe_local_queue_control = {}
+    safe_local_queue_control_contract = str(
+        safe_local_queue_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    )
+    safe_local_queue_control_summary_id = str(
+        safe_local_queue_control.get("summary_id") or "safe_local_action_queue.control_summary.v1"
+    )
+    safe_local_queue_control_status = str(safe_local_queue_control.get("status") or "preflight_ready")
+    safe_local_queue_control_level = str(safe_local_queue_control.get("current_level") or "L3")
+    safe_local_queue_control_next_level = str(safe_local_queue_control.get("next_level") or "L4")
+    safe_local_queue_control_next_unlock = str(safe_local_queue_control.get("next_unlock") or "none")
     dangerous_zone_blocker_rows = "\n".join(
         "<tr>"
         f"<td>{escape(str(item.get('zone', '')))}</td>"
@@ -3959,6 +3972,19 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
         dangerous_action_blocker_summary.get("real_world_execution_boundary") or "real_world"
     )
     dangerous_blocker_external_effects = dangerous_action_blocker_summary.get("external_effects_allowed") is True
+    dangerous_blocker_control = dangerous_action_blocker_summary.get("control_summary", {})
+    if not isinstance(dangerous_blocker_control, Mapping):
+        dangerous_blocker_control = {}
+    dangerous_blocker_control_contract = str(
+        dangerous_blocker_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    )
+    dangerous_blocker_control_summary_id = str(
+        dangerous_blocker_control.get("summary_id") or "dangerous_action_blocker.control_summary.v1"
+    )
+    dangerous_blocker_control_status = str(dangerous_blocker_control.get("status") or "blocked")
+    dangerous_blocker_control_level = str(dangerous_blocker_control.get("current_level") or "L0")
+    dangerous_blocker_control_next_level = str(dangerous_blocker_control.get("next_level") or "L9")
+    dangerous_blocker_control_next_unlock = str(dangerous_blocker_control.get("next_unlock") or "approval")
     lab_real_world_message = str(
         lab_real_world_summary.get("operator_message")
         or "Lab mode can prepare 0 local candidates; real-world writes remain blocked; 0 dangerous zones need approval"
@@ -5697,6 +5723,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <h2>Safe Local Action Queue</h2>
     <div class="task">
       <span class="field"><strong>Message</strong>{escape(safe_local_queue_message)}</span>
+      <span class="field"><strong>Control contract</strong>{escape(safe_local_queue_control_contract)}</span>
+      <span class="field"><strong>Control summary</strong>{escape(safe_local_queue_control_summary_id)}</span>
+      <span class="field"><strong>Control status</strong>{escape(safe_local_queue_control_status)}</span>
+      <span class="field"><strong>Control level</strong>{escape(safe_local_queue_control_level)} -> {escape(safe_local_queue_control_next_level)}</span>
+      <span class="field"><strong>Control next unlock</strong>{escape(safe_local_queue_control_next_unlock)}</span>
       <span class="field"><strong>Status</strong>{escape(safe_local_queue_status)}</span>
       <span class="field"><strong>Candidates</strong>{safe_local_queue_count}</span>
       <span class="field"><strong>First candidate</strong>{escape(safe_local_queue_first_id)}</span>
@@ -5719,6 +5750,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <h2>Dangerous Zone Blockers</h2>
     <div class="task">
       <span class="field"><strong>Message</strong>{escape(dangerous_blocker_message)}</span>
+      <span class="field"><strong>Control contract</strong>{escape(dangerous_blocker_control_contract)}</span>
+      <span class="field"><strong>Control summary</strong>{escape(dangerous_blocker_control_summary_id)}</span>
+      <span class="field"><strong>Control status</strong>{escape(dangerous_blocker_control_status)}</span>
+      <span class="field"><strong>Control level</strong>{escape(dangerous_blocker_control_level)} -> {escape(dangerous_blocker_control_next_level)}</span>
+      <span class="field"><strong>Control next unlock</strong>{escape(dangerous_blocker_control_next_unlock)}</span>
       <span class="field"><strong>Status</strong>{escape(dangerous_blocker_status)}</span>
       <span class="field"><strong>Blockers</strong>{dangerous_blocker_count}</span>
       <span class="field"><strong>First blocker</strong>{escape(dangerous_blocker_first_id)}</span>

@@ -101,6 +101,34 @@
       "blocked://terminal-closure/not-authorized"
     ]
   },
+  "command_preview_execution_admission_evidence": {
+    "source_command_preview_ref": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
+    "source_execution_admission_ref": "examples/agentic_service_harness_github_pr_creation_execution_admission.foundation.json",
+    "source_admission_id": "github-pr-creation-execution-admission-foundation",
+    "source_decision": "PR_CREATION_EXECUTION_BLOCKED_DRY_RUN_BOUND_AWAITING_LIVE_AUTHORITY",
+    "source_execution_admitted": false,
+    "source_execution_target_ref": "github-pr://agentic-service-harness/task-run",
+    "source_terminal_closure_allowed": false,
+    "source_dry_run_ref": "examples/agentic_service_harness_github_pr_creation_dry_run_receipt.foundation.json",
+    "source_dry_run_receipt_recorded": true,
+    "source_command_preview_bound": true,
+    "source_redacted_command_preview": "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> --body-file <redacted-body-file-ref>",
+    "source_operator_decision_ref": "operator-decision://github-pr-terminal-closure/2026-06-26/approve-terminal-certificate",
+    "source_decision_value": "approve_terminal_certificate",
+    "source_pull_request_creation_enabled": false,
+    "source_repository_write_enabled": false,
+    "source_receipt_store_append_enabled": false,
+    "source_mutation_route_enabled": false,
+    "source_secret_values_serialized": false,
+    "source_adapter_executed": false,
+    "source_connector_calls_observed": false,
+    "source_terminal_closure": false,
+    "source_success_claim_allowed": false,
+    "command_preview_execution_admission_bound": true,
+    "operator_approval_request_consumes_execution_admission_evidence": true,
+    "operator_approval_request_remains_request_only": true,
+    "contains_secret_values": false
+  },
   "remaining_witnesses": [
     {
       "witness_kind": "operator_response_record",

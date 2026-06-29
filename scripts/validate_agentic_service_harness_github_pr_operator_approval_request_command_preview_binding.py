@@ -199,6 +199,8 @@ ALLOWED_SECRET_KEYS = {
     "dns_mutation_enabled",
     "secret_mutation_enabled",
     "secret_values_serialized",
+    "source_secret_values_serialized",
+    "contains_secret_values",
 }
 FORBIDDEN_SECRET_KEY_TOKENS = (
     "access_token",
