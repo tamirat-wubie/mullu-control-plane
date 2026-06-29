@@ -236,6 +236,7 @@ def _rollback_packet(passport: Mapping[str, Any]) -> dict[str, Any]:
     if status not in {"not_required", "ready", "compensation_only", "review_only", "missing"}:
         raise EvidencePassportError(f"{passport['capability_id']}: unsupported rollback status {status!r}")
     rollback_ready = status in {"not_required", "ready", "compensation_only"}
+    missing_refs = _rollback_missing_refs(status, rollback_status)
     return {
         "rollback_status": status,
         "rollback_capability": str(rollback_status.get("rollback_capability", "")),
@@ -244,7 +245,30 @@ def _rollback_packet(passport: Mapping[str, Any]) -> dict[str, Any]:
         "rollback_evidence_missing": status in {"review_only", "missing"},
         "can_rollback": status in {"ready", "not_required"},
         "can_compensate": status == "compensation_only",
+        "missing_rollback_refs": missing_refs,
+        "next_rollback_action": (
+            f"bind rollback, compensation, or recovery evidence: {', '.join(missing_refs)}"
+            if missing_refs
+            else "no rollback evidence required"
+        ),
     }
+
+
+def _rollback_missing_refs(
+    status: str,
+    rollback_status: Mapping[str, Any],
+) -> list[str]:
+    if status not in {"review_only", "missing"}:
+        return []
+    refs = ["recovery_evidence_missing"]
+    if not str(rollback_status.get("rollback_capability", "")):
+        refs.append("rollback_capability")
+    if not str(rollback_status.get("compensation_capability", "")):
+        refs.append("compensation_capability")
+    if rollback_status.get("review_required_on_failure") is True:
+        refs.append("failure_review_receipt")
+    refs.append("rollback_or_recovery_evidence")
+    return _dedupe(refs)
 
 
 def _replay_packet(

@@ -77,6 +77,14 @@ def test_evidence_passports_answer_core_proof_questions() -> None:
     assert email["replay"]["replay_required"] is True
     assert email["rollback"]["rollback_status"] in {"review_only", "missing"}
     assert email["rollback"]["rollback_or_compensation_available"] is False
+    assert email["rollback"]["missing_rollback_refs"] == [
+        "recovery_evidence_missing",
+        "rollback_capability",
+        "compensation_capability",
+        "failure_review_receipt",
+        "rollback_or_recovery_evidence",
+    ]
+    assert "failure_review_receipt" in email["rollback"]["next_rollback_action"]
     assert email["continuation"]["safe_to_continue"] is True
     assert email["continuation"]["safe_for_live_action"] is False
 
@@ -101,6 +109,8 @@ def test_evidence_passports_project_approval_and_rollback_state() -> None:
     assert "separation_of_duty" in payment["approval"]["missing_approval_refs"]
     assert payment["rollback"]["rollback_status"] == "compensation_only"
     assert payment["rollback"]["can_compensate"] is True
+    assert payment["rollback"]["missing_rollback_refs"] == []
+    assert payment["rollback"]["next_rollback_action"] == "no rollback evidence required"
     assert payment["outcome"] == "AwaitingEvidence"
     assert payment["proof_state"] == "Unknown"
     assert payment["continuation"]["continuation_mode"] == "approval_required"

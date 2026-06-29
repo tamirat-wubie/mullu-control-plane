@@ -71,6 +71,13 @@ missing approval gate, `approval_decision_receipt`, required approval inputs,
 and the blocked approval action. This keeps approval work actionable while
 remaining a read-only planning record.
 
+Rollback debt is projected from the evidence passport rollback packet. When
+rollback or recovery evidence is missing, the debt item must name concrete refs
+such as `recovery_evidence_missing`, `rollback_capability`,
+`compensation_capability`, `failure_review_receipt`, and
+`rollback_or_recovery_evidence`. This keeps recovery work actionable while
+remaining a read-only planning record.
+
 ## Validation
 
 Run:
