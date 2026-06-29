@@ -33,7 +33,9 @@ from gateway.operator_capability_console import (  # noqa: E402
 )
 from gateway.operator_control_tower import (  # noqa: E402
     developer_workflow_capability_summary,
+    developer_workflow_control_summary,
     developer_workflow_operator_action_banner,
+    operator_dashboard_control_summary,
 )
 from gateway.operator_sandbox_patch_readiness import (  # noqa: E402
     SANDBOX_PATCH_READINESS_REGISTRY,
@@ -840,6 +842,28 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
             "7 safe local actions queued for fast mode; "
             "approval not required for local preparation"
         ),
+        "control_summary": {
+            "contract_id": "operator_dashboard_control_summary.v1",
+            "summary_id": "safe_local_action_queue.control_summary.v1",
+            "operator_message": (
+                "7 safe local actions queued for fast mode; "
+                "approval not required for local preparation"
+            ),
+            "action_banner": (
+                "7 safe local actions queued for fast mode; "
+                "approval not required for local preparation"
+            ),
+            "capability_id": "safe_local_action_queue.foundation",
+            "mode": "lab",
+            "current_level": "L3",
+            "next_level": "L4",
+            "status": "preflight_ready",
+            "blocked_reason": "none",
+            "next_unlock": "none",
+            "next_evidence_count": 0,
+            "external_effects_allowed": False,
+            "rollback_required": False,
+        },
     }
     assert capability_panel["metadata"]["dangerous_action_blocker_summary"] == {
         "summary_id": "dangerous_action_blocker.foundation",
@@ -1210,6 +1234,12 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
         "ready_for_external_pr_execution": False,
         "command_preview_rendered": False,
         "next_evidence_count": 7,
+        "local_candidate_ready": False,
+        "pr_tool_admitted": False,
+        "external_approval_status": "pending",
+        "rollback_required": True,
+        "rollback_command_count": 0,
+        "evidence_chain_count": 4,
         "execution_performed": False,
         "external_effects_allowed": False,
     }
@@ -1386,6 +1416,12 @@ def test_operator_control_tower_can_opt_into_local_sandbox_receipt_bundle(
         "ready_for_external_pr_execution": False,
         "command_preview_rendered": False,
         "next_evidence_count": 7,
+        "local_candidate_ready": False,
+        "pr_tool_admitted": False,
+        "external_approval_status": "pending",
+        "rollback_required": True,
+        "rollback_command_count": 0,
+        "evidence_chain_count": 4,
         "execution_performed": False,
         "external_effects_allowed": False,
     }
@@ -3657,6 +3693,21 @@ def test_operator_control_tower_developer_workflow_status_read_model_route(monke
     assert "prepare PR candidate" in capability_summary["allowed_actions"]
     assert "create PR" in capability_summary["blocked_actions"]
     assert "push branch" in capability_summary["blocked_actions"]
+    control_summary = read_model["control_summary"]
+    assert control_summary["summary_id"] == "developer_workflow_control_summary.v1"
+    assert control_summary["contract_id"] == "operator_dashboard_control_summary.v1"
+    assert control_summary["operator_message"] == read_model["summary"]["action_banner"]
+    assert control_summary["action_banner"] == read_model["summary"]["action_banner"]
+    assert control_summary["capability_id"] == capability_summary["capability_id"]
+    assert control_summary["mode"] == capability_summary["mode"]
+    assert control_summary["current_level"] == capability_summary["current_level"]
+    assert control_summary["next_level"] == capability_summary["next_level"]
+    assert control_summary["status"] == capability_summary["status"]
+    assert control_summary["blocked_reason"] == capability_summary["blocked_reason"]
+    assert control_summary["next_unlock"] == "external_approval_witness"
+    assert control_summary["next_evidence_count"] == capability_summary["next_evidence_count"]
+    assert control_summary["external_effects_allowed"] is False
+    assert control_summary["rollback_required"] is True
 
 
 def test_operator_control_tower_read_model_surfaces_generated_operator_receipt(
@@ -3744,6 +3795,8 @@ def test_operator_control_tower_html_action_banner_uses_generated_receipt(
     assert response.status_code == 200
     assert "Action needed before PR execution: provide external_approval_witness" in response.text
     assert "external approval is pending" in response.text
+    assert "Control contract: operator_dashboard_control_summary.v1" in response.text
+    assert "Control summary: developer_workflow_control_summary.v1" in response.text
     assert "Capability: mullu_developer_workflow.v1" in response.text
     assert "Mode: lab" in response.text
     assert "Current level: L4" in response.text
@@ -3825,6 +3878,77 @@ def test_developer_workflow_capability_summary_cases() -> None:
     assert "prepare PR candidate" in summary["allowed_actions"]
     assert "create PR" in summary["blocked_actions"]
     assert "push branch" in summary["blocked_actions"]
+
+
+def test_operator_dashboard_control_summary_contract_cases() -> None:
+    summary = operator_dashboard_control_summary(
+        summary_id="example_control_summary.v1",
+        operator_message="Action needed: provide approval",
+        next_unlock="approval",
+        capability_summary={
+            "capability_id": "example.capability",
+            "mode": "lab",
+            "current_level": "L2",
+            "next_level": "L3",
+            "status": "approval_required",
+            "blocked_reason": "approval pending",
+            "next_evidence_count": 1,
+            "external_effects_allowed": False,
+            "rollback_required": True,
+        },
+    )
+
+    assert summary["contract_id"] == "operator_dashboard_control_summary.v1"
+    assert summary["summary_id"] == "example_control_summary.v1"
+    assert summary["operator_message"] == "Action needed: provide approval"
+    assert summary["action_banner"] == "Action needed: provide approval"
+    assert summary["capability_id"] == "example.capability"
+    assert summary["mode"] == "lab"
+    assert summary["current_level"] == "L2"
+    assert summary["next_level"] == "L3"
+    assert summary["status"] == "approval_required"
+    assert summary["blocked_reason"] == "approval pending"
+    assert summary["next_unlock"] == "approval"
+    assert summary["next_evidence_count"] == 1
+    assert summary["external_effects_allowed"] is False
+    assert summary["rollback_required"] is True
+    assert summary["capability_summary"]["capability_id"] == "example.capability"
+
+
+def test_developer_workflow_control_summary_cases() -> None:
+    summary = developer_workflow_control_summary(
+        {
+            "ready_for_external_pr_execution": False,
+            "external_approval_status": "pending",
+            "command_preview_rendered": False,
+            "first_next_evidence": "",
+            "local_candidate_ready": True,
+            "pr_tool_admitted": True,
+            "sandbox_receipts_completed": 4,
+            "sandbox_receipts_required": 4,
+            "next_evidence": ["external_approval_witness", "command_preview"],
+            "rollback_required": True,
+        }
+    )
+
+    assert summary["contract_id"] == "operator_dashboard_control_summary.v1"
+    assert summary["summary_id"] == "developer_workflow_control_summary.v1"
+    assert summary["operator_message"] == (
+        "Action needed before PR execution: provide external_approval_witness; "
+        "external approval is pending."
+    )
+    assert summary["action_banner"] == summary["operator_message"]
+    assert summary["capability_id"] == "mullu_developer_workflow.v1"
+    assert summary["mode"] == "lab"
+    assert summary["current_level"] == "L4"
+    assert summary["next_level"] == "L5"
+    assert summary["status"] == "approval_required"
+    assert summary["blocked_reason"] == "external approval pending"
+    assert summary["next_unlock"] == "external_approval_witness"
+    assert summary["next_evidence_count"] == 2
+    assert summary["external_effects_allowed"] is False
+    assert summary["rollback_required"] is True
+    assert summary["capability_summary"]["next_evidence"] == ["external_approval_witness", "command_preview"]
 
 
 def test_operator_control_tower_projects_rollback_receipt_visibility() -> None:

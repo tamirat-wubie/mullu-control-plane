@@ -193,8 +193,8 @@ from gateway.operator_capability_console import (
 from gateway.operator_control_tower import (
     OperatorControlTowerBuilder,
     OperatorPanelKind,
-    developer_workflow_capability_summary,
-    developer_workflow_operator_action_banner,
+    developer_workflow_control_summary,
+    operator_dashboard_control_summary,
     operator_control_tower_snapshot_to_json_dict,
     operator_control_tower_status_receipt,
     render_operator_control_tower,
@@ -1849,9 +1849,30 @@ def _safe_local_action_queue_summary(
     first_candidate = safe_candidates[0] if safe_candidates else {}
     recommended_mode = str(friction_mode_summary.get("foundation_recommended_mode") or "fast")
     candidate_count = len(safe_candidates)
+    queue_status = "ready" if candidate_count else "empty"
+    operator_message = (
+        f"{candidate_count} safe local actions queued for {recommended_mode} mode; "
+        "approval not required for local preparation"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="safe_local_action_queue.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock="none" if candidate_count else "safe_local_candidate",
+        capability_summary={
+            "capability_id": "safe_local_action_queue.foundation",
+            "mode": "lab",
+            "current_level": "L3" if candidate_count else "L2",
+            "next_level": "L4",
+            "status": "preflight_ready" if candidate_count else "evidence_required",
+            "blocked_reason": "none" if candidate_count else "safe local candidate missing",
+            "next_evidence_count": 0 if candidate_count else 1,
+            "external_effects_allowed": False,
+            "rollback_required": False,
+        },
+    )
     return {
         "summary_id": "safe_local_action_queue.foundation",
-        "queue_status": "ready" if candidate_count else "empty",
+        "queue_status": queue_status,
         "candidate_count": candidate_count,
         "first_candidate_id": str(first_candidate.get("candidate_id") or ""),
         "first_zone": str(first_candidate.get("zone") or ""),
@@ -1860,10 +1881,12 @@ def _safe_local_action_queue_summary(
         "approval_required": False,
         "local_execution_boundary": "local_lab_only",
         "external_effects_allowed": False,
-        "operator_message": (
-            f"{candidate_count} safe local actions queued for {recommended_mode} mode; "
-            "approval not required for local preparation"
-        ),
+        "operator_message": operator_message,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 
@@ -2504,18 +2527,9 @@ def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[st
     operator_status = _developer_workflow_operator_status_from_generated_receipt(receipt)
     readiness_status = str(operator_status["readiness_status"])
     first_next_evidence = str(operator_status["first_next_evidence"])
-    next_evidence = operator_status.get("next_evidence", ())
-    if not isinstance(next_evidence, list):
-        next_evidence = []
-    evidence_text = ", ".join(str(item) for item in next_evidence if str(item).strip()) or "none"
-    action_banner = developer_workflow_operator_action_banner(
-        external_ready=operator_status["ready_for_external_pr_execution"] is True,
-        external_approval_status=str(operator_status["external_approval_status"]),
-        command_preview_rendered=operator_status["command_preview_rendered"] is True,
-        next_unlock=first_next_evidence,
-        evidence_text=evidence_text,
-    )
-    capability_summary = developer_workflow_capability_summary(operator_status)
+    control_summary = developer_workflow_control_summary(operator_status)
+    action_banner = str(control_summary["action_banner"])
+    capability_summary = control_summary["capability_summary"]
     return {
         "read_model_id": "operator_developer_workflow_status.read_model",
         "projection_only": True,
@@ -2542,6 +2556,11 @@ def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[st
             "receipt_hash": operator_status["receipt_hash"],
         },
         "capability_summary": capability_summary,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
         "source_ref": str(LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH.as_posix()),
     }
 

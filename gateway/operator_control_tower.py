@@ -83,6 +83,36 @@ _LOCAL_ROLLBACK_EXECUTION_RECEIPT_PATH = (
 _LOCAL_ROLLBACK_RECEIPT_HREF_BASE = "/operator/control-tower/local-rollback-receipt"
 
 
+def operator_dashboard_control_summary(
+    *,
+    summary_id: str,
+    operator_message: str,
+    capability_summary: Mapping[str, Any],
+    next_unlock: str,
+) -> dict[str, Any]:
+    """Return the reusable operator dashboard control-summary contract."""
+
+    normalized_message = operator_message or "operator action pending"
+    normalized_next_unlock = next_unlock or "none"
+    return {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": summary_id,
+        "operator_message": normalized_message,
+        "action_banner": normalized_message,
+        "capability_id": str(capability_summary.get("capability_id") or "unknown"),
+        "mode": str(capability_summary.get("mode") or "lab"),
+        "current_level": str(capability_summary.get("current_level") or "L2"),
+        "next_level": str(capability_summary.get("next_level") or "L5"),
+        "status": str(capability_summary.get("status") or "evidence_required"),
+        "blocked_reason": str(capability_summary.get("blocked_reason") or "evidence incomplete"),
+        "next_unlock": normalized_next_unlock,
+        "next_evidence_count": int(capability_summary.get("next_evidence_count", 0) or 0),
+        "external_effects_allowed": False,
+        "rollback_required": capability_summary.get("rollback_required") is True,
+        "capability_summary": dict(capability_summary),
+    }
+
+
 def developer_workflow_operator_action_banner(
     *,
     external_ready: bool,
@@ -163,6 +193,33 @@ def developer_workflow_capability_summary(operator_status: Mapping[str, Any]) ->
         "external_effects_allowed": False,
         "rollback_required": operator_status.get("rollback_required") is True,
     }
+
+
+def developer_workflow_control_summary(operator_status: Mapping[str, Any]) -> dict[str, Any]:
+    """Return one operator-ready Developer Workflow control summary."""
+
+    next_evidence = operator_status.get("next_evidence", ())
+    if not isinstance(next_evidence, list):
+        next_evidence = []
+    normalized_next_evidence = [str(item) for item in next_evidence if str(item).strip()][:8]
+    next_unlock = str(operator_status.get("first_next_evidence") or "")
+    if not next_unlock:
+        next_unlock = normalized_next_evidence[0] if normalized_next_evidence else "none"
+    evidence_text = ", ".join(normalized_next_evidence) or "none"
+    action_banner = developer_workflow_operator_action_banner(
+        external_ready=operator_status.get("ready_for_external_pr_execution") is True,
+        external_approval_status=str(operator_status.get("external_approval_status") or "pending"),
+        command_preview_rendered=operator_status.get("command_preview_rendered") is True,
+        next_unlock=next_unlock,
+        evidence_text=evidence_text,
+    )
+    capability_summary = developer_workflow_capability_summary(operator_status)
+    return operator_dashboard_control_summary(
+        summary_id="developer_workflow_control_summary.v1",
+        operator_message=action_banner,
+        capability_summary=capability_summary,
+        next_unlock=next_unlock,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -4891,19 +4948,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
         (str(item) for item in operator_receipt_next_evidence if str(item).strip()),
         "none",
     )
-    operator_receipt_evidence_text = ", ".join(
-        str(item) for item in operator_receipt_next_evidence if str(item).strip()
-    )
-    if not operator_receipt_evidence_text:
-        operator_receipt_evidence_text = "none"
-    operator_receipt_action_banner = developer_workflow_operator_action_banner(
-        external_ready=operator_receipt_external_ready,
-        external_approval_status=operator_receipt_approval,
-        command_preview_rendered=operator_receipt_preview,
-        next_unlock=operator_receipt_next_unlock,
-        evidence_text=operator_receipt_evidence_text,
-    )
-    operator_receipt_capability_summary = developer_workflow_capability_summary(developer_workflow_operator_receipt)
+    operator_receipt_control_summary = developer_workflow_control_summary(developer_workflow_operator_receipt)
+    operator_receipt_action_banner = str(operator_receipt_control_summary.get("action_banner") or "")
+    operator_receipt_capability_summary = operator_receipt_control_summary.get("capability_summary", {})
+    if not isinstance(operator_receipt_capability_summary, Mapping):
+        operator_receipt_capability_summary = {}
     operator_receipt_allowed_actions = operator_receipt_capability_summary.get("allowed_actions", ())
     if not isinstance(operator_receipt_allowed_actions, list):
         operator_receipt_allowed_actions = []
@@ -5847,6 +5896,8 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <div class="metrics">
       <span class="metric">Outcome: {escape(operator_receipt_outcome)}</span>
       <span class="metric">Readiness: {escape(operator_receipt_status)}</span>
+      <span class="metric">Control contract: {escape(str(operator_receipt_control_summary.get("contract_id") or "operator_dashboard_control_summary.v1"))}</span>
+      <span class="metric">Control summary: {escape(str(operator_receipt_control_summary.get("summary_id") or "developer_workflow_control_summary.v1"))}</span>
       <span class="metric">Capability: {escape(str(operator_receipt_capability_summary.get("capability_id") or "mullu_developer_workflow.v1"))}</span>
       <span class="metric">Mode: {escape(str(operator_receipt_capability_summary.get("mode") or "lab"))}</span>
       <span class="metric">Current level: {escape(str(operator_receipt_capability_summary.get("current_level") or "L2"))}</span>

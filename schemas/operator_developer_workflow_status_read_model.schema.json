@@ -17,6 +17,7 @@
     "action_needed",
     "summary",
     "capability_summary",
+    "control_summary",
     "source_ref"
   ],
   "properties": {
@@ -110,6 +111,45 @@
           "maxItems": 8,
           "items": {"type": "string", "minLength": 1, "maxLength": 160}
         },
+        "next_evidence_count": {"type": "integer", "minimum": 0, "maximum": 8},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "rollback_required": {"type": "boolean"}
+      }
+    },
+    "control_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id",
+        "summary_id",
+        "operator_message",
+        "action_banner",
+        "capability_id",
+        "mode",
+        "current_level",
+        "next_level",
+        "status",
+        "blocked_reason",
+        "next_unlock",
+        "next_evidence_count",
+        "external_effects_allowed",
+        "rollback_required"
+      ],
+      "properties": {
+        "contract_id": {"type": "string", "const": "operator_dashboard_control_summary.v1"},
+        "summary_id": {"type": "string", "const": "developer_workflow_control_summary.v1"},
+        "operator_message": {"type": "string", "minLength": 1, "maxLength": 260},
+        "action_banner": {"type": "string", "minLength": 1, "maxLength": 260},
+        "capability_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+        "mode": {"type": "string", "const": "lab"},
+        "current_level": {"type": "string", "enum": ["L2", "L4"]},
+        "next_level": {"type": "string", "const": "L5"},
+        "status": {
+          "type": "string",
+          "enum": ["prepare_only", "evidence_required", "approval_required", "preflight_ready"]
+        },
+        "blocked_reason": {"type": "string", "minLength": 1, "maxLength": 160},
+        "next_unlock": {"type": "string", "minLength": 1, "maxLength": 160},
         "next_evidence_count": {"type": "integer", "minimum": 0, "maximum": 8},
         "external_effects_allowed": {"type": "boolean", "const": false},
         "rollback_required": {"type": "boolean"}
