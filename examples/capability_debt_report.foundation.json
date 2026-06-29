@@ -7637,6 +7637,83 @@
       "operator_status": "Live action disabled"
     },
     {
+      "capability_id": "software_dev.github_patch_plan.draft",
+      "capability_name": "Draft GitHub patch plan",
+      "current_stage": "local_demo",
+      "current_unlock_level": "C3",
+      "debt_item_count": 4,
+      "debt_items": [
+        {
+          "category": "evidence",
+          "debt_id": "software_dev.github_patch_plan.draft.evidence.missing_required_evidence",
+          "description": "missing required evidence",
+          "fix": "collect evidence: diagnosis_or_problem_summary, affected_file_or_component_refs, verification_expectations, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, workspace_write_receipt, diff_receipt, production_evidence_receipt",
+          "missing_refs": [
+            "diagnosis_or_problem_summary",
+            "affected_file_or_component_refs",
+            "verification_expectations",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt",
+            "universal_action_orchestration_validation_receipt",
+            "capability_registry_entry",
+            "evidence_intake_receipt",
+            "evidence_verification_receipt",
+            "workspace_write_receipt",
+            "diff_receipt",
+            "production_evidence_receipt"
+          ],
+          "severity": "high"
+        },
+        {
+          "category": "promotion",
+          "debt_id": "software_dev.github_patch_plan.draft.promotion.blocked_promotion_stages",
+          "description": "blocked promotion stages",
+          "fix": "close promotion controls: sandbox_receipt_evidence, required_evidence, production_readiness_evidence, safe_live_action_evidence, operator_pilot_authorization, bounded_live_receipts, active_monitoring_receipt, approved_live_action_receipt, terminal_closure_certificate, production_witness, release_handoff_receipt",
+          "missing_refs": [
+            "sandbox_receipt_evidence",
+            "required_evidence",
+            "production_readiness_evidence",
+            "safe_live_action_evidence",
+            "operator_pilot_authorization",
+            "bounded_live_receipts",
+            "active_monitoring_receipt",
+            "approved_live_action_receipt",
+            "terminal_closure_certificate",
+            "production_witness",
+            "release_handoff_receipt"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "replay",
+          "debt_id": "software_dev.github_patch_plan.draft.replay.missing_deterministic_replay_proof",
+          "description": "missing deterministic replay proof",
+          "fix": "collect deterministic replay receipt",
+          "missing_refs": [
+            "replay_evidence"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "live_action",
+          "debt_id": "software_dev.github_patch_plan.draft.live_action.live_action_disabled",
+          "description": "live action disabled",
+          "fix": "keep live action disabled until promotion evidence is complete",
+          "missing_refs": [
+            "live_action_authority"
+          ],
+          "severity": "low"
+        }
+      ],
+      "debt_row_id": "capability_debt.software_dev.github_patch_plan.draft.foundation.v1",
+      "debt_row_is_not_execution_authority": true,
+      "debt_severity": "high",
+      "family": "software_dev",
+      "live_action_enabled": false,
+      "next_action": "collect evidence: diagnosis_or_problem_summary, affected_file_or_component_refs, verification_expectations, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, workspace_write_receipt, diff_receipt, production_evidence_receipt",
+      "operator_status": "Live action disabled"
+    },
+    {
       "capability_id": "software_dev.github_repo_status.summarize_read_only",
       "capability_name": "Summarize GitHub repository status read-only",
       "current_stage": "local_demo",
@@ -8532,17 +8609,17 @@
     "promotion_path_set_id": "sandbox_to_live_promotion_paths.foundation.v1"
   },
   "summary": {
-    "capabilities_with_debt_count": 103,
-    "capability_count": 103,
+    "capabilities_with_debt_count": 104,
+    "capability_count": 104,
     "category_counts": {
       "approval": 24,
-      "evidence": 101,
-      "live_action": 103,
-      "promotion": 103,
-      "replay": 102,
+      "evidence": 102,
+      "live_action": 104,
+      "promotion": 104,
+      "replay": 103,
       "rollback": 12
     },
-    "debt_row_count": 103,
+    "debt_row_count": 104,
     "family_counts": {
       "agentic_control": 17,
       "browser": 6,
@@ -8558,17 +8635,17 @@
       "personal_assistant": 12,
       "phone": 5,
       "physical": 2,
-      "software_dev": 8,
+      "software_dev": 9,
       "voice": 6
     },
     "live_action_enabled_count": 0,
     "severity_counts": {
       "critical": 0,
-      "high": 102,
+      "high": 103,
       "low": 0,
       "medium": 1
     },
-    "total_debt_item_count": 445
+    "total_debt_item_count": 449
   },
   "top_debt_items": [
     {

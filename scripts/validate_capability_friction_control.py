@@ -52,6 +52,7 @@ EXPECTED_SOFTWARE_DEV_CAPABILITIES = {
     "software_dev.pr_candidate.prepare",
     "software_dev.github_actions_failure.diagnose_read_only",
     "software_dev.github_repo_status.summarize_read_only",
+    "software_dev.github_patch_plan.draft",
 }
 REQUIRED_VALIDATOR_COMMANDS = {
     "capability_friction_control_validator": "python scripts/validate_capability_friction_control.py",

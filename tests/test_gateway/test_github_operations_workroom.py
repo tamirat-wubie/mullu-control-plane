@@ -27,6 +27,7 @@ if str(_ROOT) not in sys.path:
 import gateway.server as gateway_server  # noqa: E402
 from gateway.github_operations_workroom import (  # noqa: E402
     GitHubActionsFailureEvidenceAdmissionRequest,
+    GitHubPatchPlanDraftRequest,
     GitHubRepoStatusEvidenceAdmissionRequest,
     GitHubReadOnlyEvidenceFetcher,
     GitHubReadOnlyEvidenceAdmissionRequest,
@@ -37,6 +38,8 @@ from gateway.github_operations_workroom import (  # noqa: E402
     admit_github_read_only_evidence_collection,
     build_github_actions_failure_diagnosis_receipt,
     build_github_actions_failure_workroom_read_model,
+    build_github_patch_plan_draft_receipt,
+    build_github_patch_plan_workroom_read_model,
     build_github_repo_status_summary_receipt,
     build_github_repo_status_workroom_read_model,
     build_github_read_only_evidence_fetch_receipt,
@@ -45,6 +48,7 @@ from gateway.github_operations_workroom import (  # noqa: E402
     build_github_pr_safety_workroom_projection,
     build_github_pr_safety_workroom_read_model,
     evaluate_github_actions_failure_diagnosis,
+    evaluate_github_patch_plan_draft,
     evaluate_github_repo_status_summary,
     evaluate_github_pr_safety_judgment,
 )
@@ -1095,6 +1099,124 @@ def test_operator_github_repo_status_panel_renders_read_only_form() -> None:
     assert "Repository mutation allowed" in response.text
     assert 'fetch("/operator/github-operations/repo-status/read-evidence"' in response.text
     assert 'tokenInput.value = "";' in response.text
+
+
+def test_github_patch_plan_draft_and_receipt_are_draft_only() -> None:
+    request = GitHubPatchPlanDraftRequest(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        objective="Fix failed pytest collection after gateway route addition.",
+        evidence_refs=("github-actions-failure-receipt:abc", "github-repo-status-receipt:def"),
+        evidence_summaries=("Workflow failed during pytest collection in gateway server import.",),
+        verification_expectations=("python -m pytest tests/test_gateway/test_github_operations_workroom.py -q",),
+        surface_event_id="patch-plan-draft",
+        requested_at="2026-06-28T12:00:00+00:00",
+    )
+
+    draft = evaluate_github_patch_plan_draft(request=request, clock=_clock)
+    receipt = build_github_patch_plan_draft_receipt(
+        request=request,
+        draft=draft,
+        occurred_at="2026-06-28T12:00:00+00:00",
+    )
+
+    assert draft.status == "drafted"
+    assert draft.write_authority_granted is False
+    assert receipt.risk_class is FabricRiskClass.CLASS_1_PREPARE
+    assert receipt.policy_decision is FabricPolicyDecision.ALLOW_DRAFT_ONLY
+    assert "edit_repository_without_patch_approval" in receipt.actions_blocked
+    assert "python -m pytest tests/test_gateway/test_github_operations_workroom.py -q" in draft.verification_commands
+
+
+def test_github_patch_plan_draft_needs_evidence_without_objective_or_refs() -> None:
+    request = GitHubPatchPlanDraftRequest(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        objective="",
+        evidence_refs=(),
+        evidence_summaries=(),
+        verification_expectations=(),
+        surface_event_id="patch-plan-draft-gap",
+        requested_at="2026-06-28T12:00:00+00:00",
+    )
+
+    draft = evaluate_github_patch_plan_draft(request=request, clock=_clock)
+    receipt = build_github_patch_plan_draft_receipt(
+        request=request,
+        draft=draft,
+        occurred_at="2026-06-28T12:00:00+00:00",
+    )
+
+    assert draft.status == "needs_evidence"
+    assert draft.evidence_refs == ("missing_patch_plan_evidence",)
+    assert receipt.memory_update is FabricMemoryDecisionStatus.DEFER
+    assert receipt.partial_failure_reasons == (
+        "missing_objective",
+        "missing_evidence_refs",
+        "missing_evidence_summaries",
+        "missing_verification_expectations",
+    )
+
+
+def test_github_patch_plan_read_model_awaits_evidence() -> None:
+    read_model = build_github_patch_plan_workroom_read_model(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        surface_event_id="patch-plan-model",
+        occurred_at="2026-06-28T12:00:00+00:00",
+        clock=_clock,
+    )
+
+    assert read_model["status"] == "awaiting_evidence"
+    assert read_model["outcome"] == "AwaitingEvidence"
+    assert read_model["passport"]["risk_class"] == "class_1_prepare"
+    assert read_model["effect_boundary"]["repository_mutation_allowed"] is False
+    assert "edit_repository_without_patch_approval" in read_model["blocked_actions"]
+
+
+def test_operator_github_patch_plan_draft_endpoint_returns_receipt_without_write_authority() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.post(
+        "/operator/github-operations/patch-plan/draft",
+        json={
+            "repo": "tamiratl/mullu-control-plane",
+            "objective": "Fix failing gateway test after adding route.",
+            "evidence_refs": ["github-actions-failure-receipt:abc"],
+            "evidence_summaries": ["pytest failed in gateway operations workroom tests."],
+            "verification_expectations": ["python -m pytest tests/test_gateway/test_github_operations_workroom.py -q"],
+            "requested_at": "2026-06-28T12:00:00+00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    serialized = json.dumps(payload, sort_keys=True)
+    assert payload["github_patch_plan_draft"]["status"] == "drafted"
+    assert payload["github_patch_plan_receipt"]["policy_decision"] == "allow_draft_only"
+    assert payload["effect_boundary"]["github_call_allowed"] is False
+    assert payload["write_authority_granted"] is False
+    assert "access_token" not in serialized
+
+
+def test_operator_github_patch_plan_panel_renders_local_draft_form_without_token() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get(
+        "/operator/github-operations/patch-plan",
+        params={"repo": "tamiratl/mullu-control-plane", "occurred_at": "2026-06-28T12:00:00+00:00"},
+    )
+
+    assert response.status_code == 200
+    assert "Mullusi GitHub Patch Plan Draft Workroom" in response.text
+    assert 'fetch("/operator/github-operations/patch-plan/draft"' in response.text
+    assert "No GitHub token or write authority is accepted." in response.text
+    assert "access_token" not in response.text
 
 
 def test_operator_github_read_only_evidence_execution_endpoint_returns_receipts_without_token(
