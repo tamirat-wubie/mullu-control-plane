@@ -57,6 +57,53 @@ EXPECTED_ADMISSION_MODE = "PR_CREATION_EXECUTION_ADMISSION_PREFLIGHT_ONLY"
 EXPECTED_SOURCE_DRY_RUN_ID = "github-pr-creation-dry-run-receipt-foundation"
 EXPECTED_DECISION = "PR_CREATION_EXECUTION_BLOCKED_DRY_RUN_BOUND_AWAITING_LIVE_AUTHORITY"
 EXPECTED_EXECUTION_TARGET_REF = "github-pr://agentic-service-harness/task-run"
+COMMAND_PREVIEW_DRY_RUN_RECEIPT_EVIDENCE_BINDINGS = (
+    ("source_dry_run_ref", None),
+    ("source_read_model_id", ("command_preview_certificate_read_model_evidence", "source_read_model_id")),
+    ("source_read_model_ref", ("command_preview_certificate_read_model_evidence", "source_read_model_ref")),
+    ("source_certificate_id", ("command_preview_certificate_read_model_evidence", "source_certificate_id")),
+    ("source_minting_ref", ("command_preview_certificate_read_model_evidence", "source_minting_ref")),
+    (
+        "source_command_preview_certificate_minting_required",
+        (
+            "command_preview_certificate_read_model_evidence",
+            "requires_command_preview_certificate_minting_evidence",
+        ),
+    ),
+    (
+        "source_command_preview_decision_value_record_required",
+        (
+            "command_preview_certificate_read_model_evidence",
+            "requires_command_preview_decision_value_record_evidence",
+        ),
+    ),
+    (
+        "source_command_preview_decision_value_request_required",
+        (
+            "command_preview_certificate_read_model_evidence",
+            "requires_command_preview_decision_value_request_evidence",
+        ),
+    ),
+    ("command_preview_bound", ("command_preview_certificate_read_model_evidence", "command_preview_bound")),
+    ("command_preview_ref", ("command_preview_certificate_read_model_evidence", "command_preview_ref")),
+    ("redacted_command_preview", ("command_preview_certificate_read_model_evidence", "redacted_command_preview")),
+    ("source_operator_decision_ref", ("command_preview_certificate_read_model_evidence", "operator_decision_ref")),
+    ("source_decision_value", ("command_preview_certificate_read_model_evidence", "decision_value")),
+    ("source_dry_run_receipt_recorded", ("simulated_pr_creation", "dry_run_receipt_recorded")),
+    ("source_runtime_pr_creation_executed", ("simulated_pr_creation", "runtime_pr_creation_executed")),
+    ("source_pull_request_opened", ("simulated_pr_creation", "pull_request_opened")),
+    ("source_branch_created", ("simulated_pr_creation", "branch_created")),
+    ("source_repository_written", ("simulated_pr_creation", "repository_written")),
+    ("source_receipt_store_appended", ("simulated_pr_creation", "receipt_store_appended")),
+    ("source_adapter_executed", ("simulated_pr_creation", "adapter_executed")),
+    ("source_connector_calls_observed", ("simulated_pr_creation", "connector_calls_observed")),
+    ("source_mutation_route_called", ("simulated_pr_creation", "mutation_route_called")),
+    ("source_terminal_closure", ("simulated_pr_creation", "terminal_closure")),
+    ("source_success_claim_allowed", ("simulated_pr_creation", "success_claim_allowed")),
+    ("pull_request_creation_enabled", ("authority_denials", "pull_request_creation_enabled")),
+    ("repository_write_enabled", ("authority_denials", "repository_write_enabled")),
+    ("contains_secret_values", ("command_preview_certificate_read_model_evidence", "contains_secret_values")),
+)
 REQUIRED_FORBIDDEN_ACTION_CLASSES = (
     "execute_adapter",
     "write_to_branch",
@@ -160,16 +207,36 @@ REQUIRED_FALSE_FLAGS = (
     "destructive_operation_enabled",
     "terminal_closure",
     "default_high_risk_authority",
+    "source_runtime_pr_creation_executed",
+    "source_pull_request_opened",
+    "source_branch_created",
+    "source_repository_written",
+    "source_receipt_store_appended",
+    "source_adapter_executed",
+    "source_connector_calls_observed",
+    "source_mutation_route_called",
+    "source_terminal_closure",
+    "source_success_claim_allowed",
+    "pull_request_creation_enabled",
+    "repository_write_enabled",
+    "contains_secret_values",
 )
 REQUIRED_TRUE_FLAGS = (
     "read_only",
     "admission_only",
     "dry_run_receipt_recorded",
+    "source_dry_run_receipt_recorded",
+    "source_command_preview_certificate_minting_required",
+    "source_command_preview_decision_value_record_required",
+    "source_command_preview_decision_value_request_required",
+    "command_preview_bound",
+    "execution_admission_evidence_only",
     "report_is_not_terminal_closure",
     "terminal_closure_required",
     "required_for_closure",
 )
 ALLOWED_SECRET_KEYS = {
+    "contains_secret_values",
     "dns_mutation_enabled",
     "secret_mutation",
     "secret_mutation_enabled",
@@ -291,6 +358,7 @@ def _validate_execution_admission_semantics(
         label,
     )
     _validate_source_dry_run_binding(payload, source_dry_run, errors, label)
+    _validate_command_preview_dry_run_receipt_evidence(payload, source_dry_run, errors, label)
     _validate_contract(payload, errors, label)
     _validate_refs(payload, errors, label)
     _validate_flags_and_surface(payload, errors, label)
@@ -349,6 +417,34 @@ def _validate_source_dry_run_binding(
         (("simulated_pr_creation", "success_claim_allowed"), ("source_dry_run_binding", "source_success_claim_allowed")),
     ):
         _require_equal(payload, target_path, _get_nested(source_dry_run, source_path), errors, label)
+
+
+def _validate_command_preview_dry_run_receipt_evidence(
+    payload: Mapping[str, Any],
+    source_dry_run: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    evidence = _get_nested(payload, ("command_preview_dry_run_receipt_evidence",))
+    if not isinstance(evidence, Mapping):
+        errors.append(f"{label}: command_preview_dry_run_receipt_evidence must be an object")
+        return
+    for evidence_key, source_path in COMMAND_PREVIEW_DRY_RUN_RECEIPT_EVIDENCE_BINDINGS:
+        expected = EXPECTED_SOURCE_DRY_RUN_REF if source_path is None else _get_nested(source_dry_run, source_path)
+        _require_equal(
+            payload,
+            ("command_preview_dry_run_receipt_evidence", evidence_key),
+            expected,
+            errors,
+            label,
+        )
+    _require_equal(
+        payload,
+        ("command_preview_dry_run_receipt_evidence", "execution_admission_evidence_only"),
+        True,
+        errors,
+        label,
+    )
 
 
 def _validate_contract(payload: Mapping[str, Any], errors: list[str], label: str) -> None:

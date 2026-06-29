@@ -100,6 +100,15 @@ def test_capability_debt_report_projects_missing_evidence_for_draft() -> None:
     assert "promotion" in categories
     assert draft["debt_row_is_not_execution_authority"] is True
     assert draft["live_action_enabled"] is False
+    rollback_item = next(item for item in draft["debt_items"] if item["category"] == "rollback")
+    assert rollback_item["missing_refs"] == [
+        "recovery_evidence_missing",
+        "rollback_capability",
+        "compensation_capability",
+        "failure_review_receipt",
+        "rollback_or_recovery_evidence",
+    ]
+    assert "failure_review_receipt" in rollback_item["fix"]
     assert "collect" in draft["next_action"] or "bind" in draft["next_action"] or "keep" in draft["next_action"]
 
 

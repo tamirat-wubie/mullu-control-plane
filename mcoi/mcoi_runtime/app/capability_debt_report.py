@@ -156,13 +156,14 @@ def _debt_items(
 
     rollback = _mapping(evidence.get("rollback"))
     if rollback.get("rollback_evidence_missing") is True:
+        missing_rollback_refs = _string_list(rollback.get("missing_rollback_refs")) or ["rollback_or_recovery_evidence"]
         items.append(
             _item(
                 capability_id,
                 "rollback",
                 "high",
                 "missing rollback or recovery proof",
-                ["rollback_or_recovery_evidence"],
+                missing_rollback_refs,
             )
         )
 
@@ -273,7 +274,7 @@ def _fix(category: str, missing_refs: list[str]) -> str:
     if category == "approval":
         return f"collect governed approval evidence: {', '.join(missing_refs)}"
     if category == "rollback":
-        return "bind rollback, compensation, or recovery evidence"
+        return f"bind rollback, compensation, or recovery evidence: {', '.join(missing_refs)}"
     if category == "replay":
         return "collect deterministic replay receipt"
     if category == "promotion":

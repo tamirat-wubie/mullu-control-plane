@@ -472,7 +472,9 @@
         "rollback_or_compensation_available",
         "rollback_evidence_missing",
         "can_rollback",
-        "can_compensate"
+        "can_compensate",
+        "missing_rollback_refs",
+        "next_rollback_action"
       ],
       "properties": {
         "rollback_status": {
@@ -502,6 +504,14 @@
         },
         "can_compensate": {
           "type": "boolean"
+        },
+        "missing_rollback_refs": {
+          "$ref": "#/$defs/string_list"
+        },
+        "next_rollback_action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320
         }
       }
     },

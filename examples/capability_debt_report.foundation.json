@@ -1362,8 +1362,12 @@
           "category": "rollback",
           "debt_id": "browser.click.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"
@@ -1703,8 +1707,12 @@
           "category": "rollback",
           "debt_id": "browser.submit.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"
@@ -1795,8 +1803,12 @@
           "category": "rollback",
           "debt_id": "browser.type.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"
@@ -2428,8 +2440,12 @@
           "category": "rollback",
           "debt_id": "computer.command.run.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"
@@ -4050,8 +4066,12 @@
           "category": "rollback",
           "debt_id": "email.draft.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"
@@ -4394,8 +4414,12 @@
           "category": "rollback",
           "debt_id": "email.send.with_approval.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"
@@ -4804,8 +4828,12 @@
           "category": "rollback",
           "debt_id": "financial.refund.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"
@@ -5211,8 +5239,12 @@
           "category": "rollback",
           "debt_id": "messaging.chat.draft.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"
@@ -5318,8 +5350,12 @@
           "category": "rollback",
           "debt_id": "messaging.chat.send.with_approval.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"
@@ -5410,8 +5446,12 @@
           "category": "rollback",
           "debt_id": "messaging.sms.draft.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"
@@ -5517,8 +5557,12 @@
           "category": "rollback",
           "debt_id": "messaging.sms.send.with_approval.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"
@@ -6819,8 +6863,12 @@
           "category": "rollback",
           "debt_id": "phone.call.terminate.rollback.missing_rollback_or_recovery_proof",
           "description": "missing rollback or recovery proof",
-          "fix": "bind rollback, compensation, or recovery evidence",
+          "fix": "bind rollback, compensation, or recovery evidence: recovery_evidence_missing, rollback_capability, compensation_capability, failure_review_receipt, rollback_or_recovery_evidence",
           "missing_refs": [
+            "recovery_evidence_missing",
+            "rollback_capability",
+            "compensation_capability",
+            "failure_review_receipt",
             "rollback_or_recovery_evidence"
           ],
           "severity": "high"

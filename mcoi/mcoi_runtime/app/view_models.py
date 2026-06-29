@@ -475,6 +475,7 @@ class AutonomousRequestEpisodeSummaryView:
     stage_error_bindings: tuple[Mapping[str, object], ...] = ()
     stage_outcome_bindings: tuple[Mapping[str, object], ...] = ()
     stage_next_action_bindings: tuple[Mapping[str, object], ...] = ()
+    stage_attention_bindings: tuple[Mapping[str, object], ...] = ()
 
     @staticmethod
     def from_receipt(
@@ -622,6 +623,32 @@ class AutonomousRequestEpisodeSummaryView:
                 for step in receipt.step_receipts
                 if step.plan_stage_id is not None
             ),
+            stage_attention_bindings=tuple(
+                {
+                    "stage_id": step.plan_stage_id,
+                    "receipt_ref": step.receipt_ref,
+                    "next_action": _autonomous_request_next_action(
+                        step.dispatched,
+                        step.retry_count,
+                        step.validation_error,
+                        step.structured_error_codes,
+                    ),
+                    "attention_status": _autonomous_request_attention_status(
+                        step.dispatched,
+                        step.retry_count,
+                        step.validation_error,
+                        step.structured_error_codes,
+                    ),
+                    "attention_priority": _autonomous_request_attention_priority(
+                        step.dispatched,
+                        step.retry_count,
+                        step.validation_error,
+                        step.structured_error_codes,
+                    ),
+                }
+                for step in receipt.step_receipts
+                if step.plan_stage_id is not None
+            ),
             rollback_ref=receipt.rollback_ref,
         )
 
@@ -703,6 +730,50 @@ def _autonomous_request_next_action(
     if outcome_status == "blocked":
         return "repair"
     return "continue"
+
+
+def _autonomous_request_attention_status(
+    dispatched: bool,
+    retry_count: int,
+    validation_error: str | None,
+    structured_error_codes: tuple[str, ...],
+) -> str:
+    """Classify whether the stage should be observed, repaired, unblocked, or reviewed."""
+    next_action = _autonomous_request_next_action(
+        dispatched,
+        retry_count,
+        validation_error,
+        structured_error_codes,
+    )
+    if next_action == "halt_review":
+        return "review"
+    if next_action == "unblock_dependency":
+        return "dependency_attention"
+    if next_action == "repair":
+        return "repair_attention"
+    return "observe"
+
+
+def _autonomous_request_attention_priority(
+    dispatched: bool,
+    retry_count: int,
+    validation_error: str | None,
+    structured_error_codes: tuple[str, ...],
+) -> str:
+    """Classify deterministic controller attention priority for a stage."""
+    next_action = _autonomous_request_next_action(
+        dispatched,
+        retry_count,
+        validation_error,
+        structured_error_codes,
+    )
+    if next_action == "halt_review":
+        return "critical"
+    if next_action in {"unblock_dependency", "repair"}:
+        return "high"
+    if retry_count > 0:
+        return "medium"
+    return "low"
 
 
 # ---------------------------------------------------------------------------

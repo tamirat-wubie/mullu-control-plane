@@ -83,6 +83,81 @@ def test_github_pr_creation_execution_admission_rejects_source_dry_run_drift() -
     assert "source_dry_run_binding.source_pull_request_opened expected True" in serialized_errors
 
 
+def test_github_pr_creation_execution_admission_rejects_command_preview_dry_run_evidence_drift() -> None:
+    payload = validator.build_mutated_pr_creation_execution_admission(
+        command_preview_dry_run_receipt_evidence__source_dry_run_ref="examples/wrong-dry-run.json",
+        command_preview_dry_run_receipt_evidence__source_read_model_id="wrong-read-model",
+        command_preview_dry_run_receipt_evidence__source_read_model_ref="examples/wrong-read-model.json",
+        command_preview_dry_run_receipt_evidence__source_certificate_id="wrong-certificate",
+        command_preview_dry_run_receipt_evidence__source_minting_ref="examples/wrong-minting.json",
+        command_preview_dry_run_receipt_evidence__source_command_preview_certificate_minting_required=False,
+        command_preview_dry_run_receipt_evidence__source_command_preview_decision_value_record_required=False,
+        command_preview_dry_run_receipt_evidence__source_command_preview_decision_value_request_required=False,
+        command_preview_dry_run_receipt_evidence__command_preview_bound=False,
+        command_preview_dry_run_receipt_evidence__command_preview_ref="examples/wrong-command-preview.json",
+        command_preview_dry_run_receipt_evidence__redacted_command_preview="gh pr create --body raw",
+        command_preview_dry_run_receipt_evidence__source_operator_decision_ref="operator-decision://wrong",
+        command_preview_dry_run_receipt_evidence__source_decision_value="approve_live_pr_creation",
+        command_preview_dry_run_receipt_evidence__source_dry_run_receipt_recorded=False,
+        command_preview_dry_run_receipt_evidence__source_runtime_pr_creation_executed=True,
+        command_preview_dry_run_receipt_evidence__source_pull_request_opened=True,
+        command_preview_dry_run_receipt_evidence__source_branch_created=True,
+        command_preview_dry_run_receipt_evidence__source_repository_written=True,
+        command_preview_dry_run_receipt_evidence__source_receipt_store_appended=True,
+        command_preview_dry_run_receipt_evidence__source_adapter_executed=True,
+        command_preview_dry_run_receipt_evidence__source_connector_calls_observed=True,
+        command_preview_dry_run_receipt_evidence__source_mutation_route_called=True,
+        command_preview_dry_run_receipt_evidence__source_terminal_closure=True,
+        command_preview_dry_run_receipt_evidence__source_success_claim_allowed=True,
+        command_preview_dry_run_receipt_evidence__execution_admission_evidence_only=False,
+        command_preview_dry_run_receipt_evidence__pull_request_creation_enabled=True,
+        command_preview_dry_run_receipt_evidence__repository_write_enabled=True,
+        command_preview_dry_run_receipt_evidence__contains_secret_values=True,
+    )
+
+    errors: list[str] = []
+    validator._validate_execution_admission_semantics(payload, _source_dry_run(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_dry_run_receipt_evidence.source_dry_run_ref expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_read_model_id expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_read_model_ref expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_certificate_id expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_minting_ref expected" in serialized_errors
+    assert (
+        "command_preview_dry_run_receipt_evidence.source_command_preview_certificate_minting_required expected"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_dry_run_receipt_evidence.source_command_preview_decision_value_record_required expected"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_dry_run_receipt_evidence.source_command_preview_decision_value_request_required expected"
+        in serialized_errors
+    )
+    assert "command_preview_dry_run_receipt_evidence.command_preview_bound expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.command_preview_ref expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.redacted_command_preview expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_operator_decision_ref expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_decision_value expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_dry_run_receipt_recorded expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_runtime_pr_creation_executed expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_pull_request_opened expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_branch_created expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_repository_written expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_receipt_store_appended expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_adapter_executed expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_connector_calls_observed expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_mutation_route_called expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_terminal_closure expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_success_claim_allowed expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.execution_admission_evidence_only expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.pull_request_creation_enabled expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.repository_write_enabled expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.contains_secret_values expected" in serialized_errors
+
+
 def test_github_pr_creation_execution_admission_rejects_missing_required_refs() -> None:
     payload = validator.build_mutated_pr_creation_execution_admission(
         execution_admission_contract__forbidden_action_classes=["open_pr"],
