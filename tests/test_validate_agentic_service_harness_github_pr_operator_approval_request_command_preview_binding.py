@@ -111,6 +111,40 @@ def test_github_pr_operator_approval_request_command_preview_binding_rejects_com
     assert "must retain placeholders" in serialized_errors
 
 
+def test_github_pr_operator_approval_request_command_preview_binding_rejects_execution_admission_evidence_drift() -> None:
+    payload = validator.build_mutated_approval_request_command_preview_binding(
+        command_preview_execution_admission_evidence__source_decision="wrong-decision",
+        command_preview_execution_admission_evidence__source_execution_admitted=True,
+        command_preview_execution_admission_evidence__source_redacted_command_preview="gh pr create --fill",
+        command_preview_execution_admission_evidence__command_preview_execution_admission_bound=False,
+        command_preview_execution_admission_evidence__operator_approval_request_consumes_execution_admission_evidence=False,
+        command_preview_execution_admission_evidence__contains_secret_values=True,
+    )
+
+    errors: list[str] = []
+    validator._validate_approval_command_preview_binding_semantics(
+        payload,
+        _source_command_preview(),
+        _source_operator_approval_binding(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_execution_admission_evidence.source_decision expected" in serialized_errors
+    assert "command_preview_execution_admission_evidence.source_execution_admitted expected False" in serialized_errors
+    assert "command_preview_execution_admission_evidence.source_redacted_command_preview expected" in serialized_errors
+    assert (
+        "command_preview_execution_admission_evidence.command_preview_execution_admission_bound expected True"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_execution_admission_evidence.operator_approval_request_consumes_execution_admission_evidence "
+        "expected True"
+    ) in serialized_errors
+    assert "command_preview_execution_admission_evidence.contains_secret_values expected False" in serialized_errors
+
+
 def test_github_pr_operator_approval_request_command_preview_binding_rejects_missing_required_refs() -> None:
     payload = validator.build_mutated_approval_request_command_preview_binding(
         approval_command_preview_binding__placeholder_refs=["placeholder://branch-ref"],
