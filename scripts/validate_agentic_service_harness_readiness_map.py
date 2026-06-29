@@ -1614,13 +1614,13 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     pr_creation_command_preview_row = re.search(
-        r"^\| GitHub PR creation command preview execution-admission binding PR \| READY \| .+agentic_service_harness_github_pr_creation_command_preview.+execution-admission evidence.+redacted `gh pr create` command preview.+command execution.+adapter execution.+branch pushes.+pull-request creation.+repository writes.+receipt-store append.+connector calls.+mutation routes.+secret material.+terminal closure remain blocked\. \|$",
+        r"^\| GitHub PR creation command preview execution-admission evidence binding PR \| READY \| .+agentic_service_harness_github_pr_creation_command_preview.+command-preview execution-admission evidence.+source execution admission ref.+source admission id.+source decision.+source dry-run ref.+source dry-run receipt status.+source required-before-execution refs.+source blocked reason refs.+source command-preview-bound dry-run receipt evidence.+source redacted `gh pr create` command preview.+source operator decision ref.+source decision value.+no-adapter-execution evidence.+no-connector-call evidence.+no-pull-request-creation evidence.+no-repository-write evidence.+no-receipt-store-append evidence.+no-mutation-route evidence.+no-terminal-closure evidence.+no-success-claim evidence.+no-secret-value evidence.+command execution.+adapter execution.+branch pushes.+pull-request creation.+repository writes.+receipt-store append.+connector calls.+mutation routes.+secret material.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
     if pr_creation_command_preview_row is None:
         errors.append(
-            "missing ready row: GitHub PR creation command preview execution-admission binding PR"
+            "missing ready row: GitHub PR creation command preview execution-admission evidence binding PR"
         )
 
     pr_operator_approval_command_preview_row = re.search(
@@ -1646,7 +1646,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind PR creation command preview to command-preview execution admission evidence",
+        "harness(pr): bind operator approval request to command-preview execution admission evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:
