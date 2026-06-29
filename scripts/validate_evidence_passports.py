@@ -235,6 +235,16 @@ def _validate_evidence_passport(
     rollback = _mapping(evidence_passport.get("rollback"))
     if rollback.get("rollback_status") == "missing" and rollback.get("rollback_or_compensation_available") is True:
         errors.append(f"{label}: {capability_id} missing rollback cannot be available")
+    missing_rollback_refs = _string_list(rollback.get("missing_rollback_refs"))
+    if rollback.get("rollback_evidence_missing") is True:
+        if "recovery_evidence_missing" not in missing_rollback_refs:
+            errors.append(f"{label}: {capability_id} missing rollback refs must include recovery_evidence_missing")
+        if "rollback_or_recovery_evidence" not in missing_rollback_refs:
+            errors.append(f"{label}: {capability_id} missing rollback refs must include rollback_or_recovery_evidence")
+        if not str(rollback.get("next_rollback_action", "")).strip():
+            errors.append(f"{label}: {capability_id} missing rollback must include next_rollback_action")
+    elif missing_rollback_refs:
+        errors.append(f"{label}: {capability_id} rollback-ready capabilities must not list missing rollback refs")
 
     continuation = _mapping(evidence_passport.get("continuation"))
     if continuation.get("safe_for_live_action") is True and continuation.get("live_action_disabled") is not False:
