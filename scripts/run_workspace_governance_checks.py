@@ -41,6 +41,7 @@ CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_NAME = "workspace_governance_preflight_recei
 CANONICAL_PREFLIGHT_RECEIPT_EXAMPLE_PATH = (
     WORKSPACE_ROOT / "docs" / "workspace-governance-preflight-receipt-example.json"
 )
+DEFAULT_MAX_WORKERS = 8
 
 
 class PreflightLockError(RuntimeError):
@@ -2163,7 +2164,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--check", action="append", default=[], help="run only the named check; repeatable")
     parser.add_argument("--json", action="store_true", help="emit a machine-readable preflight receipt")
     parser.add_argument("--receipt-path", type=Path, help="write the JSON receipt to this workspace-local path")
-    parser.add_argument("--max-workers", type=int, default=1, help="maximum parallel check workers")
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=DEFAULT_MAX_WORKERS,
+        help=f"maximum parallel check workers; use 1 for sequential debugging (default: {DEFAULT_MAX_WORKERS})",
+    )
     parser.add_argument("--per-check-timeout-seconds", type=float, help="timeout for each check")
     parser.add_argument("--shard-count", type=int, default=1, help="number of deterministic shards")
     parser.add_argument("--shard-index", type=int, default=0, help="zero-based shard index")
