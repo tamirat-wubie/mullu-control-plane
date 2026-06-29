@@ -1,0 +1,35 @@
+{
+  "capability_id": "software_dev.github_issue.draft",
+  "version": 1,
+  "kind": "software_dev",
+  "risk": "low",
+  "owner": "software_platform",
+  "input_schema_ref": "schemas/software_dev/github_issue_draft.input.schema.json",
+  "output_schema_ref": "urn:mullusi:schema:github-issue-draft-receipt:1",
+  "allowed_environments": ["local", "pilot"],
+  "required_gates": ["schema_validation", "read_model_contract", "receipt_contract"],
+  "rollback_required": false,
+  "sandbox_required": false,
+  "effect_bearing": false,
+  "maturity": "C3",
+  "evidence_refs": [
+    "tests/test_gateway/test_github_operations_workroom.py",
+    "schemas/software_dev/github_issue_draft.input.schema.json",
+    "schemas/software_dev/github_issue_draft.output.schema.json"
+  ],
+  "policy_refs": [
+    "policy://software-dev/github-issue-draft-only",
+    "policy://software-dev/no-github-mutation"
+  ],
+  "receipt_contract_ref": "urn:mullusi:schema:github-issue-draft-receipt:1",
+  "metadata": {
+    "hot_reload_allowed_environments": ["local", "pilot"],
+    "direct_effects_allowed": false,
+    "unlock_ladder": {
+      "ladder_id": "mullu.capability_unlock_ladder.v1",
+      "level": 1,
+      "level_id": "L1",
+      "gate_template_ids": ["evidence_intake_gate", "verifier_gate"]
+    }
+  }
+}

@@ -49,11 +49,13 @@ GITHUB_PR_SAFETY_CAPABILITY_ID = "github.pr_safety_review.read_only.v1"
 GITHUB_ACTIONS_FAILURE_CAPABILITY_ID = "github.actions_failure_diagnosis.read_only.v1"
 GITHUB_REPO_STATUS_CAPABILITY_ID = "github.repo_status_summary.read_only.v1"
 GITHUB_PATCH_PLAN_CAPABILITY_ID = "github.patch_plan_draft.prepare.v1"
+GITHUB_ISSUE_DRAFT_CAPABILITY_ID = "github.issue_draft.prepare.v1"
 GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID = "connector.github.read"
 GITHUB_PR_SAFETY_INTENT = "REVIEW_PR_MERGE_SAFETY"
 GITHUB_ACTIONS_FAILURE_INTENT = "DIAGNOSE_GITHUB_ACTIONS_FAILURE"
 GITHUB_REPO_STATUS_INTENT = "SUMMARIZE_GITHUB_REPOSITORY_STATUS"
 GITHUB_PATCH_PLAN_INTENT = "DRAFT_GITHUB_PATCH_PLAN"
+GITHUB_ISSUE_DRAFT_INTENT = "DRAFT_GITHUB_ISSUE"
 GITHUB_WORKROOM_SURFACE = "github_operations_workroom"
 
 _REQUIRED_EVIDENCE = (
@@ -90,6 +92,14 @@ _PATCH_PLAN_BLOCKED_ACTIONS = (
     "create_issue_without_explicit_approval",
     "claim_fix_complete_without_verification",
 )
+_ISSUE_DRAFT_BLOCKED_ACTIONS = (
+    "create_github_issue_without_explicit_approval",
+    "apply_github_labels_without_write_admission",
+    "assign_github_issue_without_write_admission",
+    "post_github_comment_without_write_admission",
+    "mutate_repository_without_write_admission",
+    "claim_issue_created_without_live_receipt",
+)
 _ALLOWED_TOOLS = (
     "github.read.pull_request",
     "github.read.diff",
@@ -106,6 +116,11 @@ _PATCH_PLAN_REQUIRED_EVIDENCE = (
     "diagnosis_or_problem_summary",
     "affected_file_or_component_refs",
     "verification_expectations",
+)
+_ISSUE_DRAFT_REQUIRED_EVIDENCE = (
+    "problem_summary",
+    "evidence_refs",
+    "acceptance_criteria",
 )
 _EFFECT_BOUNDARY = {
     "execution_allowed": False,
@@ -1595,6 +1610,81 @@ class GitHubPatchPlanDraft(ContractRecord):
         object.__setattr__(self, "drafted_at", require_datetime_text(self.drafted_at, "drafted_at"))
 
 
+@dataclass(frozen=True, slots=True)
+class GitHubIssueDraftRequest(ContractRecord):
+    """Input contract for a governed local GitHub issue draft."""
+
+    actor_id: str
+    workspace_id: str
+    repo: str
+    problem_summary: str
+    evidence_refs: tuple[str, ...]
+    acceptance_criteria: tuple[str, ...]
+    suggested_labels: tuple[str, ...]
+    surface_event_id: str
+    requested_at: str
+    authority_ref: str = "policy.github.issue_draft.local_draft_only"
+    assumptions: tuple[str, ...] = (
+        "Evidence references are bounded and authorized for this actor and workspace.",
+        "Issue drafting does not create GitHub issues, apply labels, assign users, comment, or mutate repositories.",
+    )
+    write_authority_granted: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in ("actor_id", "workspace_id", "repo", "surface_event_id", "authority_ref"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if self.problem_summary:
+            object.__setattr__(self, "problem_summary", require_non_empty_text(self.problem_summary, "problem_summary"))
+        object.__setattr__(self, "requested_at", require_datetime_text(self.requested_at, "requested_at"))
+        for field_name in ("evidence_refs", "acceptance_criteria", "suggested_labels", "assumptions"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple):
+                raise ValueError(f"{field_name} must be a tuple")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if self.write_authority_granted is not False:
+            raise ValueError("issue draft request cannot grant write authority")
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubIssueDraft(ContractRecord):
+    """Governed draft issue content for a future explicit GitHub write."""
+
+    draft_id: str
+    repo: str
+    status: str
+    issue_title: str
+    issue_body: str
+    suggested_labels: tuple[str, ...]
+    acceptance_criteria: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    blocked_actions: tuple[str, ...]
+    recommended_next_action: str
+    confidence: float
+    write_authority_granted: bool
+    drafted_at: str
+
+    def __post_init__(self) -> None:
+        for field_name in ("draft_id", "repo", "status", "issue_title", "issue_body", "recommended_next_action"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if self.status not in {"drafted", "needs_evidence"}:
+            raise ValueError("status must be drafted or needs_evidence")
+        for field_name in ("suggested_labels", "acceptance_criteria", "evidence_refs", "blocked_actions"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple) or not values:
+                raise ValueError(f"{field_name} must contain at least one item")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if not isinstance(self.confidence, (int, float)) or isinstance(self.confidence, bool):
+            raise ValueError("confidence must be a number")
+        if not 0.0 <= float(self.confidence) <= 1.0:
+            raise ValueError("confidence must be between 0.0 and 1.0")
+        object.__setattr__(self, "confidence", float(self.confidence))
+        if self.write_authority_granted is not False:
+            raise ValueError("issue draft cannot grant write authority")
+        object.__setattr__(self, "drafted_at", require_datetime_text(self.drafted_at, "drafted_at"))
+
+
 def admit_github_repo_status_evidence_collection(
     request: GitHubRepoStatusEvidenceAdmissionRequest,
     *,
@@ -1885,6 +1975,132 @@ def build_github_patch_plan_draft_receipt(
             else "Patch plan draft is blocked until missing evidence is supplied."
         ),
         final_judgment=draft.target_summary,
+        memory_update=FabricMemoryDecisionStatus.STORE if draft.status == "drafted" else FabricMemoryDecisionStatus.DEFER,
+        timestamp=occurred_at,
+        partial_failure_reasons=partial_failure_reasons,
+    )
+
+
+def evaluate_github_issue_draft(
+    *,
+    request: GitHubIssueDraftRequest,
+    clock: Callable[[], str],
+) -> GitHubIssueDraft:
+    """Draft a bounded GitHub issue proposal without performing GitHub writes."""
+
+    if not isinstance(request, GitHubIssueDraftRequest):
+        raise ValueError("request must be a GitHubIssueDraftRequest")
+    drafted_at = require_datetime_text(clock(), "drafted_at")
+    missing: list[str] = []
+    if not request.problem_summary.strip():
+        missing.append("missing_problem_summary")
+    if not request.evidence_refs:
+        missing.append("missing_evidence_refs")
+    if not request.acceptance_criteria:
+        missing.append("missing_acceptance_criteria")
+
+    if missing:
+        status = "needs_evidence"
+        issue_title = "Awaiting bounded issue evidence"
+        issue_body = "Issue draft cannot be created until problem summary, evidence refs, and acceptance criteria are present."
+        labels = tuple(request.suggested_labels or ("needs-evidence",))
+        criteria = tuple(request.acceptance_criteria or ("collect_missing_issue_draft_evidence",))
+        evidence_refs = tuple(request.evidence_refs or ("missing_issue_draft_evidence",))
+        recommended_next_action = "collect_problem_summary_evidence_refs_and_acceptance_criteria"
+        confidence = 0.32
+    else:
+        status = "drafted"
+        problem = request.problem_summary.strip()
+        issue_title = _bounded_issue_title(problem)
+        criteria = tuple(dict.fromkeys(request.acceptance_criteria))
+        evidence_refs = tuple(dict.fromkeys(request.evidence_refs))
+        labels = tuple(dict.fromkeys(request.suggested_labels or ("governed-draft",)))
+        issue_body = "\n".join(
+            (
+                "## Problem",
+                problem,
+                "",
+                "## Evidence",
+                *[f"- {ref}" for ref in evidence_refs],
+                "",
+                "## Acceptance Criteria",
+                *[f"- {criterion}" for criterion in criteria],
+                "",
+                "## Governance Boundary",
+                "This is a local draft only. Creating the GitHub issue, applying labels, assigning users, or posting comments requires explicit write approval and a live receipt.",
+            )
+        )
+        recommended_next_action = "request_explicit_issue_creation_approval_or_continue_local_triage"
+        confidence = 0.68
+
+    draft_hash = _stable_hash(
+        {
+            "actor_id": request.actor_id,
+            "repo": request.repo,
+            "issue_title": issue_title,
+            "evidence_refs": evidence_refs,
+            "status": status,
+            "drafted_at": drafted_at,
+        }
+    )
+    return GitHubIssueDraft(
+        draft_id=f"github-issue-draft:{draft_hash}",
+        repo=request.repo,
+        status=status,
+        issue_title=issue_title,
+        issue_body=issue_body,
+        suggested_labels=labels,
+        acceptance_criteria=criteria,
+        evidence_refs=evidence_refs,
+        blocked_actions=_ISSUE_DRAFT_BLOCKED_ACTIONS,
+        recommended_next_action=recommended_next_action,
+        confidence=confidence,
+        write_authority_granted=False,
+        drafted_at=drafted_at,
+    )
+
+
+def build_github_issue_draft_receipt(
+    *,
+    request: GitHubIssueDraftRequest,
+    draft: GitHubIssueDraft,
+    occurred_at: str,
+) -> CausalCapabilityReceipt:
+    """Emit a Class 1 causal receipt for a local GitHub issue draft."""
+
+    if not isinstance(request, GitHubIssueDraftRequest):
+        raise ValueError("request must be a GitHubIssueDraftRequest")
+    if not isinstance(draft, GitHubIssueDraft):
+        raise ValueError("draft must be a GitHubIssueDraft")
+    occurred_at = require_datetime_text(occurred_at, "occurred_at")
+    receipt_hash = _stable_hash(
+        {
+            "actor_id": request.actor_id,
+            "draft_id": draft.draft_id,
+            "surface_event_id": request.surface_event_id,
+            "occurred_at": occurred_at,
+        }
+    )
+    partial_failure_reasons = () if draft.status == "drafted" else tuple(draft.acceptance_criteria)
+    return CausalCapabilityReceipt(
+        receipt_id=f"github-issue-draft-receipt:{receipt_hash}",
+        event_id=request.surface_event_id,
+        actor_id=request.actor_id,
+        surface=GITHUB_WORKROOM_SURFACE,
+        intent=GITHUB_ISSUE_DRAFT_INTENT,
+        target_object=f"github_repository:{request.repo}",
+        risk_class=FabricRiskClass.CLASS_1_PREPARE,
+        evidence_used=draft.evidence_refs,
+        policy_decision=FabricPolicyDecision.ALLOW_DRAFT_ONLY,
+        actions_taken=("drafted_github_issue", "emitted_causal_receipt") if draft.status == "drafted" else ("reported_issue_draft_evidence_gap",),
+        actions_blocked=draft.blocked_actions,
+        assumptions=request.assumptions,
+        verification_result=(
+            "GitHub issue drafted from bounded evidence; no GitHub write was performed."
+            if draft.status == "drafted"
+            else "GitHub issue draft is blocked until missing evidence is supplied."
+        ),
+        final_judgment=draft.issue_title,
         memory_update=FabricMemoryDecisionStatus.STORE if draft.status == "drafted" else FabricMemoryDecisionStatus.DEFER,
         timestamp=occurred_at,
         partial_failure_reasons=partial_failure_reasons,
@@ -2459,6 +2675,61 @@ def build_github_patch_plan_workroom_read_model(
     }
 
 
+def build_github_issue_draft_workroom_read_model(
+    *,
+    actor_id: str,
+    workspace_id: str,
+    repo: str,
+    surface_event_id: str,
+    occurred_at: str,
+    clock: Callable[[], str],
+) -> dict[str, Any]:
+    """Build the operator Workroom read model for local GitHub issue drafting."""
+
+    generated_at = require_datetime_text(clock(), "generated_at")
+    passport = UniversalCapabilityPassport(
+        passport_id=GITHUB_ISSUE_DRAFT_CAPABILITY_ID,
+        name="GitHub Issue Draft",
+        domain="software_governance",
+        inputs=("repo", "actor_id", "problem_summary", "evidence_refs", "acceptance_criteria", "suggested_labels"),
+        outputs=("issue_title", "issue_body", "suggested_labels", "receipt"),
+        required_evidence=_ISSUE_DRAFT_REQUIRED_EVIDENCE,
+        allowed_tools=("mullusi.local_github_issue_draft",),
+        blocked_actions=_ISSUE_DRAFT_BLOCKED_ACTIONS,
+        risk_class=FabricRiskClass.CLASS_1_PREPARE,
+        verification_rules=(
+            "no_issue_draft_without_problem_summary",
+            "no_issue_draft_without_evidence_refs",
+            "no_issue_creation_without_explicit_write_approval",
+            "no_github_write_from_issue_draft",
+        ),
+        receipt_fields=("actor", "repo", "problem_summary", "evidence_used", "issue_draft", "actions_blocked"),
+        memory_policy="Store issue-draft receipt metadata only after a drafted issue; defer memory when evidence is missing.",
+    )
+    return {
+        "schema_ref": "urn:mullusi:read-model:github-operations-issue-draft-workroom:1",
+        "generated_at": generated_at,
+        "capability_id": GITHUB_ISSUE_DRAFT_CAPABILITY_ID,
+        "surface": GITHUB_WORKROOM_SURFACE,
+        "actor_id": require_non_empty_text(actor_id, "actor_id"),
+        "workspace_id": require_non_empty_text(workspace_id, "workspace_id"),
+        "repo": require_non_empty_text(repo, "repo"),
+        "surface_event_id": require_non_empty_text(surface_event_id, "surface_event_id"),
+        "occurred_at": require_datetime_text(occurred_at, "occurred_at"),
+        "status": "awaiting_evidence",
+        "outcome": "AwaitingEvidence",
+        "required_evidence": list(passport.required_evidence),
+        "allowed_tools": list(passport.allowed_tools),
+        "blocked_actions": list(_ISSUE_DRAFT_BLOCKED_ACTIONS),
+        "passport": passport.to_json_dict(),
+        "effect_boundary": dict(_EFFECT_BOUNDARY),
+        "raw_tool_surface_exposed": False,
+        "governed": True,
+        "execution_allowed": False,
+        "write_authority_granted": False,
+    }
+
+
 def render_github_pr_safety_workroom_html(read_model: Mapping[str, Any]) -> str:
     """Render the browser-facing operator Workroom panel."""
 
@@ -2900,6 +3171,110 @@ patchPlanForm.addEventListener("submit", async (event) => {{
 </html>"""
 
 
+def render_github_issue_draft_workroom_html(read_model: Mapping[str, Any]) -> str:
+    """Render the local GitHub issue draft Workroom panel."""
+
+    repo = _html(read_model.get("repo", ""))
+    actor_id = _html(read_model.get("actor_id", "operator:gateway"))
+    workspace_id = _html(read_model.get("workspace_id", "workspace:mullusi-control-plane"))
+    surface_event_id = _html(read_model.get("surface_event_id", ""))
+    occurred_at = _html(read_model.get("occurred_at", ""))
+    status = _html(read_model.get("status", "awaiting_evidence"))
+    outcome = _html(read_model.get("outcome", "AwaitingEvidence"))
+    blocked_actions = "".join(f"<li>{_html(action)}</li>" for action in read_model.get("blocked_actions", ()))
+    required_evidence = "".join(f"<li>{_html(item)}</li>" for item in read_model.get("required_evidence", ()))
+    mutation_allowed = str(read_model.get("effect_boundary", {}).get("repository_mutation_allowed", False)).lower()
+    issue_creation_allowed = str(read_model.get("effect_boundary", {}).get("issue_creation_allowed", False)).lower()
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullusi GitHub Issue Draft Workroom</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 2rem; color: #17202a; background: #f7f9fb; }}
+    main {{ max-width: 1080px; margin: 0 auto; }}
+    section, form {{ background: #fff; border: 1px solid #d8dee8; border-radius: 8px; padding: 1rem; margin: 1rem 0; }}
+    label {{ display: block; font-weight: 650; margin-top: .75rem; }}
+    input, textarea {{ width: 100%; box-sizing: border-box; margin-top: .25rem; padding: .55rem; border: 1px solid #aeb8c7; border-radius: 6px; }}
+    textarea {{ min-height: 6rem; }}
+    button {{ margin-top: .9rem; padding: .55rem .85rem; border: 1px solid #1f5f9f; border-radius: 6px; background: #1f5f9f; color: #fff; font-weight: 700; }}
+    pre {{ overflow: auto; background: #0f1720; color: #e8eef7; padding: .85rem; border-radius: 6px; min-height: 4rem; }}
+    dl {{ display: grid; grid-template-columns: 210px 1fr; gap: .5rem 1rem; }}
+    dt {{ font-weight: 700; }}
+    dd {{ margin: 0; }}
+    code {{ background: #eef2f6; padding: .15rem .35rem; border-radius: 4px; }}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mullusi GitHub Issue Draft Workroom</h1>
+  <section>
+    <dl>
+      <dt>Repository</dt><dd><code>{repo}</code></dd>
+      <dt>Status</dt><dd>{status}</dd>
+      <dt>Outcome</dt><dd>{outcome}</dd>
+      <dt>Issue creation allowed</dt><dd><code>{issue_creation_allowed}</code></dd>
+      <dt>Repository mutation allowed</dt><dd><code>{mutation_allowed}</code></dd>
+    </dl>
+  </section>
+  <form id="issue-draft">
+    <input name="actor_id" type="hidden" value="{actor_id}">
+    <input name="workspace_id" type="hidden" value="{workspace_id}">
+    <input name="surface_event_id" type="hidden" value="{surface_event_id}">
+    <input name="requested_at" type="hidden" value="{occurred_at}">
+    <label>Repository <input name="repo" value="{repo}"></label>
+    <label>Problem summary <textarea name="problem_summary" placeholder="Describe the problem from bounded evidence."></textarea></label>
+    <label>Evidence refs <textarea name="evidence_refs" placeholder="One receipt or evidence reference per line."></textarea></label>
+    <label>Acceptance criteria <textarea name="acceptance_criteria" placeholder="One acceptance criterion per line."></textarea></label>
+    <label>Suggested labels <textarea name="suggested_labels" placeholder="One label per line."></textarea></label>
+    <button type="submit">Draft Issue</button>
+  </form>
+  <section>
+    <h2>Draft Result</h2>
+    <pre id="issue-draft-output">Awaiting local evidence. No GitHub token or issue creation authority is accepted.</pre>
+  </section>
+  <section>
+    <h2>Required Evidence</h2>
+    <ul>{required_evidence}</ul>
+  </section>
+  <section>
+    <h2>Blocked Actions</h2>
+    <ul>{blocked_actions}</ul>
+  </section>
+</main>
+<script>
+const issueDraftForm = document.getElementById("issue-draft");
+const issueDraftOutput = document.getElementById("issue-draft-output");
+function lines(value) {{
+  return value.split("\\n").map((item) => item.trim()).filter(Boolean);
+}}
+issueDraftForm.addEventListener("submit", async (event) => {{
+  event.preventDefault();
+  const form = new FormData(event.target);
+  const payload = {{
+    actor_id: form.get("actor_id"),
+    workspace_id: form.get("workspace_id"),
+    repo: form.get("repo"),
+    problem_summary: form.get("problem_summary"),
+    evidence_refs: lines(form.get("evidence_refs") || ""),
+    acceptance_criteria: lines(form.get("acceptance_criteria") || ""),
+    suggested_labels: lines(form.get("suggested_labels") || ""),
+    surface_event_id: form.get("surface_event_id"),
+    requested_at: form.get("requested_at")
+  }};
+  const response = await fetch("/operator/github-operations/issue-draft/draft", {{
+    method: "POST",
+    headers: {{ "Content-Type": "application/json" }},
+    body: JSON.stringify(payload)
+  }});
+  const data = await response.json();
+  issueDraftOutput.textContent = JSON.stringify(data, null, 2);
+}});
+</script>
+</body>
+</html>"""
+
+
 def _stable_hash(payload: Mapping[str, Any]) -> str:
     normalized = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
@@ -2912,6 +3287,13 @@ def _payload_hash(payload: Any) -> str:
 
 def _text_hash(payload: str) -> str:
     return f"sha256:{hashlib.sha256(payload.encode('utf-8')).hexdigest()}"
+
+
+def _bounded_issue_title(problem_summary: str, *, max_length: int = 78) -> str:
+    normalized = " ".join(require_non_empty_text(problem_summary, "problem_summary").split())
+    if len(normalized) <= max_length:
+        return normalized
+    return normalized[: max_length - 3].rstrip() + "..."
 
 
 def _validate_fetch_admission(admission: GitHubReadOnlyEvidenceAdmission) -> None:
