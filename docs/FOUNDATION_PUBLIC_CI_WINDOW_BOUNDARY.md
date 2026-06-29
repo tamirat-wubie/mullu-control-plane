@@ -75,6 +75,14 @@ itself, generate the no-execute checklist:
 python scripts/generate_public_ci_window_operator_commands.py --pull-request 2380 --branch codex/public-ci-window-visibility-restoration-20260628 --head-sha 331adc8c851b48a754643a9ac33c706c9365071c
 ```
 
+The committed packet fixture is
+[`../examples/foundation_public_ci_window_operator_commands.example.json`](../examples/foundation_public_ci_window_operator_commands.example.json).
+Validate it against the generator and manual execution boundary:
+
+```powershell
+python scripts/validate_public_ci_window_operator_command_packet.py
+```
+
 When the repository is public and live metadata is intentionally available, the
 remote surface check may also run:
 

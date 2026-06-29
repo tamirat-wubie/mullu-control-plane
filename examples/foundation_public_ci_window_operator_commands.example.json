@@ -1,0 +1,87 @@
+{
+  "blocked_claims": [
+    "public readiness",
+    "public launch",
+    "customer access",
+    "production deployment",
+    "legal filing",
+    "fundraising readiness",
+    "raw secret exposure"
+  ],
+  "branch": "codex/public-ci-window-visibility-restoration-20260628",
+  "commands": [
+    {
+      "command": "python scripts/validate_public_repository_surface.py --local-only",
+      "live_effect_possible": false,
+      "operator_execution_required": false,
+      "phase": "pre-window",
+      "purpose": "Validate public-safe repository surface before any visibility change.",
+      "step_id": "01_preflight_public_surface"
+    },
+    {
+      "command": "python scripts/validate_proprietary_boundary.py",
+      "live_effect_possible": false,
+      "operator_execution_required": false,
+      "phase": "pre-window",
+      "purpose": "Validate proprietary boundary before any visibility change.",
+      "step_id": "02_preflight_proprietary_boundary"
+    },
+    {
+      "command": "python scripts/validate_release_status.py",
+      "live_effect_possible": false,
+      "operator_execution_required": false,
+      "phase": "pre-window",
+      "purpose": "Confirm no release or public-readiness claim is implied by the window.",
+      "step_id": "03_preflight_release_status"
+    },
+    {
+      "command": "gh repo edit tamirat-wubie/mullu-control-plane --visibility public",
+      "live_effect_possible": true,
+      "operator_execution_required": true,
+      "phase": "open-window",
+      "purpose": "Manual operator command to open temporary public visibility for GitHub Actions only.",
+      "step_id": "04_open_visibility_manual"
+    },
+    {
+      "command": "gh pr checks 2380",
+      "live_effect_possible": false,
+      "operator_execution_required": false,
+      "phase": "execution-window",
+      "purpose": "Observe PR checks created during the public CI window.",
+      "step_id": "05_observe_pr_checks"
+    },
+    {
+      "command": "python scripts/report_ci_health.py --repo tamirat-wubie/mullu-control-plane --branch codex/public-ci-window-visibility-restoration-20260628 --json",
+      "live_effect_possible": false,
+      "operator_execution_required": false,
+      "phase": "execution-window",
+      "purpose": "Record CI health for the branch under verification.",
+      "step_id": "06_observe_ci_health"
+    },
+    {
+      "command": "gh repo edit tamirat-wubie/mullu-control-plane --visibility private",
+      "live_effect_possible": true,
+      "operator_execution_required": true,
+      "phase": "close-window",
+      "purpose": "Manual operator command to restore private visibility after CI evidence is captured.",
+      "step_id": "07_close_visibility_manual"
+    },
+    {
+      "command": "python scripts/validate_public_repository_surface.py --local-only",
+      "live_effect_possible": false,
+      "operator_execution_required": false,
+      "phase": "post-window receipt",
+      "purpose": "Re-check local public-safe surface after visibility restoration.",
+      "step_id": "08_verify_private_surface"
+    }
+  ],
+  "generator_id": "foundation_public_ci_window_operator_commands.v1",
+  "head_sha": "331adc8c851b48a754643a9ac33c706c9365071c",
+  "no_execute": true,
+  "pull_request": "https://github.com/tamirat-wubie/mullu-control-plane/pull/2380",
+  "receipt_path": ".change_assurance/public-ci-window-2380-receipt.json",
+  "repo": "tamirat-wubie/mullu-control-plane",
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "window_id": "foundation_public_ci_window.20260628.pr2380"
+}
