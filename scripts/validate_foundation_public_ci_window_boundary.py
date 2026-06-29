@@ -170,6 +170,7 @@ REQUIRED_FRAGMENTS = (
     "python scripts/report_ci_health.py --repo tamirat-wubie/mullu-control-plane --branch main --json",
     "python scripts/generate_public_ci_window_operator_commands.py --pull-request 2380 --branch codex/public-ci-window-visibility-restoration-20260628 --head-sha 331adc8c851b48a754643a9ac33c706c9365071c",
     "python scripts/validate_public_ci_window_operator_command_packet.py",
+    "python scripts/build_public_ci_window_receipt.py",
     "foundation_public_ci_window_operator_commands.example.json",
     "repo_visibility_before",
     "repo_visibility_after",
