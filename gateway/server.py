@@ -2073,6 +2073,29 @@ def _safe_vs_dangerous_summary(
 
     first_safe = safe_candidates[0] if safe_candidates else {}
     first_blocker = dangerous_blockers[0] if dangerous_blockers else {}
+    first_dangerous_reason = str(
+        first_blocker.get("reason") or "dangerous_zone_requires_explicit_approval"
+    )
+    operator_message = (
+        f"{len(safe_candidates)} local-lab candidates available; "
+        f"{len(dangerous_blockers)} real-world zones blocked pending explicit approval"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="safe_vs_dangerous.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock="approval" if dangerous_blockers else "none",
+        capability_summary={
+            "capability_id": "safe_vs_dangerous.boundary",
+            "mode": "lab",
+            "current_level": "L3",
+            "next_level": "L9",
+            "status": "blocked" if dangerous_blockers else "preflight_ready",
+            "blocked_reason": first_dangerous_reason if dangerous_blockers else "none",
+            "next_evidence_count": len(dangerous_blockers),
+            "external_effects_allowed": False,
+            "rollback_required": bool(dangerous_blockers),
+        },
+    )
     return {
         "summary_id": "safe_vs_dangerous.local_lab",
         "safe_candidate_count": len(safe_candidates),
@@ -2080,16 +2103,16 @@ def _safe_vs_dangerous_summary(
         "first_safe_zone": str(first_safe.get("zone") or ""),
         "first_safe_action": str(first_safe.get("primary_action") or "prepare safe local sandbox work"),
         "first_dangerous_zone": str(first_blocker.get("zone") or ""),
-        "first_dangerous_reason": str(
-            first_blocker.get("reason") or "dangerous_zone_requires_explicit_approval"
-        ),
-        "operator_message": (
-            f"{len(safe_candidates)} local-lab candidates available; "
-            f"{len(dangerous_blockers)} real-world zones blocked pending explicit approval"
-        ),
+        "first_dangerous_reason": first_dangerous_reason,
+        "operator_message": operator_message,
         "safe_execution_boundary": "local_lab_only",
         "dangerous_execution_boundary": "real_world",
         "external_effects_allowed": False,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 
@@ -2197,6 +2220,27 @@ def _capability_registry_summary(
     )
     next_capability_id = str(first_blocked.get("capability_id") or "") if isinstance(first_blocked, Mapping) else ""
     next_blocked_reason = str(first_blocked.get("next_unlock") or "review") if isinstance(first_blocked, Mapping) else "review"
+    operator_message = (
+        f"{preflight_ready_count} capabilities preflight-ready; "
+        f"{blocked_count} capabilities blocked; next evidence is "
+        f"{next_blocked_reason} for {next_capability_id or 'capability review'}"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="capability_registry.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock=next_blocked_reason,
+        capability_summary={
+            "capability_id": next_capability_id or "capability_registry.review",
+            "mode": "lab",
+            "current_level": "L0",
+            "next_level": "L3",
+            "status": "approval_required" if approval_required_count else "preflight_ready",
+            "blocked_reason": next_blocked_reason,
+            "next_evidence_count": len(next_required_evidence),
+            "external_effects_allowed": False,
+            "rollback_required": any("rollback" in value for value in next_required_evidence),
+        },
+    )
     return {
         "summary_id": "capability_registry.foundation",
         "capability_count": len(capability_cards),
@@ -2208,13 +2252,14 @@ def _capability_registry_summary(
         "next_blocked_reason": next_blocked_reason,
         "next_required_evidence": next_required_evidence,
         "next_required_evidence_count": len(next_required_evidence),
-        "operator_message": (
-            f"{preflight_ready_count} capabilities preflight-ready; "
-            f"{blocked_count} capabilities blocked; next evidence is "
-            f"{next_blocked_reason} for {next_capability_id or 'capability review'}"
-        ),
+        "operator_message": operator_message,
         "execution_boundary": "local_lab_only",
         "external_effects_allowed": False,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 

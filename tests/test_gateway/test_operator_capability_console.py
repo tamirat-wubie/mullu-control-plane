@@ -778,6 +778,22 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert "capabilities preflight-ready" in registry_summary["operator_message"]
     assert registry_summary["execution_boundary"] == "local_lab_only"
     assert registry_summary["external_effects_allowed"] is False
+    assert registry_summary["control_summary"] == {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": "capability_registry.control_summary.v1",
+        "operator_message": registry_summary["operator_message"],
+        "action_banner": registry_summary["operator_message"],
+        "capability_id": registry_summary["next_blocked_capability_id"],
+        "mode": "lab",
+        "current_level": "L0",
+        "next_level": "L3",
+        "status": "approval_required",
+        "blocked_reason": registry_summary["next_blocked_reason"],
+        "next_unlock": registry_summary["next_blocked_reason"],
+        "next_evidence_count": registry_summary["next_required_evidence_count"],
+        "external_effects_allowed": False,
+        "rollback_required": True,
+    }
     safe_vs_dangerous = capability_panel["metadata"]["safe_vs_dangerous_summary"]
     assert safe_vs_dangerous["summary_id"] == "safe_vs_dangerous.local_lab"
     assert safe_vs_dangerous["safe_candidate_count"] == 7
@@ -792,6 +808,22 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert safe_vs_dangerous["safe_execution_boundary"] == "local_lab_only"
     assert safe_vs_dangerous["dangerous_execution_boundary"] == "real_world"
     assert safe_vs_dangerous["external_effects_allowed"] is False
+    assert safe_vs_dangerous["control_summary"] == {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": "safe_vs_dangerous.control_summary.v1",
+        "operator_message": safe_vs_dangerous["operator_message"],
+        "action_banner": safe_vs_dangerous["operator_message"],
+        "capability_id": "safe_vs_dangerous.boundary",
+        "mode": "lab",
+        "current_level": "L3",
+        "next_level": "L9",
+        "status": "blocked",
+        "blocked_reason": safe_vs_dangerous["first_dangerous_reason"],
+        "next_unlock": "approval",
+        "next_evidence_count": safe_vs_dangerous["dangerous_blocker_count"],
+        "external_effects_allowed": False,
+        "rollback_required": True,
+    }
     unlock_readiness = capability_panel["metadata"]["unlock_readiness_summary"]
     assert unlock_readiness["summary_id"] == "unlock_readiness.local_lab"
     assert unlock_readiness["pending_unlock_count"] == len(unlock_queue)
@@ -1811,6 +1843,7 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "rollback execution remains receipt-bound" in response.text
     assert "If Mullu can change it, Mullu must also know how to undo it." in response.text
     assert "Capability Registry Summary" in response.text
+    assert "capability_registry.control_summary.v1" in response.text
     assert "capabilities preflight-ready" in response.text
     assert "Next blocked capability" in response.text
     assert "Friction Mode Summary" in response.text
@@ -1818,6 +1851,7 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "fast mode recommended for local lab" in response.text
     assert "Safe vs Dangerous Summary" in response.text
     assert "7 local-lab candidates available; 7 real-world zones blocked pending explicit approval" in response.text
+    assert "safe_vs_dangerous.control_summary.v1" in response.text
     assert "Unlock Readiness Summary" in response.text
     assert "pending unlocks; next evidence" in response.text
     assert "unlock_readiness.control_summary.v1" in response.text

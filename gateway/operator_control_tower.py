@@ -4078,6 +4078,17 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     registry_evidence_count = int(capability_registry_summary.get("next_required_evidence_count") or 0)
     registry_boundary = str(capability_registry_summary.get("execution_boundary") or "local_lab_only")
     registry_external_effects = capability_registry_summary.get("external_effects_allowed") is True
+    registry_control = capability_registry_summary.get("control_summary", {})
+    if not isinstance(registry_control, Mapping):
+        registry_control = {}
+    registry_control_contract = str(registry_control.get("contract_id") or "operator_dashboard_control_summary.v1")
+    registry_control_summary_id = str(
+        registry_control.get("summary_id") or "capability_registry.control_summary.v1"
+    )
+    registry_control_status = str(registry_control.get("status") or "approval_required")
+    registry_control_level = str(registry_control.get("current_level") or "L0")
+    registry_control_next_level = str(registry_control.get("next_level") or "L3")
+    registry_control_next_unlock = str(registry_control.get("next_unlock") or registry_next_reason)
     safe_vs_dangerous_message = str(
         safe_vs_dangerous_summary.get("operator_message")
         or "0 local-lab candidates available; 0 real-world zones blocked pending explicit approval"
@@ -4100,6 +4111,21 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
         safe_vs_dangerous_summary.get("dangerous_execution_boundary") or "real_world"
     )
     safe_vs_dangerous_external_effects = safe_vs_dangerous_summary.get("external_effects_allowed") is True
+    safe_vs_dangerous_control = safe_vs_dangerous_summary.get("control_summary", {})
+    if not isinstance(safe_vs_dangerous_control, Mapping):
+        safe_vs_dangerous_control = {}
+    safe_vs_dangerous_control_contract = str(
+        safe_vs_dangerous_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    )
+    safe_vs_dangerous_control_summary_id = str(
+        safe_vs_dangerous_control.get("summary_id") or "safe_vs_dangerous.control_summary.v1"
+    )
+    safe_vs_dangerous_control_status = str(safe_vs_dangerous_control.get("status") or "blocked")
+    safe_vs_dangerous_control_level = str(safe_vs_dangerous_control.get("current_level") or "L3")
+    safe_vs_dangerous_control_next_level = str(safe_vs_dangerous_control.get("next_level") or "L9")
+    safe_vs_dangerous_control_next_unlock = str(
+        safe_vs_dangerous_control.get("next_unlock") or "approval"
+    )
     unlock_readiness_message = str(
         unlock_readiness_summary.get("operator_message")
         or "0 pending unlocks; next evidence for capability review is approval; 0 dangerous zones require explicit approval"
@@ -5703,6 +5729,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <h2>Capability Registry Summary</h2>
     <div class="task">
       <span class="field"><strong>Message</strong>{escape(registry_message)}</span>
+      <span class="field"><strong>Control contract</strong>{escape(registry_control_contract)}</span>
+      <span class="field"><strong>Control summary</strong>{escape(registry_control_summary_id)}</span>
+      <span class="field"><strong>Control status</strong>{escape(registry_control_status)}</span>
+      <span class="field"><strong>Control level</strong>{escape(registry_control_level)} -> {escape(registry_control_next_level)}</span>
+      <span class="field"><strong>Control next unlock</strong>{escape(registry_control_next_unlock)}</span>
       <span class="field"><strong>Capabilities</strong>{registry_capability_count}</span>
       <span class="field"><strong>Preflight ready</strong>{registry_preflight_ready_count}</span>
       <span class="field"><strong>Blocked</strong>{registry_blocked_count}</span>
@@ -5733,6 +5764,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <h2>Safe vs Dangerous Summary</h2>
     <div class="task">
       <span class="field"><strong>Message</strong>{escape(safe_vs_dangerous_message)}</span>
+      <span class="field"><strong>Control contract</strong>{escape(safe_vs_dangerous_control_contract)}</span>
+      <span class="field"><strong>Control summary</strong>{escape(safe_vs_dangerous_control_summary_id)}</span>
+      <span class="field"><strong>Control status</strong>{escape(safe_vs_dangerous_control_status)}</span>
+      <span class="field"><strong>Control level</strong>{escape(safe_vs_dangerous_control_level)} -> {escape(safe_vs_dangerous_control_next_level)}</span>
+      <span class="field"><strong>Control next unlock</strong>{escape(safe_vs_dangerous_control_next_unlock)}</span>
       <span class="field"><strong>Safe candidates</strong>{safe_vs_dangerous_safe_count}</span>
       <span class="field"><strong>Dangerous blockers</strong>{safe_vs_dangerous_blocked_count}</span>
       <span class="field"><strong>First safe zone</strong>{escape(safe_vs_dangerous_first_safe)}</span>
