@@ -1415,7 +1415,7 @@ def _validate_github_pr_branch_write_command_preview_response_binding_ready(
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| GitHub PR branch-write authority command-preview response binding PR \| READY \| .+command-preview-bound operator response witness.+terminal closure remain blocked\. \|$",
+        r"^\| GitHub PR branch-write authority command-preview response binding PR \| READY \| .+command-preview operator response evidence.+source response binding id/ref.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
@@ -1646,7 +1646,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind branch-write authority to command-preview operator response evidence",
+        "harness(pr): bind UAO PR admission to command-preview branch-write authority evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:

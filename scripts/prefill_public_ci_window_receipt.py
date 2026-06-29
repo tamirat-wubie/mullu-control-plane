@@ -153,9 +153,9 @@ def prefill_public_ci_window_receipt(
     closed_at: str | None = None,
     repo_visibility_restored_at: str | None = None,
     branch_deleted: bool = False,
+    observed_at: datetime | None = None,
     run_limit: int = 20,
     runner: CommandRunner = _run_command,
-    observed_at: datetime | None = None,
 ) -> dict[str, Any]:
     """Build a receipt from read-only GitHub PR and workflow metadata."""
 
