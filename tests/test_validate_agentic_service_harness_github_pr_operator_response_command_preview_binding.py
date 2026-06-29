@@ -109,6 +109,51 @@ def test_github_pr_operator_response_command_preview_binding_rejects_command_sha
     assert "must retain placeholders" in serialized_errors
 
 
+def test_github_pr_operator_response_command_preview_binding_rejects_approval_request_evidence_drift() -> None:
+    payload = validator.build_mutated_operator_response_command_preview_binding(
+        command_preview_approval_request_evidence__source_approval_request_id="wrong-approval-request",
+        command_preview_approval_request_evidence__source_operator_response_collected=True,
+        command_preview_approval_request_evidence__source_command_preview_execution_admission_bound=False,
+        command_preview_approval_request_evidence__source_operator_approval_request_remains_request_only=False,
+        command_preview_approval_request_evidence__operator_response_consumes_approval_request_evidence=False,
+        command_preview_approval_request_evidence__operator_response_remains_uncollected=False,
+        command_preview_approval_request_evidence__source_contains_secret_values=True,
+    )
+
+    errors: list[str] = []
+    validator._validate_response_command_preview_binding_semantics(
+        payload,
+        _source_operator_response(),
+        _source_command_approval_binding(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_approval_request_evidence.source_approval_request_id expected" in serialized_errors
+    assert (
+        "command_preview_approval_request_evidence.source_operator_response_collected expected False"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_approval_request_evidence.source_command_preview_execution_admission_bound expected True"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_approval_request_evidence.source_operator_approval_request_remains_request_only expected True"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_approval_request_evidence.operator_response_consumes_approval_request_evidence expected True"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_approval_request_evidence.operator_response_remains_uncollected expected True"
+        in serialized_errors
+    )
+    assert "command_preview_approval_request_evidence.source_contains_secret_values expected False" in serialized_errors
+
+
 def test_github_pr_operator_response_command_preview_binding_rejects_missing_required_refs() -> None:
     payload = validator.build_mutated_operator_response_command_preview_binding(
         response_command_preview_binding__placeholder_refs=["placeholder://branch-ref"],
