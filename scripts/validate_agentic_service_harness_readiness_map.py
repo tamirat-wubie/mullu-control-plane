@@ -531,15 +531,24 @@ REQUIRED_GITHUB_PR_BRANCH_WRITE_ACTUAL_DIFF_RESPONSE_BINDING_TERMS = (
     "terminal closure fail closed",
 )
 REQUIRED_GITHUB_PR_BRANCH_WRITE_COMMAND_PREVIEW_RESPONSE_BINDING_TERMS = (
-    "GitHub PR branch-write authority command-preview response binding PR",
+    "GitHub PR branch-write authority command-preview operator-response evidence binding PR",
     "agentic_service_harness_github_pr_branch_write_authority_binding",
-    "command-preview-bound operator response witness",
-    "operator response witness ref",
-    "command-preview approval request binding ref",
-    "redacted command preview",
-    "argument vector template",
-    "placeholder refs",
-    "branch-write evidence ref",
+    "command-preview operator response evidence",
+    "source response binding ref",
+    "source operator response witness ref",
+    "source approval request binding ref",
+    "source operator response evidence ref",
+    "source command preview ref",
+    "source redacted command preview",
+    "source argument vector template",
+    "source placeholder refs",
+    "source required-before-execution refs",
+    "source blocked reason refs",
+    "no-operator-response-collected evidence",
+    "no-secret-value evidence",
+    "branch-write authority consumes operator response evidence",
+    "branch-write authority remains uncollected",
+    "branch-write authority remains non-authorizing",
     "Branch-write authority remains AwaitingEvidence",
     "PR command execution",
     "pull-request creation",
@@ -1415,12 +1424,14 @@ def _validate_github_pr_branch_write_command_preview_response_binding_ready(
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| GitHub PR branch-write authority command-preview response binding PR \| READY \| .+command-preview operator response evidence.+source response binding id/ref.+terminal closure remain blocked\. \|$",
+        r"^\| GitHub PR branch-write authority command-preview operator-response evidence binding PR \| READY \| .+agentic_service_harness_github_pr_branch_write_authority_binding.+command-preview operator response evidence.+source response binding ref.+source operator response witness ref.+source approval request binding ref.+source approval request id.+source operator response evidence ref.+source command preview ref.+source redacted command preview.+source argument vector template.+source placeholder refs.+source required-before-execution refs.+source blocked reason refs.+no-operator-response-collected evidence.+no-command-execution evidence.+no-branch-write evidence.+no-pull-request-creation evidence.+no-repository-write evidence.+no-connector-call evidence.+no-mutation-route evidence.+no-receipt-store-append evidence.+no-terminal-certificate evidence.+no-secret-value evidence.+branch-write authority consumes operator response evidence.+branch-write authority remains uncollected.+branch-write authority remains non-authorizing.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
     if closure_row is None:
-        errors.append("missing ready row: GitHub PR branch-write authority command-preview response binding PR")
+        errors.append(
+            "missing ready row: GitHub PR branch-write authority command-preview operator-response evidence binding PR"
+        )
 
 
 def _validate_github_pr_uao_actual_diff_branch_write_binding_ready(

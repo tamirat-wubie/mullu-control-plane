@@ -91,8 +91,9 @@
     "source_binding_id": "agentic_service_harness_github_pr_operator_response_command_preview_binding",
     "source_operator_response_witness_ref": "examples/agentic_service_harness_github_pr_operator_response_witness.foundation.json",
     "source_operator_approval_request_command_preview_binding_ref": "examples/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.foundation.json",
-    "source_command_preview_ref": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
+    "source_approval_request_id": "approval-request.github-pr-admission",
     "source_operator_response_evidence_ref": "evidence://operator-pr-approval-response-record",
+    "source_command_preview_ref": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
     "source_redacted_command_preview": "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> --body-file <redacted-body-file-ref>",
     "source_argument_vector_template": [
       "gh",
@@ -150,12 +151,13 @@
     "source_mutation_route_enabled": false,
     "source_receipt_store_append_enabled": false,
     "source_terminal_certificate_verified": false,
-    "source_approval_request_evidence_consumed": true,
-    "source_response_remains_preview_only": true,
+    "source_operator_response_consumes_approval_request_evidence": true,
+    "source_operator_response_remains_uncollected": true,
+    "source_command_preview_response_remains_preview_only": true,
     "source_contains_secret_values": false,
-    "branch_write_consumes_operator_response_evidence": true,
+    "branch_write_authority_consumes_operator_response_evidence": true,
     "branch_write_authority_remains_uncollected": true,
-    "branch_write_remains_non_authorizing": true
+    "branch_write_authority_remains_non_authorizing": true
   },
   "remaining_witnesses": [
     {
@@ -253,5 +255,5 @@
       "required_for_closure": true
     }
   ],
-  "next_action": "Bind UAO PR admission to the command-preview branch-write authority evidence after explicit branch-write authority evidence exists; do not allow PR command execution, connector calls, receipt-store append, or terminal closure from this binding."
+  "next_action": "Bind UAO PR admission to the command-preview branch-write authority witness after explicit branch-write authority evidence exists; do not allow PR command execution, connector calls, receipt-store append, or terminal closure from this binding."
 }

@@ -125,16 +125,47 @@ def test_github_pr_branch_write_authority_binding_rejects_command_preview_respon
 
 
 def test_github_pr_branch_write_authority_binding_rejects_operator_response_evidence_drift() -> None:
+    drift_values = {
+        "source_response_command_preview_binding_ref": "examples/wrong-response-binding.json",
+        "source_binding_id": "wrong_binding",
+        "source_operator_response_witness_ref": "examples/wrong-response-witness.json",
+        "source_operator_approval_request_command_preview_binding_ref": "examples/wrong-approval-binding.json",
+        "source_approval_request_id": "wrong-approval-request",
+        "source_operator_response_evidence_ref": "evidence://wrong-response-record",
+        "source_command_preview_ref": "examples/wrong-command-preview.json",
+        "source_redacted_command_preview": "gh pr create --base main",
+        "source_argument_vector_template": ["gh", "pr"],
+        "source_placeholder_refs": ["placeholder://wrong"],
+        "source_required_before_execution_refs": ["evidence://wrong-required-ref"],
+        "source_blocked_reason_refs": ["blocked://wrong"],
+        "source_operator_response_bound": False,
+        "source_command_preview_bound": False,
+        "source_preview_rendered": False,
+        "source_operator_response_collected": True,
+        "source_operator_approval_granted": True,
+        "source_operator_approval_rejected": True,
+        "source_command_execution_admitted": True,
+        "source_adapter_execution_enabled": True,
+        "source_branch_write_enabled": True,
+        "source_pull_request_creation_enabled": True,
+        "source_repository_write_enabled": True,
+        "source_connector_call_enabled": True,
+        "source_mutation_route_enabled": True,
+        "source_receipt_store_append_enabled": True,
+        "source_terminal_certificate_verified": True,
+        "source_operator_response_consumes_approval_request_evidence": False,
+        "source_operator_response_remains_uncollected": False,
+        "source_command_preview_response_remains_preview_only": False,
+        "source_contains_secret_values": True,
+        "branch_write_authority_consumes_operator_response_evidence": False,
+        "branch_write_authority_remains_uncollected": False,
+        "branch_write_authority_remains_non_authorizing": False,
+    }
     payload = validator.build_mutated_branch_write_authority_binding(
-        command_preview_operator_response_evidence__source_binding_id="wrong-response-binding",
-        command_preview_operator_response_evidence__source_operator_response_evidence_ref="evidence://wrong-response",
-        command_preview_operator_response_evidence__source_operator_response_collected=True,
-        command_preview_operator_response_evidence__source_branch_write_enabled=True,
-        command_preview_operator_response_evidence__source_approval_request_evidence_consumed=False,
-        command_preview_operator_response_evidence__source_response_remains_preview_only=False,
-        command_preview_operator_response_evidence__branch_write_consumes_operator_response_evidence=False,
-        command_preview_operator_response_evidence__branch_write_authority_remains_uncollected=False,
-        command_preview_operator_response_evidence__source_contains_secret_values=True,
+        **{
+            f"command_preview_operator_response_evidence__{key}": value
+            for key, value in drift_values.items()
+        }
     )
 
     errors: list[str] = []
@@ -146,33 +177,8 @@ def test_github_pr_branch_write_authority_binding_rejects_operator_response_evid
     )
     serialized_errors = "\n".join(errors)
 
-    assert "command_preview_operator_response_evidence.source_binding_id expected" in serialized_errors
-    assert (
-        "command_preview_operator_response_evidence.source_operator_response_evidence_ref expected"
-        in serialized_errors
-    )
-    assert (
-        "command_preview_operator_response_evidence.source_operator_response_collected expected False"
-        in serialized_errors
-    )
-    assert "command_preview_operator_response_evidence.source_branch_write_enabled expected False" in serialized_errors
-    assert (
-        "command_preview_operator_response_evidence.source_approval_request_evidence_consumed expected True"
-        in serialized_errors
-    )
-    assert (
-        "command_preview_operator_response_evidence.source_response_remains_preview_only expected True"
-        in serialized_errors
-    )
-    assert (
-        "command_preview_operator_response_evidence.branch_write_consumes_operator_response_evidence expected True"
-        in serialized_errors
-    )
-    assert (
-        "command_preview_operator_response_evidence.branch_write_authority_remains_uncollected expected True"
-        in serialized_errors
-    )
-    assert "command_preview_operator_response_evidence.source_contains_secret_values expected False" in serialized_errors
+    for key in drift_values:
+        assert f"command_preview_operator_response_evidence.{key}" in serialized_errors
 
 
 def test_github_pr_branch_write_authority_binding_rejects_witness_drift() -> None:

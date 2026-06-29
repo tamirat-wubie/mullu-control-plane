@@ -405,8 +405,8 @@ def test_readiness_map_rejects_missing_github_pr_branch_write_command_preview_re
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "| GitHub PR branch-write authority command-preview response binding PR | READY |",
-            "| GitHub PR branch-write authority command-preview response binding PR | PARTIAL |",
+            "| GitHub PR branch-write authority command-preview operator-response evidence binding PR | READY |",
+            "| GitHub PR branch-write authority command-preview operator-response evidence binding PR | PARTIAL |",
         ),
         encoding="utf-8",
     )
@@ -416,7 +416,7 @@ def test_readiness_map_rejects_missing_github_pr_branch_write_command_preview_re
 
     assert validation.ok is False
     assert (
-        "missing ready row: GitHub PR branch-write authority command-preview response binding PR"
+        "missing ready row: GitHub PR branch-write authority command-preview operator-response evidence binding PR"
         in serialized_errors
     )
 
