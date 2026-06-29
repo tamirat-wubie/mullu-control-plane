@@ -21,6 +21,7 @@ An Evidence Passport answers these questions for each capability:
 | What is missing? | `missing_evidence` |
 | What was blocked? | `blocked.blocked_actions` |
 | Can it be replayed? | `replay.replayable` |
+| Which replay proof is missing? | `replay.missing_replay_refs` |
 | Can it be rolled back? | `rollback.can_rollback` and `rollback.can_compensate` |
 | Which rollback proof is missing? | `rollback.missing_rollback_refs` |
 | Is it safe to continue? | `continuation.safe_to_continue` and `continuation.safe_for_live_action` |
@@ -74,6 +75,11 @@ For rollback-gated capabilities, `rollback` also records
 missing rollback capability, compensation capability, failure review receipt,
 or recovery evidence required before promotion can continue; they do not
 execute rollback or compensation.
+
+For replay-gated capabilities, `replay` also records `missing_replay_refs` and
+`next_replay_action`. These fields explain the missing replay record, input
+digest, output digest, and capability-specific receipts required before
+promotion can continue; they do not replay or execute the capability.
 
 ## Governance Boundary
 

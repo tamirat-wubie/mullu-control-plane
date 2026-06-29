@@ -231,6 +231,15 @@ def _validate_evidence_passport(
         errors.append(f"{label}: {capability_id} missing replay refs must mark missing_replay_evidence")
     if replay.get("replayable") is True and replay.get("missing_replay_evidence") is True:
         errors.append(f"{label}: {capability_id} replayable cannot have missing replay evidence")
+    missing_replay_refs = _string_list(replay.get("missing_replay_refs"))
+    if replay.get("missing_replay_evidence") is True:
+        for required_ref in ("replay_record", "replay_input_digest", "replay_output_digest"):
+            if required_ref not in missing_replay_refs:
+                errors.append(f"{label}: {capability_id} missing replay refs must include {required_ref}")
+        if not str(replay.get("next_replay_action", "")).strip():
+            errors.append(f"{label}: {capability_id} missing replay must include next_replay_action")
+    elif missing_replay_refs:
+        errors.append(f"{label}: {capability_id} replay-ready capabilities must not list missing replay refs")
 
     rollback = _mapping(evidence_passport.get("rollback"))
     if rollback.get("rollback_status") == "missing" and rollback.get("rollback_or_compensation_available") is True:
