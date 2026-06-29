@@ -95,6 +95,151 @@ def test_registry_reports_malformed_schema_inventory_without_payload_leak(
     assert registry.manifest_count == 0
 
 
+def test_repair_template_metadata_accepts_registered_template_binding(tmp_path: Path) -> None:
+    manifest_path = _write_manifest_repo(
+        tmp_path,
+        metadata={
+            "causal_repair_template_domain": "file",
+            "causal_repair_template_action_type": "edit",
+            "causal_repair_effect_class": "internal_versioned",
+            "causal_repair_reversibility_class": "version_restore",
+            "causal_repair_snapshot_quality": 3,
+            "causal_repair_template_evidence": [
+                "before_hash",
+                "version_id",
+                "restore_pointer",
+            ],
+        },
+    )
+    registry = CapabilityManifestRegistry(repo_root=tmp_path, clock=lambda: "2026-05-31T00:00:00Z")
+
+    admission = registry.admit_path(manifest_path, environment="local")
+
+    assert admission.status is CapabilityManifestAdmissionStatus.ADMITTED
+    assert admission.errors == ()
+    assert admission.manifest is not None
+    assert admission.manifest.metadata["causal_repair_template_domain"] == "file"
+    assert registry.manifest_count == 1
+
+
+def test_repair_template_metadata_rejects_missing_action_type(tmp_path: Path) -> None:
+    manifest_path = _write_manifest_repo(
+        tmp_path,
+        metadata={
+            "causal_repair_template_domain": "file",
+            "causal_repair_template_evidence": [
+                "before_hash",
+                "version_id",
+                "restore_pointer",
+            ],
+        },
+    )
+    registry = CapabilityManifestRegistry(repo_root=tmp_path, clock=lambda: "2026-05-31T00:00:00Z")
+
+    admission = registry.admit_path(manifest_path, environment="local")
+
+    assert admission.status is CapabilityManifestAdmissionStatus.REJECTED
+    assert "causal_repair_template_action_type_required" in admission.errors
+    assert admission.manifest is None
+    assert registry.manifest_count == 0
+
+
+def test_repair_template_metadata_rejects_unknown_template(tmp_path: Path) -> None:
+    manifest_path = _write_manifest_repo(
+        tmp_path,
+        metadata={
+            "causal_repair_template_domain": "calendar",
+            "causal_repair_template_action_type": "delete_event",
+            "causal_repair_template_evidence": ["event_id"],
+        },
+    )
+    registry = CapabilityManifestRegistry(repo_root=tmp_path, clock=lambda: "2026-05-31T00:00:00Z")
+
+    admission = registry.admit_path(manifest_path, environment="local")
+
+    assert admission.status is CapabilityManifestAdmissionStatus.REJECTED
+    assert "causal_repair_template_unknown:calendar.delete_event" in admission.errors
+    assert admission.capability_id == "sample.read"
+    assert registry.manifest_count == 0
+
+
+def test_repair_template_metadata_rejects_snapshot_below_template_minimum(tmp_path: Path) -> None:
+    manifest_path = _write_manifest_repo(
+        tmp_path,
+        metadata={
+            "causal_repair_template_domain": "file",
+            "causal_repair_template_action_type": "edit",
+            "causal_repair_effect_class": "internal_versioned",
+            "causal_repair_reversibility_class": "version_restore",
+            "causal_repair_snapshot_quality": 2,
+            "causal_repair_template_evidence": [
+                "before_hash",
+                "version_id",
+                "restore_pointer",
+            ],
+        },
+    )
+    registry = CapabilityManifestRegistry(repo_root=tmp_path, clock=lambda: "2026-05-31T00:00:00Z")
+
+    admission = registry.admit_path(manifest_path, environment="local")
+
+    assert admission.status is CapabilityManifestAdmissionStatus.REJECTED
+    assert "causal_repair_snapshot_quality_below_template_minimum" in admission.errors
+    assert "causal_repair_template_evidence_missing:version_id,restore_pointer" not in admission.errors
+    assert registry.manifest_count == 0
+
+
+def test_repair_template_metadata_rejects_missing_required_template_evidence(tmp_path: Path) -> None:
+    manifest_path = _write_manifest_repo(
+        tmp_path,
+        metadata={
+            "causal_repair_template_domain": "file",
+            "causal_repair_template_action_type": "edit",
+            "causal_repair_effect_class": "internal_versioned",
+            "causal_repair_reversibility_class": "version_restore",
+            "causal_repair_snapshot_quality": 3,
+            "causal_repair_template_evidence": ["before_hash"],
+        },
+    )
+    registry = CapabilityManifestRegistry(repo_root=tmp_path, clock=lambda: "2026-05-31T00:00:00Z")
+
+    admission = registry.admit_path(manifest_path, environment="local")
+
+    assert admission.status is CapabilityManifestAdmissionStatus.REJECTED
+    assert (
+        "causal_repair_template_evidence_missing:version_id,restore_pointer"
+        in admission.errors
+    )
+    assert admission.manifest is None
+    assert registry.manifest_count == 0
+
+
+def test_repair_template_metadata_rejects_class_mismatch(tmp_path: Path) -> None:
+    manifest_path = _write_manifest_repo(
+        tmp_path,
+        metadata={
+            "causal_repair_template_domain": "file",
+            "causal_repair_template_action_type": "edit",
+            "causal_repair_effect_class": "user_visible",
+            "causal_repair_reversibility_class": "version_restore",
+            "causal_repair_snapshot_quality": 3,
+            "causal_repair_template_evidence": [
+                "before_hash",
+                "version_id",
+                "restore_pointer",
+            ],
+        },
+    )
+    registry = CapabilityManifestRegistry(repo_root=tmp_path, clock=lambda: "2026-05-31T00:00:00Z")
+
+    admission = registry.admit_path(manifest_path, environment="local")
+
+    assert admission.status is CapabilityManifestAdmissionStatus.REJECTED
+    assert "causal_repair_effect_class_mismatch" in admission.errors
+    assert "causal_repair_reversibility_class_mismatch" not in admission.errors
+    assert registry.manifest_count == 0
+
+
 def _write_manifest_repo(
     repo_root: Path,
     *,

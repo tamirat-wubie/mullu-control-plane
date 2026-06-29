@@ -22,6 +22,15 @@ from mcoi_runtime.contracts.capability_manifest import (
     CapabilityManifestMaturity,
     CapabilityManifestRisk,
 )
+from mcoi_runtime.core.causal_repair import (
+    EffectClass as CausalRepairEffectClass,
+    ReversibilityClass as CausalRepairReversibilityClass,
+    SnapshotQuality as CausalRepairSnapshotQuality,
+)
+from mcoi_runtime.core.repair_template_registry import (
+    RepairTemplateRegistry,
+    RepairTemplateRegistryError,
+)
 
 from .invariants import RuntimeCoreInvariantError, stable_identifier
 
@@ -198,6 +207,7 @@ class CapabilityManifestRegistry:
             errors.append("effect_bearing_capability_requires_policy_refs")
         if hot_reload:
             errors.extend(_hot_reload_metadata_errors(manifest, environment=environment))
+        errors.extend(_repair_template_metadata_errors(manifest))
         if hot_reload and environment == "production" and manifest.effect_bearing:
             errors.append("production_hot_reload_denied_for_effect_bearing_capability")
         if environment == "production" and manifest.maturity not in _PRODUCTION_MATURITY:
@@ -403,3 +413,160 @@ def _hot_reload_metadata_errors(manifest: CapabilityManifest, *, environment: st
     if environment == "production" and metadata.get("production_hot_reload_allowed") is not True:
         errors.append("production_hot_reload_denied_by_manifest_metadata")
     return tuple(errors)
+
+
+def _repair_template_metadata_errors(manifest: CapabilityManifest) -> tuple[str, ...]:
+    metadata = manifest.metadata
+    if not isinstance(metadata, Mapping):
+        return ("causal_repair_metadata_invalid",)
+    keys = {
+        "causal_repair_template_domain",
+        "causal_repair_template_action_type",
+        "causal_repair_effect_class",
+        "causal_repair_reversibility_class",
+        "causal_repair_snapshot_quality",
+        "causal_repair_template_evidence",
+        "causal_repair_external_confirmation_refs",
+    }
+    if not any(key in metadata for key in keys):
+        return ()
+    errors: list[str] = []
+    domain = _metadata_required_text(
+        metadata,
+        "causal_repair_template_domain",
+        errors,
+    )
+    action_type = _metadata_required_text(
+        metadata,
+        "causal_repair_template_action_type",
+        errors,
+    )
+    if domain is None or action_type is None:
+        return tuple(errors)
+
+    try:
+        template = RepairTemplateRegistry.default_registry().get_template(
+            domain,
+            action_type,
+        )
+    except RepairTemplateRegistryError:
+        errors.append(f"causal_repair_template_unknown:{domain}.{action_type}")
+        return tuple(errors)
+
+    effect_class = _metadata_optional_enum(
+        metadata,
+        "causal_repair_effect_class",
+        CausalRepairEffectClass,
+        errors,
+    )
+    if effect_class is not None and effect_class.value != template.effect_class.value:
+        errors.append("causal_repair_effect_class_mismatch")
+    reversibility_class = _metadata_optional_enum(
+        metadata,
+        "causal_repair_reversibility_class",
+        CausalRepairReversibilityClass,
+        errors,
+    )
+    if (
+        reversibility_class is not None
+        and reversibility_class.value != template.reversibility_class.value
+    ):
+        errors.append("causal_repair_reversibility_class_mismatch")
+
+    snapshot_quality = metadata.get("causal_repair_snapshot_quality")
+    if snapshot_quality is not None:
+        if isinstance(snapshot_quality, bool) or not isinstance(snapshot_quality, int):
+            errors.append("causal_repair_snapshot_quality_invalid")
+        else:
+            try:
+                quality = CausalRepairSnapshotQuality(snapshot_quality)
+            except ValueError:
+                errors.append("causal_repair_snapshot_quality_invalid")
+            else:
+                if quality < template.snapshot_quality_minimum:
+                    errors.append("causal_repair_snapshot_quality_below_template_minimum")
+
+    evidence = _metadata_text_tuple(
+        metadata,
+        "causal_repair_template_evidence",
+        errors,
+        required=bool(template.required_evidence),
+    )
+    if evidence is not None:
+        missing_evidence = tuple(
+            item for item in template.required_evidence if item not in evidence
+        )
+        if missing_evidence:
+            errors.append(
+                "causal_repair_template_evidence_missing:"
+                + ",".join(missing_evidence)
+            )
+    _metadata_text_tuple(
+        metadata,
+        "causal_repair_external_confirmation_refs",
+        errors,
+        required=False,
+    )
+    return tuple(errors)
+
+
+def _metadata_required_text(
+    metadata: Mapping[str, Any],
+    key: str,
+    errors: list[str],
+) -> str | None:
+    value = metadata.get(key)
+    if not isinstance(value, str) or not value.strip():
+        errors.append(f"{key}_required")
+        return None
+    return value.strip()
+
+
+def _metadata_optional_enum(
+    metadata: Mapping[str, Any],
+    key: str,
+    enum_type: type,
+    errors: list[str],
+) -> Any | None:
+    value = metadata.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        errors.append(f"{key}_invalid")
+        return None
+    try:
+        return enum_type(value)
+    except ValueError:
+        errors.append(f"{key}_invalid")
+        return None
+
+
+def _metadata_text_tuple(
+    metadata: Mapping[str, Any],
+    key: str,
+    errors: list[str],
+    *,
+    required: bool,
+) -> tuple[str, ...] | None:
+    value = metadata.get(key)
+    if value is None:
+        if required:
+            errors.append(f"{key}_required")
+        return None
+    if isinstance(value, str):
+        if not value.strip():
+            errors.append(f"{key}_invalid")
+            return None
+        return (value.strip(),)
+    if not isinstance(value, (tuple, list)):
+        errors.append(f"{key}_invalid")
+        return None
+    result: list[str] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item.strip():
+            errors.append(f"{key}_invalid:{index}")
+            continue
+        result.append(item.strip())
+    if required and not result:
+        errors.append(f"{key}_required")
+    return tuple(result)

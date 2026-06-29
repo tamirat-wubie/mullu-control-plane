@@ -171,6 +171,18 @@ def _assert_gateway_request_receipt(
 def _bind_uao_fixture_to_universal_action_detail(
     record: dict,
 ) -> dict:
+    recovery_plan = record["recovery_plan"]
+    causal_repair_admission_ref = (
+        recovery_plan.get("causal_repair_admission_ref")
+        or f"causal-repair-admission-certificate://{record['action_id']}"
+    )
+    causal_repair_admission_status = recovery_plan.get(
+        "causal_repair_admission_status",
+        "not_required",
+    )
+    causal_repair_admission_reason = (
+        recovery_plan.get("causal_repair_admission_reason") or ""
+    )
     universal_detail = {
         "action_id": record["action_id"],
         "blocked": record["decision"]["status"] != "allow",
@@ -194,6 +206,9 @@ def _bind_uao_fixture_to_universal_action_detail(
             f"recovery-plan-certificate://{record['action_id']}"
         ),
         "recovery_plan_id": f"recovery-plan://{record['action_id']}",
+        "causal_repair_admission_certificate_id": causal_repair_admission_ref,
+        "causal_repair_admission_status": causal_repair_admission_status,
+        "causal_repair_admission_reason": causal_repair_admission_reason,
         "intent_certificate_id": f"intent-certificate://{record['action_id']}",
         "intent_hash": f"typed-intent://{record['action_id']}",
         "operating_substrate_certificate_id": (
@@ -268,6 +283,15 @@ def _uao_fixture_proof_hash(universal_detail: dict) -> str:
             "recovery_plan_certificate_id"
         ],
         "recovery_plan_id": universal_detail["recovery_plan_id"],
+        "causal_repair_admission_certificate_id": universal_detail[
+            "causal_repair_admission_certificate_id"
+        ],
+        "causal_repair_admission_status": universal_detail[
+            "causal_repair_admission_status"
+        ],
+        "causal_repair_admission_reason": universal_detail[
+            "causal_repair_admission_reason"
+        ],
         "intent_certificate_id": universal_detail["intent_certificate_id"],
         "intent_hash": universal_detail["intent_hash"],
         "operating_substrate_certificate_id": universal_detail[

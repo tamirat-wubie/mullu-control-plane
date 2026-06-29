@@ -46,6 +46,7 @@ from mcoi_runtime.contracts.execution import (
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityAuthorityPolicy,
     CapabilityCertificationStatus,
+    CapabilityEvidenceModel,
     CapabilityRecoveryPlan,
     CapabilityRegistryEntry,
     DomainCapsule,
@@ -301,6 +302,19 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
         result.recovery_plan_certificate.compensation_plan_id
         == "customer_ops.notify_address_update_review"
     )
+    assert result.causal_repair_admission_certificate is not None
+    assert result.causal_repair_admission_certificate.status == "admitted"
+    assert result.causal_repair_admission_certificate.reason == "admitted"
+    assert (
+        result.causal_repair_admission_certificate.effect_class
+        == "internal_reversible"
+    )
+    assert (
+        result.causal_repair_admission_certificate.reversibility_class
+        == "exact_rollback"
+    )
+    assert result.causal_repair_admission_certificate.snapshot_quality == 2
+    assert result.causal_repair_admission_certificate.idempotency_required is False
     assert result.governed_action.authority_proof.actor_roles == (REQUIRED_ROLE,)
     assert result.governed_action.authority_proof.approval_chain == (REQUIRED_ROLE,)
     assert result.governed_action.authority_proof.approval_refs == ("approval-1",)
@@ -380,6 +394,16 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["recovery_plan"]["recovery_kind"] == "rollback_and_compensation"
     assert record["recovery_plan"]["recovery_plan_ref"]
     assert record["recovery_plan"]["certificate_ref"]
+    assert record["recovery_plan"]["causal_repair_admission_status"] == "admitted"
+    assert record["recovery_plan"]["causal_repair_admission_reason"] == "admitted"
+    assert record["recovery_plan"]["causal_repair_effect_class"] == "internal_reversible"
+    assert (
+        record["recovery_plan"]["causal_repair_reversibility_class"]
+        == "exact_rollback"
+    )
+    assert record["recovery_plan"]["causal_repair_snapshot_quality"] == 2
+    assert record["recovery_plan"]["causal_repair_idempotency_required"] is False
+    assert record["recovery_plan"]["causal_repair_idempotency_present"] is False
     assert record["closure"]["whqr_replay_binding"] is None
     assert record["claim_ledger"]["ledger_ref"].startswith("claim-ledger://")
     assert record["claim_ledger"]["unverified_claim_ids"] == []
@@ -791,6 +815,190 @@ def test_universal_action_kernel_blocks_world_mutation_without_recovery_path() -
     )
     assert result.closure_state == "closed_blocked"
     assert result.proof_hash.startswith("universal-action-proof-")
+
+
+def test_universal_action_kernel_blocks_external_effect_without_idempotency() -> None:
+    kernel, executor = _kernel_with_capability()
+    request = _action_request(
+        intent_id="intent-causal-repair-idempotency-block",
+        metadata={"causal_repair_effect_class": "user_visible"},
+    )
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(
+        request=request,
+        result=result,
+    )
+    validation_errors = _validate_uao_record(record)
+    recovery_guard = _guard(record, "recovery_available")
+
+    assert validation_errors == []
+    assert result.blocked is True
+    assert result.block_reason == "causal_repair_admission_idempotency_key_missing"
+    assert result.causal_repair_admission_certificate is not None
+    assert result.causal_repair_admission_certificate.status == "blocked"
+    assert result.causal_repair_admission_certificate.idempotency_required is True
+    assert result.causal_repair_admission_certificate.idempotency_present is False
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert record["decision"]["status"] == "block"
+    assert record["decision"]["next_action"] == "bind_causal_repair_evidence"
+    assert record["recovery_plan"]["available"] is True
+    assert record["recovery_plan"]["causal_repair_admission_status"] == "blocked"
+    assert (
+        record["recovery_plan"]["causal_repair_admission_reason"]
+        == "idempotency_key_missing"
+    )
+    assert record["recovery_plan"]["causal_repair_effect_class"] == "user_visible"
+    assert record["recovery_plan"]["causal_repair_idempotency_required"] is True
+    assert record["recovery_plan"]["causal_repair_idempotency_present"] is False
+    assert recovery_guard["verdict"] == "blocked"
+    assert recovery_guard["reason_code"] == result.block_reason
+
+
+def test_universal_action_kernel_blocks_exact_rollback_with_weak_snapshot() -> None:
+    kernel, executor = _kernel_with_capability()
+    request = _action_request(
+        intent_id="intent-causal-repair-snapshot-block",
+        metadata={"causal_repair_snapshot_quality": 0},
+    )
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(
+        request=request,
+        result=result,
+    )
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert result.blocked is True
+    assert (
+        result.block_reason
+        == "causal_repair_admission_snapshot_insufficient_for_exact_rollback"
+    )
+    assert result.causal_repair_admission_certificate is not None
+    assert result.causal_repair_admission_certificate.snapshot_quality == 0
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert record["recovery_plan"]["causal_repair_admission_status"] == "blocked"
+    assert (
+        record["recovery_plan"]["causal_repair_admission_reason"]
+        == "snapshot_insufficient_for_exact_rollback"
+    )
+    assert record["recovery_plan"]["causal_repair_snapshot_quality"] == 0
+    assert _guard(record, "recovery_available")["verdict"] == "blocked"
+
+
+def test_universal_action_kernel_admits_registered_file_repair_template() -> None:
+    kernel, executor = _kernel_with_capability()
+    request = _action_request(
+        intent_id="intent-causal-repair-template-admit",
+        metadata={
+            "causal_repair_template_domain": "file",
+            "causal_repair_template_action_type": "edit",
+            "causal_repair_effect_class": "internal_versioned",
+            "causal_repair_reversibility_class": "version_restore",
+            "causal_repair_snapshot_quality": 3,
+            "causal_repair_template_evidence": (
+                "before_hash",
+                "version_id",
+                "restore_pointer",
+            ),
+        },
+    )
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(
+        request=request,
+        result=result,
+    )
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert result.blocked is False
+    assert result.causal_repair_admission_certificate is not None
+    assert result.causal_repair_admission_certificate.template_id == (
+        "repair-template.file.edit.v1"
+    )
+    assert result.causal_repair_admission_certificate.template_status == "admitted"
+    assert result.causal_repair_admission_certificate.repair_strategy == "version_restore"
+    assert record["recovery_plan"]["causal_repair_template_id"] == (
+        "repair-template.file.edit.v1"
+    )
+    assert record["recovery_plan"]["causal_repair_template_status"] == "admitted"
+    assert executor.calls == 1
+
+
+def test_universal_action_kernel_blocks_template_missing_evidence() -> None:
+    kernel, executor = _kernel_with_capability()
+    request = _action_request(
+        intent_id="intent-causal-repair-template-evidence-block",
+        metadata={
+            "causal_repair_template_domain": "file",
+            "causal_repair_template_action_type": "edit",
+            "causal_repair_effect_class": "internal_versioned",
+            "causal_repair_reversibility_class": "version_restore",
+            "causal_repair_snapshot_quality": 3,
+            "causal_repair_template_evidence": ("before_hash",),
+        },
+    )
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(
+        request=request,
+        result=result,
+    )
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert result.blocked is True
+    assert result.block_reason == "causal_repair_admission_required_evidence_missing"
+    assert result.causal_repair_admission_certificate is not None
+    assert result.causal_repair_admission_certificate.status == "blocked"
+    assert result.causal_repair_admission_certificate.template_status == "blocked"
+    assert result.causal_repair_admission_certificate.template_reason == (
+        "required_evidence_missing"
+    )
+    assert record["recovery_plan"]["causal_repair_template_status"] == "blocked"
+    assert record["recovery_plan"]["causal_repair_template_required_strategy"] == (
+        "version_restore"
+    )
+    assert executor.calls == 0
+
+
+def test_universal_action_kernel_uses_manifest_repair_template_metadata() -> None:
+    kernel, executor = _kernel_with_capability(
+        entry_metadata={
+            "causal_repair_template_domain": "file",
+            "causal_repair_template_action_type": "edit",
+            "causal_repair_effect_class": "internal_versioned",
+            "causal_repair_reversibility_class": "version_restore",
+            "causal_repair_snapshot_quality": 3,
+        },
+        evidence_required=("before_hash", "version_id", "restore_pointer"),
+    )
+    request = _action_request(intent_id="intent-manifest-repair-template")
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(
+        request=request,
+        result=result,
+    )
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert result.blocked is False
+    assert result.causal_repair_admission_certificate is not None
+    assert result.causal_repair_admission_certificate.effect_class == "internal_versioned"
+    assert result.causal_repair_admission_certificate.reversibility_class == (
+        "version_restore"
+    )
+    assert result.causal_repair_admission_certificate.template_id == (
+        "repair-template.file.edit.v1"
+    )
+    assert result.causal_repair_admission_certificate.template_status == "admitted"
+    assert record["recovery_plan"]["causal_repair_template_status"] == "admitted"
+    assert executor.calls == 1
 
 
 def test_universal_action_kernel_blocks_missing_approval_before_plan() -> None:
@@ -2372,11 +2580,15 @@ def _kernel_with_capability(
     authority_policy: CapabilityAuthorityPolicy | None = None,
     recovery_plan: CapabilityRecoveryPlan | None = None,
     effect_names: tuple[str, ...] | None = None,
+    entry_metadata: dict | None = None,
+    evidence_required: tuple[str, ...] | None = None,
 ) -> tuple[UniversalActionKernel, FakeExecutor]:
     return _kernel(
         gate=_capability_admission_gate(
             authority_policy=authority_policy,
             recovery_plan=recovery_plan,
+            entry_metadata=entry_metadata,
+            evidence_required=evidence_required,
         ),
         world_state=world_state,
         effect_names=effect_names,
@@ -2523,6 +2735,8 @@ def _capability_admission_gate(
     *,
     authority_policy: CapabilityAuthorityPolicy | None = None,
     recovery_plan: CapabilityRecoveryPlan | None = None,
+    entry_metadata: dict | None = None,
+    evidence_required: tuple[str, ...] | None = None,
 ) -> CommandCapabilityAdmissionGate:
     registry = GovernedCapabilityRegistry(clock=_clock)
     compiler = DomainCapsuleCompiler(clock=_clock)
@@ -2530,6 +2744,8 @@ def _capability_admission_gate(
         "shell_command",
         authority_policy=authority_policy,
         recovery_plan=recovery_plan,
+        entry_metadata=entry_metadata,
+        evidence_required=evidence_required,
     )
     capsule = _certified_capsule("shell_command")
     compilation = compiler.compile(capsule=capsule, registry_entries=(entry,))
@@ -2543,9 +2759,19 @@ def _certified_entry(
     *,
     authority_policy: CapabilityAuthorityPolicy | None = None,
     recovery_plan: CapabilityRecoveryPlan | None = None,
+    entry_metadata: dict | None = None,
+    evidence_required: tuple[str, ...] | None = None,
 ) -> CapabilityRegistryEntry:
     entry = CapabilityRegistryEntry.from_mapping(
         _fixture("capability_registry_entry.json")
+    )
+    evidence_model = (
+        CapabilityEvidenceModel(
+            required_evidence=evidence_required,
+            terminal_certificate_required=entry.evidence_model.terminal_certificate_required,
+        )
+        if evidence_required is not None
+        else entry.evidence_model
     )
     return CapabilityRegistryEntry(
         capability_id=capability_id,
@@ -2554,14 +2780,14 @@ def _certified_entry(
         input_schema_ref=entry.input_schema_ref,
         output_schema_ref=entry.output_schema_ref,
         effect_model=entry.effect_model,
-        evidence_model=entry.evidence_model,
+        evidence_model=evidence_model,
         authority_policy=authority_policy or entry.authority_policy,
         isolation_profile=entry.isolation_profile,
         recovery_plan=recovery_plan or entry.recovery_plan,
         cost_model=entry.cost_model,
         obligation_model=entry.obligation_model,
         certification_status=CapabilityCertificationStatus.CERTIFIED,
-        metadata=entry.metadata,
+        metadata=entry_metadata if entry_metadata is not None else entry.metadata,
         extensions=entry.extensions,
     )
 

@@ -191,7 +191,67 @@
         "compensation_plan_ref": { "type": ["string", "null"], "minLength": 1 },
         "review_required_on_failure": { "type": "boolean" },
         "certificate_ref": { "type": ["string", "null"], "minLength": 1 },
-        "effect_plan_ref": { "type": ["string", "null"], "minLength": 1 }
+        "effect_plan_ref": { "type": ["string", "null"], "minLength": 1 },
+        "causal_repair_admission_ref": { "type": ["string", "null"], "minLength": 1 },
+        "causal_repair_admission_status": {
+          "type": "string",
+          "enum": ["not_required", "admitted", "blocked", "approval_required"]
+        },
+        "causal_repair_admission_reason": { "type": ["string", "null"], "minLength": 1 },
+        "causal_repair_effect_class": {
+          "type": ["string", "null"],
+          "enum": [
+            null,
+            "read_only",
+            "internal_reversible",
+            "internal_versioned",
+            "external_mutation",
+            "user_visible",
+            "financial_or_legal",
+            "public_irreversible",
+            "physical_world"
+          ]
+        },
+        "causal_repair_reversibility_class": {
+          "type": ["string", "null"],
+          "enum": [
+            null,
+            "read_only",
+            "exact_rollback",
+            "version_restore",
+            "semantic_compensation",
+            "reconcile_required",
+            "human_escalation",
+            "forbidden"
+          ]
+        },
+        "causal_repair_snapshot_quality": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 5
+        },
+        "causal_repair_idempotency_required": { "type": "boolean" },
+        "causal_repair_idempotency_present": { "type": "boolean" },
+        "causal_repair_template_id": { "type": ["string", "null"], "minLength": 1 },
+        "causal_repair_template_status": {
+          "type": ["string", "null"],
+          "enum": [null, "admitted", "blocked", "approval_required", "template_missing"]
+        },
+        "causal_repair_template_reason": { "type": ["string", "null"], "minLength": 1 },
+        "causal_repair_template_required_strategy": {
+          "type": ["string", "null"],
+          "enum": [
+            null,
+            "none_required",
+            "exact_rollback",
+            "version_restore",
+            "semantic_compensation",
+            "reconcile_then_decide",
+            "quarantine",
+            "escalate",
+            "forbid"
+          ]
+        }
       }
     },
     "claim_ledger": {

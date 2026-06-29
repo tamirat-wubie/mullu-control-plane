@@ -83,6 +83,18 @@ from mcoi_runtime.contracts.verification import (
 from mcoi_runtime.contracts.whqr import WHQRDocument
 from mcoi_runtime.contracts.world_state import WorldStateSnapshot
 from mcoi_runtime.contracts.solver_outcome import SolverOutcome
+from mcoi_runtime.core.causal_repair import (
+    AdmissionStatus as CausalRepairAdmissionStatus,
+    CausalRepairAction,
+    CausalRepairEngine,
+    CompensationContract as CausalCompensationContract,
+    EffectClass as CausalEffectClass,
+    ReconciliationContract as CausalReconciliationContract,
+    RepairAdmissionReceipt,
+    ReversibilityClass as CausalReversibilityClass,
+    SnapshotQuality as CausalSnapshotQuality,
+    SnapshotReceipt as CausalSnapshotReceipt,
+)
 from mcoi_runtime.core.closure_learning import ClosureLearningAdmissionGate
 from mcoi_runtime.core.command_capability_admission import (
     CommandCapabilityAdmissionGate,
@@ -105,6 +117,11 @@ from mcoi_runtime.core.invariants import (
 )
 from mcoi_runtime.core.life_meaning_governance import judge_life_meaning
 from mcoi_runtime.core.memory import MemoryEntry, MemoryTier
+from mcoi_runtime.core.repair_template_registry import (
+    RepairTemplateAdmissionStatus,
+    RepairTemplateRegistry,
+    TemplateSelectionRequest,
+)
 from mcoi_runtime.core.simulation import SimulationEngine
 from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
 from mcoi_runtime.core.world_state import WorldStateEngine
@@ -231,6 +248,29 @@ class RecoveryPlanCertificate:
 
 
 @dataclass(frozen=True, slots=True)
+class CausalRepairAdmissionCertificate:
+    """Pre-dispatch proof that repair admission passed or blocked explicitly."""
+
+    certificate_id: str
+    action_id: str
+    admission_id: str
+    status: str
+    reason: str
+    repair_strategy: str
+    effect_class: str
+    reversibility_class: str
+    snapshot_quality: int | None
+    idempotency_required: bool
+    idempotency_present: bool
+    evidence_refs: tuple[str, ...]
+    issued_at: str
+    template_id: str | None = None
+    template_status: str | None = None
+    template_reason: str | None = None
+    template_required_strategy: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class UniversalActionResult:
     """Terminal result for one universal governed action attempt."""
 
@@ -248,6 +288,7 @@ class UniversalActionResult:
     simulation_certificate: SimulationCertificate | None = None
     effect_prediction_certificate: EffectPredictionCertificate | None = None
     recovery_plan_certificate: RecoveryPlanCertificate | None = None
+    causal_repair_admission_certificate: CausalRepairAdmissionCertificate | None = None
     intent_certificate: IntentCompilationCertificate | None = None
     operating_substrate_certificate: OperatingSubstrateSupportCertificate | None = None
     capability_decision: CommandCapabilityAdmissionDecision | None = None
@@ -406,6 +447,46 @@ class UniversalActionKernel:
             effect_prediction_certificate=effect_prediction_certificate,
             issued_at=now,
         )
+        causal_repair_admission_certificate = (
+            self._build_causal_repair_admission_certificate(
+                action_id=action_id,
+                request=request,
+                governed_action=governed_action,
+                issued_at=now,
+            )
+        )
+        if (
+            causal_repair_admission_certificate.status
+            != CausalRepairAdmissionStatus.ADMITTED.value
+        ):
+            return self._blocked(
+                action_id=action_id,
+                request=request,
+                issued_at=now,
+                trace_ref=trace_ref,
+                block_reason=(
+                    "causal_repair_admission_"
+                    + causal_repair_admission_certificate.reason
+                ),
+                goal_certificate=goal_certificate,
+                world_certificate=world_certificate,
+                plan_certificate=plan_certificate,
+                effect_prediction_certificate=effect_prediction_certificate,
+                recovery_plan_certificate=recovery_plan_certificate,
+                causal_repair_admission_certificate=(
+                    causal_repair_admission_certificate
+                ),
+                intent_certificate=intent_certificate,
+                operating_substrate_certificate=operating_substrate_certificate,
+                capability_decision=capability_decision,
+                governed_action=governed_action,
+                decision_status=(
+                    "escalate"
+                    if causal_repair_admission_certificate.status
+                    == CausalRepairAdmissionStatus.APPROVAL_REQUIRED.value
+                    else "block"
+                ),
+            )
         simulation_certificate = self._build_simulation_certificate(
             request=request,
             plan_certificate=plan_certificate,
@@ -424,6 +505,9 @@ class UniversalActionKernel:
                 simulation_certificate=simulation_certificate,
                 effect_prediction_certificate=effect_prediction_certificate,
                 recovery_plan_certificate=recovery_plan_certificate,
+                causal_repair_admission_certificate=(
+                    causal_repair_admission_certificate
+                ),
                 intent_certificate=intent_certificate,
                 operating_substrate_certificate=operating_substrate_certificate,
                 capability_decision=capability_decision,
@@ -441,6 +525,7 @@ class UniversalActionKernel:
             simulation_certificate=simulation_certificate,
             effect_prediction_certificate=effect_prediction_certificate,
             recovery_plan_certificate=recovery_plan_certificate,
+            causal_repair_admission_certificate=causal_repair_admission_certificate,
             intent_certificate=intent_certificate,
             operating_substrate_certificate=operating_substrate_certificate,
             capability_decision=capability_decision,
@@ -459,6 +544,9 @@ class UniversalActionKernel:
                 simulation_certificate=simulation_certificate,
                 effect_prediction_certificate=effect_prediction_certificate,
                 recovery_plan_certificate=recovery_plan_certificate,
+                causal_repair_admission_certificate=(
+                    causal_repair_admission_certificate
+                ),
                 intent_certificate=intent_certificate,
                 operating_substrate_certificate=operating_substrate_certificate,
                 capability_decision=capability_decision,
@@ -513,6 +601,7 @@ class UniversalActionKernel:
             simulation_certificate=simulation_certificate,
             effect_prediction_certificate=effect_prediction_certificate,
             recovery_plan_certificate=recovery_plan_certificate,
+            causal_repair_admission_certificate=causal_repair_admission_certificate,
             intent_certificate=intent_certificate,
             operating_substrate_certificate=operating_substrate_certificate,
             capability_decision=capability_decision,
@@ -748,6 +837,8 @@ class UniversalActionKernel:
         simulation_certificate: SimulationCertificate | None = None,
         effect_prediction_certificate: EffectPredictionCertificate | None = None,
         recovery_plan_certificate: RecoveryPlanCertificate | None = None,
+        causal_repair_admission_certificate: CausalRepairAdmissionCertificate
+        | None = None,
         capability_decision: CommandCapabilityAdmissionDecision | None = None,
         governed_action: GovernedAction | None = None,
         intent_certificate: IntentCompilationCertificate | None = None,
@@ -779,6 +870,7 @@ class UniversalActionKernel:
             simulation_certificate=simulation_certificate,
             effect_prediction_certificate=effect_prediction_certificate,
             recovery_plan_certificate=recovery_plan_certificate,
+            causal_repair_admission_certificate=causal_repair_admission_certificate,
             intent_certificate=intent_certificate,
             operating_substrate_certificate=operating_substrate_certificate,
             capability_decision=capability_decision,
@@ -817,6 +909,7 @@ class UniversalActionKernel:
         simulation_certificate: SimulationCertificate,
         effect_prediction_certificate: EffectPredictionCertificate,
         recovery_plan_certificate: RecoveryPlanCertificate,
+        causal_repair_admission_certificate: CausalRepairAdmissionCertificate,
         intent_certificate: IntentCompilationCertificate,
         operating_substrate_certificate: OperatingSubstrateSupportCertificate | None,
         capability_decision: CommandCapabilityAdmissionDecision,
@@ -846,6 +939,7 @@ class UniversalActionKernel:
             simulation_certificate=simulation_certificate,
             effect_prediction_certificate=effect_prediction_certificate,
             recovery_plan_certificate=recovery_plan_certificate,
+            causal_repair_admission_certificate=causal_repair_admission_certificate,
             intent_certificate=intent_certificate,
             operating_substrate_certificate=operating_substrate_certificate,
             capability_decision=capability_decision,
@@ -1077,6 +1171,120 @@ class UniversalActionKernel:
             issued_at=issued_at,
         )
 
+    def _build_causal_repair_admission_certificate(
+        self,
+        *,
+        action_id: str,
+        request: UniversalActionRequest,
+        governed_action: GovernedAction,
+        issued_at: str,
+    ) -> CausalRepairAdmissionCertificate:
+        passport = governed_action.capability_passport
+        repair_effect_class = _causal_repair_effect_class(request, passport)
+        repair_reversibility = _causal_repair_reversibility_class(request, passport)
+        snapshot_quality = _causal_repair_snapshot_quality(
+            request,
+            passport,
+            repair_reversibility,
+        )
+        idempotency_key = _causal_repair_idempotency_key(request)
+        template_selection = _causal_repair_template_selection(
+            request=request,
+            passport=passport,
+            effect_class=repair_effect_class,
+            reversibility_class=repair_reversibility,
+            snapshot_quality=snapshot_quality,
+            idempotency_key=idempotency_key,
+        )
+        if (
+            template_selection is not None
+            and template_selection.status is not RepairTemplateAdmissionStatus.ADMITTED
+        ):
+            admission = _repair_admission_from_template_selection(
+                action_id=action_id,
+                template_selection=template_selection,
+            )
+            return _causal_repair_admission_certificate(
+                action_id=action_id,
+                admission=admission,
+                effect_class=repair_effect_class,
+                reversibility_class=repair_reversibility,
+                snapshot_quality=snapshot_quality,
+                idempotency_present=idempotency_key is not None,
+                issued_at=issued_at,
+                template_id=template_selection.template_id,
+                template_status=template_selection.status.value,
+                template_reason=template_selection.reason,
+                template_required_strategy=template_selection.required_strategy.value,
+            )
+        synthetic_action = CausalRepairAction(
+            action_id=action_id,
+            actor_id=request.actor_id,
+            domain=_causal_repair_domain(request, passport),
+            target_ref=f"capability://{passport.capability_id}",
+            boundary_scope=_causal_repair_boundary_scope(request, passport),
+            effect_class=repair_effect_class,
+            reversibility_class=repair_reversibility,
+            execute=lambda state: state,
+            verify_success=lambda _state: True,
+            rollback=(lambda state: state)
+            if repair_reversibility
+            in {
+                CausalReversibilityClass.EXACT_ROLLBACK,
+                CausalReversibilityClass.VERSION_RESTORE,
+            }
+            else None,
+            compensate=(lambda state: state)
+            if repair_reversibility is CausalReversibilityClass.SEMANTIC_COMPENSATION
+            else None,
+            reconcile=(lambda _state: None)
+            if passport.reconciliation_required
+            else None,
+            snapshot_receipt=_causal_snapshot_receipt(
+                action_id=action_id,
+                snapshot_quality=snapshot_quality,
+                passport=passport,
+            ),
+            compensation_contract=_causal_compensation_contract(
+                action_id=action_id,
+                passport=passport,
+                idempotency_key=idempotency_key,
+            ),
+            reconciliation_contract=_causal_reconciliation_contract(
+                action_id=action_id,
+                passport=passport,
+                idempotency_key=idempotency_key,
+            ),
+            idempotency_key=idempotency_key,
+            risk_score=_causal_repair_risk_score(request.risk_level),
+            requires_approval=bool(passport.approval_chain),
+            approval_ref=_first_text(
+                _text_tuple_from_metadata(request.metadata, "approval_refs")
+            ),
+        )
+        admission = CausalRepairEngine(clock=self._clock).admit_action(
+            synthetic_action
+        )
+        return _causal_repair_admission_certificate(
+            action_id=action_id,
+            admission=admission,
+            effect_class=repair_effect_class,
+            reversibility_class=repair_reversibility,
+            snapshot_quality=snapshot_quality,
+            idempotency_present=idempotency_key is not None,
+            issued_at=issued_at,
+            template_id=template_selection.template_id if template_selection else None,
+            template_status=(
+                template_selection.status.value if template_selection else None
+            ),
+            template_reason=template_selection.reason if template_selection else None,
+            template_required_strategy=(
+                template_selection.required_strategy.value
+                if template_selection
+                else None
+            ),
+        )
+
     def _close_and_admit_learning(
         self,
         *,
@@ -1197,6 +1405,21 @@ class UniversalActionKernel:
                 if result.recovery_plan_certificate
                 else ""
             ),
+            "causal_repair_admission_certificate_id": (
+                result.causal_repair_admission_certificate.certificate_id
+                if result.causal_repair_admission_certificate
+                else ""
+            ),
+            "causal_repair_admission_status": (
+                result.causal_repair_admission_certificate.status
+                if result.causal_repair_admission_certificate
+                else ""
+            ),
+            "causal_repair_admission_reason": (
+                result.causal_repair_admission_certificate.reason
+                if result.causal_repair_admission_certificate
+                else ""
+            ),
             "intent_certificate_id": result.intent_certificate.certificate_id
             if result.intent_certificate
             else "",
@@ -1254,6 +1477,23 @@ class UniversalActionKernel:
                 else {}
             ),
         }
+        if (
+            result.causal_repair_admission_certificate
+            and result.causal_repair_admission_certificate.template_status
+        ):
+            payload.update(
+                {
+                    "causal_repair_template_id": (
+                        result.causal_repair_admission_certificate.template_id or ""
+                    ),
+                    "causal_repair_template_status": (
+                        result.causal_repair_admission_certificate.template_status
+                    ),
+                    "causal_repair_template_reason": (
+                        result.causal_repair_admission_certificate.template_reason or ""
+                    ),
+                }
+            )
         encoded = json.dumps(
             payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")
         )
@@ -1273,6 +1513,9 @@ class UniversalActionKernel:
             simulation_certificate=result.simulation_certificate,
             effect_prediction_certificate=result.effect_prediction_certificate,
             recovery_plan_certificate=result.recovery_plan_certificate,
+            causal_repair_admission_certificate=(
+                result.causal_repair_admission_certificate
+            ),
             intent_certificate=result.intent_certificate,
             operating_substrate_certificate=result.operating_substrate_certificate,
             capability_decision=result.capability_decision,
@@ -1498,6 +1741,330 @@ def _text_tuple_from_metadata(metadata: Mapping[str, Any], key: str) -> tuple[st
     if not isinstance(value, (tuple, list)):
         return ()
     return tuple(item for item in value if isinstance(item, str) and item.strip())
+
+
+def _first_text(values: tuple[str, ...]) -> str | None:
+    return values[0] if values else None
+
+
+def _causal_repair_domain(
+    request: UniversalActionRequest,
+    passport: CapabilityPassportRecord,
+) -> str:
+    override = request.metadata.get("causal_repair_template_domain")
+    if isinstance(override, str) and override.strip():
+        return override.strip()
+    if getattr(passport, "repair_template_domain", ""):
+        return passport.repair_template_domain
+    return passport.capability_id
+
+
+def _causal_repair_effect_class(
+    request: UniversalActionRequest,
+    passport: CapabilityPassportRecord,
+) -> CausalEffectClass:
+    override = request.metadata.get("causal_repair_effect_class")
+    if isinstance(override, str) and override:
+        return CausalEffectClass(override)
+    passport_override = getattr(passport, "repair_template_effect_class", "")
+    if passport_override:
+        return CausalEffectClass(passport_override)
+    if not passport.world_mutating:
+        return CausalEffectClass.READ_ONLY
+    if passport.rollback_capability:
+        return CausalEffectClass.INTERNAL_REVERSIBLE
+    return CausalEffectClass.INTERNAL_REVERSIBLE
+
+
+def _causal_repair_reversibility_class(
+    request: UniversalActionRequest,
+    passport: CapabilityPassportRecord,
+) -> CausalReversibilityClass:
+    override = request.metadata.get("causal_repair_reversibility_class")
+    if isinstance(override, str) and override:
+        return CausalReversibilityClass(override)
+    passport_override = getattr(passport, "repair_template_reversibility_class", "")
+    if passport_override:
+        return CausalReversibilityClass(passport_override)
+    if not passport.world_mutating:
+        return CausalReversibilityClass.READ_ONLY
+    if passport.rollback_capability:
+        return CausalReversibilityClass.EXACT_ROLLBACK
+    if passport.compensation_capability:
+        return CausalReversibilityClass.SEMANTIC_COMPENSATION
+    return CausalReversibilityClass.HUMAN_ESCALATION
+
+
+def _causal_repair_snapshot_quality(
+    request: UniversalActionRequest,
+    passport: CapabilityPassportRecord,
+    reversibility: CausalReversibilityClass,
+) -> CausalSnapshotQuality | None:
+    raw_quality = request.metadata.get("causal_repair_snapshot_quality")
+    if raw_quality is not None:
+        return CausalSnapshotQuality(raw_quality)
+    passport_quality = getattr(passport, "repair_template_snapshot_quality", None)
+    if passport_quality is not None:
+        return CausalSnapshotQuality(passport_quality)
+    if reversibility is CausalReversibilityClass.EXACT_ROLLBACK:
+        return CausalSnapshotQuality.S2_LOCAL
+    if reversibility is CausalReversibilityClass.VERSION_RESTORE:
+        return CausalSnapshotQuality.S3_VERSIONED
+    return None
+
+
+def _causal_repair_boundary_scope(
+    request: UniversalActionRequest,
+    passport: CapabilityPassportRecord,
+) -> tuple[str, ...]:
+    override = _text_tuple_from_metadata(request.metadata, "causal_repair_boundary_scope")
+    if override:
+        return override
+    if not passport.world_mutating:
+        return ()
+    return (
+        f"tenant://{request.tenant_id}",
+        f"capability://{passport.capability_id}",
+    )
+
+
+def _causal_repair_idempotency_key(request: UniversalActionRequest) -> str | None:
+    for key in ("causal_repair_idempotency_key", "idempotency_key"):
+        value = request.metadata.get(key)
+        if isinstance(value, str) and value:
+            return value
+    return None
+
+
+def _causal_repair_risk_score(risk_level: RiskLevel) -> float:
+    if risk_level is RiskLevel.CRITICAL:
+        return 1.0
+    if risk_level is RiskLevel.HIGH:
+        return 0.75
+    if risk_level is RiskLevel.MODERATE:
+        return 0.5
+    return 0.25
+
+
+def _causal_repair_template_selection(
+    *,
+    request: UniversalActionRequest,
+    passport: CapabilityPassportRecord,
+    effect_class: CausalEffectClass,
+    reversibility_class: CausalReversibilityClass,
+    snapshot_quality: CausalSnapshotQuality | None,
+    idempotency_key: str | None,
+):
+    domain = request.metadata.get("causal_repair_template_domain") or getattr(
+        passport,
+        "repair_template_domain",
+        "",
+    )
+    action_type = request.metadata.get("causal_repair_template_action_type") or getattr(
+        passport,
+        "repair_template_action_type",
+        "",
+    )
+    if not isinstance(domain, str) or not domain.strip():
+        return None
+    if not isinstance(action_type, str) or not action_type.strip():
+        return None
+    registry = RepairTemplateRegistry.default_registry()
+    return registry.evaluate(
+        TemplateSelectionRequest(
+            domain=domain.strip(),
+            action_type=action_type.strip(),
+            effect_class=effect_class,
+            reversibility_class=reversibility_class,
+            available_evidence=_text_tuple_from_metadata(
+                request.metadata,
+                "causal_repair_template_evidence",
+            )
+            or getattr(passport, "repair_template_evidence", ()),
+            has_idempotency_key=idempotency_key is not None,
+            snapshot_quality=snapshot_quality or CausalSnapshotQuality.S0_NONE,
+            approval_present=bool(
+                _text_tuple_from_metadata(request.metadata, "approval_refs")
+            ),
+            external_confirmation_present=bool(
+                _text_tuple_from_metadata(
+                    request.metadata,
+                    "causal_repair_external_confirmation_refs",
+                )
+                or getattr(passport, "repair_template_external_confirmation_refs", ())
+            ),
+        )
+    )
+
+
+def _repair_admission_from_template_selection(
+    *,
+    action_id: str,
+    template_selection,
+) -> RepairAdmissionReceipt:
+    if template_selection.status is RepairTemplateAdmissionStatus.APPROVAL_REQUIRED:
+        status = CausalRepairAdmissionStatus.APPROVAL_REQUIRED
+    elif template_selection.status is RepairTemplateAdmissionStatus.ADMITTED:
+        status = CausalRepairAdmissionStatus.ADMITTED
+    else:
+        status = CausalRepairAdmissionStatus.BLOCKED
+    return RepairAdmissionReceipt(
+        admission_id=stable_identifier(
+            "causal-repair-template-admission",
+            {
+                "action_id": action_id,
+                "request_id": template_selection.request_id,
+                "status": template_selection.status.value,
+                "reason": template_selection.reason,
+            },
+        ),
+        action_id=action_id,
+        status=status,
+        reason=template_selection.reason,
+        repair_strategy=template_selection.required_strategy,
+        evidence_refs=template_selection.evidence_refs,
+    )
+
+
+def _causal_snapshot_receipt(
+    *,
+    action_id: str,
+    snapshot_quality: CausalSnapshotQuality | None,
+    passport: CapabilityPassportRecord,
+) -> CausalSnapshotReceipt | None:
+    if snapshot_quality is None:
+        return None
+    return CausalSnapshotReceipt(
+        snapshot_id=stable_identifier(
+            "causal-repair-snapshot",
+            {
+                "action_id": action_id,
+                "capability_id": passport.capability_id,
+                "snapshot_quality": int(snapshot_quality),
+            },
+        ),
+        action_id=action_id,
+        before_hash=stable_identifier(
+            "causal-repair-before",
+            {
+                "action_id": action_id,
+                "capability_id": passport.capability_id,
+                "passport_hash": passport.passport_hash,
+            },
+        ),
+        snapshot_quality=snapshot_quality,
+        observed_fields=("capability_passport", "effect_plan", "recovery_plan"),
+        missing_fields=(),
+    )
+
+
+def _causal_compensation_contract(
+    *,
+    action_id: str,
+    passport: CapabilityPassportRecord,
+    idempotency_key: str | None,
+) -> CausalCompensationContract | None:
+    if not passport.compensation_capability:
+        return None
+    compensation_key = idempotency_key or stable_identifier(
+        "causal-repair-compensation-idempotency",
+        {
+            "action_id": action_id,
+            "capability_id": passport.capability_id,
+            "compensation_capability": passport.compensation_capability,
+        },
+    )
+    return CausalCompensationContract(
+        compensation_id=stable_identifier(
+            "causal-repair-compensation",
+            {"action_id": action_id, "capability_id": passport.capability_id},
+        ),
+        original_action_id=action_id,
+        idempotency_key=compensation_key,
+        adequacy_criteria=(
+            "scope_match",
+            "truthfulness",
+            "duplicate_safety",
+            "verification",
+        ),
+        verification_rule="terminal_reconciliation_or_operator_review",
+        escalation_rule="operator_review_required_on_compensation_failure",
+    )
+
+
+def _causal_reconciliation_contract(
+    *,
+    action_id: str,
+    passport: CapabilityPassportRecord,
+    idempotency_key: str | None,
+) -> CausalReconciliationContract | None:
+    if not passport.reconciliation_required:
+        return None
+    lookup_key = idempotency_key or stable_identifier(
+        "causal-repair-reconciliation-key",
+        {"action_id": action_id, "capability_id": passport.capability_id},
+    )
+    return CausalReconciliationContract(
+        reconciliation_id=stable_identifier(
+            "causal-repair-reconciliation",
+            {"action_id": action_id, "capability_id": passport.capability_id},
+        ),
+        action_id=action_id,
+        provider_lookup_ref=f"capability://{passport.capability_id}/reconciliation",
+        idempotency_lookup_key=lookup_key,
+        safe_retry_condition="observed provider state proves no duplicate effect",
+        escalation_condition="provider commit state remains ambiguous",
+    )
+
+
+def _causal_repair_admission_certificate(
+    *,
+    action_id: str,
+    admission: RepairAdmissionReceipt,
+    effect_class: CausalEffectClass,
+    reversibility_class: CausalReversibilityClass,
+    snapshot_quality: CausalSnapshotQuality | None,
+    idempotency_present: bool,
+    issued_at: str,
+    template_id: str | None = None,
+    template_status: str | None = None,
+    template_reason: str | None = None,
+    template_required_strategy: str | None = None,
+) -> CausalRepairAdmissionCertificate:
+    idempotency_required = effect_class in {
+        CausalEffectClass.EXTERNAL_MUTATION,
+        CausalEffectClass.USER_VISIBLE,
+        CausalEffectClass.FINANCIAL_OR_LEGAL,
+        CausalEffectClass.PUBLIC_IRREVERSIBLE,
+        CausalEffectClass.PHYSICAL_WORLD,
+    }
+    return CausalRepairAdmissionCertificate(
+        certificate_id=stable_identifier(
+            "causal-repair-admission-cert",
+            {
+                "action_id": action_id,
+                "admission_id": admission.admission_id,
+                "status": admission.status.value,
+                "reason": admission.reason,
+            },
+        ),
+        action_id=action_id,
+        admission_id=admission.admission_id,
+        status=admission.status.value,
+        reason=admission.reason,
+        repair_strategy=admission.repair_strategy.value,
+        effect_class=effect_class.value,
+        reversibility_class=reversibility_class.value,
+        snapshot_quality=int(snapshot_quality) if snapshot_quality is not None else None,
+        idempotency_required=idempotency_required,
+        idempotency_present=idempotency_present,
+        evidence_refs=admission.evidence_refs,
+        issued_at=issued_at,
+        template_id=template_id,
+        template_status=template_status,
+        template_reason=template_reason,
+        template_required_strategy=template_required_strategy,
+    )
 
 
 def _operating_substrate_projection_required(request: UniversalActionRequest) -> bool:
@@ -1967,6 +2534,10 @@ def _uao_record_evidence_refs(
     refs.extend(result.world_certificate.evidence_refs)
     if result.operating_substrate_certificate is not None:
         refs.extend(result.operating_substrate_certificate.evidence_refs)
+    if result.causal_repair_admission_certificate is not None:
+        refs.append(result.causal_repair_admission_certificate.certificate_id)
+        refs.append(result.causal_repair_admission_certificate.admission_id)
+        refs.extend(result.causal_repair_admission_certificate.evidence_refs)
     refs.append(result.world_certificate.snapshot.snapshot_id)
     return _unique_text_list(refs)
 
@@ -2013,6 +2584,7 @@ def _uao_record_recovery_plan(result: UniversalActionResult) -> dict[str, Any]:
             "review_required_on_failure": True,
             "certificate_ref": None,
             "effect_plan_ref": effect_plan_ref,
+            **_uao_record_causal_repair_fields(result),
         }
     return {
         "available": True,
@@ -2023,6 +2595,42 @@ def _uao_record_recovery_plan(result: UniversalActionResult) -> dict[str, Any]:
         "review_required_on_failure": certificate.review_required_on_failure,
         "certificate_ref": certificate.certificate_id,
         "effect_plan_ref": certificate.effect_plan_id,
+        **_uao_record_causal_repair_fields(result),
+    }
+
+
+def _uao_record_causal_repair_fields(result: UniversalActionResult) -> dict[str, Any]:
+    certificate = result.causal_repair_admission_certificate
+    if certificate is None:
+        return {
+            "causal_repair_admission_ref": None,
+            "causal_repair_admission_status": "not_required",
+            "causal_repair_admission_reason": None,
+            "causal_repair_effect_class": None,
+            "causal_repair_reversibility_class": None,
+            "causal_repair_snapshot_quality": None,
+            "causal_repair_idempotency_required": False,
+            "causal_repair_idempotency_present": False,
+            "causal_repair_template_id": None,
+            "causal_repair_template_status": None,
+            "causal_repair_template_reason": None,
+            "causal_repair_template_required_strategy": None,
+        }
+    return {
+        "causal_repair_admission_ref": certificate.admission_id,
+        "causal_repair_admission_status": certificate.status,
+        "causal_repair_admission_reason": certificate.reason,
+        "causal_repair_effect_class": certificate.effect_class,
+        "causal_repair_reversibility_class": certificate.reversibility_class,
+        "causal_repair_snapshot_quality": certificate.snapshot_quality,
+        "causal_repair_idempotency_required": certificate.idempotency_required,
+        "causal_repair_idempotency_present": certificate.idempotency_present,
+        "causal_repair_template_id": certificate.template_id,
+        "causal_repair_template_status": certificate.template_status,
+        "causal_repair_template_reason": certificate.template_reason,
+        "causal_repair_template_required_strategy": (
+            certificate.template_required_strategy
+        ),
     }
 
 
@@ -2119,6 +2727,10 @@ def _uao_record_claim_ledger(
                         _optional_text_value(recovery_plan.get("certificate_ref"))
                         or "",
                         _optional_text_value(recovery_plan.get("effect_plan_ref"))
+                        or "",
+                        _optional_text_value(
+                            recovery_plan.get("causal_repair_admission_ref")
+                        )
                         or "",
                     )
                 ),
@@ -2945,6 +3557,11 @@ def _uao_record_effect_classes(result: UniversalActionResult) -> list[str]:
     classes = ["external_capability", "world_state"]
     if result.recovery_plan_certificate is not None:
         classes.append("recovery_plan")
+    if result.causal_repair_admission_certificate is not None:
+        classes.append(result.causal_repair_admission_certificate.effect_class)
+        classes.append(
+            "causal_repair_" + result.causal_repair_admission_certificate.status
+        )
     if (
         result.dispatch_result is not None
         and result.dispatch_result.execution_result is not None
@@ -3014,6 +3631,27 @@ def _uao_record_decision(result: UniversalActionResult) -> dict[str, Any]:
             "proof_state": "Unknown",
             "solver_outcome": "AwaitingEvidence",
             "next_action": "collect_operating_substrate_evidence",
+            "execution_allowed": False,
+        }
+    if result.block_reason.startswith("causal_repair_admission_"):
+        if result.block_reason in {
+            "causal_repair_admission_approval_required",
+            "causal_repair_admission_human_escalation_required",
+        }:
+            return {
+                "status": "escalate",
+                "reason_code": result.block_reason,
+                "proof_state": "Unknown",
+                "solver_outcome": "AwaitingEvidence",
+                "next_action": "operator_review",
+                "execution_allowed": False,
+            }
+        return {
+            "status": "block",
+            "reason_code": result.block_reason,
+            "proof_state": "Fail",
+            "solver_outcome": "GovernanceBlocked",
+            "next_action": "bind_causal_repair_evidence",
             "execution_allowed": False,
         }
     return {
@@ -3316,6 +3954,8 @@ def _uao_record_admission_guards(
             _optional_text_value(recovery_plan.get("recovery_plan_ref")) or "",
             _optional_text_value(recovery_plan.get("rollback_plan_ref")) or "",
             _optional_text_value(recovery_plan.get("compensation_plan_ref")) or "",
+            _optional_text_value(recovery_plan.get("causal_repair_admission_ref"))
+            or "",
         )
     )
     if not recovery_refs:
@@ -3402,6 +4042,8 @@ def _uao_record_blocked_guard(result: UniversalActionResult) -> str | None:
     if result.block_reason == "capability_admission_rejected":
         return "capability_certified"
     if result.block_reason == "recovery_plan_missing":
+        return "recovery_available"
+    if result.block_reason.startswith("causal_repair_admission_"):
         return "recovery_available"
     if result.block_reason == "governed_action_admission_rejected":
         return "authority_valid"
