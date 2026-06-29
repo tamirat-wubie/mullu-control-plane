@@ -108,6 +108,63 @@ def developer_workflow_operator_action_banner(
     return f"Action needed before PR execution: complete {normalized_evidence}."
 
 
+def developer_workflow_capability_summary(operator_status: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the friction-reduction capability summary for Developer Workflow v1."""
+
+    next_evidence = operator_status.get("next_evidence", ())
+    if not isinstance(next_evidence, list):
+        next_evidence = []
+    normalized_next_evidence = [str(item) for item in next_evidence if str(item).strip()][:8]
+    local_candidate_ready = operator_status.get("local_candidate_ready") is True
+    pr_tool_admitted = operator_status.get("pr_tool_admitted") is True
+    external_ready = operator_status.get("ready_for_external_pr_execution") is True
+    external_approval_status = str(operator_status.get("external_approval_status") or "pending")
+    sandbox_complete = int(operator_status.get("sandbox_receipts_completed", 0) or 0) >= int(
+        operator_status.get("sandbox_receipts_required", 0) or 0
+    )
+    if external_ready and external_approval_status == "approved":
+        capability_status = "preflight_ready"
+        blocked_reason = "dashboard execution disabled"
+    elif external_approval_status != "approved" and local_candidate_ready and pr_tool_admitted:
+        capability_status = "approval_required"
+        blocked_reason = "external approval pending"
+    elif not sandbox_complete:
+        capability_status = "evidence_required"
+        blocked_reason = "sandbox receipt evidence incomplete"
+    else:
+        capability_status = "prepare_only"
+        blocked_reason = "local candidate or PR tool admission incomplete"
+    allowed_actions = [
+        "prepare diff",
+        "validate evidence",
+        "write sandbox files",
+        "run tests",
+    ]
+    if local_candidate_ready and pr_tool_admitted:
+        allowed_actions.append("prepare PR candidate")
+    blocked_actions = [
+        "create PR",
+        "push branch",
+        "connector call",
+        "merge",
+        "deploy",
+    ]
+    return {
+        "capability_id": "mullu_developer_workflow.v1",
+        "current_level": "L4" if sandbox_complete else "L2",
+        "next_level": "L5",
+        "status": capability_status,
+        "mode": "lab",
+        "allowed_actions": allowed_actions,
+        "blocked_actions": blocked_actions,
+        "blocked_reason": blocked_reason,
+        "next_evidence": normalized_next_evidence,
+        "next_evidence_count": len(normalized_next_evidence),
+        "external_effects_allowed": False,
+        "rollback_required": operator_status.get("rollback_required") is True,
+    }
+
+
 @dataclass(frozen=True, slots=True)
 class OperatorTowerSignal:
     """Bounded operator signal emitted from a panel."""
@@ -4846,6 +4903,19 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
         next_unlock=operator_receipt_next_unlock,
         evidence_text=operator_receipt_evidence_text,
     )
+    operator_receipt_capability_summary = developer_workflow_capability_summary(developer_workflow_operator_receipt)
+    operator_receipt_allowed_actions = operator_receipt_capability_summary.get("allowed_actions", ())
+    if not isinstance(operator_receipt_allowed_actions, list):
+        operator_receipt_allowed_actions = []
+    operator_receipt_blocked_actions = operator_receipt_capability_summary.get("blocked_actions", ())
+    if not isinstance(operator_receipt_blocked_actions, list):
+        operator_receipt_blocked_actions = []
+    operator_receipt_allowed_text = ", ".join(
+        str(action) for action in operator_receipt_allowed_actions if str(action).strip()
+    )
+    operator_receipt_blocked_text = ", ".join(
+        str(action) for action in operator_receipt_blocked_actions if str(action).strip()
+    )
     fast_summary = mode_summary.get("fast", {}) if isinstance(mode_summary.get("fast", {}), Mapping) else {}
     balanced_summary = mode_summary.get("balanced", {}) if isinstance(mode_summary.get("balanced", {}), Mapping) else {}
     strict_summary = mode_summary.get("strict", {}) if isinstance(mode_summary.get("strict", {}), Mapping) else {}
@@ -5777,6 +5847,14 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <div class="metrics">
       <span class="metric">Outcome: {escape(operator_receipt_outcome)}</span>
       <span class="metric">Readiness: {escape(operator_receipt_status)}</span>
+      <span class="metric">Capability: {escape(str(operator_receipt_capability_summary.get("capability_id") or "mullu_developer_workflow.v1"))}</span>
+      <span class="metric">Mode: {escape(str(operator_receipt_capability_summary.get("mode") or "lab"))}</span>
+      <span class="metric">Current level: {escape(str(operator_receipt_capability_summary.get("current_level") or "L2"))}</span>
+      <span class="metric">Next level: {escape(str(operator_receipt_capability_summary.get("next_level") or "L5"))}</span>
+      <span class="metric">Capability status: {escape(str(operator_receipt_capability_summary.get("status") or "evidence_required"))}</span>
+      <span class="metric">Blocked reason: {escape(str(operator_receipt_capability_summary.get("blocked_reason") or "sandbox receipt evidence incomplete"))}</span>
+      <span class="metric">Allowed actions: {escape(operator_receipt_allowed_text)}</span>
+      <span class="metric">Blocked actions: {escape(operator_receipt_blocked_text)}</span>
       <span class="metric">External approval: {escape(operator_receipt_approval)}</span>
       <span class="metric">Local candidate ready: {escape(str(operator_receipt_candidate_ready).lower())}</span>
       <span class="metric">PR tool admitted: {escape(str(operator_receipt_tool_admitted).lower())}</span>

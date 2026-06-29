@@ -31,7 +31,10 @@ from gateway.operator_capability_console import (  # noqa: E402
     build_developer_workflow_v1_run_read_model,
     build_operator_capability_read_model,
 )
-from gateway.operator_control_tower import developer_workflow_operator_action_banner  # noqa: E402
+from gateway.operator_control_tower import (  # noqa: E402
+    developer_workflow_capability_summary,
+    developer_workflow_operator_action_banner,
+)
 from gateway.operator_sandbox_patch_readiness import (  # noqa: E402
     SANDBOX_PATCH_READINESS_REGISTRY,
     sandbox_patch_readiness_compact_summary,
@@ -3741,6 +3744,14 @@ def test_operator_control_tower_html_action_banner_uses_generated_receipt(
     assert response.status_code == 200
     assert "Action needed before PR execution: provide external_approval_witness" in response.text
     assert "external approval is pending" in response.text
+    assert "Capability: mullu_developer_workflow.v1" in response.text
+    assert "Mode: lab" in response.text
+    assert "Current level: L4" in response.text
+    assert "Next level: L5" in response.text
+    assert "Capability status: approval_required" in response.text
+    assert "Blocked reason: external approval pending" in response.text
+    assert "Allowed actions: prepare diff, validate evidence, write sandbox files, run tests, prepare PR candidate" in response.text
+    assert "Blocked actions: create PR, push branch, connector call, merge, deploy" in response.text
     assert "External approval: pending" in response.text
     assert "PR tool admitted: true" in response.text
     assert "Rollback required: true" in response.text
@@ -3785,6 +3796,35 @@ def test_developer_workflow_operator_action_banner_cases() -> None:
     assert approved_external == (
         "PR execution remains disabled in this dashboard; use the approved external path only."
     )
+
+
+def test_developer_workflow_capability_summary_cases() -> None:
+    summary = developer_workflow_capability_summary(
+        {
+            "ready_for_external_pr_execution": False,
+            "external_approval_status": "pending",
+            "local_candidate_ready": True,
+            "pr_tool_admitted": True,
+            "sandbox_receipts_completed": 4,
+            "sandbox_receipts_required": 4,
+            "next_evidence": ["external_approval_witness", "command_preview"],
+            "rollback_required": True,
+        }
+    )
+
+    assert summary["capability_id"] == "mullu_developer_workflow.v1"
+    assert summary["mode"] == "lab"
+    assert summary["current_level"] == "L4"
+    assert summary["next_level"] == "L5"
+    assert summary["status"] == "approval_required"
+    assert summary["blocked_reason"] == "external approval pending"
+    assert summary["next_evidence"] == ["external_approval_witness", "command_preview"]
+    assert summary["next_evidence_count"] == 2
+    assert summary["external_effects_allowed"] is False
+    assert summary["rollback_required"] is True
+    assert "prepare PR candidate" in summary["allowed_actions"]
+    assert "create PR" in summary["blocked_actions"]
+    assert "push branch" in summary["blocked_actions"]
 
 
 def test_operator_control_tower_projects_rollback_receipt_visibility() -> None:
