@@ -13,6 +13,7 @@
     "source_pr_creation_execution_admission_ref",
     "scope",
     "source_execution_admission_binding",
+    "execution_admission_evidence",
     "command_preview_contract",
     "command_preview",
     "execution_decision",
@@ -34,6 +35,7 @@
     },
     "scope": { "$ref": "#/$defs/scope" },
     "source_execution_admission_binding": { "$ref": "#/$defs/source_execution_admission_binding" },
+    "execution_admission_evidence": { "$ref": "#/$defs/execution_admission_evidence" },
     "command_preview_contract": { "$ref": "#/$defs/command_preview_contract" },
     "command_preview": { "$ref": "#/$defs/command_preview" },
     "execution_decision": { "$ref": "#/$defs/execution_decision" },
@@ -129,6 +131,77 @@
         "source_receipt_store_append_enabled": { "type": "boolean", "const": false },
         "source_mutation_route_enabled": { "type": "boolean", "const": false },
         "source_secret_values_serialized": { "type": "boolean", "const": false }
+      }
+    },
+    "execution_admission_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_execution_admission_ref",
+        "source_admission_id",
+        "source_decision",
+        "source_execution_admitted",
+        "source_execution_target_ref",
+        "source_terminal_closure_allowed",
+        "source_required_before_execution_refs",
+        "source_blocked_reason_refs",
+        "source_dry_run_ref",
+        "source_dry_run_receipt_recorded",
+        "source_command_preview_bound",
+        "source_command_preview_ref",
+        "source_redacted_command_preview",
+        "source_operator_decision_ref",
+        "source_decision_value",
+        "source_pull_request_creation_enabled",
+        "source_repository_write_enabled",
+        "source_receipt_store_append_enabled",
+        "source_mutation_route_enabled",
+        "source_secret_values_serialized",
+        "source_adapter_executed",
+        "source_connector_calls_observed",
+        "source_terminal_closure",
+        "source_success_claim_allowed",
+        "command_preview_execution_admission_bound",
+        "command_preview_remains_preview_only",
+        "contains_secret_values"
+      ],
+      "properties": {
+        "source_execution_admission_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_creation_execution_admission.foundation.json"
+        },
+        "source_admission_id": { "type": "string", "const": "github-pr-creation-execution-admission-foundation" },
+        "source_decision": { "type": "string", "const": "PR_CREATION_EXECUTION_BLOCKED_DRY_RUN_BOUND_AWAITING_LIVE_AUTHORITY" },
+        "source_execution_admitted": { "type": "boolean", "const": false },
+        "source_execution_target_ref": { "$ref": "#/$defs/evidence_ref" },
+        "source_terminal_closure_allowed": { "type": "boolean", "const": false },
+        "source_required_before_execution_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "source_blocked_reason_refs": { "$ref": "#/$defs/evidence_ref_list" },
+        "source_dry_run_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_creation_dry_run_receipt.foundation.json"
+        },
+        "source_dry_run_receipt_recorded": { "type": "boolean", "const": true },
+        "source_command_preview_bound": { "type": "boolean", "const": true },
+        "source_command_preview_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json"
+        },
+        "source_redacted_command_preview": { "type": "string", "minLength": 1 },
+        "source_operator_decision_ref": { "$ref": "#/$defs/evidence_ref" },
+        "source_decision_value": { "type": "string", "const": "approve_terminal_certificate" },
+        "source_pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "source_repository_write_enabled": { "type": "boolean", "const": false },
+        "source_receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "source_mutation_route_enabled": { "type": "boolean", "const": false },
+        "source_secret_values_serialized": { "type": "boolean", "const": false },
+        "source_adapter_executed": { "type": "boolean", "const": false },
+        "source_connector_calls_observed": { "type": "boolean", "const": false },
+        "source_terminal_closure": { "type": "boolean", "const": false },
+        "source_success_claim_allowed": { "type": "boolean", "const": false },
+        "command_preview_execution_admission_bound": { "type": "boolean", "const": true },
+        "command_preview_remains_preview_only": { "type": "boolean", "const": true },
+        "contains_secret_values": { "type": "boolean", "const": false }
       }
     },
     "command_preview_contract": {

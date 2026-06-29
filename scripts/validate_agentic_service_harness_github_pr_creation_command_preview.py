@@ -150,6 +150,31 @@ REQUIRED_RECEIPT_REFS = {
     ),
     "github_pr_creation_execution_admission_example": EXPECTED_SOURCE_EXECUTION_ADMISSION_REF,
 }
+EXECUTION_ADMISSION_EVIDENCE_BINDINGS = (
+    ("source_admission_id", ("execution_admission_contract", "admission_id")),
+    ("source_decision", ("execution_admission_decision", "decision")),
+    ("source_execution_admitted", ("execution_admission_decision", "execution_admitted")),
+    ("source_execution_target_ref", ("execution_admission_decision", "execution_target_ref")),
+    ("source_terminal_closure_allowed", ("execution_admission_decision", "terminal_closure_allowed")),
+    ("source_required_before_execution_refs", ("execution_admission_decision", "required_before_execution_refs")),
+    ("source_blocked_reason_refs", ("execution_admission_decision", "blocked_reason_refs")),
+    ("source_dry_run_ref", ("command_preview_dry_run_receipt_evidence", "source_dry_run_ref")),
+    ("source_dry_run_receipt_recorded", ("command_preview_dry_run_receipt_evidence", "source_dry_run_receipt_recorded")),
+    ("source_command_preview_bound", ("command_preview_dry_run_receipt_evidence", "command_preview_bound")),
+    ("source_command_preview_ref", ("command_preview_dry_run_receipt_evidence", "command_preview_ref")),
+    ("source_redacted_command_preview", ("command_preview_dry_run_receipt_evidence", "redacted_command_preview")),
+    ("source_operator_decision_ref", ("command_preview_dry_run_receipt_evidence", "source_operator_decision_ref")),
+    ("source_decision_value", ("command_preview_dry_run_receipt_evidence", "source_decision_value")),
+    ("source_pull_request_creation_enabled", ("command_preview_dry_run_receipt_evidence", "pull_request_creation_enabled")),
+    ("source_repository_write_enabled", ("command_preview_dry_run_receipt_evidence", "repository_write_enabled")),
+    ("source_receipt_store_append_enabled", ("command_preview_dry_run_receipt_evidence", "source_receipt_store_appended")),
+    ("source_mutation_route_enabled", ("authority_denials", "mutation_route_enabled")),
+    ("source_secret_values_serialized", ("scope", "secret_values_serialized")),
+    ("source_adapter_executed", ("command_preview_dry_run_receipt_evidence", "source_adapter_executed")),
+    ("source_connector_calls_observed", ("command_preview_dry_run_receipt_evidence", "source_connector_calls_observed")),
+    ("source_terminal_closure", ("command_preview_dry_run_receipt_evidence", "source_terminal_closure")),
+    ("source_success_claim_allowed", ("command_preview_dry_run_receipt_evidence", "source_success_claim_allowed")),
+)
 REQUIRED_FALSE_FLAGS = (
     "execution_admitted",
     "pr_creation_enabled",
@@ -164,6 +189,11 @@ REQUIRED_FALSE_FLAGS = (
     "source_receipt_store_append_enabled",
     "source_mutation_route_enabled",
     "source_secret_values_serialized",
+    "source_adapter_executed",
+    "source_connector_calls_observed",
+    "source_terminal_closure",
+    "source_success_claim_allowed",
+    "contains_secret_values",
     "command_executed",
     "adapter_executed",
     "connector_call_executed",
@@ -188,6 +218,10 @@ REQUIRED_TRUE_FLAGS = (
     "read_only",
     "preview_only",
     "preview_rendered",
+    "source_dry_run_receipt_recorded",
+    "source_command_preview_bound",
+    "command_preview_execution_admission_bound",
+    "command_preview_remains_preview_only",
     "report_is_not_terminal_closure",
     "terminal_closure_required",
     "required_for_closure",
@@ -198,6 +232,7 @@ ALLOWED_SECRET_KEYS = {
     "secret_mutation_enabled",
     "secret_values_serialized",
     "source_secret_values_serialized",
+    "contains_secret_values",
 }
 FORBIDDEN_SECRET_KEY_TOKENS = (
     "access_token",
@@ -307,6 +342,7 @@ def _validate_command_preview_semantics(
         label,
     )
     _validate_source_execution_admission_binding(payload, source_execution_admission, errors, label)
+    _validate_execution_admission_evidence(payload, source_execution_admission, errors, label)
     _validate_contract(payload, errors, label)
     _validate_refs(payload, errors, label)
     _validate_command_shape(payload, errors, label)
@@ -356,6 +392,57 @@ def _validate_source_execution_admission_binding(
         (("scope", "secret_values_serialized"), ("source_execution_admission_binding", "source_secret_values_serialized")),
     ):
         _require_equal(payload, target_path, _get_nested(source_execution_admission, source_path), errors, label)
+
+
+def _validate_execution_admission_evidence(
+    payload: Mapping[str, Any],
+    source_execution_admission: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    evidence = _get_nested(payload, ("execution_admission_evidence",))
+    if not isinstance(evidence, Mapping):
+        errors.append(f"{label}: execution_admission_evidence must be an object")
+        return
+    if not source_execution_admission:
+        return
+    _require_equal(
+        payload,
+        ("execution_admission_evidence", "source_execution_admission_ref"),
+        EXPECTED_SOURCE_EXECUTION_ADMISSION_REF,
+        errors,
+        label,
+    )
+    for evidence_key, source_path in EXECUTION_ADMISSION_EVIDENCE_BINDINGS:
+        _require_equal(
+            payload,
+            ("execution_admission_evidence", evidence_key),
+            _get_nested(source_execution_admission, source_path),
+            errors,
+            label,
+        )
+    _require_equal(
+        payload,
+        ("execution_admission_evidence", "source_redacted_command_preview"),
+        _get_nested(payload, ("command_preview", "redacted_command_preview")),
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("execution_admission_evidence", "command_preview_execution_admission_bound"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("execution_admission_evidence", "command_preview_remains_preview_only"),
+        True,
+        errors,
+        label,
+    )
+    _require_equal(payload, ("execution_admission_evidence", "contains_secret_values"), False, errors, label)
 
 
 def _validate_contract(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
