@@ -143,7 +143,7 @@
     "source_success_claim_allowed": false,
     "command_preview_execution_admission_bound": true,
     "operator_approval_request_consumes_execution_admission_evidence": true,
-    "operator_approval_request_remains_preview_only": true,
+    "operator_approval_request_remains_request_only": true,
     "contains_secret_values": false
   },
   "remaining_witnesses": [

@@ -41,6 +41,7 @@ from scripts.validate_agentic_service_harness_github_pr_creation_command_preview
     EXPECTED_ARGUMENT_VECTOR,
     EXPECTED_COMMAND_PREVIEW,
     EXPECTED_PREVIEW_ID,
+    EXPECTED_SOURCE_EXECUTION_ADMISSION_REF,
     validate_agentic_service_harness_github_pr_creation_command_preview,
 )
 from scripts.validate_agentic_service_harness_github_pr_operator_approval_request_actual_non_empty_diff_binding import (  # noqa: E402
@@ -143,32 +144,37 @@ REQUIRED_RECEIPT_REFS = {
     ),
     "github_pr_operator_approval_request_example": EXPECTED_SOURCE_OPERATOR_APPROVAL_REQUEST_REF,
 }
-COMMAND_PREVIEW_EXECUTION_ADMISSION_EVIDENCE_KEYS = (
-    "source_command_preview_ref",
-    "source_execution_admission_ref",
-    "source_admission_id",
-    "source_decision",
-    "source_execution_admitted",
-    "source_execution_target_ref",
-    "source_terminal_closure_allowed",
-    "source_required_before_execution_refs",
-    "source_blocked_reason_refs",
-    "source_dry_run_ref",
-    "source_dry_run_receipt_recorded",
-    "source_command_preview_bound",
-    "source_redacted_command_preview",
-    "source_operator_decision_ref",
-    "source_decision_value",
-    "source_pull_request_creation_enabled",
-    "source_repository_write_enabled",
-    "source_receipt_store_append_enabled",
-    "source_mutation_route_enabled",
-    "source_secret_values_serialized",
-    "source_adapter_executed",
-    "source_connector_calls_observed",
-    "source_terminal_closure",
-    "source_success_claim_allowed",
-    "command_preview_execution_admission_bound",
+COMMAND_PREVIEW_EXECUTION_ADMISSION_EVIDENCE_BINDINGS = (
+    ("source_execution_admission_ref", ("execution_admission_evidence", "source_execution_admission_ref")),
+    ("source_admission_id", ("execution_admission_evidence", "source_admission_id")),
+    ("source_decision", ("execution_admission_evidence", "source_decision")),
+    ("source_execution_admitted", ("execution_admission_evidence", "source_execution_admitted")),
+    ("source_execution_target_ref", ("execution_admission_evidence", "source_execution_target_ref")),
+    ("source_terminal_closure_allowed", ("execution_admission_evidence", "source_terminal_closure_allowed")),
+    (
+        "source_required_before_execution_refs",
+        ("execution_admission_evidence", "source_required_before_execution_refs"),
+    ),
+    ("source_blocked_reason_refs", ("execution_admission_evidence", "source_blocked_reason_refs")),
+    ("source_dry_run_ref", ("execution_admission_evidence", "source_dry_run_ref")),
+    ("source_dry_run_receipt_recorded", ("execution_admission_evidence", "source_dry_run_receipt_recorded")),
+    ("source_command_preview_bound", ("execution_admission_evidence", "source_command_preview_bound")),
+    ("source_redacted_command_preview", ("execution_admission_evidence", "source_redacted_command_preview")),
+    ("source_operator_decision_ref", ("execution_admission_evidence", "source_operator_decision_ref")),
+    ("source_decision_value", ("execution_admission_evidence", "source_decision_value")),
+    ("source_pull_request_creation_enabled", ("execution_admission_evidence", "source_pull_request_creation_enabled")),
+    ("source_repository_write_enabled", ("execution_admission_evidence", "source_repository_write_enabled")),
+    ("source_receipt_store_append_enabled", ("execution_admission_evidence", "source_receipt_store_append_enabled")),
+    ("source_mutation_route_enabled", ("execution_admission_evidence", "source_mutation_route_enabled")),
+    ("source_secret_values_serialized", ("execution_admission_evidence", "source_secret_values_serialized")),
+    ("source_adapter_executed", ("execution_admission_evidence", "source_adapter_executed")),
+    ("source_connector_calls_observed", ("execution_admission_evidence", "source_connector_calls_observed")),
+    ("source_terminal_closure", ("execution_admission_evidence", "source_terminal_closure")),
+    ("source_success_claim_allowed", ("execution_admission_evidence", "source_success_claim_allowed")),
+    (
+        "command_preview_execution_admission_bound",
+        ("execution_admission_evidence", "command_preview_execution_admission_bound"),
+    ),
 )
 REQUIRED_FALSE_FLAGS = (
     "terminal_closure",
@@ -178,6 +184,18 @@ REQUIRED_FALSE_FLAGS = (
     "external_adapter_integrated",
     "receipt_store_append_enabled",
     "secret_values_serialized",
+    "source_execution_admitted",
+    "source_terminal_closure_allowed",
+    "source_pull_request_creation_enabled",
+    "source_repository_write_enabled",
+    "source_receipt_store_append_enabled",
+    "source_mutation_route_enabled",
+    "source_secret_values_serialized",
+    "source_adapter_executed",
+    "source_connector_calls_observed",
+    "source_terminal_closure",
+    "source_success_claim_allowed",
+    "contains_secret_values",
     "operator_response_collected",
     "operator_approval_granted",
     "operator_approval_rejected",
@@ -231,13 +249,13 @@ REQUIRED_TRUE_FLAGS = (
     "approval_request_bound",
     "command_preview_bound",
     "preview_rendered",
-    "blocks_command_execution",
-    "required_for_closure",
     "source_dry_run_receipt_recorded",
     "source_command_preview_bound",
     "command_preview_execution_admission_bound",
     "operator_approval_request_consumes_execution_admission_evidence",
-    "operator_approval_request_remains_preview_only",
+    "operator_approval_request_remains_request_only",
+    "blocks_command_execution",
+    "required_for_closure",
 )
 ALLOWED_SECRET_KEYS = {
     "dns_mutation_enabled",
@@ -454,15 +472,25 @@ def _validate_command_preview_execution_admission_evidence(
         return
     if not source_command_preview:
         return
-    source_evidence = _get_nested(source_command_preview, ("execution_admission_evidence",))
-    if not isinstance(source_evidence, Mapping):
-        errors.append("GitHub PR command preview source: execution_admission_evidence must be an object")
-        return
-    for evidence_key in COMMAND_PREVIEW_EXECUTION_ADMISSION_EVIDENCE_KEYS:
+    _require_equal(
+        payload,
+        ("command_preview_execution_admission_evidence", "source_command_preview_ref"),
+        EXPECTED_SOURCE_COMMAND_PREVIEW_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_execution_admission_evidence", "source_execution_admission_ref"),
+        EXPECTED_SOURCE_EXECUTION_ADMISSION_REF,
+        errors,
+        label,
+    )
+    for evidence_key, source_path in COMMAND_PREVIEW_EXECUTION_ADMISSION_EVIDENCE_BINDINGS:
         _require_equal(
             payload,
             ("command_preview_execution_admission_evidence", evidence_key),
-            source_evidence.get(evidence_key),
+            _get_nested(source_command_preview, source_path),
             errors,
             label,
         )
@@ -485,7 +513,7 @@ def _validate_command_preview_execution_admission_evidence(
     )
     _require_equal(
         payload,
-        ("command_preview_execution_admission_evidence", "operator_approval_request_remains_preview_only"),
+        ("command_preview_execution_admission_evidence", "operator_approval_request_remains_request_only"),
         True,
         errors,
         label,

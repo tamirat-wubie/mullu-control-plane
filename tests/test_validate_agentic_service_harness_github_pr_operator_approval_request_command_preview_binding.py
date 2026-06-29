@@ -90,6 +90,59 @@ def test_github_pr_operator_approval_request_command_preview_binding_rejects_sou
     ) in serialized_errors
 
 
+def test_github_pr_operator_approval_request_command_preview_binding_rejects_execution_evidence_drift() -> None:
+    payload = validator.build_mutated_approval_request_command_preview_binding()
+    source_command_preview = _source_command_preview()
+    source_operator_approval_binding = _source_operator_approval_binding()
+    evidence = payload["command_preview_execution_admission_evidence"]
+    assert isinstance(evidence, dict)
+
+    mutations = {
+        "source_command_preview_ref": "examples/wrong-preview.json",
+        "source_execution_admission_ref": "examples/wrong-admission.json",
+        "source_admission_id": "wrong-admission",
+        "source_decision": "PR_CREATION_EXECUTION_ADMITTED",
+        "source_execution_admitted": True,
+        "source_execution_target_ref": "github-pr://wrong",
+        "source_terminal_closure_allowed": True,
+        "source_dry_run_ref": "examples/wrong-dry-run.json",
+        "source_dry_run_receipt_recorded": False,
+        "source_command_preview_bound": False,
+        "source_redacted_command_preview": "gh pr create --title raw",
+        "source_operator_decision_ref": "operator-decision://wrong",
+        "source_decision_value": "deny_terminal_certificate",
+        "source_pull_request_creation_enabled": True,
+        "source_repository_write_enabled": True,
+        "source_receipt_store_append_enabled": True,
+        "source_mutation_route_enabled": True,
+        "source_secret_values_serialized": True,
+        "source_adapter_executed": True,
+        "source_connector_calls_observed": True,
+        "source_terminal_closure": True,
+        "source_success_claim_allowed": True,
+        "command_preview_execution_admission_bound": False,
+        "operator_approval_request_consumes_execution_admission_evidence": False,
+        "operator_approval_request_remains_request_only": False,
+        "contains_secret_values": True,
+    }
+
+    for key, value in mutations.items():
+        mutated = json.loads(json.dumps(payload))
+        mutated["command_preview_execution_admission_evidence"][key] = value
+        errors: list[str] = []
+
+        validator._validate_approval_command_preview_binding_semantics(
+            mutated,
+            source_command_preview,
+            source_operator_approval_binding,
+            errors,
+            f"mutated-{key}",
+        )
+        serialized_errors = "\n".join(errors)
+
+        assert f"command_preview_execution_admission_evidence.{key}" in serialized_errors
+
+
 def test_github_pr_operator_approval_request_command_preview_binding_rejects_command_shape_drift() -> None:
     payload = validator.build_mutated_approval_request_command_preview_binding(
         approval_command_preview_binding__redacted_command_preview="gh pr create --base main --head live --title raw"
