@@ -82,7 +82,7 @@
     {
       "artifact_id": "universal_action_orchestration_schema",
       "artifact_ref": "schemas/universal_action_orchestration.schema.json",
-      "artifact_digest_sha256": "bc9b181d0cb5cb4d2d28a210b75303d466d161f5a31a2273d34dcf83eb83074e",
+      "artifact_digest_sha256": "6ceccfb9fe57279b0df2592cd7f727aff82232cbab9bcba9466f3399093fb75c",
       "artifact_role": "uao_schema",
       "execution_authority_denied": true
     },
