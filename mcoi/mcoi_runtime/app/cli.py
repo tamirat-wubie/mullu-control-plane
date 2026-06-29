@@ -433,6 +433,7 @@ def _autonomous_demo_summary_envelope(view: AutonomousRequestEpisodeSummaryView)
         "stage_error_bindings": [dict(binding) for binding in view.stage_error_bindings],
         "stage_outcome_bindings": [dict(binding) for binding in view.stage_outcome_bindings],
         "stage_next_action_bindings": [dict(binding) for binding in view.stage_next_action_bindings],
+        "stage_attention_bindings": [dict(binding) for binding in view.stage_attention_bindings],
         "rollback_ref": view.rollback_ref,
     }
 
