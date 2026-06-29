@@ -208,10 +208,10 @@ def test_bootstrap_capability_services_exposes_enabled_manifest_registry() -> No
 
     read_model = bootstrap.capability_manifest_registry.read_model()
     assert read_model["configured"] is True
-    assert read_model["manifest_count"] == 10
-    assert read_model["admission_count"] == 10
+    assert read_model["manifest_count"] == 11
+    assert read_model["admission_count"] == 11
     assert read_model["capability_abi_coverage_status"] == "complete"
-    assert read_model["capability_abi_covered_count"] == 10
+    assert read_model["capability_abi_covered_count"] == 11
     assert read_model["capability_abi_blocked_count"] == 0
     assert "software_dev.change.run" in read_model["capability_ids"]
     assert observability.sources["capability_manifest_registry"]() == read_model

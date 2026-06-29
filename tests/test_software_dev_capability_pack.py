@@ -53,7 +53,7 @@ def test_software_dev_capability_entries_are_schema_valid() -> None:
     payload = _load_json(SOFTWARE_DEV_CAPABILITY_PACK_PATH)
     entries = payload["capabilities"]
 
-    assert len(entries) == 10
+    assert len(entries) == 11
     assert all(_validate_schema_instance(schema, entry) == [] for entry in entries)
     assert all(CapabilityRegistryEntry.from_mapping(entry).domain == "software_dev" for entry in entries)
 
@@ -63,7 +63,7 @@ def test_software_dev_input_schema_refs_are_materialized_and_strict() -> None:
     schema_refs = tuple(entry.input_schema_ref for entry in entries)
     output_refs = tuple(entry.output_schema_ref for entry in entries)
 
-    assert len(schema_refs) == 10
+    assert len(schema_refs) == 11
     assert all(ref.startswith("schemas/software_dev/") for ref in schema_refs)
     assert all((ROOT / ref).exists() for ref in schema_refs)
     assert all(ref.startswith("urn:mullusi:schema:") for ref in output_refs)
@@ -77,8 +77,8 @@ def test_software_dev_output_schema_refs_are_materialized_and_strict() -> None:
     output_refs = tuple(entry.output_schema_ref for entry in _software_dev_entries())
     schemas_by_id = _software_dev_output_schemas_by_id()
 
-    assert len(output_refs) == 10
-    assert len(schemas_by_id) == 10
+    assert len(output_refs) == 11
+    assert len(schemas_by_id) == 11
     assert set(output_refs) == set(schemas_by_id)
     for schema_id, schema in schemas_by_id.items():
         assert schema_id.startswith("urn:mullusi:schema:")
@@ -106,6 +106,7 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
     repo_status_payload = deepcopy(payloads["schemas/software_dev/github_repo_status_summary.input.schema.json"])
     patch_plan_payload = deepcopy(payloads["schemas/software_dev/github_patch_plan.input.schema.json"])
     issue_draft_payload = deepcopy(payloads["schemas/software_dev/github_issue_draft.input.schema.json"])
+    release_readiness_payload = deepcopy(payloads["schemas/software_dev/github_release_readiness.input.schema.json"])
     issue_draft_missing_evidence_payload = deepcopy(issue_draft_payload)
 
     context_payload["affected_files"] = ["../secrets.py"]
@@ -115,6 +116,7 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
     repo_status_payload["write_authority_granted"] = True
     patch_plan_payload["write_authority_granted"] = True
     issue_draft_payload["write_authority_granted"] = True
+    release_readiness_payload["write_authority_granted"] = True
     issue_draft_missing_evidence_payload["evidence_refs"] = []
 
     assert _validate_schema_instance(
@@ -144,6 +146,10 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
     assert _validate_schema_instance(
         _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "github_issue_draft.input.schema.json"),
         issue_draft_payload,
+    )
+    assert _validate_schema_instance(
+        _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "github_release_readiness.input.schema.json"),
+        release_readiness_payload,
     )
     issue_draft_evidence_errors = _validate_schema_instance(
         _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "github_issue_draft.input.schema.json"),
@@ -176,6 +182,7 @@ def test_software_dev_output_schemas_reject_effect_overclaims() -> None:
     repo_status_payload = deepcopy(payloads["urn:mullusi:schema:github-repo-status-summary-receipt:1"])
     patch_plan_payload = deepcopy(payloads["urn:mullusi:schema:github-patch-plan-receipt:1"])
     issue_draft_payload = deepcopy(payloads["urn:mullusi:schema:github-issue-draft-receipt:1"])
+    release_readiness_payload = deepcopy(payloads["urn:mullusi:schema:github-release-readiness-receipt:1"])
 
     repo_payload["files"] = ["C:\\secrets.py"]
     app_graph_payload["metadata"]["direct_deployment_allowed"] = True
@@ -184,6 +191,7 @@ def test_software_dev_output_schemas_reject_effect_overclaims() -> None:
     repo_status_payload["policy_decision"] = "allow"
     patch_plan_payload["policy_decision"] = "allow"
     issue_draft_payload["policy_decision"] = "allow"
+    release_readiness_payload["policy_decision"] = "allow"
 
     assert _validate_schema_instance(schemas_by_id["urn:mullusi:schema:repo-map:1"], repo_payload)
     assert _validate_schema_instance(schemas_by_id["urn:mullusi:schema:app-task-graph:1"], app_graph_payload)
@@ -203,6 +211,10 @@ def test_software_dev_output_schemas_reject_effect_overclaims() -> None:
     assert _validate_schema_instance(
         schemas_by_id["urn:mullusi:schema:github-issue-draft-receipt:1"],
         issue_draft_payload,
+    )
+    assert _validate_schema_instance(
+        schemas_by_id["urn:mullusi:schema:github-release-readiness-receipt:1"],
+        release_readiness_payload,
     )
 
 
@@ -233,10 +245,10 @@ def test_software_dev_named_loader_installs_only_software_dev_domain() -> None:
     read_model = gate.read_model()
 
     assert capsule.domain == "software_dev"
-    assert len(entries) == 10
+    assert len(entries) == 11
     assert all(entry.domain == "software_dev" for entry in entries)
     assert read_model["capsule_count"] == 1
-    assert read_model["capability_count"] == 10
+    assert read_model["capability_count"] == 11
     assert read_model["domains"] == ({"domain": "software_dev", "capability_ids": tuple(sorted(capsule.capability_refs))},)
     assert read_model["capability_manifest_registry_configured"] is False
     assert read_model["capability_manifest_registry"]["manifest_count"] == 0
@@ -259,11 +271,11 @@ def test_software_dev_named_loader_projects_manifest_registry_when_configured() 
 
     assert read_model["capability_manifest_registry_configured"] is True
     assert read_model["capability_manifest_coverage_status"] == "complete"
-    assert read_model["capability_manifest_covered_count"] == 10
+    assert read_model["capability_manifest_covered_count"] == 11
     assert read_model["capability_manifest_missing_count"] == 0
-    assert len(read_model["capability_manifest_coverage"]) == 10
-    assert manifest_registry["manifest_count"] == 10
-    assert manifest_registry["admission_count"] == 10
+    assert len(read_model["capability_manifest_coverage"]) == 11
+    assert manifest_registry["manifest_count"] == 11
+    assert manifest_registry["admission_count"] == 11
     assert manifest_registry["capability_abi_coverage_status"] == "complete"
     assert set(manifest_registry["capability_ids"]) == {
         entry.capability_id for entry in load_software_dev_capability_entries()
@@ -278,7 +290,7 @@ def test_software_dev_pack_declares_reusable_unlock_ladder_profiles() -> None:
     expected_levels = _expected_unlock_levels()
     ladder_by_level = {level.level: level for level in default_capability_unlock_ladder()}
 
-    assert len(entries) == 10
+    assert len(entries) == 11
     assert set(expected_levels) == {entry["capability_id"] for entry in entries}
     for entry in entries:
         capability_id = entry["capability_id"]
@@ -298,7 +310,7 @@ def test_software_dev_manifests_declare_same_unlock_profiles_as_pack() -> None:
     }
     manifest_paths = tuple(sorted((ROOT / "capabilities" / "software_dev" / "manifests").glob("*.json")))
 
-    assert len(manifest_paths) == 10
+    assert len(manifest_paths) == 11
     assert set(pack_profiles) == set(_expected_unlock_levels())
     for manifest_path in manifest_paths:
         manifest = _load_json(manifest_path)
@@ -342,6 +354,10 @@ def test_software_dev_pack_installs_through_explicit_capability_fabric() -> None
         command_id="cmd-issue-draft",
         intent_name="software_dev.github_issue.draft",
     )
+    release_readiness_decision = gate.admit(
+        command_id="cmd-release-readiness",
+        intent_name="software_dev.github_release.readiness",
+    )
     change_decision = gate.admit(command_id="cmd-change", intent_name="software_dev.change.run")
     direct_deploy_decision = gate.admit(command_id="cmd-deploy", intent_name="software_dev.deploy.production")
 
@@ -355,10 +371,12 @@ def test_software_dev_pack_installs_through_explicit_capability_fabric() -> None
     assert patch_plan_decision.capability_id == "software_dev.github_patch_plan.draft"
     assert issue_draft_decision.status.value == "accepted"
     assert issue_draft_decision.capability_id == "software_dev.github_issue.draft"
+    assert release_readiness_decision.status.value == "accepted"
+    assert release_readiness_decision.capability_id == "software_dev.github_release.readiness"
     assert change_decision.status.value == "accepted"
     assert change_decision.capability_id == "software_dev.change.run"
     assert direct_deploy_decision.status.value == "rejected"
-    assert read_model["capability_count"] == 10
+    assert read_model["capability_count"] == 11
     assert set(capabilities) == set(governed)
     assert read_model["domains"] == ({"domain": "software_dev", "capability_ids": tuple(sorted(capabilities))},)
 
@@ -371,6 +389,7 @@ def test_software_dev_governed_records_bind_read_and_effect_boundaries() -> None
     repo_status_record = governed["software_dev.github_repo_status.summarize_read_only"]
     patch_plan_record = governed["software_dev.github_patch_plan.draft"]
     issue_draft_record = governed["software_dev.github_issue.draft"]
+    release_readiness_record = governed["software_dev.github_release.readiness"]
     change_record = governed["software_dev.change.run"]
     pr_record = governed["software_dev.pr_candidate.prepare"]
 
@@ -403,6 +422,12 @@ def test_software_dev_governed_records_bind_read_and_effect_boundaries() -> None
     assert issue_draft_record["allowed_tools"] == ["mullusi.local_github_issue_draft"]
     assert issue_draft_record["allowed_networks"] == []
     assert "github_issue_created" in issue_draft_record["forbidden_effects"]
+    assert release_readiness_record["read_only"] is False
+    assert release_readiness_record["world_mutating"] is False
+    assert release_readiness_record["requires_approval"] is False
+    assert release_readiness_record["allowed_tools"] == ["mullusi.local_release_readiness_assessment"]
+    assert release_readiness_record["allowed_networks"] == []
+    assert "github_release_created" in release_readiness_record["forbidden_effects"]
     assert change_record["read_only"] is False
     assert change_record["world_mutating"] is True
     assert change_record["requires_approval"] is True
@@ -451,6 +476,7 @@ def _expected_unlock_levels() -> dict[str, int]:
         "software_dev.github_repo_status.summarize_read_only": 2,
         "software_dev.github_patch_plan.draft": 1,
         "software_dev.github_issue.draft": 1,
+        "software_dev.github_release.readiness": 1,
         "software_dev.context_bundle.build": 2,
         "software_dev.gate_plan.select": 2,
         "software_dev.change.run": 4,
@@ -527,6 +553,21 @@ def _representative_software_dev_schema_payloads() -> dict[str, dict]:
             "suggested_labels": ["governance", "github-workroom"],
             "write_authority_granted": False,
             "metadata": metadata,
+        },
+        "schemas/software_dev/github_release_readiness.input.schema.json": {
+            "capability_id": "software_dev.github_release.readiness",
+            "repo": "tamiratl/mullu-control-plane",
+            "release_objective": "Assess release readiness for the GitHub Operations Workroom MVP.",
+            "candidate_ref": "release-candidate:2026-06-29",
+            "evidence_refs": ["github-repo-status-receipt:abc123"],
+            "ci_status_refs": ["ci:82-checks-pass"],
+            "change_summary_refs": ["pr:2397"],
+            "risk_refs": ["security-review:bounded"],
+            "rollback_refs": ["rollback:revert-pr"],
+            "known_blockers": [],
+            "assumptions": ["Release readiness remains prepare-only."],
+            "write_authority_granted": False,
+            "metadata": {"fixture": "software_dev_capability_pack", "release_execution_allowed": False},
         },
         "schemas/software_dev/context_bundle.input.schema.json": {
             "capability_id": "software_dev.context_bundle.build",
@@ -784,6 +825,34 @@ def _representative_software_dev_output_payloads() -> dict[str, dict]:
             "timestamp": "2026-06-29T12:00:00+00:00",
             "metadata": metadata,
             "partial_failure_reasons": [],
+        },
+        "urn:mullusi:schema:github-release-readiness-receipt:1": {
+            "receipt_id": "github-release-readiness-receipt:abc123",
+            "intent": "ASSESS_GITHUB_RELEASE_READINESS",
+            "target_object": "github_repository:tamiratl/mullu-control-plane:release_candidate:release-candidate:2026-06-29",
+            "risk_class": "class_1_prepare",
+            "evidence_used": ["github-repo-status-receipt:abc123", "ci:82-checks-pass", "pr:2397", "rollback:revert-pr"],
+            "policy_decision": "allow_draft_only",
+            "actions_taken": ["assessed_release_readiness", "emitted_causal_receipt"],
+            "actions_blocked": [
+                "create_git_tag_without_release_approval",
+                "create_github_release_without_release_approval",
+                "deploy_release_without_deployment_witness",
+                "publish_package_without_external_obligation_approval",
+                "trigger_workflow_without_explicit_approval",
+                "merge_or_mutate_repository_without_write_admission",
+                "claim_release_ready_without_required_evidence",
+            ],
+            "assumptions": ["Release readiness assessment does not execute release actions."],
+            "verification_result": "Release readiness assessed from bounded evidence; no tag, release, deployment, workflow, merge, or GitHub write was performed.",
+            "final_judgment": "Release candidate release-candidate:2026-06-29 has bounded evidence for a local readiness recommendation.",
+            "memory_update": "store",
+            "partial_failure_reasons": [],
+            "write_authority_granted": False,
+            "metadata": {
+                "release_execution_allowed": False,
+                "write_authority_granted": False,
+            },
         },
         "urn:mullusi:schema:code-context-bundle:1": {
             "bundle_id": "context:abc123",

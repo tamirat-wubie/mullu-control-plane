@@ -5,7 +5,7 @@
     "gate_registry_template_count": 12,
     "operator_view_hides_internal_gate_ids": true,
     "operator_view_hides_schema_refs": true,
-    "passport_count": 105,
+    "passport_count": 106,
     "required_gate_template_count": 12,
     "resolved_gate_template_count": 12,
     "unresolved_gate_count": 0,
@@ -227,7 +227,7 @@
         }
       },
       {
-        "capability_count": 10,
+        "capability_count": 11,
         "dominant_status": "Live action disabled",
         "family": "software_dev",
         "highest_unlock_level": "C4",
@@ -235,7 +235,7 @@
         "status_counts": {
           "Blocked": 0,
           "Evidence missing": 0,
-          "Live action disabled": 10,
+          "Live action disabled": 11,
           "Needs approval": 0,
           "Prepare-only": 0,
           "Ready": 0
@@ -1795,6 +1795,21 @@
           },
           {
             "allowed_actions": [
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 11,
+            "capability_id": "software_dev.github_release.readiness",
+            "capability_name": "Assess GitHub release readiness",
+            "current_unlock_level": "C3",
+            "family": "software_dev",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 7,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
               "read",
               "verify_evidence",
               "emit_receipt"
@@ -1969,7 +1984,7 @@
             "status": "Live action disabled"
           }
         ],
-        "count": 103,
+        "count": 104,
         "label": "Live action disabled"
       }
     ],
@@ -2005,7 +2020,7 @@
         "severity_rank": 4
       },
       {
-        "count": 103,
+        "count": 104,
         "label": "Live action disabled",
         "meaning": "Capability can be inspected or prepared, but live action remains disabled.",
         "severity_rank": 5
@@ -2018,15 +2033,15 @@
     "passport_set_id": "capability_passports.foundation.v1"
   },
   "summary": {
-    "attention_required_count": 104,
-    "capability_count": 105,
+    "attention_required_count": 105,
+    "capability_count": 106,
     "family_count": 16,
     "live_action_disabled": true,
     "ready_count": 1,
     "status_counts": {
       "Blocked": 0,
       "Evidence missing": 0,
-      "Live action disabled": 103,
+      "Live action disabled": 104,
       "Needs approval": 1,
       "Prepare-only": 0,
       "Ready": 1

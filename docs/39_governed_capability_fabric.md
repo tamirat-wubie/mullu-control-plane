@@ -201,16 +201,21 @@ POST /operator/github-operations/patch-plan/draft
 GET  /operator/github-operations/issue-draft/read-model
 GET  /operator/github-operations/issue-draft
 POST /operator/github-operations/issue-draft/draft
+GET  /operator/github-operations/release-readiness/read-model
+GET  /operator/github-operations/release-readiness
+POST /operator/github-operations/release-readiness/assess
 ```
 
 The GET read model powers the browser-facing Workroom panel. Missing evidence
 returns `AwaitingEvidence` with required evidence listed; supplied evidence refs
 produce the same governed projection and receipt as the POST preview. The PR
-safety, Actions failure, repository status, patch-plan, and issue-draft surfaces
+safety, Actions failure, repository status, patch-plan, issue-draft, and
+release-readiness surfaces
 preserve a closed effect boundary by default: no GitHub call, no repository
-read, no issue creation, no PR mutation, no branch push, no review submission,
-and no deployment change. Live read routes open GitHub read authority only for
-the admitted GET-only connector call.
+read, no issue creation, no release creation, no tag creation, no PR mutation,
+no branch push, no workflow trigger, no review submission, and no deployment
+change. Live read routes open GitHub read authority only for the admitted
+GET-only connector call.
 
 The read-admission preview binds planned live evidence collection to the
 existing certified `connector.github.read` capability. It admits only
@@ -410,6 +415,47 @@ body, suggested labels, evidence refs, acceptance criteria, and blocked actions.
 Missing problem summary, evidence refs, or acceptance criteria returns
 `AwaitingEvidence` and defers memory update. Drafting earns an issue proposal,
 not GitHub write authority.
+
+## GitHub Release Readiness
+
+The release-readiness path is the sixth narrow Workroom capability. It is a
+`Class 1 - Prepare` path that converts bounded repository, CI, change, risk,
+rollback, and blocker evidence refs into a local release-readiness judgment:
+`ready`, `blocked`, or `awaiting_evidence`. It does not read GitHub, accept an
+access token, create tags, create GitHub releases, deploy, publish packages,
+trigger workflows, merge, mutate repository state, or claim external release
+completion.
+
+Required evidence:
+
+```text
+release_objective
+candidate_ref
+ci_status_ref
+change_summary_ref
+risk_or_rollback_ref
+```
+
+Blocked actions:
+
+```text
+create_git_tag_without_release_approval
+create_github_release_without_release_approval
+deploy_release_without_deployment_witness
+publish_package_without_external_obligation_approval
+trigger_workflow_without_explicit_approval
+merge_or_mutate_repository_without_write_admission
+claim_release_ready_without_required_evidence
+```
+
+The result is a prepare-only causal receipt containing the release objective,
+candidate ref, evidence refs, blockers, required next evidence, release notes
+outline, rollback summary, and blocked actions. Missing release objective,
+candidate ref, CI status refs, change summary refs, or risk/rollback refs
+returns `AwaitingEvidence` and defers memory update. Declared blockers return
+`blocked`. A `ready` judgment earns only a local recommendation; release
+execution still requires explicit human approval and fresh release/deployment
+witness evidence.
 
 `evaluate_github_pr_safety_judgment` converts the read-only fetch result and
 fetch receipt into one bounded status:
