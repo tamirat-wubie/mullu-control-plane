@@ -1552,6 +1552,33 @@ def test_main_json_emits_machine_readable_receipt() -> None:
     assert runner.allows_saved_canonical_receipt(("protocol_manifest",), 1) is False
 
 
+def test_main_defaults_to_bounded_parallel_preflight(monkeypatch: pytest.MonkeyPatch) -> None:
+    observed_max_workers: list[int] = []
+
+    def fake_build_check_commands() -> tuple[runner.CheckCommand, ...]:
+        return (runner.CheckCommand("alpha", ("python", "alpha.py")),)
+
+    def fake_run_checks(
+        observed_commands: tuple[runner.CheckCommand, ...],
+        workspace_root: Path = runner.WORKSPACE_ROOT,
+        max_workers: int = 1,
+        timeout_seconds: float | None = None,
+        progress_stream: object | None = None,
+    ) -> tuple[runner.CheckResult, ...]:
+        observed_max_workers.append(max_workers)
+        assert [command.name for command in observed_commands] == ["alpha"]
+        return (runner.CheckResult("alpha", ("python", "alpha.py"), 0, "alpha ok\n", ""),)
+
+    monkeypatch.setattr(runner, "build_check_commands", fake_build_check_commands)
+    monkeypatch.setattr(runner, "run_checks", fake_run_checks)
+
+    exit_code = runner.main(["--json", "--check", "alpha"])
+
+    assert exit_code == 0
+    assert runner.DEFAULT_MAX_WORKERS == 8
+    assert observed_max_workers == [runner.DEFAULT_MAX_WORKERS]
+
+
 def test_main_rejects_saved_receipt_for_selected_or_sharded_runs(capsys: pytest.CaptureFixture[str]) -> None:
     selected_receipt_path = runner.WORKSPACE_ROOT / ".tmp" / "partial-selected-preflight-receipt.json"
     sharded_receipt_path = runner.WORKSPACE_ROOT / ".tmp" / "partial-sharded-preflight-receipt.json"

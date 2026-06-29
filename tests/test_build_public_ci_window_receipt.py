@@ -12,6 +12,7 @@ not claim closure; secret-shaped input is rejected without echoing raw values.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 import json
 import sys
 from pathlib import Path
@@ -48,6 +49,10 @@ def _closed_receipt() -> dict[str, object]:
     )
 
 
+def _recent_utc_timestamp() -> str:
+    return (datetime.now(timezone.utc) - timedelta(hours=1)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
 def test_public_ci_window_receipt_builder_closed_receipt_passes() -> None:
     receipt = _closed_receipt()
 
@@ -60,11 +65,13 @@ def test_public_ci_window_receipt_builder_closed_receipt_passes() -> None:
 
 
 def test_public_ci_window_receipt_builder_bounded_receipt_passes() -> None:
+    opened_at = _recent_utc_timestamp()
+
     receipt = build_public_ci_window_receipt(
         pull_request="2391",
         branch="codex/public-ci-window-command-packet-fixture-20260629",
         head_sha="f6daa95ea7d45f8669401120411b191c6372903a",
-        opened_at="2026-06-29T06:46:05Z",
+        opened_at=opened_at,
         workflow_run_urls=[
             "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28355217313",
             "https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/28355219685",
@@ -78,6 +85,7 @@ def test_public_ci_window_receipt_builder_bounded_receipt_passes() -> None:
     )
 
     assert validate_window_receipt(receipt) == []
+    assert receipt["opened_at"] == opened_at
     assert receipt["status"] == "bounded_public_awaiting_evidence"
     assert receipt["solver_outcome"] == "AwaitingEvidence"
     assert receipt["repo_visibility_restored"] is False

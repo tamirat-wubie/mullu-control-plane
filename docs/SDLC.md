@@ -143,10 +143,10 @@ python scripts/validate_sdlc_release_readiness.py --strict
 python scripts/validate_sdlc_security_review.py --strict
 python scripts/validate_sdlc_pr_enforcement.py
 python scripts/route_sdlc.py "CI failed on the SDLC Governance Gate for a PR"
-python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json
+python scripts/run_workspace_governance_checks.py --json --max-workers 8 --per-check-timeout-seconds 120 --receipt-path .tmp/workspace-governance-preflight-receipt.json
 python -m pytest mcoi/tests/test_sdlc_dashboard.py -q
 python -m pytest tests/test_validate_sdlc_artifact.py tests/test_validate_sdlc_route.py tests/test_validate_sdlc_state_machine.py tests/test_validate_sdlc_release_readiness.py tests/test_sdlc_security_review.py tests/test_validate_sdlc_pr_enforcement.py -q
-python scripts/run_workspace_governance_checks.py
+python scripts/run_workspace_governance_checks.py --max-workers 8 --per-check-timeout-seconds 120
 ```
 
 ## Doctrine
