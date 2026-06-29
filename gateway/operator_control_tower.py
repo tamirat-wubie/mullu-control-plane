@@ -4792,6 +4792,16 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     operator_receipt_rollback_count = int(
         developer_workflow_operator_receipt.get("rollback_command_count", 0) or 0
     )
+    operator_receipt_evidence_chain = developer_workflow_operator_receipt.get("evidence_chain", ())
+    if not isinstance(operator_receipt_evidence_chain, list):
+        operator_receipt_evidence_chain = []
+    operator_receipt_evidence_chain_text = " -> ".join(
+        f"{str(item.get('stage', '')).strip()}={str(item.get('status', '')).strip()}"
+        for item in operator_receipt_evidence_chain
+        if isinstance(item, Mapping) and str(item.get("stage", "")).strip()
+    )
+    if not operator_receipt_evidence_chain_text:
+        operator_receipt_evidence_chain_text = "evidence chain unavailable"
     operator_receipt_next_evidence = developer_workflow_operator_receipt.get("next_evidence", ())
     if not isinstance(operator_receipt_next_evidence, list):
         operator_receipt_next_evidence = []
@@ -5756,6 +5766,7 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
       <span class="metric">Rollback required: {escape(str(operator_receipt_rollback_required).lower())}</span>
       <span class="metric">Rollback commands: {operator_receipt_rollback_count}</span>
       <span class="metric">Rollback preview: {escape(operator_receipt_rollback_command)}</span>
+      <span class="metric">Evidence chain: {escape(operator_receipt_evidence_chain_text)}</span>
       <span class="metric">Command preview: {escape(str(operator_receipt_preview).lower())}</span>
       <span class="metric">Execution performed: {escape(str(operator_receipt_execution).lower())}</span>
       <span class="metric">External effects allowed: {escape(str(operator_receipt_external_effects).lower())}</span>

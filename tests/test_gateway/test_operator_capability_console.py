@@ -3669,6 +3669,28 @@ def test_operator_control_tower_read_model_surfaces_generated_operator_receipt(
     assert operator_receipt["rollback_command_preview"] == (
         "git push origin --delete codex/developer-workflow-local-readiness"
     )
+    assert operator_receipt["evidence_chain"] == [
+        {
+            "stage": "sandbox_receipts",
+            "status": "receipts_complete",
+            "ref": ".change_assurance/developer_workflow_sandbox_receipt_bundle.generated.json",
+        },
+        {
+            "stage": "pr_preparation_approval",
+            "status": "approved",
+            "ref": ".change_assurance/pr_preparation_approval_packet.approved.json",
+        },
+        {
+            "stage": "local_pr_candidate",
+            "status": "ready_for_pr_tool",
+            "ref": ".change_assurance/local_pr_candidate_packet.generated.json",
+        },
+        {
+            "stage": "external_approval",
+            "status": "pending",
+            "ref": ".change_assurance/external_pr_execution_approval_witness.pending.json",
+        },
+    ]
     assert operator_receipt["execution_performed"] is False
     assert operator_receipt["command_preview_rendered"] is False
     assert operator_summary["readiness_status"] == "awaiting_external_pr_approval"
@@ -3677,6 +3699,7 @@ def test_operator_control_tower_read_model_surfaces_generated_operator_receipt(
     assert operator_summary["pr_tool_admitted"] is True
     assert operator_summary["rollback_required"] is True
     assert operator_summary["rollback_command_count"] == 2
+    assert operator_summary["evidence_chain_count"] == 4
     assert operator_summary["execution_performed"] is False
     assert operator_summary["external_effects_allowed"] is False
 
@@ -3704,6 +3727,11 @@ def test_operator_control_tower_html_action_banner_uses_generated_receipt(
     assert "Rollback required: true" in response.text
     assert "Rollback commands: 2" in response.text
     assert "Rollback preview: git push origin --delete codex/developer-workflow-local-readiness" in response.text
+    assert (
+        "Evidence chain: sandbox_receipts=receipts_complete -&gt; "
+        "pr_preparation_approval=approved -&gt; "
+        "local_pr_candidate=ready_for_pr_tool -&gt; external_approval=pending"
+    ) in response.text
     assert "External effects allowed: false" in response.text
 
 

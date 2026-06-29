@@ -4355,6 +4355,12 @@ def _developer_workflow_operator_receipt_projection(
         "rollback_required": True,
         "rollback_command_preview": "external PR rollback command unavailable until generated operator receipt is loaded",
         "rollback_command_count": 0,
+        "evidence_chain": [
+            {"stage": "sandbox_receipts", "status": "unknown", "ref": "workflow_monitor.metadata.developer_workflow_run"},
+            {"stage": "pr_preparation_approval", "status": "pending", "ref": "workflow_monitor.metadata.pr_readiness_bundle"},
+            {"stage": "local_pr_candidate", "status": "pending", "ref": "workflow_monitor.metadata.pr_readiness_bundle"},
+            {"stage": "external_approval", "status": "pending", "ref": "external_approval_witness"},
+        ],
         "command_preview_rendered": command_preview.get("ready") is True,
         "next_evidence": [
             str(item)
@@ -4399,6 +4405,37 @@ def _developer_workflow_operator_receipt_from_generated_receipt(
         (str(command) for command in rollback_commands if str(command).strip()),
         "rollback command unavailable",
     )
+    sandbox_receipts = receipt.get("sandbox_receipts", {})
+    if not isinstance(sandbox_receipts, Mapping):
+        sandbox_receipts = {}
+    pr_preparation = approvals.get("pr_preparation", {})
+    if not isinstance(pr_preparation, Mapping):
+        pr_preparation = {}
+    source_refs = receipt.get("source_refs", {})
+    if not isinstance(source_refs, Mapping):
+        source_refs = {}
+    evidence_chain = [
+        {
+            "stage": "sandbox_receipts",
+            "status": str(sandbox_receipts.get("bundle_status") or "unknown"),
+            "ref": str(source_refs.get("sandbox_receipt_bundle_path") or "sandbox_receipts"),
+        },
+        {
+            "stage": "pr_preparation_approval",
+            "status": str(pr_preparation.get("status") or "pending"),
+            "ref": str(source_refs.get("approval_packet_path") or "pr_preparation_approval"),
+        },
+        {
+            "stage": "local_pr_candidate",
+            "status": str(local_candidate.get("candidate_status") or "pending"),
+            "ref": str(source_refs.get("local_candidate_packet_path") or "local_pr_candidate"),
+        },
+        {
+            "stage": "external_approval",
+            "status": str(external_approval.get("status") or "pending"),
+            "ref": str(source_refs.get("external_approval_witness_path") or "external_approval_witness"),
+        },
+    ]
     next_evidence = receipt.get("next_evidence", ())
     if not isinstance(next_evidence, list):
         next_evidence = []
@@ -4417,6 +4454,7 @@ def _developer_workflow_operator_receipt_from_generated_receipt(
         "rollback_required": rollback.get("required") is True,
         "rollback_command_preview": rollback_command_preview,
         "rollback_command_count": len([command for command in rollback_commands if str(command).strip()]),
+        "evidence_chain": evidence_chain,
         "command_preview_rendered": external_handoff.get("command_preview_rendered") is True,
         "next_evidence": [str(item) for item in next_evidence if str(item).strip()][:8],
         "external_effects_allowed": False,
@@ -4440,6 +4478,7 @@ def _developer_workflow_operator_receipt_summary(receipt: Mapping[str, Any]) -> 
         "pr_tool_admitted": receipt.get("pr_tool_admitted") is True,
         "rollback_required": receipt.get("rollback_required") is True,
         "rollback_command_count": int(receipt.get("rollback_command_count", 0) or 0),
+        "evidence_chain_count": len(receipt.get("evidence_chain", ())) if isinstance(receipt.get("evidence_chain"), list) else 0,
         "command_preview_rendered": receipt.get("command_preview_rendered") is True,
         "next_evidence_count": len([item for item in next_evidence if str(item).strip()]),
         "execution_performed": False,
