@@ -16,6 +16,7 @@
     "risk",
     "action_needed",
     "summary",
+    "capability_summary",
     "source_ref"
   ],
   "properties": {
@@ -63,6 +64,55 @@
         "command_preview_rendered": {"type": "boolean"},
         "execution_performed": {"type": "boolean", "const": false},
         "receipt_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "capability_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "current_level",
+        "next_level",
+        "status",
+        "mode",
+        "allowed_actions",
+        "blocked_actions",
+        "blocked_reason",
+        "next_evidence",
+        "next_evidence_count",
+        "external_effects_allowed",
+        "rollback_required"
+      ],
+      "properties": {
+        "capability_id": {"type": "string", "const": "mullu_developer_workflow.v1"},
+        "current_level": {"type": "string", "enum": ["L2", "L4"]},
+        "next_level": {"type": "string", "const": "L5"},
+        "status": {
+          "type": "string",
+          "enum": ["prepare_only", "evidence_required", "approval_required", "preflight_ready"]
+        },
+        "mode": {"type": "string", "const": "lab"},
+        "allowed_actions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "blocked_actions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "blocked_reason": {"type": "string", "minLength": 1, "maxLength": 160},
+        "next_evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 160}
+        },
+        "next_evidence_count": {"type": "integer", "minimum": 0, "maximum": 8},
+        "external_effects_allowed": {"type": "boolean", "const": false},
+        "rollback_required": {"type": "boolean"}
       }
     },
     "source_ref": {"type": "string", "minLength": 1, "maxLength": 260}

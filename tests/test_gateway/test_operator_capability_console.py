@@ -3640,6 +3640,20 @@ def test_operator_control_tower_developer_workflow_status_read_model_route(monke
     )
     assert read_model["summary"]["command_preview_rendered"] is False
     assert read_model["summary"]["execution_performed"] is False
+    capability_summary = read_model["capability_summary"]
+    assert capability_summary["capability_id"] == "mullu_developer_workflow.v1"
+    assert capability_summary["mode"] == "lab"
+    assert capability_summary["current_level"] == "L4"
+    assert capability_summary["next_level"] == "L5"
+    assert capability_summary["status"] == "approval_required"
+    assert capability_summary["blocked_reason"] == "external approval pending"
+    assert capability_summary["next_evidence"] == ["external_approval_witness", "command_preview"]
+    assert capability_summary["next_evidence_count"] == 2
+    assert capability_summary["external_effects_allowed"] is False
+    assert capability_summary["rollback_required"] is True
+    assert "prepare PR candidate" in capability_summary["allowed_actions"]
+    assert "create PR" in capability_summary["blocked_actions"]
+    assert "push branch" in capability_summary["blocked_actions"]
 
 
 def test_operator_control_tower_read_model_surfaces_generated_operator_receipt(

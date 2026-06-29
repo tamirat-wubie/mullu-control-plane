@@ -2514,6 +2514,7 @@ def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[st
         next_unlock=first_next_evidence,
         evidence_text=evidence_text,
     )
+    capability_summary = _developer_workflow_capability_summary(operator_status)
     return {
         "read_model_id": "operator_developer_workflow_status.read_model",
         "projection_only": True,
@@ -2539,7 +2540,65 @@ def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[st
             "execution_performed": False,
             "receipt_hash": operator_status["receipt_hash"],
         },
+        "capability_summary": capability_summary,
         "source_ref": str(LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH.as_posix()),
+    }
+
+
+def _developer_workflow_capability_summary(operator_status: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the friction-reduction capability summary for Developer Workflow v1."""
+
+    next_evidence = operator_status.get("next_evidence", ())
+    if not isinstance(next_evidence, list):
+        next_evidence = []
+    normalized_next_evidence = [str(item) for item in next_evidence if str(item).strip()][:8]
+    local_candidate_ready = operator_status["local_candidate_ready"] is True
+    pr_tool_admitted = operator_status["pr_tool_admitted"] is True
+    external_ready = operator_status["ready_for_external_pr_execution"] is True
+    external_approval_status = str(operator_status["external_approval_status"] or "pending")
+    sandbox_complete = int(operator_status["sandbox_receipts_completed"] or 0) >= int(
+        operator_status["sandbox_receipts_required"] or 0
+    )
+    if external_ready and external_approval_status == "approved":
+        capability_status = "preflight_ready"
+        blocked_reason = "dashboard execution disabled"
+    elif external_approval_status != "approved" and local_candidate_ready and pr_tool_admitted:
+        capability_status = "approval_required"
+        blocked_reason = "external approval pending"
+    elif not sandbox_complete:
+        capability_status = "evidence_required"
+        blocked_reason = "sandbox receipt evidence incomplete"
+    else:
+        capability_status = "prepare_only"
+        blocked_reason = "local candidate or PR tool admission incomplete"
+    allowed_actions = [
+        "prepare diff",
+        "validate evidence",
+        "write sandbox files",
+        "run tests",
+    ]
+    if local_candidate_ready and pr_tool_admitted:
+        allowed_actions.append("prepare PR candidate")
+    blocked_actions = [
+        "create PR",
+        "push branch",
+        "connector call",
+        "merge",
+        "deploy",
+    ]
+    return {
+        "capability_id": "mullu_developer_workflow.v1",
+        "current_level": "L4" if sandbox_complete else "L2",
+        "next_level": "L5",
+        "status": capability_status,
+        "mode": "lab",
+        "allowed_actions": allowed_actions,
+        "blocked_actions": blocked_actions,
+        "blocked_reason": blocked_reason,
+        "next_evidence": normalized_next_evidence,
+        "next_evidence_count": len(normalized_next_evidence),
+        "external_effects_allowed": False,
+        "rollback_required": operator_status["rollback_required"] is True,
     }
 
 
