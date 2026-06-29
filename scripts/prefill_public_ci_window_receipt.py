@@ -19,6 +19,7 @@ Invariants:
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import json
 from pathlib import Path
 import subprocess
@@ -154,6 +155,7 @@ def prefill_public_ci_window_receipt(
     branch_deleted: bool = False,
     run_limit: int = 20,
     runner: CommandRunner = _run_command,
+    observed_at: datetime | None = None,
 ) -> dict[str, Any]:
     """Build a receipt from read-only GitHub PR and workflow metadata."""
 
@@ -198,6 +200,7 @@ def prefill_public_ci_window_receipt(
         merge_commit=merge_commit,
         repo_visibility_restored_at=repo_visibility_restored_at,
         branch_deleted=branch_deleted,
+        observed_at=observed_at,
     )
 
 

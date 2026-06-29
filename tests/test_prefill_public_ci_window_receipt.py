@@ -11,6 +11,7 @@ operator-supplied visibility restoration; secret-shaped data is not echoed.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import json
 import subprocess
 import sys
@@ -82,6 +83,7 @@ def _runner(calls: list[list[str]]):
 
 def test_prefill_public_ci_window_receipt_builds_closed_receipt() -> None:
     calls: list[list[str]] = []
+    observed_at = datetime(2026, 6, 29, 9, 0, 0, tzinfo=timezone.utc)
     receipt = prefill_public_ci_window_receipt(
         pull_request="2400",
         opened_at="2026-06-29T07:46:00Z",
@@ -89,9 +91,10 @@ def test_prefill_public_ci_window_receipt_builds_closed_receipt() -> None:
         repo_visibility_restored_at="2026-06-29T08:06:00Z",
         branch_deleted=True,
         runner=_runner(calls),
+        observed_at=observed_at,
     )
 
-    assert validate_window_receipt(receipt) == []
+    assert validate_window_receipt(receipt, observed_at=observed_at) == []
     assert receipt["status"] == "closed"
     assert receipt["merge_commit"] == "ba07975fc10c2aa7ec8f1506aa6652245d1be96c"
     assert receipt["closed_at"] == "2026-06-29T08:07:42Z"
@@ -103,6 +106,7 @@ def test_prefill_public_ci_window_receipt_builds_closed_receipt() -> None:
 
 def test_prefill_public_ci_window_receipt_builds_bounded_receipt() -> None:
     calls: list[list[str]] = []
+    observed_at = datetime(2026, 6, 29, 9, 0, 0, tzinfo=timezone.utc)
     receipt = prefill_public_ci_window_receipt(
         pull_request="2400",
         opened_at="2026-06-29T07:46:00Z",
@@ -110,9 +114,10 @@ def test_prefill_public_ci_window_receipt_builds_bounded_receipt() -> None:
         repo_visibility_restored_at="2026-06-29T08:06:00Z",
         branch_deleted=True,
         runner=_runner(calls),
+        observed_at=observed_at,
     )
 
-    assert validate_window_receipt(receipt) == []
+    assert validate_window_receipt(receipt, observed_at=observed_at) == []
     assert receipt["status"] == "bounded_public_awaiting_evidence"
     assert receipt["solver_outcome"] == "AwaitingEvidence"
     assert receipt["merge_commit"] is None

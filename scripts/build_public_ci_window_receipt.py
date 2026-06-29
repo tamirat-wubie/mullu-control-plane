@@ -143,6 +143,7 @@ def build_public_ci_window_receipt(
     merge_commit: str | None = None,
     repo_visibility_restored_at: str | None = None,
     branch_deleted: bool | None = None,
+    observed_at: datetime | None = None,
 ) -> dict[str, Any]:
     """Build a public CI window receipt matching the boundary validator."""
 
@@ -214,7 +215,7 @@ def build_public_ci_window_receipt(
         "window_id": f"foundation_public_ci_window.{_date_token(opened_at)}.pr{pr_number}",
         "workflow_run_urls": workflow_run_urls,
     }
-    findings = validate_window_receipt(receipt)
+    findings = validate_window_receipt(receipt, observed_at=observed_at)
     if findings:
         rule_ids = ", ".join(finding.rule_id for finding in findings)
         raise ValueError(f"generated receipt failed boundary validation: {rule_ids}")
