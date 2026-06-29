@@ -28,7 +28,7 @@ from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 DEFAULT_SCHEMA = (
     REPO_ROOT
     / "schemas"
-    / "personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_verification_result_absence_status_closure_packet.schema.json"
+    / "pa_ref_absence_closure_packet.schema.json"
 )
 DEFAULT_RECEIPT_SCHEMA = REPO_ROOT / "schemas" / "personal_assistant_receipt.schema.json"
 RUNTIME_GENERATED_AT = DEFAULT_OPERATOR_REAPPROVAL_DECISION_RECEIPT_VALUE_BINDING_RECORD_VERIFIER_EXECUTION_DECISION_VALUE_RECORD_VALUE_EXPLICIT_DECISION_VALUE_REF_VERIFICATION_RESULT_ABSENCE_STATUS_CLOSURE_PACKET_GENERATED_AT

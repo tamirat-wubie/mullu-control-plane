@@ -2369,7 +2369,7 @@
       "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-verification-result-absence-status-ledger:1"
     },
     {
-      "path": "schemas/personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_verification_result_absence_status_closure_packet.schema.json",
+      "path": "schemas/pa_ref_absence_closure_packet.schema.json",
       "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-verification-result-absence-status-closure-packet",
       "surface": "personal-assistant",
       "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-verification-result-absence-status-closure-packet:1"

@@ -25,7 +25,7 @@ from mcoi_runtime.personal_assistant import (
     build_default_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_verification_result_absence_status_ledger,
     build_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_verification_result_absence_status_closure_packet_envelope,
 )
-from scripts.validate_personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_verification_result_absence_status_closure_packet import (
+from scripts.validate_pa_ref_absence_closure_packet import (
     EXPECTED_REQUIRED_VALUE_REFS,
     _validate_explicit_decision_value_ref_verification_result_absence_status_closure_packet_semantics,
 )
@@ -36,7 +36,7 @@ ROOT = Path(__file__).resolve().parent.parent
 VALUE_REF_VERIFICATION_RESULT_ABSENCE_STATUS_CLOSURE_PACKET_SCHEMA_PATH = (
     ROOT
     / "schemas"
-    / "personal_assistant_operator_reapproval_decision_receipt_value_binding_record_verifier_execution_decision_value_record_value_explicit_decision_value_ref_verification_result_absence_status_closure_packet.schema.json"
+    / "pa_ref_absence_closure_packet.schema.json"
 )
 RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_receipt.schema.json"
 
