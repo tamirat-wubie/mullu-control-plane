@@ -1320,6 +1320,34 @@ def test_operator_github_issue_draft_endpoint_returns_receipt_without_write_auth
     assert "access_token" not in serialized
 
 
+def test_operator_github_issue_draft_endpoint_defers_when_evidence_is_missing() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.post(
+        "/operator/github-operations/issue-draft/draft",
+        json={
+            "repo": "tamiratl/mullu-control-plane",
+            "problem_summary": "",
+            "evidence_refs": [],
+            "acceptance_criteria": [],
+            "suggested_labels": [],
+            "requested_at": "2026-06-29T12:00:00+00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    serialized = json.dumps(payload, sort_keys=True)
+    assert payload["outcome"] == "AwaitingEvidence"
+    assert payload["github_issue_draft"]["status"] == "needs_evidence"
+    assert payload["github_issue_draft"]["evidence_refs"] == ["missing_issue_draft_evidence"]
+    assert payload["github_issue_draft_receipt"]["memory_update"] == "defer"
+    assert payload["effect_boundary"]["issue_creation_allowed"] is False
+    assert payload["write_authority_granted"] is False
+    assert "access_token" not in serialized
+
+
 def test_operator_github_issue_draft_panel_renders_local_draft_form_without_token() -> None:
     app = create_gateway_app(platform=StubPlatform())
     client = TestClient(app)

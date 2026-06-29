@@ -106,6 +106,7 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
     repo_status_payload = deepcopy(payloads["schemas/software_dev/github_repo_status_summary.input.schema.json"])
     patch_plan_payload = deepcopy(payloads["schemas/software_dev/github_patch_plan.input.schema.json"])
     issue_draft_payload = deepcopy(payloads["schemas/software_dev/github_issue_draft.input.schema.json"])
+    issue_draft_missing_evidence_payload = deepcopy(issue_draft_payload)
 
     context_payload["affected_files"] = ["../secrets.py"]
     change_payload["command_policy"]["network_allowed"] = True
@@ -114,6 +115,7 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
     repo_status_payload["write_authority_granted"] = True
     patch_plan_payload["write_authority_granted"] = True
     issue_draft_payload["write_authority_granted"] = True
+    issue_draft_missing_evidence_payload["evidence_refs"] = []
 
     assert _validate_schema_instance(
         _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "context_bundle.input.schema.json"),
@@ -143,6 +145,13 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
         _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "github_issue_draft.input.schema.json"),
         issue_draft_payload,
     )
+    issue_draft_evidence_errors = _validate_schema_instance(
+        _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "github_issue_draft.input.schema.json"),
+        issue_draft_missing_evidence_payload,
+    )
+    assert issue_draft_evidence_errors
+    assert issue_draft_missing_evidence_payload["evidence_refs"] == []
+    assert issue_draft_missing_evidence_payload["write_authority_granted"] is False
 
 
 def test_software_dev_output_schemas_accept_representative_receipts() -> None:
