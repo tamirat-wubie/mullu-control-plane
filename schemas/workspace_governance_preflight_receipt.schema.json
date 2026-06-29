@@ -324,6 +324,7 @@
             "tenant_scope_coverage",
             "persistence_tenant_guard_coverage",
             "mcp_capability_manifest",
+            "capability_success_contract_registry",
             "capability_debt_report",
             "capability_passports",
             "capability_passport_dashboard",

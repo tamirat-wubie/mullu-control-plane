@@ -1,5 +1,5 @@
 {
-  "check_count": 329,
+  "check_count": 330,
   "checks": [
     {
       "args": [
@@ -3406,6 +3406,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "{\n  \"approval_policy_capabilities\": [\n    \"mcp.docs_search_docs\"\n  ],\n  \"approval_policy_count\": 1,\n  \"approval_policy_ids\": [\n    \"mcp-approval-mcp-docs-search-docs-low\"\n  ],\n  \"capability_count\": 1,\n  \"capability_ids\": [\n    \"mcp.docs_search_docs\"\n  ],\n  \"certification_evidence_refs\": [\n    \"evidence:mcp-docs-search\"\n  ],\n  \"certified_by_refs\": [\n    \"operator-1\"\n  ],\n  \"errors\": [],\n  \"escalation_policy_count\": 1,\n  \"escalation_policy_ids\": [\n    \"mcp-escalation-tenant-1\"\n  ],\n  \"manifest_path\": \"examples\\\\mcp_capability_manifest.json\",\n  \"manifest_ref\": \"file:///C:/Users/tmrtl/Projects/Agentic%20framwork%20and%20computer%20uses%20inteligence/examples/mcp_capability_manifest.json\",\n  \"owner_teams\": [\n    \"knowledge-ops\"\n  ],\n  \"ownership_count\": 1,\n  \"ownership_resource_refs\": [\n    \"mcp.docs_search_docs\"\n  ],\n  \"valid\": true\n}\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_capability_success_contract_registry.py"
+      ],
+      "name": "capability_success_contract_registry",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "[PASS] capability_success_registry_schema\n[PASS] capability_success_registry_pack_refs\n[PASS] capability_success_registry_full_coverage\n[PASS] capability_success_registry_effect_delta_binding\n[PASS] capability_success_registry_mandatory_evidence_binding\n[PASS] capability_success_registry_authority_gate\n[PASS] capability_success_registry_false_success_block\n[PASS] capability_success_registry_receipt_integrity\nSTATUS: passed\n",
       "termination_reason": "completed",
       "termination_signal": null
     },

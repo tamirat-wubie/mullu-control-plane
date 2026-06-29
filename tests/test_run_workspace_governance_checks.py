@@ -226,6 +226,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "tenant_scope_coverage",
         "persistence_tenant_guard_coverage",
         "mcp_capability_manifest",
+        "capability_success_contract_registry",
         "capability_debt_report",
         "capability_passports",
         "capability_passport_dashboard",
@@ -962,6 +963,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "--manifest",
         "examples/mcp_capability_manifest.json",
         "--json",
+    )
+    assert args_by_name["capability_success_contract_registry"][1:] == (
+        "scripts/validate_capability_success_contract_registry.py",
     )
     assert args_by_name["capability_debt_report"][1:] == (
         "scripts/validate_capability_debt_report.py",

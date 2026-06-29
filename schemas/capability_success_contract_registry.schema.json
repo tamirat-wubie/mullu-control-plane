@@ -1,0 +1,405 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:capability-success-contract-registry:1",
+  "title": "Capability Success Contract Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "registry_id",
+    "registry_version",
+    "generated_from",
+    "loaded_capability_pack_refs",
+    "coverage_policy",
+    "default_rule_refs",
+    "contract_overrides",
+    "metadata"
+  ],
+  "properties": {
+    "registry_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registry_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_from": {
+      "type": "string",
+      "enum": ["capability_fabric_entries"]
+    },
+    "loaded_capability_pack_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "coverage_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "require_contract_for_every_loaded_capability",
+        "minimum_proof_level_by_risk"
+      ],
+      "properties": {
+        "require_contract_for_every_loaded_capability": {
+          "type": "boolean"
+        },
+        "minimum_proof_level_by_risk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["low", "medium", "high", "critical"],
+          "properties": {
+            "low": { "$ref": "#/$defs/proof_level" },
+            "medium": { "$ref": "#/$defs/proof_level" },
+            "high": { "$ref": "#/$defs/proof_level" },
+            "critical": { "$ref": "#/$defs/proof_level" }
+          }
+        }
+      }
+    },
+    "default_rule_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "contract_overrides": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/capability_success_contract"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "proof_level": {
+      "type": "string",
+      "enum": ["P0", "P1", "P2", "P3", "P4", "P5"]
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "claim_type": {
+      "type": "string",
+      "enum": [
+        "read_observation",
+        "file_write",
+        "command_run",
+        "email_send",
+        "calendar_write",
+        "deployment_witness",
+        "payment",
+        "github_pr",
+        "software_change",
+        "evidence_append",
+        "custom"
+      ]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "VERIFIED_SUCCESS_CLEAN",
+        "VERIFIED_SUCCESS_WITH_RESIDUAL_RISK",
+        "PARTIAL_SUCCESS_DECLARED",
+        "PENDING_EXTERNAL_SETTLEMENT",
+        "PENDING_EVIDENCE",
+        "BLOCKED_FALSE_SUCCESS",
+        "BLOCKED_SCOPE_MISMATCH",
+        "BLOCKED_AUTHORITY_MISMATCH",
+        "BLOCKED_STALE_EVIDENCE",
+        "BLOCKED_CONTRADICTION",
+        "BLOCKED_INVARIANT_DAMAGE",
+        "VERIFIED_FAILURE",
+        "INCONCLUSIVE_VERIFIER_FAILURE",
+        "ESCALATED_FOR_HUMAN_REVIEW",
+        "ROLLBACK_REQUIRED",
+        "ROLLED_BACK"
+      ]
+    },
+    "string_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "optional_string_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "proof_obligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "obligation_id",
+        "what_must_be_proven",
+        "evidence_fields",
+        "evidence_type",
+        "verifier",
+        "freshness_window_seconds",
+        "scope_binding",
+        "mandatory",
+        "failure_effect"
+      ],
+      "properties": {
+        "obligation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "what_must_be_proven": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_fields": {
+          "$ref": "#/$defs/string_list"
+        },
+        "evidence_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verifier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "freshness_window_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "scope_binding": {
+          "$ref": "#/$defs/string_list"
+        },
+        "mandatory": {
+          "type": "boolean"
+        },
+        "failure_effect": {
+          "$ref": "#/$defs/verdict"
+        }
+      }
+    },
+    "capability_success_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id",
+        "capability_id",
+        "domain",
+        "claim_type",
+        "risk_level",
+        "proof_level_required",
+        "scope_bindings",
+        "authority",
+        "expected_delta",
+        "invariants",
+        "proof_obligations",
+        "independent_evidence_required",
+        "freshness",
+        "acceptance_predicate",
+        "verdict_policy",
+        "repair_policy",
+        "receipt_requirements",
+        "metadata"
+      ],
+      "properties": {
+        "contract_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capability_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "claim_type": {
+          "$ref": "#/$defs/claim_type"
+        },
+        "risk_level": {
+          "$ref": "#/$defs/risk_level"
+        },
+        "proof_level_required": {
+          "$ref": "#/$defs/proof_level"
+        },
+        "scope_bindings": {
+          "$ref": "#/$defs/string_list"
+        },
+        "authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "required_permissions",
+            "block_on_unknown_authority",
+            "human_confirmation_required"
+          ],
+          "properties": {
+            "required_permissions": {
+              "$ref": "#/$defs/string_list"
+            },
+            "block_on_unknown_authority": {
+              "type": "boolean"
+            },
+            "human_confirmation_required": {
+              "type": "boolean"
+            }
+          }
+        },
+        "expected_delta": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["required_changes", "forbidden_changes", "optional_changes"],
+          "properties": {
+            "required_changes": {
+              "$ref": "#/$defs/string_list"
+            },
+            "forbidden_changes": {
+              "$ref": "#/$defs/string_list"
+            },
+            "optional_changes": {
+              "$ref": "#/$defs/optional_string_list"
+            }
+          }
+        },
+        "invariants": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["must_remain_true", "must_not_happen"],
+          "properties": {
+            "must_remain_true": {
+              "$ref": "#/$defs/string_list"
+            },
+            "must_not_happen": {
+              "$ref": "#/$defs/string_list"
+            }
+          }
+        },
+        "proof_obligations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/proof_obligation"
+          }
+        },
+        "independent_evidence_required": {
+          "type": "boolean"
+        },
+        "freshness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "max_age_seconds",
+            "recheck_required",
+            "durability_window_seconds"
+          ],
+          "properties": {
+            "max_age_seconds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "recheck_required": {
+              "type": "boolean"
+            },
+            "durability_window_seconds": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "acceptance_predicate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "all_mandatory_evidence_present",
+            "expected_delta_verified",
+            "forbidden_delta_absent",
+            "invariants_preserved",
+            "causal_trace_valid",
+            "contradictions_absent",
+            "durability_satisfied"
+          ],
+          "properties": {
+            "all_mandatory_evidence_present": { "type": "boolean" },
+            "expected_delta_verified": { "type": "boolean" },
+            "forbidden_delta_absent": { "type": "boolean" },
+            "invariants_preserved": { "type": "boolean" },
+            "causal_trace_valid": { "type": "boolean" },
+            "contradictions_absent": { "type": "boolean" },
+            "durability_satisfied": { "type": "boolean" }
+          }
+        },
+        "verdict_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "allow_partial_success",
+            "allow_pending_success",
+            "block_on_stale_evidence",
+            "block_on_scope_mismatch",
+            "block_on_unknown_authority"
+          ],
+          "properties": {
+            "allow_partial_success": { "type": "boolean" },
+            "allow_pending_success": { "type": "boolean" },
+            "block_on_stale_evidence": { "type": "boolean" },
+            "block_on_scope_mismatch": { "type": "boolean" },
+            "block_on_unknown_authority": { "type": "boolean" }
+          }
+        },
+        "repair_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "retry_allowed",
+            "rollback_required_on_contamination",
+            "escalate_on_high_risk"
+          ],
+          "properties": {
+            "retry_allowed": { "type": "boolean" },
+            "rollback_required_on_contamination": { "type": "boolean" },
+            "escalate_on_high_risk": { "type": "boolean" }
+          }
+        },
+        "receipt_requirements": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "required_fields",
+            "hash_chain_required",
+            "residual_gaps_required"
+          ],
+          "properties": {
+            "required_fields": {
+              "$ref": "#/$defs/string_list"
+            },
+            "hash_chain_required": {
+              "type": "boolean"
+            },
+            "residual_gaps_required": {
+              "type": "boolean"
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
