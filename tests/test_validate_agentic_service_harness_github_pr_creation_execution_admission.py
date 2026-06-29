@@ -83,6 +83,21 @@ def test_github_pr_creation_execution_admission_rejects_source_dry_run_drift() -
     assert "source_dry_run_binding.source_pull_request_opened expected True" in serialized_errors
 
 
+def test_github_pr_creation_execution_admission_rejects_command_preview_dry_run_evidence_drift() -> None:
+    payload = validator.build_mutated_pr_creation_execution_admission()
+    payload["command_preview_dry_run_receipt_evidence"]["command_preview_ref"] = "examples/wrong-command-preview.json"
+    payload["command_preview_dry_run_receipt_evidence"]["source_pull_request_opened"] = True
+    payload["command_preview_dry_run_receipt_evidence"]["source_projection_only"] = False
+
+    errors: list[str] = []
+    validator._validate_execution_admission_semantics(payload, _source_dry_run(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_dry_run_receipt_evidence.command_preview_ref expected" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_pull_request_opened expected False" in serialized_errors
+    assert "command_preview_dry_run_receipt_evidence.source_projection_only expected True" in serialized_errors
+
+
 def test_github_pr_creation_execution_admission_rejects_missing_required_refs() -> None:
     payload = validator.build_mutated_pr_creation_execution_admission(
         execution_admission_contract__forbidden_action_classes=["open_pr"],

@@ -9746,11 +9746,17 @@
     },
     {
       "approval": {
+        "approval_blocked_actions": [],
         "approval_refs": [],
         "approval_required": false,
         "approval_state": "not_required",
         "approved": false,
-        "missing_approval": false
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
       },
       "blocked": {
         "blocked_action_count": 10,

@@ -1604,7 +1604,7 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     pr_creation_execution_admission_row = re.search(
-        r"^\| GitHub PR creation execution admission dry-run binding PR \| READY \| .+agentic_service_harness_github_pr_creation_execution_admission.+PR creation dry-run receipt.+execution admission.+operator approval.+branch-write authority.+UAO.+rollback.+receipt-store write-path.+effect reconciliation.+pull-request creation.+repository writes.+connector calls.+mutation routes.+secret material.+terminal closure remain blocked\. \|$",
+        r"^\| GitHub PR creation execution admission dry-run binding PR \| READY \| .+agentic_service_harness_github_pr_creation_execution_admission.+PR creation dry-run receipt evidence.+command-preview dry-run receipt evidence.+command preview ref.+redacted command preview.+source read-model id/ref.+source certificate id.+source minting ref.+approve_terminal_certificate.+projection-only status.+dry-run result state.+non-authorizing PR creation flags.+execution admission.+operator approval.+branch-write authority.+UAO.+rollback.+receipt-store write-path.+effect reconciliation.+pull-request creation.+repository writes.+connector calls.+mutation routes.+secret material.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )

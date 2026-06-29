@@ -147,8 +147,13 @@ REQUIRED_FALSE_FLAGS = (
     "source_adapter_executed",
     "source_connector_calls_observed",
     "source_mutation_route_called",
+    "source_raw_secret_material_included",
     "source_terminal_closure",
     "source_success_claim_allowed",
+    "source_pr_admitted",
+    "source_pull_request_creation_enabled",
+    "source_repository_written_by_read_model",
+    "source_contains_secret_values",
     "terminal_closure_allowed",
     "live_adapter_execution_enabled",
     "branch_write_enabled",
@@ -165,6 +170,15 @@ REQUIRED_TRUE_FLAGS = (
     "read_only",
     "admission_only",
     "dry_run_receipt_recorded",
+    "source_dry_run_receipt_recorded",
+    "source_terminal_certificate_read_model_projection_only",
+    "source_terminal_certificate_read_model_not_terminal_closure",
+    "requires_command_preview_certificate_minting_evidence",
+    "requires_command_preview_decision_value_record_evidence",
+    "requires_command_preview_decision_value_request_evidence",
+    "command_preview_bound",
+    "source_projection_only",
+    "source_read_model_is_not_terminal_closure",
     "report_is_not_terminal_closure",
     "terminal_closure_required",
     "required_for_closure",
@@ -174,6 +188,8 @@ ALLOWED_SECRET_KEYS = {
     "secret_mutation",
     "secret_mutation_enabled",
     "secret_values_serialized",
+    "source_contains_secret_values",
+    "source_raw_secret_material_included",
 }
 FORBIDDEN_SECRET_KEY_TOKENS = (
     "access_token",
@@ -291,6 +307,7 @@ def _validate_execution_admission_semantics(
         label,
     )
     _validate_source_dry_run_binding(payload, source_dry_run, errors, label)
+    _validate_command_preview_dry_run_receipt_evidence(payload, source_dry_run, errors, label)
     _validate_contract(payload, errors, label)
     _validate_refs(payload, errors, label)
     _validate_flags_and_surface(payload, errors, label)
@@ -349,6 +366,174 @@ def _validate_source_dry_run_binding(
         (("simulated_pr_creation", "success_claim_allowed"), ("source_dry_run_binding", "source_success_claim_allowed")),
     ):
         _require_equal(payload, target_path, _get_nested(source_dry_run, source_path), errors, label)
+
+
+def _validate_command_preview_dry_run_receipt_evidence(
+    payload: Mapping[str, Any],
+    source_dry_run: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    if not source_dry_run:
+        return
+    for source_path, target_path in (
+        (("dry_run_contract", "dry_run_id"), ("command_preview_dry_run_receipt_evidence", "source_dry_run_receipt_id")),
+        (("source_pr_admission_preflight_ref",), ("command_preview_dry_run_receipt_evidence", "source_pr_admission_preflight_ref")),
+        (
+            ("source_terminal_closure_certificate_read_model_ref",),
+            ("command_preview_dry_run_receipt_evidence", "source_terminal_closure_certificate_read_model_ref"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "source_read_model_id"),
+            ("command_preview_dry_run_receipt_evidence", "source_read_model_id"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "source_read_model_ref"),
+            ("command_preview_dry_run_receipt_evidence", "source_read_model_ref"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "source_certificate_id"),
+            ("command_preview_dry_run_receipt_evidence", "source_certificate_id"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "source_minting_ref"),
+            ("command_preview_dry_run_receipt_evidence", "source_minting_ref"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "requires_command_preview_certificate_minting_evidence"),
+            (
+                "command_preview_dry_run_receipt_evidence",
+                "requires_command_preview_certificate_minting_evidence",
+            ),
+        ),
+        (
+            (
+                "command_preview_certificate_read_model_evidence",
+                "requires_command_preview_decision_value_record_evidence",
+            ),
+            (
+                "command_preview_dry_run_receipt_evidence",
+                "requires_command_preview_decision_value_record_evidence",
+            ),
+        ),
+        (
+            (
+                "command_preview_certificate_read_model_evidence",
+                "requires_command_preview_decision_value_request_evidence",
+            ),
+            (
+                "command_preview_dry_run_receipt_evidence",
+                "requires_command_preview_decision_value_request_evidence",
+            ),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "command_preview_bound"),
+            ("command_preview_dry_run_receipt_evidence", "command_preview_bound"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "command_preview_ref"),
+            ("command_preview_dry_run_receipt_evidence", "command_preview_ref"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "redacted_command_preview"),
+            ("command_preview_dry_run_receipt_evidence", "redacted_command_preview"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "operator_decision_ref"),
+            ("command_preview_dry_run_receipt_evidence", "operator_decision_ref"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "decision_value"),
+            ("command_preview_dry_run_receipt_evidence", "decision_value"),
+        ),
+        (("simulated_pr_creation", "result_state"), ("command_preview_dry_run_receipt_evidence", "source_result_state")),
+        (
+            ("simulated_pr_creation", "dry_run_receipt_recorded"),
+            ("command_preview_dry_run_receipt_evidence", "source_dry_run_receipt_recorded"),
+        ),
+        (
+            ("simulated_pr_creation", "source_admission_decision"),
+            ("command_preview_dry_run_receipt_evidence", "source_admission_decision"),
+        ),
+        (("simulated_pr_creation", "source_pr_admitted"), ("command_preview_dry_run_receipt_evidence", "source_pr_admitted")),
+        (
+            ("simulated_pr_creation", "source_terminal_certificate_read_model_projection_only"),
+            (
+                "command_preview_dry_run_receipt_evidence",
+                "source_terminal_certificate_read_model_projection_only",
+            ),
+        ),
+        (
+            ("simulated_pr_creation", "source_terminal_certificate_read_model_not_terminal_closure"),
+            (
+                "command_preview_dry_run_receipt_evidence",
+                "source_terminal_certificate_read_model_not_terminal_closure",
+            ),
+        ),
+        (
+            ("simulated_pr_creation", "runtime_pr_creation_executed"),
+            ("command_preview_dry_run_receipt_evidence", "source_runtime_pr_creation_executed"),
+        ),
+        (
+            ("simulated_pr_creation", "pull_request_opened"),
+            ("command_preview_dry_run_receipt_evidence", "source_pull_request_opened"),
+        ),
+        (("simulated_pr_creation", "branch_created"), ("command_preview_dry_run_receipt_evidence", "source_branch_created")),
+        (
+            ("simulated_pr_creation", "repository_written"),
+            ("command_preview_dry_run_receipt_evidence", "source_repository_written"),
+        ),
+        (
+            ("simulated_pr_creation", "receipt_store_appended"),
+            ("command_preview_dry_run_receipt_evidence", "source_receipt_store_appended"),
+        ),
+        (("simulated_pr_creation", "adapter_executed"), ("command_preview_dry_run_receipt_evidence", "source_adapter_executed")),
+        (
+            ("simulated_pr_creation", "connector_calls_observed"),
+            ("command_preview_dry_run_receipt_evidence", "source_connector_calls_observed"),
+        ),
+        (
+            ("simulated_pr_creation", "mutation_route_called"),
+            ("command_preview_dry_run_receipt_evidence", "source_mutation_route_called"),
+        ),
+        (
+            ("simulated_pr_creation", "raw_secret_material_included"),
+            ("command_preview_dry_run_receipt_evidence", "source_raw_secret_material_included"),
+        ),
+        (("simulated_pr_creation", "terminal_closure"), ("command_preview_dry_run_receipt_evidence", "source_terminal_closure")),
+        (
+            ("simulated_pr_creation", "success_claim_allowed"),
+            ("command_preview_dry_run_receipt_evidence", "source_success_claim_allowed"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "projection_only"),
+            ("command_preview_dry_run_receipt_evidence", "source_projection_only"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "read_model_is_not_terminal_closure"),
+            ("command_preview_dry_run_receipt_evidence", "source_read_model_is_not_terminal_closure"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "pull_request_creation_enabled"),
+            ("command_preview_dry_run_receipt_evidence", "source_pull_request_creation_enabled"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "repository_written_by_read_model"),
+            ("command_preview_dry_run_receipt_evidence", "source_repository_written_by_read_model"),
+        ),
+        (
+            ("command_preview_certificate_read_model_evidence", "contains_secret_values"),
+            ("command_preview_dry_run_receipt_evidence", "source_contains_secret_values"),
+        ),
+    ):
+        _require_equal(payload, target_path, _get_nested(source_dry_run, source_path), errors, label)
+    _require_equal(
+        payload,
+        ("command_preview_dry_run_receipt_evidence", "source_dry_run_receipt_ref"),
+        EXPECTED_SOURCE_DRY_RUN_REF,
+        errors,
+        label,
+    )
 
 
 def _validate_contract(payload: Mapping[str, Any], errors: list[str], label: str) -> None:
