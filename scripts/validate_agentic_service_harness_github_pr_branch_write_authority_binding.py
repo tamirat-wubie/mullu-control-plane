@@ -153,6 +153,19 @@ REQUIRED_FALSE_FLAGS = (
     "mutation_route_admitted",
     "receipt_store_appended",
     "secret_values_serialized",
+    "source_operator_response_collected",
+    "source_operator_approval_granted",
+    "source_operator_approval_rejected",
+    "source_command_execution_admitted",
+    "source_adapter_execution_enabled",
+    "source_branch_write_enabled",
+    "source_pull_request_creation_enabled",
+    "source_repository_write_enabled",
+    "source_connector_call_enabled",
+    "source_mutation_route_enabled",
+    "source_receipt_store_append_enabled",
+    "source_terminal_certificate_verified",
+    "source_contains_secret_values",
 )
 REQUIRED_TRUE_FLAGS = (
     "planning_only",
@@ -164,11 +177,20 @@ REQUIRED_TRUE_FLAGS = (
     "response_witness_required",
     "branch_write_authority_required",
     "blocks_pr_admission",
+    "source_operator_response_bound",
+    "source_command_preview_bound",
+    "source_preview_rendered",
+    "source_approval_request_evidence_consumed",
+    "source_response_remains_preview_only",
+    "branch_write_consumes_operator_response_evidence",
+    "branch_write_authority_remains_uncollected",
+    "branch_write_remains_non_authorizing",
 )
 ALLOWED_SECRET_KEYS = {
     "dns_mutation_enabled",
     "secret_mutation_enabled",
     "secret_values_serialized",
+    "source_contains_secret_values",
 }
 FORBIDDEN_SECRET_KEY_TOKENS = (
     "access_token",
@@ -498,6 +520,12 @@ def _validate_branch_write_authority_binding_semantics(
             errors,
             label,
         )
+        _validate_command_preview_operator_response_evidence(
+            payload,
+            source_response_command_preview,
+            errors,
+            label,
+        )
         for required_ref in (
             EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF,
             EXPECTED_SOURCE_OPERATOR_RESPONSE_REF,
@@ -573,6 +601,97 @@ def _validate_branch_write_authority_binding_semantics(
             errors.append(f"{label}: {dotted_path} uses forbidden secret-bearing key")
         if isinstance(value, str) and any(pattern.search(value) for pattern in FORBIDDEN_CREDENTIAL_VALUE_PATTERNS):
             errors.append(f"{label}: {dotted_path} contains credential-like value")
+
+
+def _validate_command_preview_operator_response_evidence(
+    payload: Mapping[str, Any],
+    source_response_command_preview: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    evidence_path = ("command_preview_operator_response_evidence",)
+    source_binding = _mapping(_get_nested(source_response_command_preview, ("response_command_preview_binding",)))
+    source_approval_evidence = _mapping(
+        _get_nested(source_response_command_preview, ("command_preview_approval_request_evidence",))
+    )
+    comparisons: tuple[tuple[tuple[str, ...], object], ...] = (
+        (("source_response_command_preview_binding_ref",), EXPECTED_SOURCE_RESPONSE_COMMAND_PREVIEW_BINDING_REF),
+        (("source_binding_id",), "agentic_service_harness_github_pr_operator_response_command_preview_binding"),
+        (("source_operator_response_witness_ref",), source_response_command_preview.get("source_operator_response_witness_ref")),
+        (
+            ("source_operator_approval_request_command_preview_binding_ref",),
+            source_response_command_preview.get("source_operator_approval_request_command_preview_binding_ref"),
+        ),
+        (("source_command_preview_ref",), source_binding.get("command_preview_ref")),
+        (("source_operator_response_evidence_ref",), source_binding.get("operator_response_evidence_ref")),
+        (("source_redacted_command_preview",), source_binding.get("redacted_command_preview")),
+        (("source_argument_vector_template",), source_binding.get("argument_vector_template")),
+        (("source_placeholder_refs",), source_binding.get("placeholder_refs")),
+        (("source_required_before_execution_refs",), source_binding.get("required_before_execution_refs")),
+        (("source_blocked_reason_refs",), source_binding.get("blocked_reason_refs")),
+        (("source_operator_response_bound",), source_binding.get("operator_response_bound")),
+        (("source_command_preview_bound",), source_binding.get("command_preview_bound")),
+        (("source_preview_rendered",), source_binding.get("preview_rendered")),
+        (("source_operator_response_collected",), source_binding.get("operator_response_collected")),
+        (("source_operator_approval_granted",), source_binding.get("operator_approval_granted")),
+        (("source_operator_approval_rejected",), source_binding.get("operator_approval_rejected")),
+        (("source_command_execution_admitted",), source_binding.get("command_execution_admitted")),
+        (("source_adapter_execution_enabled",), source_binding.get("adapter_execution_enabled")),
+        (("source_branch_write_enabled",), source_binding.get("branch_write_enabled")),
+        (("source_pull_request_creation_enabled",), source_binding.get("pull_request_creation_enabled")),
+        (("source_repository_write_enabled",), source_binding.get("repository_write_enabled")),
+        (("source_connector_call_enabled",), source_binding.get("connector_call_enabled")),
+        (("source_mutation_route_enabled",), source_binding.get("mutation_route_enabled")),
+        (("source_receipt_store_append_enabled",), source_binding.get("receipt_store_append_enabled")),
+        (("source_terminal_certificate_verified",), source_binding.get("terminal_certificate_verified")),
+        (
+            ("source_approval_request_evidence_consumed",),
+            source_approval_evidence.get("operator_response_consumes_approval_request_evidence"),
+        ),
+        (
+            ("source_response_remains_preview_only",),
+            source_approval_evidence.get("command_preview_response_remains_preview_only"),
+        ),
+        (("source_contains_secret_values",), False),
+        (("branch_write_consumes_operator_response_evidence",), True),
+        (("branch_write_authority_remains_uncollected",), True),
+        (("branch_write_remains_non_authorizing",), True),
+    )
+    for relative_path, expected in comparisons:
+        _require_equal(payload, (*evidence_path, *relative_path), expected, errors, label)
+    for required_ref in (
+        EXPECTED_SOURCE_OPERATOR_RESPONSE_REF,
+        EXPECTED_SOURCE_COMMAND_APPROVAL_BINDING_REF,
+        EXPECTED_REQUESTED_EVIDENCE_REF,
+        "evidence://operator-approval-for-pr-execution",
+        "evidence://uao-pr-execution-admission",
+        "evidence://repository-effect-rollback-plan",
+        "evidence://receipt-store-write-path-binding",
+        "evidence://effect-reconciliation-before-terminal-closure",
+        "witness://github-pr-terminal-closure-certificate",
+    ):
+        _require_contains(
+            payload,
+            (*evidence_path, "source_required_before_execution_refs"),
+            required_ref,
+            errors,
+            label,
+        )
+    for blocked_ref in (
+        "blocked://operator-response/not-collected",
+        "blocked://operator-approval/not-granted",
+        "blocked://command-execution/not-admitted",
+        "blocked://branch-write-authority/not-bound",
+        "blocked://uao/pr-execution-not-admitted",
+        "blocked://terminal-closure/not-authorized",
+    ):
+        _require_contains(
+            payload,
+            (*evidence_path, "source_blocked_reason_refs"),
+            blocked_ref,
+            errors,
+            label,
+        )
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:

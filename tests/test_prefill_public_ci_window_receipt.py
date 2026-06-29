@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 import json
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Sequence
 
@@ -113,8 +114,8 @@ def test_prefill_public_ci_window_receipt_builds_bounded_receipt() -> None:
         status="bounded_public_awaiting_evidence",
         repo_visibility_restored_at="2026-06-29T08:06:00Z",
         branch_deleted=True,
-        runner=_runner(calls),
         observed_at=observed_at,
+        runner=_runner(calls),
     )
 
     assert validate_window_receipt(receipt, observed_at=observed_at) == []
