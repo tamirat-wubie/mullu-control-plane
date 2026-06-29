@@ -271,35 +271,6 @@
         }
       }
     },
-    "remaining_witness": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "witness_kind",
-        "status",
-        "evidence_ref",
-        "blocks_pr_admission",
-        "authority_granted"
-      ],
-      "properties": {
-        "witness_kind": {
-          "type": "string",
-          "enum": [
-            "operator_execution_approval",
-            "uao_pr_admission",
-            "repository_effect_rollback_plan",
-            "receipt_store_write_path",
-            "ci_gate_before_ready_for_review",
-            "effect_reconciliation",
-            "terminal_certificate"
-          ]
-        },
-        "status": { "type": "string", "const": "AwaitingEvidence" },
-        "evidence_ref": { "$ref": "#/$defs/evidence_ref" },
-        "blocks_pr_admission": { "type": "boolean", "const": true },
-        "authority_granted": { "type": "boolean", "const": false }
-      }
-    },
     "command_preview_operator_response_evidence": {
       "type": "object",
       "additionalProperties": false,
@@ -308,8 +279,9 @@
         "source_binding_id",
         "source_operator_response_witness_ref",
         "source_operator_approval_request_command_preview_binding_ref",
-        "source_command_preview_ref",
+        "source_approval_request_id",
         "source_operator_response_evidence_ref",
+        "source_command_preview_ref",
         "source_redacted_command_preview",
         "source_argument_vector_template",
         "source_placeholder_refs",
@@ -330,12 +302,13 @@
         "source_mutation_route_enabled",
         "source_receipt_store_append_enabled",
         "source_terminal_certificate_verified",
-        "source_approval_request_evidence_consumed",
-        "source_response_remains_preview_only",
+        "source_operator_response_consumes_approval_request_evidence",
+        "source_operator_response_remains_uncollected",
+        "source_command_preview_response_remains_preview_only",
         "source_contains_secret_values",
-        "branch_write_consumes_operator_response_evidence",
+        "branch_write_authority_consumes_operator_response_evidence",
         "branch_write_authority_remains_uncollected",
-        "branch_write_remains_non_authorizing"
+        "branch_write_authority_remains_non_authorizing"
       ],
       "properties": {
         "source_response_command_preview_binding_ref": {
@@ -354,13 +327,14 @@
           "type": "string",
           "const": "examples/agentic_service_harness_github_pr_operator_approval_request_command_preview_binding.foundation.json"
         },
+        "source_approval_request_id": {
+          "type": "string",
+          "const": "approval-request.github-pr-admission"
+        },
+        "source_operator_response_evidence_ref": { "$ref": "#/$defs/evidence_ref" },
         "source_command_preview_ref": {
           "type": "string",
           "const": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json"
-        },
-        "source_operator_response_evidence_ref": {
-          "type": "string",
-          "const": "evidence://operator-pr-approval-response-record"
         },
         "source_redacted_command_preview": {
           "type": "string",
@@ -421,12 +395,42 @@
         "source_mutation_route_enabled": { "type": "boolean", "const": false },
         "source_receipt_store_append_enabled": { "type": "boolean", "const": false },
         "source_terminal_certificate_verified": { "type": "boolean", "const": false },
-        "source_approval_request_evidence_consumed": { "type": "boolean", "const": true },
-        "source_response_remains_preview_only": { "type": "boolean", "const": true },
+        "source_operator_response_consumes_approval_request_evidence": { "type": "boolean", "const": true },
+        "source_operator_response_remains_uncollected": { "type": "boolean", "const": true },
+        "source_command_preview_response_remains_preview_only": { "type": "boolean", "const": true },
         "source_contains_secret_values": { "type": "boolean", "const": false },
-        "branch_write_consumes_operator_response_evidence": { "type": "boolean", "const": true },
+        "branch_write_authority_consumes_operator_response_evidence": { "type": "boolean", "const": true },
         "branch_write_authority_remains_uncollected": { "type": "boolean", "const": true },
-        "branch_write_remains_non_authorizing": { "type": "boolean", "const": true }
+        "branch_write_authority_remains_non_authorizing": { "type": "boolean", "const": true }
+      }
+    },
+    "remaining_witness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "witness_kind",
+        "status",
+        "evidence_ref",
+        "blocks_pr_admission",
+        "authority_granted"
+      ],
+      "properties": {
+        "witness_kind": {
+          "type": "string",
+          "enum": [
+            "operator_execution_approval",
+            "uao_pr_admission",
+            "repository_effect_rollback_plan",
+            "receipt_store_write_path",
+            "ci_gate_before_ready_for_review",
+            "effect_reconciliation",
+            "terminal_certificate"
+          ]
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+        "blocks_pr_admission": { "type": "boolean", "const": true },
+        "authority_granted": { "type": "boolean", "const": false }
       }
     },
     "authority_denials": {
