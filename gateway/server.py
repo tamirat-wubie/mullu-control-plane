@@ -2499,31 +2499,9 @@ def _load_local_developer_workflow_operator_receipt() -> dict[str, Any]:
 def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[str, Any]:
     """Return the compact product status row for Developer Workflow v1."""
 
-    readiness_status = str(receipt.get("readiness_status") or "awaiting_sandbox_receipts")
-    next_evidence = [str(item) for item in receipt.get("next_evidence", ()) if str(item).strip()]
-    sandbox_receipts = receipt.get("sandbox_receipts", {})
-    if not isinstance(sandbox_receipts, Mapping):
-        sandbox_receipts = {}
-    approvals = receipt.get("approvals", {})
-    if not isinstance(approvals, Mapping):
-        approvals = {}
-    external_approval = approvals.get("external_pr_execution", {})
-    if not isinstance(external_approval, Mapping):
-        external_approval = {}
-    local_candidate = receipt.get("local_pr_candidate", {})
-    if not isinstance(local_candidate, Mapping):
-        local_candidate = {}
-    external_handoff = receipt.get("external_handoff", {})
-    if not isinstance(external_handoff, Mapping):
-        external_handoff = {}
-    rollback = receipt.get("rollback", {})
-    if not isinstance(rollback, Mapping):
-        rollback = {}
-    rollback_commands = rollback.get("commands", ())
-    if not isinstance(rollback_commands, list):
-        rollback_commands = []
-    rollback_command_count = len([command for command in rollback_commands if str(command).strip()])
-    first_next_evidence = next_evidence[0] if next_evidence else "none"
+    operator_status = _developer_workflow_operator_status_from_generated_receipt(receipt)
+    readiness_status = str(operator_status["readiness_status"])
+    first_next_evidence = str(operator_status["first_next_evidence"])
     return {
         "read_model_id": "operator_developer_workflow_status.read_model",
         "projection_only": True,
@@ -2535,18 +2513,18 @@ def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[st
         "risk": _developer_workflow_status_risk(readiness_status),
         "action_needed": _developer_workflow_status_action(readiness_status, first_next_evidence),
         "summary": {
-            "solver_outcome": str(receipt.get("solver_outcome") or "AwaitingEvidence"),
-            "workflow_run_id": str(receipt.get("workflow_run_id") or "developer_workflow_v1_foundation_run"),
-            "sandbox_receipts_completed": int(sandbox_receipts.get("completed_count", 0) or 0),
-            "sandbox_receipts_required": int(sandbox_receipts.get("required_count", 0) or 0),
-            "local_candidate_ready": local_candidate.get("candidate_ready") is True,
-            "pr_tool_admitted": local_candidate.get("pr_tool_admitted") is True,
-            "external_approval_status": str(external_approval.get("status") or "pending"),
-            "rollback_required": rollback.get("required") is True,
-            "rollback_command_count": rollback_command_count,
-            "command_preview_rendered": external_handoff.get("command_preview_rendered") is True,
+            "solver_outcome": operator_status["solver_outcome"],
+            "workflow_run_id": operator_status["workflow_run_id"],
+            "sandbox_receipts_completed": operator_status["sandbox_receipts_completed"],
+            "sandbox_receipts_required": operator_status["sandbox_receipts_required"],
+            "local_candidate_ready": operator_status["local_candidate_ready"],
+            "pr_tool_admitted": operator_status["pr_tool_admitted"],
+            "external_approval_status": operator_status["external_approval_status"],
+            "rollback_required": operator_status["rollback_required"],
+            "rollback_command_count": operator_status["rollback_command_count"],
+            "command_preview_rendered": operator_status["command_preview_rendered"],
             "execution_performed": False,
-            "receipt_hash": str(receipt.get("receipt_hash") or ""),
+            "receipt_hash": operator_status["receipt_hash"],
         },
         "source_ref": str(LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH.as_posix()),
     }
@@ -4383,6 +4361,36 @@ def _developer_workflow_operator_receipt_from_generated_receipt(
 ) -> dict[str, Any]:
     """Return dashboard-safe fields from a validated generated operator receipt."""
 
+    operator_status = _developer_workflow_operator_status_from_generated_receipt(receipt)
+    return {
+        "receipt_id": operator_status["receipt_id"],
+        "schema_ref": "schemas/developer_workflow_operator_receipt.schema.json",
+        "workflow_id": operator_status["workflow_id"],
+        "workflow_run_id": operator_status["workflow_run_id"],
+        "solver_outcome": operator_status["solver_outcome"],
+        "readiness_status": operator_status["readiness_status"],
+        "execution_performed": False,
+        "ready_for_external_pr_execution": operator_status["ready_for_external_pr_execution"],
+        "external_approval_status": operator_status["external_approval_status"],
+        "local_candidate_ready": operator_status["local_candidate_ready"],
+        "pr_tool_admitted": operator_status["pr_tool_admitted"],
+        "rollback_required": operator_status["rollback_required"],
+        "rollback_command_preview": operator_status["rollback_command_preview"],
+        "rollback_command_count": operator_status["rollback_command_count"],
+        "evidence_chain": operator_status["evidence_chain"],
+        "command_preview_rendered": operator_status["command_preview_rendered"],
+        "next_evidence": operator_status["next_evidence"],
+        "external_effects_allowed": False,
+        "source_refs": operator_status["source_refs"],
+        "receipt_hash": operator_status["receipt_hash"],
+    }
+
+
+def _developer_workflow_operator_status_from_generated_receipt(
+    receipt: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Normalize generated Developer Workflow operator receipt fields for projections."""
+
     external_handoff = receipt.get("external_handoff", {})
     if not isinstance(external_handoff, Mapping):
         external_handoff = {}
@@ -4439,26 +4447,27 @@ def _developer_workflow_operator_receipt_from_generated_receipt(
     next_evidence = receipt.get("next_evidence", ())
     if not isinstance(next_evidence, list):
         next_evidence = []
+    normalized_next_evidence = [str(item) for item in next_evidence if str(item).strip()][:8]
     return {
         "receipt_id": str(receipt.get("receipt_id") or "developer_workflow_operator_receipt.v1"),
-        "schema_ref": "schemas/developer_workflow_operator_receipt.schema.json",
         "workflow_id": str(receipt.get("workflow_id") or "mullu_developer_workflow.v1"),
         "workflow_run_id": str(receipt.get("workflow_run_id") or "developer_workflow_v1_foundation_run"),
         "solver_outcome": str(receipt.get("solver_outcome") or "AwaitingEvidence"),
         "readiness_status": str(receipt.get("readiness_status") or "awaiting_sandbox_receipts"),
-        "execution_performed": False,
         "ready_for_external_pr_execution": external_handoff.get("ready_for_external_pr_execution") is True,
         "external_approval_status": str(external_approval.get("status") or "pending"),
         "local_candidate_ready": local_candidate.get("candidate_ready") is True,
         "pr_tool_admitted": local_candidate.get("pr_tool_admitted") is True,
+        "sandbox_receipts_completed": int(sandbox_receipts.get("completed_count", 0) or 0),
+        "sandbox_receipts_required": int(sandbox_receipts.get("required_count", 0) or 0),
         "rollback_required": rollback.get("required") is True,
         "rollback_command_preview": rollback_command_preview,
         "rollback_command_count": len([command for command in rollback_commands if str(command).strip()]),
         "evidence_chain": evidence_chain,
         "command_preview_rendered": external_handoff.get("command_preview_rendered") is True,
-        "next_evidence": [str(item) for item in next_evidence if str(item).strip()][:8],
-        "external_effects_allowed": False,
-        "source_refs": dict(receipt.get("source_refs", {})) if isinstance(receipt.get("source_refs"), Mapping) else {},
+        "next_evidence": normalized_next_evidence,
+        "first_next_evidence": normalized_next_evidence[0] if normalized_next_evidence else "none",
+        "source_refs": dict(source_refs),
         "receipt_hash": str(receipt.get("receipt_hash") or ""),
     }
 

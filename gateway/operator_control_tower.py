@@ -83,6 +83,31 @@ _LOCAL_ROLLBACK_EXECUTION_RECEIPT_PATH = (
 _LOCAL_ROLLBACK_RECEIPT_HREF_BASE = "/operator/control-tower/local-rollback-receipt"
 
 
+def developer_workflow_operator_action_banner(
+    *,
+    external_ready: bool,
+    external_approval_status: str,
+    command_preview_rendered: bool,
+    next_unlock: str,
+    evidence_text: str,
+) -> str:
+    """Return bounded operator guidance for Developer Workflow PR execution."""
+
+    normalized_approval = external_approval_status or "pending"
+    normalized_next_unlock = next_unlock or "none"
+    normalized_evidence = evidence_text or "none"
+    if external_ready and normalized_approval == "approved":
+        return "PR execution remains disabled in this dashboard; use the approved external path only."
+    if normalized_approval != "approved":
+        return (
+            f"Action needed before PR execution: provide {normalized_next_unlock}; "
+            "external approval is pending."
+        )
+    if not command_preview_rendered:
+        return "Action needed before PR execution: render command preview."
+    return f"Action needed before PR execution: complete {normalized_evidence}."
+
+
 @dataclass(frozen=True, slots=True)
 class OperatorTowerSignal:
     """Bounded operator signal emitted from a panel."""
@@ -4814,19 +4839,13 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     )
     if not operator_receipt_evidence_text:
         operator_receipt_evidence_text = "none"
-    if operator_receipt_external_ready and operator_receipt_approval == "approved":
-        operator_receipt_action_banner = "PR execution remains disabled in this dashboard; use the approved external path only."
-    elif operator_receipt_approval != "approved":
-        operator_receipt_action_banner = (
-            f"Action needed before PR execution: provide {operator_receipt_next_unlock}; "
-            "external approval is pending."
-        )
-    elif not operator_receipt_preview:
-        operator_receipt_action_banner = "Action needed before PR execution: render command preview."
-    else:
-        operator_receipt_action_banner = (
-            f"Action needed before PR execution: complete {operator_receipt_evidence_text}."
-        )
+    operator_receipt_action_banner = developer_workflow_operator_action_banner(
+        external_ready=operator_receipt_external_ready,
+        external_approval_status=operator_receipt_approval,
+        command_preview_rendered=operator_receipt_preview,
+        next_unlock=operator_receipt_next_unlock,
+        evidence_text=operator_receipt_evidence_text,
+    )
     fast_summary = mode_summary.get("fast", {}) if isinstance(mode_summary.get("fast", {}), Mapping) else {}
     balanced_summary = mode_summary.get("balanced", {}) if isinstance(mode_summary.get("balanced", {}), Mapping) else {}
     strict_summary = mode_summary.get("strict", {}) if isinstance(mode_summary.get("strict", {}), Mapping) else {}

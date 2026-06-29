@@ -31,6 +31,7 @@ from gateway.operator_capability_console import (  # noqa: E402
     build_developer_workflow_v1_run_read_model,
     build_operator_capability_read_model,
 )
+from gateway.operator_control_tower import developer_workflow_operator_action_banner  # noqa: E402
 from gateway.operator_sandbox_patch_readiness import (  # noqa: E402
     SANDBOX_PATCH_READINESS_REGISTRY,
     sandbox_patch_readiness_compact_summary,
@@ -3733,6 +3734,39 @@ def test_operator_control_tower_html_action_banner_uses_generated_receipt(
         "local_pr_candidate=ready_for_pr_tool -&gt; external_approval=pending"
     ) in response.text
     assert "External effects allowed: false" in response.text
+
+
+def test_developer_workflow_operator_action_banner_cases() -> None:
+    pending = developer_workflow_operator_action_banner(
+        external_ready=False,
+        external_approval_status="pending",
+        command_preview_rendered=False,
+        next_unlock="external_approval_witness",
+        evidence_text="external_approval_witness, command_preview",
+    )
+    preview_missing = developer_workflow_operator_action_banner(
+        external_ready=False,
+        external_approval_status="approved",
+        command_preview_rendered=False,
+        next_unlock="command_preview",
+        evidence_text="command_preview",
+    )
+    approved_external = developer_workflow_operator_action_banner(
+        external_ready=True,
+        external_approval_status="approved",
+        command_preview_rendered=True,
+        next_unlock="none",
+        evidence_text="none",
+    )
+
+    assert pending == (
+        "Action needed before PR execution: provide external_approval_witness; "
+        "external approval is pending."
+    )
+    assert preview_missing == "Action needed before PR execution: render command preview."
+    assert approved_external == (
+        "PR execution remains disabled in this dashboard; use the approved external path only."
+    )
 
 
 def test_operator_control_tower_projects_rollback_receipt_visibility() -> None:
