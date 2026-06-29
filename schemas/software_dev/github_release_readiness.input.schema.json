@@ -1,0 +1,70 @@
+{
+  "$id": "urn:mullusi:schema:software-dev:github-release-readiness-input:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for governed local GitHub release readiness assessment.",
+  "properties": {
+    "assumptions": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "candidate_ref": { "minLength": 1, "type": "string" },
+    "capability_id": { "const": "software_dev.github_release.readiness", "type": "string" },
+    "change_summary_refs": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "ci_status_refs": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "evidence_refs": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "known_blockers": {
+      "items": { "minLength": 1, "type": "string" },
+      "type": "array"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "properties": {
+        "fixture": { "const": "software_dev_capability_pack", "type": "string" },
+        "release_execution_allowed": { "const": false, "type": "boolean" }
+      },
+      "required": ["fixture", "release_execution_allowed"],
+      "type": "object"
+    },
+    "release_objective": { "minLength": 1, "type": "string" },
+    "repo": { "minLength": 1, "type": "string" },
+    "risk_refs": {
+      "items": { "minLength": 1, "type": "string" },
+      "type": "array"
+    },
+    "rollback_refs": {
+      "items": { "minLength": 1, "type": "string" },
+      "type": "array"
+    },
+    "write_authority_granted": { "const": false, "type": "boolean" }
+  },
+  "required": [
+    "capability_id",
+    "repo",
+    "release_objective",
+    "candidate_ref",
+    "evidence_refs",
+    "ci_status_refs",
+    "change_summary_refs",
+    "risk_refs",
+    "rollback_refs",
+    "known_blockers",
+    "assumptions",
+    "write_authority_granted",
+    "metadata"
+  ],
+  "type": "object"
+}

@@ -30,6 +30,7 @@ from gateway.github_operations_workroom import (  # noqa: E402
     GitHubIssueDraftRequest,
     GitHubPatchPlanDraftRequest,
     GitHubRepoStatusEvidenceAdmissionRequest,
+    GitHubReleaseReadinessRequest,
     GitHubReadOnlyEvidenceFetcher,
     GitHubReadOnlyEvidenceAdmissionRequest,
     GITHUB_ACTIONS_FAILURE_CAPABILITY_ID,
@@ -45,6 +46,8 @@ from gateway.github_operations_workroom import (  # noqa: E402
     build_github_patch_plan_workroom_read_model,
     build_github_repo_status_summary_receipt,
     build_github_repo_status_workroom_read_model,
+    build_github_release_readiness_receipt,
+    build_github_release_readiness_workroom_read_model,
     build_github_read_only_evidence_fetch_receipt,
     GitHubPrSafetyWorkroomRequest,
     build_pr_safety_projection_from_github_fetch_receipt,
@@ -54,6 +57,7 @@ from gateway.github_operations_workroom import (  # noqa: E402
     evaluate_github_issue_draft,
     evaluate_github_patch_plan_draft,
     evaluate_github_repo_status_summary,
+    evaluate_github_release_readiness,
     evaluate_github_pr_safety_judgment,
 )
 from gateway.server import create_gateway_app  # noqa: E402
@@ -1361,6 +1365,156 @@ def test_operator_github_issue_draft_panel_renders_local_draft_form_without_toke
     assert "Mullusi GitHub Issue Draft Workroom" in response.text
     assert 'fetch("/operator/github-operations/issue-draft/draft"' in response.text
     assert "No GitHub token or issue creation authority is accepted." in response.text
+    assert "access_token" not in response.text
+
+
+def test_github_release_readiness_ready_receipt_is_prepare_only() -> None:
+    request = GitHubReleaseReadinessRequest(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        release_objective="Prepare release readiness for GitHub Workroom MVP.",
+        candidate_ref="release-candidate:2026-06-29",
+        evidence_refs=("github-repo-status-receipt:abc",),
+        ci_status_refs=("ci:82-checks-pass",),
+        change_summary_refs=("pr:2397",),
+        risk_refs=("security-review:bounded",),
+        rollback_refs=("rollback:revert-pr",),
+        known_blockers=(),
+        surface_event_id="release-readiness",
+        requested_at="2026-06-29T12:00:00+00:00",
+    )
+
+    assessment = evaluate_github_release_readiness(request=request, clock=_clock)
+    receipt = build_github_release_readiness_receipt(
+        request=request,
+        assessment=assessment,
+        occurred_at="2026-06-29T12:00:00+00:00",
+    )
+
+    assert assessment.status == "ready"
+    assert assessment.write_authority_granted is False
+    assert "explicit_human_release_approval_before_external_action" in assessment.required_next_evidence
+    assert receipt.risk_class is FabricRiskClass.CLASS_1_PREPARE
+    assert receipt.policy_decision is FabricPolicyDecision.ALLOW_DRAFT_ONLY
+    assert "create_github_release_without_release_approval" in receipt.actions_blocked
+
+
+def test_github_release_readiness_awaits_required_evidence() -> None:
+    request = GitHubReleaseReadinessRequest(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        release_objective="",
+        candidate_ref="",
+        evidence_refs=(),
+        ci_status_refs=(),
+        change_summary_refs=(),
+        risk_refs=(),
+        rollback_refs=(),
+        known_blockers=(),
+        surface_event_id="release-readiness-gap",
+        requested_at="2026-06-29T12:00:00+00:00",
+    )
+
+    assessment = evaluate_github_release_readiness(request=request, clock=_clock)
+    receipt = build_github_release_readiness_receipt(
+        request=request,
+        assessment=assessment,
+        occurred_at="2026-06-29T12:00:00+00:00",
+    )
+
+    assert assessment.status == "awaiting_evidence"
+    assert "missing_ci_status_refs" in assessment.required_next_evidence
+    assert assessment.evidence_refs == ("missing_release_readiness_evidence",)
+    assert receipt.memory_update is FabricMemoryDecisionStatus.DEFER
+    assert "missing_candidate_ref" in receipt.partial_failure_reasons
+
+
+def test_github_release_readiness_blocks_declared_blockers() -> None:
+    request = GitHubReleaseReadinessRequest(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        release_objective="Prepare governed release readiness.",
+        candidate_ref="release-candidate:blocked",
+        evidence_refs=("github-repo-status-receipt:abc",),
+        ci_status_refs=("ci:passing",),
+        change_summary_refs=("pr:2397",),
+        risk_refs=("risk:bounded",),
+        rollback_refs=(),
+        known_blockers=("unresolved_security_review",),
+        surface_event_id="release-readiness-blocked",
+        requested_at="2026-06-29T12:00:00+00:00",
+    )
+
+    assessment = evaluate_github_release_readiness(request=request, clock=_clock)
+
+    assert assessment.status == "blocked"
+    assert assessment.blockers == ("unresolved_security_review",)
+    assert assessment.recommended_next_action == "resolve_declared_blockers_then_reassess_release_readiness"
+
+
+def test_github_release_readiness_read_model_awaits_evidence() -> None:
+    read_model = build_github_release_readiness_workroom_read_model(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        surface_event_id="release-readiness-model",
+        occurred_at="2026-06-29T12:00:00+00:00",
+        clock=_clock,
+    )
+
+    assert read_model["status"] == "awaiting_evidence"
+    assert read_model["passport"]["risk_class"] == "class_1_prepare"
+    assert read_model["release_execution_allowed"] is False
+    assert "create_github_release_without_release_approval" in read_model["blocked_actions"]
+
+
+def test_operator_github_release_readiness_endpoint_returns_receipt_without_release_authority() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.post(
+        "/operator/github-operations/release-readiness/assess",
+        json={
+            "repo": "tamiratl/mullu-control-plane",
+            "release_objective": "Prepare GitHub Workroom release readiness.",
+            "candidate_ref": "release-candidate:2026-06-29",
+            "evidence_refs": ["github-repo-status-receipt:abc"],
+            "ci_status_refs": ["ci:82-checks-pass"],
+            "change_summary_refs": ["pr:2397"],
+            "risk_refs": ["security-review:bounded"],
+            "rollback_refs": ["rollback:revert-pr"],
+            "known_blockers": [],
+            "requested_at": "2026-06-29T12:00:00+00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    serialized = json.dumps(payload, sort_keys=True)
+    assert payload["github_release_readiness"]["status"] == "ready"
+    assert payload["github_release_readiness_receipt"]["policy_decision"] == "allow_draft_only"
+    assert payload["effect_boundary"]["release_execution_allowed"] is False
+    assert payload["effect_boundary"]["tag_creation_allowed"] is False
+    assert payload["write_authority_granted"] is False
+    assert "access_token" not in serialized
+
+
+def test_operator_github_release_readiness_panel_renders_local_assessment_form_without_token() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get(
+        "/operator/github-operations/release-readiness",
+        params={"repo": "tamiratl/mullu-control-plane", "occurred_at": "2026-06-29T12:00:00+00:00"},
+    )
+
+    assert response.status_code == 200
+    assert "Mullusi GitHub Release Readiness Workroom" in response.text
+    assert 'fetch("/operator/github-operations/release-readiness/assess"' in response.text
+    assert "No GitHub token, tag, release, or deployment authority is accepted." in response.text
     assert "access_token" not in response.text
 
 

@@ -1,0 +1,69 @@
+{
+  "$id": "urn:mullusi:schema:github-release-readiness-receipt:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Receipt for governed local GitHub release readiness assessment.",
+  "properties": {
+    "actions_blocked": {
+      "contains": { "const": "create_github_release_without_release_approval" },
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "actions_taken": {
+      "items": { "enum": ["assessed_release_readiness", "reported_release_readiness_gap", "emitted_causal_receipt"], "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "assumptions": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "evidence_used": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "final_judgment": { "minLength": 1, "type": "string" },
+    "intent": { "const": "ASSESS_GITHUB_RELEASE_READINESS", "type": "string" },
+    "memory_update": { "enum": ["store", "defer"], "type": "string" },
+    "metadata": {
+      "additionalProperties": true,
+      "properties": {
+        "release_execution_allowed": { "const": false, "type": "boolean" },
+        "write_authority_granted": { "const": false, "type": "boolean" }
+      },
+      "required": ["release_execution_allowed", "write_authority_granted"],
+      "type": "object"
+    },
+    "partial_failure_reasons": {
+      "items": { "minLength": 1, "type": "string" },
+      "type": "array"
+    },
+    "policy_decision": { "const": "allow_draft_only", "type": "string" },
+    "receipt_id": { "pattern": "^github-release-readiness-receipt:", "type": "string" },
+    "risk_class": { "const": "class_1_prepare", "type": "string" },
+    "target_object": { "pattern": "^github_repository:", "type": "string" },
+    "verification_result": { "minLength": 1, "type": "string" },
+    "write_authority_granted": { "const": false, "type": "boolean" }
+  },
+  "required": [
+    "receipt_id",
+    "intent",
+    "target_object",
+    "risk_class",
+    "evidence_used",
+    "policy_decision",
+    "actions_taken",
+    "actions_blocked",
+    "assumptions",
+    "verification_result",
+    "final_judgment",
+    "memory_update",
+    "partial_failure_reasons",
+    "write_authority_granted",
+    "metadata"
+  ],
+  "type": "object"
+}

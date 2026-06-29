@@ -399,6 +399,91 @@
       }
     },
     {
+      "capability_id": "software_dev.github_release.readiness",
+      "domain": "software_dev",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/software_dev/github_release_readiness.input.schema.json",
+      "output_schema_ref": "urn:mullusi:schema:github-release-readiness-receipt:1",
+      "effect_model": {
+        "expected_effects": ["github_release_readiness_assessed", "causal_receipt_emitted"],
+        "forbidden_effects": [
+          "git_tag_created",
+          "github_release_created",
+          "deployment_started",
+          "package_published",
+          "workflow_triggered",
+          "repository_mutated",
+          "release_ready_claimed_without_evidence"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["release_objective", "candidate_ref", "ci_status_ref", "change_summary_ref", "risk_or_rollback_ref"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["developer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Assess GitHub release readiness",
+        "risk_tier": "low",
+        "target_maturity": "C3",
+        "fixture_only": false,
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 1,
+          "level_id": "L1",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate"]
+        }
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": false,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["developer"],
+          "allowed_tools": ["mullusi.local_release_readiness_assessment"],
+          "allowed_networks": [],
+          "allowed_paths": [],
+          "forbidden_effects": [
+            "git_tag_created",
+            "github_release_created",
+            "deployment_started",
+            "package_published",
+            "workflow_triggered",
+            "repository_mutated",
+            "release_ready_claimed_without_evidence"
+          ],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
       "capability_id": "software_dev.context_bundle.build",
       "domain": "software_dev",
       "version": "0.1.0",

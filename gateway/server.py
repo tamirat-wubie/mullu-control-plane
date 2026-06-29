@@ -149,6 +149,7 @@ from gateway.github_operations_workroom import (
     GitHubIssueDraftRequest,
     GitHubPatchPlanDraftRequest,
     GitHubRepoStatusEvidenceAdmissionRequest,
+    GitHubReleaseReadinessRequest,
     GitHubReadOnlyEvidenceFetchError,
     GitHubReadOnlyEvidenceFetcher,
     GitHubReadOnlyEvidenceAdmissionRequest,
@@ -164,6 +165,8 @@ from gateway.github_operations_workroom import (
     build_github_patch_plan_workroom_read_model,
     build_github_repo_status_summary_receipt,
     build_github_repo_status_workroom_read_model,
+    build_github_release_readiness_receipt,
+    build_github_release_readiness_workroom_read_model,
     build_github_read_only_evidence_fetch_receipt,
     build_github_pr_safety_workroom_projection,
     build_github_pr_safety_workroom_read_model,
@@ -172,6 +175,7 @@ from gateway.github_operations_workroom import (
     evaluate_github_issue_draft,
     evaluate_github_patch_plan_draft,
     evaluate_github_repo_status_summary,
+    evaluate_github_release_readiness,
     evaluate_github_pr_safety_judgment,
     persist_github_read_only_evidence_receipt_bundle,
     read_github_read_only_evidence_receipt_bundle,
@@ -179,6 +183,7 @@ from gateway.github_operations_workroom import (
     render_github_issue_draft_workroom_html,
     render_github_patch_plan_workroom_html,
     render_github_repo_status_workroom_html,
+    render_github_release_readiness_workroom_html,
     render_github_pr_safety_workroom_html,
 )
 from gateway.axiomworld_api import register_axiomworld_routes
@@ -880,6 +885,33 @@ class GatewayGitHubIssueDraftRequest(BaseModel):
         default_factory=lambda: [
             "Evidence references are bounded and authorized for this actor and workspace.",
             "Issue drafting does not create GitHub issues, apply labels, assign users, comment, or mutate repositories.",
+        ]
+    )
+
+
+class GatewayGitHubReleaseReadinessRequest(BaseModel):
+    """Assess governed local GitHub release readiness from bounded evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    actor_id: str = "operator:gateway"
+    workspace_id: str = "workspace:mullusi-control-plane"
+    repo: str = "tamirat-wubie/mullu-control-plane"
+    release_objective: str = ""
+    candidate_ref: str = ""
+    evidence_refs: list[str] = Field(default_factory=list)
+    ci_status_refs: list[str] = Field(default_factory=list)
+    change_summary_refs: list[str] = Field(default_factory=list)
+    risk_refs: list[str] = Field(default_factory=list)
+    rollback_refs: list[str] = Field(default_factory=list)
+    known_blockers: list[str] = Field(default_factory=list)
+    surface_event_id: str = ""
+    requested_at: str = ""
+    authority_ref: str = "policy.github.release_readiness.local_prepare_only"
+    assumptions: list[str] = Field(
+        default_factory=lambda: [
+            "Evidence references are bounded and authorized for this actor and workspace.",
+            "Release readiness assessment does not tag, publish, deploy, trigger workflows, merge, or mutate GitHub.",
         ]
     )
 
@@ -10632,6 +10664,123 @@ def create_gateway_app(
                 "issue_creation_allowed": False,
                 "review_submission_allowed": False,
                 "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+        }
+
+    @app.get("/operator/github-operations/release-readiness/read-model")
+    def operator_github_operations_release_readiness_read_model(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = surface_event_id or f"operator-github-release-readiness:{repo}:{now}"
+            return build_github_release_readiness_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+
+    @app.get("/operator/github-operations/release-readiness", response_class=HTMLResponse)
+    def operator_github_operations_release_readiness_panel(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = surface_event_id or f"operator-github-release-readiness:{repo}:{now}"
+            read_model = build_github_release_readiness_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return HTMLResponse(render_github_release_readiness_workroom_html(read_model))
+
+    @app.post("/operator/github-operations/release-readiness/assess")
+    def operator_github_operations_release_readiness_assess(
+        request: Request,
+        req: GatewayGitHubReleaseReadinessRequest,
+    ):
+        _require_authority_operator(request)
+        try:
+            now = req.requested_at or _clock()
+            surface_event_id = req.surface_event_id or f"operator-github-release-readiness:{req.repo}:{now}"
+            readiness_request = GitHubReleaseReadinessRequest(
+                actor_id=req.actor_id,
+                workspace_id=req.workspace_id,
+                repo=req.repo,
+                release_objective=req.release_objective,
+                candidate_ref=req.candidate_ref,
+                evidence_refs=tuple(req.evidence_refs),
+                ci_status_refs=tuple(req.ci_status_refs),
+                change_summary_refs=tuple(req.change_summary_refs),
+                risk_refs=tuple(req.risk_refs),
+                rollback_refs=tuple(req.rollback_refs),
+                known_blockers=tuple(req.known_blockers),
+                surface_event_id=surface_event_id,
+                requested_at=now,
+                authority_ref=req.authority_ref,
+                assumptions=tuple(req.assumptions),
+            )
+            assessment = evaluate_github_release_readiness(request=readiness_request, clock=lambda: now)
+            receipt = build_github_release_readiness_receipt(
+                request=readiness_request,
+                assessment=assessment,
+                occurred_at=now,
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid GitHub release readiness request",
+                    "error_code": "invalid_github_release_readiness",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "github_release_readiness": assessment.to_json_dict(),
+            "github_release_readiness_receipt": receipt.to_json_dict(),
+            "outcome": "SolvedUnverified" if assessment.status == "ready" else "AwaitingEvidence",
+            "governed": True,
+            "execution_allowed": True,
+            "live_connector_call_performed": False,
+            "write_authority_granted": False,
+            "effect_boundary": {
+                "execution_allowed": True,
+                "live_connector_execution_allowed": False,
+                "github_call_allowed": False,
+                "repository_read_allowed": False,
+                "repository_mutation_allowed": False,
+                "pull_request_mutation_allowed": False,
+                "branch_push_allowed": False,
+                "issue_creation_allowed": False,
+                "review_submission_allowed": False,
+                "deployment_mutation_allowed": False,
+                "release_execution_allowed": False,
+                "tag_creation_allowed": False,
+                "workflow_trigger_allowed": False,
                 "system_of_record_write_allowed": False,
             },
         }

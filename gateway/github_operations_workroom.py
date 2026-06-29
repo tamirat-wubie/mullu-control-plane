@@ -50,12 +50,14 @@ GITHUB_ACTIONS_FAILURE_CAPABILITY_ID = "github.actions_failure_diagnosis.read_on
 GITHUB_REPO_STATUS_CAPABILITY_ID = "github.repo_status_summary.read_only.v1"
 GITHUB_PATCH_PLAN_CAPABILITY_ID = "github.patch_plan_draft.prepare.v1"
 GITHUB_ISSUE_DRAFT_CAPABILITY_ID = "github.issue_draft.prepare.v1"
+GITHUB_RELEASE_READINESS_CAPABILITY_ID = "github.release_readiness.prepare.v1"
 GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID = "connector.github.read"
 GITHUB_PR_SAFETY_INTENT = "REVIEW_PR_MERGE_SAFETY"
 GITHUB_ACTIONS_FAILURE_INTENT = "DIAGNOSE_GITHUB_ACTIONS_FAILURE"
 GITHUB_REPO_STATUS_INTENT = "SUMMARIZE_GITHUB_REPOSITORY_STATUS"
 GITHUB_PATCH_PLAN_INTENT = "DRAFT_GITHUB_PATCH_PLAN"
 GITHUB_ISSUE_DRAFT_INTENT = "DRAFT_GITHUB_ISSUE"
+GITHUB_RELEASE_READINESS_INTENT = "ASSESS_GITHUB_RELEASE_READINESS"
 GITHUB_WORKROOM_SURFACE = "github_operations_workroom"
 
 _REQUIRED_EVIDENCE = (
@@ -100,6 +102,15 @@ _ISSUE_DRAFT_BLOCKED_ACTIONS = (
     "mutate_repository_without_write_admission",
     "claim_issue_created_without_live_receipt",
 )
+_RELEASE_READINESS_BLOCKED_ACTIONS = (
+    "create_git_tag_without_release_approval",
+    "create_github_release_without_release_approval",
+    "deploy_release_without_deployment_witness",
+    "publish_package_without_external_obligation_approval",
+    "trigger_workflow_without_explicit_approval",
+    "merge_or_mutate_repository_without_write_admission",
+    "claim_release_ready_without_required_evidence",
+)
 _ALLOWED_TOOLS = (
     "github.read.pull_request",
     "github.read.diff",
@@ -121,6 +132,13 @@ _ISSUE_DRAFT_REQUIRED_EVIDENCE = (
     "problem_summary",
     "evidence_refs",
     "acceptance_criteria",
+)
+_RELEASE_READINESS_REQUIRED_EVIDENCE = (
+    "release_objective",
+    "candidate_ref",
+    "ci_status_ref",
+    "change_summary_ref",
+    "risk_or_rollback_ref",
 )
 _EFFECT_BOUNDARY = {
     "execution_allowed": False,
@@ -1685,6 +1703,107 @@ class GitHubIssueDraft(ContractRecord):
         object.__setattr__(self, "drafted_at", require_datetime_text(self.drafted_at, "drafted_at"))
 
 
+@dataclass(frozen=True, slots=True)
+class GitHubReleaseReadinessRequest(ContractRecord):
+    """Input contract for a governed local GitHub release readiness assessment."""
+
+    actor_id: str
+    workspace_id: str
+    repo: str
+    release_objective: str
+    candidate_ref: str
+    evidence_refs: tuple[str, ...]
+    ci_status_refs: tuple[str, ...]
+    change_summary_refs: tuple[str, ...]
+    risk_refs: tuple[str, ...]
+    rollback_refs: tuple[str, ...]
+    known_blockers: tuple[str, ...]
+    surface_event_id: str
+    requested_at: str
+    authority_ref: str = "policy.github.release_readiness.local_prepare_only"
+    assumptions: tuple[str, ...] = (
+        "Evidence references are bounded and authorized for this actor and workspace.",
+        "Release readiness assessment does not tag, publish, deploy, trigger workflows, merge, or mutate GitHub.",
+    )
+    write_authority_granted: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in ("actor_id", "workspace_id", "repo", "surface_event_id", "authority_ref"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if self.release_objective:
+            object.__setattr__(self, "release_objective", require_non_empty_text(self.release_objective, "release_objective"))
+        if self.candidate_ref:
+            object.__setattr__(self, "candidate_ref", require_non_empty_text(self.candidate_ref, "candidate_ref"))
+        object.__setattr__(self, "requested_at", require_datetime_text(self.requested_at, "requested_at"))
+        for field_name in (
+            "evidence_refs",
+            "ci_status_refs",
+            "change_summary_refs",
+            "risk_refs",
+            "rollback_refs",
+            "known_blockers",
+            "assumptions",
+        ):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple):
+                raise ValueError(f"{field_name} must be a tuple")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if self.write_authority_granted is not False:
+            raise ValueError("release readiness request cannot grant write authority")
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubReleaseReadinessAssessment(ContractRecord):
+    """Governed local release readiness judgment without release execution authority."""
+
+    assessment_id: str
+    repo: str
+    status: str
+    readiness_judgment: str
+    release_objective: str
+    candidate_ref: str
+    evidence_refs: tuple[str, ...]
+    required_next_evidence: tuple[str, ...]
+    blockers: tuple[str, ...]
+    release_notes_outline: tuple[str, ...]
+    rollback_summary: str
+    blocked_actions: tuple[str, ...]
+    recommended_next_action: str
+    confidence: float
+    write_authority_granted: bool
+    assessed_at: str
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "assessment_id",
+            "repo",
+            "status",
+            "readiness_judgment",
+            "release_objective",
+            "candidate_ref",
+            "rollback_summary",
+            "recommended_next_action",
+        ):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if self.status not in {"ready", "blocked", "awaiting_evidence"}:
+            raise ValueError("status must be ready, blocked, or awaiting_evidence")
+        for field_name in ("evidence_refs", "required_next_evidence", "blockers", "release_notes_outline", "blocked_actions"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple) or not values:
+                raise ValueError(f"{field_name} must contain at least one item")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if not isinstance(self.confidence, (int, float)) or isinstance(self.confidence, bool):
+            raise ValueError("confidence must be a number")
+        if not 0.0 <= float(self.confidence) <= 1.0:
+            raise ValueError("confidence must be between 0.0 and 1.0")
+        object.__setattr__(self, "confidence", float(self.confidence))
+        if self.write_authority_granted is not False:
+            raise ValueError("release readiness assessment cannot grant write authority")
+        object.__setattr__(self, "assessed_at", require_datetime_text(self.assessed_at, "assessed_at"))
+
+
 def admit_github_repo_status_evidence_collection(
     request: GitHubRepoStatusEvidenceAdmissionRequest,
     *,
@@ -2102,6 +2221,163 @@ def build_github_issue_draft_receipt(
         ),
         final_judgment=draft.issue_title,
         memory_update=FabricMemoryDecisionStatus.STORE if draft.status == "drafted" else FabricMemoryDecisionStatus.DEFER,
+        timestamp=occurred_at,
+        partial_failure_reasons=partial_failure_reasons,
+    )
+
+
+def evaluate_github_release_readiness(
+    *,
+    request: GitHubReleaseReadinessRequest,
+    clock: Callable[[], str],
+) -> GitHubReleaseReadinessAssessment:
+    """Assess release readiness from bounded evidence without executing release actions."""
+
+    if not isinstance(request, GitHubReleaseReadinessRequest):
+        raise ValueError("request must be a GitHubReleaseReadinessRequest")
+    assessed_at = require_datetime_text(clock(), "assessed_at")
+    missing: list[str] = []
+    if not request.release_objective.strip():
+        missing.append("missing_release_objective")
+    if not request.candidate_ref.strip():
+        missing.append("missing_candidate_ref")
+    if not request.evidence_refs:
+        missing.append("missing_evidence_refs")
+    if not request.ci_status_refs:
+        missing.append("missing_ci_status_refs")
+    if not request.change_summary_refs:
+        missing.append("missing_change_summary_refs")
+    if not request.risk_refs and not request.rollback_refs:
+        missing.append("missing_risk_or_rollback_refs")
+
+    evidence_refs = tuple(
+        dict.fromkeys(
+            (
+                *request.evidence_refs,
+                *request.ci_status_refs,
+                *request.change_summary_refs,
+                *request.risk_refs,
+                *request.rollback_refs,
+            )
+            or ("missing_release_readiness_evidence",)
+        )
+    )
+    objective = request.release_objective.strip() or "Awaiting bounded release objective."
+    candidate_ref = request.candidate_ref.strip() or "missing_release_candidate_ref"
+
+    if missing:
+        status = "awaiting_evidence"
+        readiness_judgment = "Release readiness is awaiting required evidence."
+        required_next_evidence = tuple(missing)
+        blockers = ("release_readiness_claim_blocked_until_required_evidence_is_present",)
+        release_notes_outline = ("collect_release_objective_candidate_ci_change_and_rollback_evidence",)
+        rollback_summary = "Rollback cannot be assessed until risk or rollback evidence is present."
+        recommended_next_action = "collect_release_objective_candidate_ci_change_summary_and_risk_or_rollback_refs"
+        confidence = 0.3
+    elif request.known_blockers:
+        status = "blocked"
+        readiness_judgment = f"Release candidate {candidate_ref} is blocked by declared release blockers."
+        required_next_evidence = ("blocker_resolution_receipt", "post_resolution_ci_status_ref")
+        blockers = tuple(dict.fromkeys(request.known_blockers))
+        release_notes_outline = (
+            f"Objective: {objective}",
+            f"Candidate: {candidate_ref}",
+            "Release notes remain blocked until declared blockers are resolved.",
+        )
+        rollback_summary = "Rollback path evidence is present, but release remains blocked by unresolved blockers."
+        recommended_next_action = "resolve_declared_blockers_then_reassess_release_readiness"
+        confidence = 0.62
+    else:
+        status = "ready"
+        readiness_judgment = f"Release candidate {candidate_ref} has bounded evidence for a local readiness recommendation."
+        required_next_evidence = ("explicit_human_release_approval_before_external_action",)
+        blockers = ("no_declared_blockers_in_bounded_request",)
+        release_notes_outline = (
+            f"Objective: {objective}",
+            f"Candidate: {candidate_ref}",
+            "Summarize accepted changes from provided change summary refs.",
+            "Cite CI status refs and rollback refs before any external release action.",
+        )
+        rollback_summary = "Rollback or risk evidence references are present; verify freshness before any release execution."
+        recommended_next_action = "request_explicit_release_approval_or_continue_prepare_only_review"
+        confidence = 0.7
+
+    assessment_hash = _stable_hash(
+        {
+            "actor_id": request.actor_id,
+            "repo": request.repo,
+            "candidate_ref": candidate_ref,
+            "evidence_refs": evidence_refs,
+            "status": status,
+            "assessed_at": assessed_at,
+        }
+    )
+    return GitHubReleaseReadinessAssessment(
+        assessment_id=f"github-release-readiness:{assessment_hash}",
+        repo=request.repo,
+        status=status,
+        readiness_judgment=readiness_judgment,
+        release_objective=objective,
+        candidate_ref=candidate_ref,
+        evidence_refs=evidence_refs,
+        required_next_evidence=required_next_evidence,
+        blockers=blockers,
+        release_notes_outline=release_notes_outline,
+        rollback_summary=rollback_summary,
+        blocked_actions=_RELEASE_READINESS_BLOCKED_ACTIONS,
+        recommended_next_action=recommended_next_action,
+        confidence=confidence,
+        write_authority_granted=False,
+        assessed_at=assessed_at,
+    )
+
+
+def build_github_release_readiness_receipt(
+    *,
+    request: GitHubReleaseReadinessRequest,
+    assessment: GitHubReleaseReadinessAssessment,
+    occurred_at: str,
+) -> CausalCapabilityReceipt:
+    """Emit a Class 1 causal receipt for a local release readiness assessment."""
+
+    if not isinstance(request, GitHubReleaseReadinessRequest):
+        raise ValueError("request must be a GitHubReleaseReadinessRequest")
+    if not isinstance(assessment, GitHubReleaseReadinessAssessment):
+        raise ValueError("assessment must be a GitHubReleaseReadinessAssessment")
+    occurred_at = require_datetime_text(occurred_at, "occurred_at")
+    receipt_hash = _stable_hash(
+        {
+            "actor_id": request.actor_id,
+            "assessment_id": assessment.assessment_id,
+            "surface_event_id": request.surface_event_id,
+            "occurred_at": occurred_at,
+        }
+    )
+    partial_failure_reasons = () if assessment.status == "ready" else tuple(assessment.required_next_evidence)
+    return CausalCapabilityReceipt(
+        receipt_id=f"github-release-readiness-receipt:{receipt_hash}",
+        event_id=request.surface_event_id,
+        actor_id=request.actor_id,
+        surface=GITHUB_WORKROOM_SURFACE,
+        intent=GITHUB_RELEASE_READINESS_INTENT,
+        target_object=f"github_repository:{request.repo}:release_candidate:{assessment.candidate_ref}",
+        risk_class=FabricRiskClass.CLASS_1_PREPARE,
+        evidence_used=assessment.evidence_refs,
+        policy_decision=FabricPolicyDecision.ALLOW_DRAFT_ONLY,
+        actions_taken=(
+            ("assessed_release_readiness", "emitted_causal_receipt")
+            if assessment.status == "ready"
+            else ("reported_release_readiness_gap", "emitted_causal_receipt")
+        ),
+        actions_blocked=assessment.blocked_actions,
+        assumptions=request.assumptions,
+        verification_result=(
+            "Release readiness assessed from bounded evidence; no tag, release, deployment, workflow, merge, or GitHub write was performed."
+            if assessment.status == "ready"
+            else "Release readiness remains blocked or awaiting evidence; no external release action was performed."
+        ),
+        final_judgment=assessment.readiness_judgment,
+        memory_update=FabricMemoryDecisionStatus.STORE if assessment.status == "ready" else FabricMemoryDecisionStatus.DEFER,
         timestamp=occurred_at,
         partial_failure_reasons=partial_failure_reasons,
     )
@@ -2730,6 +3006,74 @@ def build_github_issue_draft_workroom_read_model(
     }
 
 
+def build_github_release_readiness_workroom_read_model(
+    *,
+    actor_id: str,
+    workspace_id: str,
+    repo: str,
+    surface_event_id: str,
+    occurred_at: str,
+    clock: Callable[[], str],
+) -> dict[str, Any]:
+    """Build the operator Workroom read model for local release readiness assessment."""
+
+    generated_at = require_datetime_text(clock(), "generated_at")
+    passport = UniversalCapabilityPassport(
+        passport_id=GITHUB_RELEASE_READINESS_CAPABILITY_ID,
+        name="GitHub Release Readiness",
+        domain="software_governance",
+        inputs=(
+            "repo",
+            "actor_id",
+            "release_objective",
+            "candidate_ref",
+            "evidence_refs",
+            "ci_status_refs",
+            "change_summary_refs",
+            "risk_refs",
+            "rollback_refs",
+            "known_blockers",
+        ),
+        outputs=("readiness_judgment", "blockers", "required_next_evidence", "release_notes_outline", "receipt"),
+        required_evidence=_RELEASE_READINESS_REQUIRED_EVIDENCE,
+        allowed_tools=("mullusi.local_release_readiness_assessment",),
+        blocked_actions=_RELEASE_READINESS_BLOCKED_ACTIONS,
+        risk_class=FabricRiskClass.CLASS_1_PREPARE,
+        verification_rules=(
+            "no_release_readiness_claim_without_candidate_ref",
+            "no_release_readiness_claim_without_ci_status_ref",
+            "no_release_readiness_claim_without_change_summary_ref",
+            "no_release_readiness_claim_without_risk_or_rollback_ref",
+            "no_release_execution_from_readiness_assessment",
+        ),
+        receipt_fields=("actor", "repo", "candidate_ref", "evidence_used", "readiness_judgment", "actions_blocked"),
+        memory_policy="Store release-readiness receipt metadata only after a ready recommendation; defer memory when blocked or awaiting evidence.",
+    )
+    return {
+        "schema_ref": "urn:mullusi:read-model:github-operations-release-readiness-workroom:1",
+        "generated_at": generated_at,
+        "capability_id": GITHUB_RELEASE_READINESS_CAPABILITY_ID,
+        "surface": GITHUB_WORKROOM_SURFACE,
+        "actor_id": require_non_empty_text(actor_id, "actor_id"),
+        "workspace_id": require_non_empty_text(workspace_id, "workspace_id"),
+        "repo": require_non_empty_text(repo, "repo"),
+        "surface_event_id": require_non_empty_text(surface_event_id, "surface_event_id"),
+        "occurred_at": require_datetime_text(occurred_at, "occurred_at"),
+        "status": "awaiting_evidence",
+        "outcome": "AwaitingEvidence",
+        "required_evidence": list(passport.required_evidence),
+        "allowed_tools": list(passport.allowed_tools),
+        "blocked_actions": list(_RELEASE_READINESS_BLOCKED_ACTIONS),
+        "passport": passport.to_json_dict(),
+        "effect_boundary": dict(_EFFECT_BOUNDARY),
+        "raw_tool_surface_exposed": False,
+        "governed": True,
+        "execution_allowed": False,
+        "write_authority_granted": False,
+        "release_execution_allowed": False,
+    }
+
+
 def render_github_pr_safety_workroom_html(read_model: Mapping[str, Any]) -> str:
     """Render the browser-facing operator Workroom panel."""
 
@@ -3269,6 +3613,118 @@ issueDraftForm.addEventListener("submit", async (event) => {{
   }});
   const data = await response.json();
   issueDraftOutput.textContent = JSON.stringify(data, null, 2);
+}});
+</script>
+</body>
+</html>"""
+
+
+def render_github_release_readiness_workroom_html(read_model: Mapping[str, Any]) -> str:
+    """Render the local GitHub release readiness Workroom panel."""
+
+    repo = _html(read_model.get("repo", ""))
+    actor_id = _html(read_model.get("actor_id", "operator:gateway"))
+    workspace_id = _html(read_model.get("workspace_id", "workspace:mullusi-control-plane"))
+    surface_event_id = _html(read_model.get("surface_event_id", ""))
+    occurred_at = _html(read_model.get("occurred_at", ""))
+    status = _html(read_model.get("status", "awaiting_evidence"))
+    outcome = _html(read_model.get("outcome", "AwaitingEvidence"))
+    blocked_actions = "".join(f"<li>{_html(action)}</li>" for action in read_model.get("blocked_actions", ()))
+    required_evidence = "".join(f"<li>{_html(item)}</li>" for item in read_model.get("required_evidence", ()))
+    release_execution_allowed = str(read_model.get("release_execution_allowed", False)).lower()
+    write_authority = str(read_model.get("write_authority_granted", False)).lower()
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullusi GitHub Release Readiness Workroom</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 2rem; color: #17202a; background: #f7f9fb; }}
+    main {{ max-width: 1080px; margin: 0 auto; }}
+    section, form {{ background: #fff; border: 1px solid #d8dee8; border-radius: 8px; padding: 1rem; margin: 1rem 0; }}
+    label {{ display: block; font-weight: 650; margin-top: .75rem; }}
+    input, textarea {{ width: 100%; box-sizing: border-box; margin-top: .25rem; padding: .55rem; border: 1px solid #aeb8c7; border-radius: 6px; }}
+    textarea {{ min-height: 5.5rem; }}
+    button {{ margin-top: .9rem; padding: .55rem .85rem; border: 1px solid #1f5f9f; border-radius: 6px; background: #1f5f9f; color: #fff; font-weight: 700; }}
+    pre {{ overflow: auto; background: #0f1720; color: #e8eef7; padding: .85rem; border-radius: 6px; min-height: 4rem; }}
+    dl {{ display: grid; grid-template-columns: 230px 1fr; gap: .5rem 1rem; }}
+    dt {{ font-weight: 700; }}
+    dd {{ margin: 0; }}
+    code {{ background: #eef2f6; padding: .15rem .35rem; border-radius: 4px; }}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mullusi GitHub Release Readiness Workroom</h1>
+  <section>
+    <dl>
+      <dt>Repository</dt><dd><code>{repo}</code></dd>
+      <dt>Status</dt><dd>{status}</dd>
+      <dt>Outcome</dt><dd>{outcome}</dd>
+      <dt>Release execution allowed</dt><dd><code>{release_execution_allowed}</code></dd>
+      <dt>Write authority granted</dt><dd><code>{write_authority}</code></dd>
+    </dl>
+  </section>
+  <form id="release-readiness">
+    <input name="actor_id" type="hidden" value="{actor_id}">
+    <input name="workspace_id" type="hidden" value="{workspace_id}">
+    <input name="surface_event_id" type="hidden" value="{surface_event_id}">
+    <input name="requested_at" type="hidden" value="{occurred_at}">
+    <label>Repository <input name="repo" value="{repo}"></label>
+    <label>Release objective <input name="release_objective" value=""></label>
+    <label>Candidate ref <input name="candidate_ref" value=""></label>
+    <label>Evidence refs <textarea name="evidence_refs" placeholder="One evidence or receipt reference per line."></textarea></label>
+    <label>CI status refs <textarea name="ci_status_refs" placeholder="One CI status reference per line."></textarea></label>
+    <label>Change summary refs <textarea name="change_summary_refs" placeholder="One change summary reference per line."></textarea></label>
+    <label>Risk refs <textarea name="risk_refs" placeholder="One risk reference per line."></textarea></label>
+    <label>Rollback refs <textarea name="rollback_refs" placeholder="One rollback reference per line."></textarea></label>
+    <label>Known blockers <textarea name="known_blockers" placeholder="One unresolved blocker per line."></textarea></label>
+    <button type="submit">Assess Readiness</button>
+  </form>
+  <section>
+    <h2>Assessment Result</h2>
+    <pre id="release-readiness-output">Awaiting local release evidence. No GitHub token, tag, release, or deployment authority is accepted.</pre>
+  </section>
+  <section>
+    <h2>Required Evidence</h2>
+    <ul>{required_evidence}</ul>
+  </section>
+  <section>
+    <h2>Blocked Actions</h2>
+    <ul>{blocked_actions}</ul>
+  </section>
+</main>
+<script>
+const releaseReadinessForm = document.getElementById("release-readiness");
+const releaseReadinessOutput = document.getElementById("release-readiness-output");
+function releaseLines(value) {{
+  return value.split("\\n").map((item) => item.trim()).filter(Boolean);
+}}
+releaseReadinessForm.addEventListener("submit", async (event) => {{
+  event.preventDefault();
+  const form = new FormData(event.target);
+  const payload = {{
+    actor_id: form.get("actor_id"),
+    workspace_id: form.get("workspace_id"),
+    repo: form.get("repo"),
+    release_objective: form.get("release_objective"),
+    candidate_ref: form.get("candidate_ref"),
+    evidence_refs: releaseLines(form.get("evidence_refs") || ""),
+    ci_status_refs: releaseLines(form.get("ci_status_refs") || ""),
+    change_summary_refs: releaseLines(form.get("change_summary_refs") || ""),
+    risk_refs: releaseLines(form.get("risk_refs") || ""),
+    rollback_refs: releaseLines(form.get("rollback_refs") || ""),
+    known_blockers: releaseLines(form.get("known_blockers") || ""),
+    surface_event_id: form.get("surface_event_id"),
+    requested_at: form.get("requested_at")
+  }};
+  const response = await fetch("/operator/github-operations/release-readiness/assess", {{
+    method: "POST",
+    headers: {{ "Content-Type": "application/json" }},
+    body: JSON.stringify(payload)
+  }});
+  const data = await response.json();
+  releaseReadinessOutput.textContent = JSON.stringify(data, null, 2);
 }});
 </script>
 </body>

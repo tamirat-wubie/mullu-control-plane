@@ -6513,6 +6513,76 @@
     },
     {
       "allowed_actions": [
+        "verify_evidence",
+        "emit_receipt"
+      ],
+      "allowed_tools": [
+        "mullusi.local_release_readiness_assessment"
+      ],
+      "autonomy_ready": false,
+      "blocked_actions": [
+        "git_tag_created",
+        "github_release_created",
+        "deployment_started",
+        "package_published",
+        "workflow_triggered",
+        "repository_mutated",
+        "release_ready_claimed_without_evidence",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "blockers": [
+        "sandbox_receipt_missing",
+        "live_read_receipt_missing",
+        "worker_deployment_evidence_missing",
+        "recovery_evidence_missing",
+        "autonomy_controls_missing"
+      ],
+      "capability_id": "software_dev.github_release.readiness",
+      "capability_name": "Assess GitHub release readiness",
+      "certification_status": "certified",
+      "current_unlock_level": "C3",
+      "evidence_refs": [
+        "capability_registry:software_dev.github_release.readiness",
+        "capability_certification:certified"
+      ],
+      "family": "software_dev",
+      "next_unlock_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "passport_id": "capability_passport.software_dev.github_release.readiness.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "production_ready": false,
+      "required_gates": [
+        "gate.uao.admission",
+        "gate.capability.registry",
+        "gate.evidence.intake",
+        "gate.evidence.verification",
+        "gate.receipt.append",
+        "gate.production.evidence"
+      ],
+      "required_receipts": [
+        "release_objective",
+        "candidate_ref",
+        "ci_status_ref",
+        "change_summary_ref",
+        "risk_or_rollback_ref",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "rollback_status": {
+        "compensation_capability": "",
+        "review_required_on_failure": true,
+        "rollback_capability": "",
+        "status": "not_required"
+      },
+      "source_ref": "capabilities/software_dev/capability_pack.json",
+      "unlock_label": "Implemented",
+      "version": "0.1.0"
+    },
+    {
+      "allowed_actions": [
         "read",
         "verify_evidence",
         "emit_receipt"
@@ -7298,7 +7368,7 @@
   "summary": {
     "approval_required_count": 24,
     "blocked_count": 0,
-    "capability_count": 105,
+    "capability_count": 106,
     "family_counts": {
       "agentic_control": 17,
       "browser": 6,
@@ -7314,25 +7384,25 @@
       "personal_assistant": 12,
       "phone": 5,
       "physical": 2,
-      "software_dev": 10,
+      "software_dev": 11,
       "voice": 6
     },
     "operator_status_counts": {
       "Blocked": 0,
       "Evidence missing": 0,
-      "Live action disabled": 103,
+      "Live action disabled": 104,
       "Needs approval": 1,
       "Prepare-only": 0,
       "Ready": 1
     },
-    "passport_count": 105,
-    "receipt_required_count": 105,
-    "rollback_ready_count": 93,
+    "passport_count": 106,
+    "receipt_required_count": 106,
+    "rollback_ready_count": 94,
     "unlock_level_counts": {
       "C0": 0,
       "C1": 0,
       "C2": 12,
-      "C3": 88,
+      "C3": 89,
       "C4": 3,
       "C5": 0,
       "C6": 2,

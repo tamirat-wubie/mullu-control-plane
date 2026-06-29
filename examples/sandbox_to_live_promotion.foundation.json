@@ -14352,6 +14352,158 @@
         "approved_live",
         "production"
       ],
+      "capability_id": "software_dev.github_release.readiness",
+      "capability_name": "Assess GitHub release readiness",
+      "current_stage": "local_demo",
+      "current_unlock_level": "C3",
+      "family": "software_dev",
+      "live_action_enabled": false,
+      "next_promotion_step": "add sandbox receipt evidence",
+      "next_stage": "dry_run",
+      "operator_status": "Live action disabled",
+      "promotion_blocked": true,
+      "promotion_path_id": "sandbox_to_live_promotion.software_dev.github_release.readiness.foundation.v1",
+      "promotion_path_is_not_execution_authority": true,
+      "stage_count": 8,
+      "stages": [
+        {
+          "description": "Capability is registered and bounded for isolated proof.",
+          "label": "Sandbox",
+          "live_execution_allowed": false,
+          "missing_controls": [],
+          "required_controls": [
+            "capability_registry_binding",
+            "schema_policy_boundary"
+          ],
+          "sequence": 1,
+          "stage_id": "sandbox",
+          "stage_status": "complete"
+        },
+        {
+          "description": "Capability has local demo or mock-evaluation evidence.",
+          "label": "Local demo",
+          "live_execution_allowed": false,
+          "missing_controls": [],
+          "required_controls": [
+            "mock_or_local_eval_receipt",
+            "no_external_effects"
+          ],
+          "sequence": 2,
+          "stage_id": "local_demo",
+          "stage_status": "current"
+        },
+        {
+          "description": "Capability has no-effect rehearsal, receipt, and replay obligations.",
+          "label": "Dry-run",
+          "live_execution_allowed": false,
+          "missing_controls": [
+            "sandbox_receipt_evidence"
+          ],
+          "required_controls": [
+            "sandbox_receipt",
+            "receipt_append",
+            "deterministic_replay_plan"
+          ],
+          "sequence": 3,
+          "stage_id": "dry_run",
+          "stage_status": "blocked"
+        },
+        {
+          "description": "Capability needs approval, evidence review, or recovery review.",
+          "label": "Operator review",
+          "live_execution_allowed": false,
+          "missing_controls": [
+            "required_evidence"
+          ],
+          "required_controls": [
+            "approval_review",
+            "evidence_review",
+            "rollback_review"
+          ],
+          "sequence": 4,
+          "stage_id": "operator_review",
+          "stage_status": "blocked"
+        },
+        {
+          "description": "Capability is eligible only for bounded pilot planning after live evidence.",
+          "label": "Pilot",
+          "live_execution_allowed": false,
+          "missing_controls": [
+            "production_readiness_evidence",
+            "safe_live_action_evidence",
+            "operator_pilot_authorization"
+          ],
+          "required_controls": [
+            "pilot_authorization",
+            "live_evidence",
+            "connector_lease"
+          ],
+          "sequence": 5,
+          "stage_id": "pilot",
+          "stage_status": "blocked"
+        },
+        {
+          "description": "Capability requires bounded live receipts and active rollback coverage.",
+          "label": "Limited live",
+          "live_execution_allowed": false,
+          "missing_controls": [
+            "bounded_live_receipts",
+            "active_monitoring_receipt"
+          ],
+          "required_controls": [
+            "bounded_live_scope",
+            "monitoring",
+            "rollback_or_compensation"
+          ],
+          "sequence": 6,
+          "stage_id": "limited_live",
+          "stage_status": "blocked"
+        },
+        {
+          "description": "Capability requires approved live action evidence and terminal receipts.",
+          "label": "Approved live",
+          "live_execution_allowed": false,
+          "missing_controls": [
+            "approved_live_action_receipt",
+            "terminal_closure_certificate"
+          ],
+          "required_controls": [
+            "operator_approval",
+            "external_effect_receipt",
+            "terminal_certificate"
+          ],
+          "sequence": 7,
+          "stage_id": "approved_live",
+          "stage_status": "blocked"
+        },
+        {
+          "description": "Capability requires production witness evidence and retained monitoring.",
+          "label": "Production",
+          "live_execution_allowed": false,
+          "missing_controls": [
+            "production_witness",
+            "release_handoff_receipt"
+          ],
+          "required_controls": [
+            "production_witness",
+            "public_claim_boundary",
+            "release_handoff"
+          ],
+          "sequence": 8,
+          "stage_id": "production",
+          "stage_status": "blocked"
+        }
+      ]
+    },
+    {
+      "blocked_stage_ids": [
+        "dry_run",
+        "operator_review",
+        "pilot",
+        "limited_live",
+        "approved_live",
+        "production"
+      ],
       "capability_id": "software_dev.github_repo_status.summarize_read_only",
       "capability_name": "Summarize GitHub repository status read-only",
       "current_stage": "local_demo",
@@ -16031,13 +16183,13 @@
     "production"
   ],
   "summary": {
-    "blocked_path_count": 105,
-    "capability_count": 105,
+    "blocked_path_count": 106,
+    "capability_count": 106,
     "current_stage_counts": {
       "approved_live": 0,
       "dry_run": 3,
       "limited_live": 0,
-      "local_demo": 88,
+      "local_demo": 89,
       "operator_review": 1,
       "pilot": 1,
       "production": 0,
@@ -16058,12 +16210,12 @@
       "personal_assistant": 12,
       "phone": 5,
       "physical": 2,
-      "software_dev": 10,
+      "software_dev": 11,
       "voice": 6
     },
     "live_action_enabled_count": 0,
     "production_stage_count": 0,
-    "promotion_path_count": 105
+    "promotion_path_count": 106
   },
   "validators": [
     {
