@@ -710,6 +710,22 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert lab_real_world["lab_execution_boundary"] == "local_lab_only"
     assert lab_real_world["real_world_execution_boundary"] == "real_world"
     assert lab_real_world["external_effects_allowed"] is False
+    assert lab_real_world["control_summary"] == {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": "lab_real_world.control_summary.v1",
+        "operator_message": lab_real_world["operator_message"],
+        "action_banner": lab_real_world["operator_message"],
+        "capability_id": "lab_real_world.boundary",
+        "mode": "lab",
+        "current_level": "L3",
+        "next_level": "L9",
+        "status": "blocked",
+        "blocked_reason": "real_world_effect_boundary",
+        "next_unlock": "approval",
+        "next_evidence_count": lab_real_world["dangerous_approval_required_count"],
+        "external_effects_allowed": False,
+        "rollback_required": True,
+    }
     approval_boundary = capability_panel["metadata"]["approval_boundary_summary"]
     assert approval_boundary["summary_id"] == "approval_boundary.foundation"
     assert approval_boundary["local_auto_candidate_count"] == len(safe_action_candidates)
@@ -1785,6 +1801,7 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "high, real-world boundary" in response.text
     assert "Lab vs Real-world Summary" in response.text
     assert "Lab mode can prepare 7 local candidates" in response.text
+    assert "lab_real_world.control_summary.v1" in response.text
     assert "Real-world write status" in response.text
     assert "Approval Boundary Summary" in response.text
     assert "approval_boundary.control_summary.v1" in response.text

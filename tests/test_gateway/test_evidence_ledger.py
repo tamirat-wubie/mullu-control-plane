@@ -15,6 +15,9 @@ Invariants:
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from gateway.evidence_ledger import (
@@ -27,7 +30,11 @@ from gateway.evidence_ledger import (
     RelationType,
     SourceAuthority,
 )
-from gateway.evidence_ledger_read_model import build_foundation_evidence_ledger_read_model
+from gateway.evidence_ledger_read_model import (
+    EvidenceLedgerReadModelSourceError,
+    build_foundation_evidence_ledger_read_model,
+    load_repository_evidence_source,
+)
 from gateway.server import create_gateway_app
 
 
@@ -250,6 +257,10 @@ def test_evidence_ledger_read_model_projection_is_foundation_bound() -> None:
     assert payload["route_id"] == "causal_evidence_continuity_ledger_read_model"
     assert payload["status"] == "SolvedVerified"
     assert payload["read_only"] is True
+    assert payload["repository_local_source"] is True
+    assert payload["repository_source_ref"] == "examples/evidence_ledger/foundation_evidence_source.json"
+    assert payload["repository_source_hash"].startswith("sha256:")
+    assert payload["repository_source_loaded"] is True
     assert payload["foundation_fixture_is_not_live_evidence"] is True
     assert payload["route_is_not_write_path"] is True
     assert payload["external_effects_allowed"] is False
@@ -259,6 +270,8 @@ def test_evidence_ledger_read_model_projection_is_foundation_bound() -> None:
     assert "raw_payload" not in proof_summary
     assert "raw_reference" not in proof_summary
     assert invariants["proof_view_redacts_raw_payload"] is True
+    assert invariants["repository_local_source_loaded"] is True
+    assert invariants["repository_source_is_not_write_path"] is True
 
 
 def test_evidence_ledger_gateway_route_is_read_only() -> None:
@@ -272,6 +285,8 @@ def test_evidence_ledger_gateway_route_is_read_only() -> None:
     assert post_response.status_code == 405
     assert payload["status"] == "SolvedVerified"
     assert payload["read_only"] is True
+    assert payload["repository_local_source"] is True
+    assert payload["repository_source_loaded"] is True
     assert payload["route_is_not_write_path"] is True
     assert payload["foundation_fixture_is_not_live_evidence"] is True
     assert payload["raw_payloads_exposed"] is False
@@ -279,6 +294,25 @@ def test_evidence_ledger_gateway_route_is_read_only() -> None:
     assert payload["evidence"]["accepted_count"] == 3
     assert payload["evidence"]["rejected_count"] == 0
     assert payload["evidence"]["linked_count"] == 3
+
+
+def test_evidence_ledger_repository_source_rejects_missing_foundation_marker(tmp_path: Path) -> None:
+    source_payload = load_repository_evidence_source()
+    source_payload["source_is_not_write_path"] = False
+    bad_source = tmp_path / "bad-evidence-source.json"
+    bad_source.write_text(json.dumps(source_payload), encoding="utf-8")
+
+    try:
+        build_foundation_evidence_ledger_read_model(generated_at=NOW, source_path=bad_source)
+    except EvidenceLedgerReadModelSourceError as exc:
+        error = str(exc)
+    else:
+        error = ""
+
+    assert error == "source_is_not_write_path_must_be_true"
+    assert bad_source.exists()
+    assert source_payload["repository_local_source"] is True
+    assert source_payload["source_is_not_live_evidence"] is True
 
 
 class StubPlatform:

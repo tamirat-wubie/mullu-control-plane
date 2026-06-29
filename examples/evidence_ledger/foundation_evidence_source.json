@@ -1,0 +1,148 @@
+{
+  "source_id": "foundation-evidence-ledger-source.v1",
+  "source_version": 1,
+  "foundation_mode": true,
+  "repository_local_source": true,
+  "source_is_not_live_evidence": true,
+  "source_is_not_write_path": true,
+  "source_is_not_terminal_closure": true,
+  "observed_at": "2026-06-29T12:00:00+00:00",
+  "claim": {
+    "claim_id": "claim-foundation-invoice-123-paid",
+    "claim_type": "payment_completed",
+    "proposition": "Invoice 123 payment is supported by repository-local proof evidence.",
+    "subject": "invoice-123",
+    "scope": {
+      "tenant_id": "foundation-tenant",
+      "repository_local_source": true
+    },
+    "temporal_scope": {
+      "valid_at": "2026-06-29T12:00:00+00:00",
+      "strongly_supported_at_time": "2026-06-29T12:00:00+00:00"
+    },
+    "expiration_policy": {
+      "requires_recheck_after": "PT24H",
+      "claim_expires_without_recheck": true
+    },
+    "expected_evidence_profile": {
+      "required_evidence_kinds": [
+        "transaction",
+        "email",
+        "api_response"
+      ],
+      "minimum_independent_sources": 2,
+      "freshness_window_days": 30
+    }
+  },
+  "source_authorities": [
+    {
+      "source_id": "foundation-bank-feed",
+      "source_type": "local_bank_fixture",
+      "authority_domains": [
+        "payment_settlement",
+        "bank_transaction"
+      ],
+      "forbidden_domains": [],
+      "reliability_score": 0.95,
+      "verification_method": "repository_local_fixture",
+      "last_verified_at": "2026-06-29T12:00:00+00:00",
+      "authority_scope": "payment settlement fixture only"
+    },
+    {
+      "source_id": "foundation-gmail",
+      "source_type": "local_email_fixture",
+      "authority_domains": [
+        "email_receipt"
+      ],
+      "forbidden_domains": [
+        "payment_settlement"
+      ],
+      "reliability_score": 0.7,
+      "verification_method": "repository_local_fixture",
+      "last_verified_at": "2026-06-29T12:00:00+00:00",
+      "authority_scope": "email receipt fixture only"
+    },
+    {
+      "source_id": "foundation-invoice-system",
+      "source_type": "local_invoice_fixture",
+      "authority_domains": [
+        "invoice_status"
+      ],
+      "forbidden_domains": [],
+      "reliability_score": 0.8,
+      "verification_method": "repository_local_fixture",
+      "last_verified_at": "2026-06-29T12:00:00+00:00",
+      "authority_scope": "invoice status fixture only"
+    }
+  ],
+  "evidence_records": [
+    {
+      "evidence_kind": "transaction",
+      "source_id": "foundation-bank-feed",
+      "observer_id": "foundation-observer",
+      "capture_method": "repository_local_source_projection",
+      "observed_at": "2026-06-29T12:00:00+00:00",
+      "ontology_type": "payment_evidence",
+      "authority_domain": "payment_settlement",
+      "sensitivity_level": "restricted",
+      "raw_reference": "foundation://raw/transaction/foundation-bank-feed",
+      "canonical_reference": "foundation://canonical/transaction/foundation-bank-feed",
+      "raw_payload": {
+        "transaction_id": "txn-123",
+        "invoice_id": "123",
+        "state": "posted"
+      },
+      "canonical_payload": {
+        "evidence_kind": "transaction",
+        "source_id": "foundation-bank-feed",
+        "invoice_id": "123",
+        "authority_domain": "payment_settlement"
+      }
+    },
+    {
+      "evidence_kind": "email",
+      "source_id": "foundation-gmail",
+      "observer_id": "foundation-observer",
+      "capture_method": "repository_local_source_projection",
+      "observed_at": "2026-06-29T12:00:00+00:00",
+      "ontology_type": "payment_evidence",
+      "authority_domain": "email_receipt",
+      "sensitivity_level": "restricted",
+      "raw_reference": "foundation://raw/email/foundation-gmail",
+      "canonical_reference": "foundation://canonical/email/foundation-gmail",
+      "raw_payload": {
+        "message_id": "msg-123",
+        "invoice_id": "123",
+        "state": "receipt_observed"
+      },
+      "canonical_payload": {
+        "evidence_kind": "email",
+        "source_id": "foundation-gmail",
+        "invoice_id": "123",
+        "authority_domain": "email_receipt"
+      }
+    },
+    {
+      "evidence_kind": "api_response",
+      "source_id": "foundation-invoice-system",
+      "observer_id": "foundation-observer",
+      "capture_method": "repository_local_source_projection",
+      "observed_at": "2026-06-29T12:00:00+00:00",
+      "ontology_type": "payment_evidence",
+      "authority_domain": "invoice_status",
+      "sensitivity_level": "restricted",
+      "raw_reference": "foundation://raw/api_response/foundation-invoice-system",
+      "canonical_reference": "foundation://canonical/api_response/foundation-invoice-system",
+      "raw_payload": {
+        "invoice_id": "123",
+        "state": "paid"
+      },
+      "canonical_payload": {
+        "evidence_kind": "api_response",
+        "source_id": "foundation-invoice-system",
+        "invoice_id": "123",
+        "authority_domain": "invoice_status"
+      }
+    }
+  ]
+}

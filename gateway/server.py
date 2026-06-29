@@ -2144,6 +2144,27 @@ def _lab_real_world_summary(
         if isinstance(item, Mapping) and item.get("approval_required") is True
     )
     real_world_status = real_world_write_status or "blocked"
+    operator_message = (
+        f"Lab mode can prepare {len(safe_candidates)} local candidates; "
+        f"real-world writes remain {real_world_status}; "
+        f"{dangerous_approval_count} dangerous zones need approval"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="lab_real_world.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock="approval" if dangerous_approval_count else "none",
+        capability_summary={
+            "capability_id": "lab_real_world.boundary",
+            "mode": "lab",
+            "current_level": "L3" if lab_mode_allowed else "L1",
+            "next_level": "L9",
+            "status": "blocked" if real_world_status != "allowed" else "preflight_ready",
+            "blocked_reason": "real_world_effect_boundary" if real_world_status != "allowed" else "none",
+            "next_evidence_count": dangerous_approval_count,
+            "external_effects_allowed": False,
+            "rollback_required": dangerous_approval_count > 0,
+        },
+    )
     return {
         "summary_id": "lab_real_world.foundation",
         "lab_mode_allowed": lab_mode_allowed,
@@ -2153,14 +2174,15 @@ def _lab_real_world_summary(
         "real_world_write_status": real_world_status,
         "dangerous_blocker_count": len(dangerous_blockers),
         "dangerous_approval_required_count": dangerous_approval_count,
-        "operator_message": (
-            f"Lab mode can prepare {len(safe_candidates)} local candidates; "
-            f"real-world writes remain {real_world_status}; "
-            f"{dangerous_approval_count} dangerous zones need approval"
-        ),
+        "operator_message": operator_message,
         "lab_execution_boundary": "local_lab_only",
         "real_world_execution_boundary": "real_world",
         "external_effects_allowed": False,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 

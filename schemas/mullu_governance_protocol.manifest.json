@@ -605,6 +605,12 @@
       "urn": "urn:mullusi:schema:capability-registry-entry:1"
     },
     {
+      "path": "schemas/capability_success_contract_registry.schema.json",
+      "schema_id": "capability-success-contract-registry",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:capability-success-contract-registry:1"
+    },
+    {
       "path": "schemas/capability_upgrade_plan.schema.json",
       "schema_id": "capability-upgrade-plan",
       "surface": "capability",

@@ -38,7 +38,7 @@ def test_component_router_inventory_accepts_default_foundation_example() -> None
     assert validation.errors == ()
     assert validation.route_binding_count == 10
     assert validation.bound_route_count == 35
-    assert validation.route_family_classification_count == 80
+    assert validation.route_family_classification_count == 81
     assert validation.classified_route_count == validation.discovered_route_count
     assert validation.discovered_route_count >= validation.bound_route_count
     assert validation.unclassified_route_count == 0

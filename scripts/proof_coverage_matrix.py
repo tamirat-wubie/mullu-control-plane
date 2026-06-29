@@ -220,6 +220,34 @@ def proof_coverage_matrix() -> dict[str, Any]:
             },
         ),
         _surface(
+            "causal_evidence_ledger_read_model",
+            ["/api/v1/evidence-ledger/read-model"],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "proven",
+            [
+                "gateway/evidence_ledger.py",
+                "gateway/evidence_ledger_read_model.py",
+                "gateway/server.py",
+                "examples/evidence_ledger/foundation_evidence_source.json",
+                "tests/test_gateway/test_evidence_ledger.py",
+            ],
+            (
+                "Causal evidence continuity ledger exposes a Foundation Mode proof-only read model "
+                "from repository-local evidence source material; it does not append live evidence, "
+                "grant route execution authority, or claim terminal closure."
+            ),
+            [
+                "evidence_ledger_judges_claim_strongly_when_required_evidence_is_present",
+                "evidence_ledger_blocks_premature_judgment_when_required_evidence_is_missing",
+                "evidence_ledger_exposes_proof_only_view_without_raw_payload",
+                "evidence_ledger_read_model_projection_is_foundation_bound",
+                "evidence_ledger_gateway_route_is_read_only",
+                "evidence_ledger_repository_source_rejects_missing_foundation_marker",
+            ],
+        ),
+        _surface(
             "local_assurance_refresh",
             [
                 "refresh_local_assurance.run_refresh",

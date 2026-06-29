@@ -3999,6 +3999,19 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     lab_real_world_lab_boundary = str(lab_real_world_summary.get("lab_execution_boundary") or "local_lab_only")
     lab_real_world_real_boundary = str(lab_real_world_summary.get("real_world_execution_boundary") or "real_world")
     lab_real_world_external_effects = lab_real_world_summary.get("external_effects_allowed") is True
+    lab_real_world_control = lab_real_world_summary.get("control_summary", {})
+    if not isinstance(lab_real_world_control, Mapping):
+        lab_real_world_control = {}
+    lab_real_world_control_contract = str(
+        lab_real_world_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    )
+    lab_real_world_control_summary_id = str(
+        lab_real_world_control.get("summary_id") or "lab_real_world.control_summary.v1"
+    )
+    lab_real_world_control_status = str(lab_real_world_control.get("status") or "blocked")
+    lab_real_world_control_level = str(lab_real_world_control.get("current_level") or "L3")
+    lab_real_world_control_next_level = str(lab_real_world_control.get("next_level") or "L9")
+    lab_real_world_control_next_unlock = str(lab_real_world_control.get("next_unlock") or "approval")
     approval_boundary_message = str(
         approval_boundary_summary.get("operator_message")
         or "0 local automatic candidates; 0 capability unlocks need approval; 0 dangerous zones remain approval-bound"
@@ -5635,6 +5648,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <h2>Lab vs Real-world Summary</h2>
     <div class="task">
       <span class="field"><strong>Message</strong>{escape(lab_real_world_message)}</span>
+      <span class="field"><strong>Control contract</strong>{escape(lab_real_world_control_contract)}</span>
+      <span class="field"><strong>Control summary</strong>{escape(lab_real_world_control_summary_id)}</span>
+      <span class="field"><strong>Control status</strong>{escape(lab_real_world_control_status)}</span>
+      <span class="field"><strong>Control level</strong>{escape(lab_real_world_control_level)} -> {escape(lab_real_world_control_next_level)}</span>
+      <span class="field"><strong>Control next unlock</strong>{escape(lab_real_world_control_next_unlock)}</span>
       <span class="field"><strong>Lab mode allowed</strong>{escape(str(lab_real_world_lab_allowed).lower())}</span>
       <span class="field"><strong>Lab safe candidates</strong>{lab_real_world_safe_count}</span>
       <span class="field"><strong>Fast lab ready</strong>{lab_real_world_fast_ready}</span>
