@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:software-dev:github-issue-draft-input:1",
+  "title": "Software Dev GitHub Issue Draft Input",
+  "description": "Governed local request for drafting a GitHub issue from bounded evidence. The request cannot create GitHub issues, apply labels, assign users, post comments, mutate repositories, or claim live issue creation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_id",
+    "request_id",
+    "repository_ref",
+    "workspace_ref",
+    "problem_summary",
+    "evidence_refs",
+    "acceptance_criteria",
+    "suggested_labels",
+    "metadata"
+  ],
+  "properties": {
+    "capability_id": {
+      "const": "software_dev.github_issue.draft"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repository_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workspace_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "problem_summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "suggested_labels": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "write_authority_granted": {
+      "const": false
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}
