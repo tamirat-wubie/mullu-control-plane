@@ -145,6 +145,7 @@ from gateway.governed_operations import (
 )
 from gateway.github_operations_workroom import (
     GitHubActionsFailureEvidenceAdmissionRequest,
+    GitHubIssueDraftRequest,
     GitHubPatchPlanDraftRequest,
     GitHubRepoStatusEvidenceAdmissionRequest,
     GitHubReadOnlyEvidenceFetchError,
@@ -156,6 +157,8 @@ from gateway.github_operations_workroom import (
     admit_github_read_only_evidence_collection,
     build_github_actions_failure_diagnosis_receipt,
     build_github_actions_failure_workroom_read_model,
+    build_github_issue_draft_receipt,
+    build_github_issue_draft_workroom_read_model,
     build_github_patch_plan_draft_receipt,
     build_github_patch_plan_workroom_read_model,
     build_github_repo_status_summary_receipt,
@@ -165,12 +168,14 @@ from gateway.github_operations_workroom import (
     build_github_pr_safety_workroom_read_model,
     build_pr_safety_projection_from_github_fetch_receipt,
     evaluate_github_actions_failure_diagnosis,
+    evaluate_github_issue_draft,
     evaluate_github_patch_plan_draft,
     evaluate_github_repo_status_summary,
     evaluate_github_pr_safety_judgment,
     persist_github_read_only_evidence_receipt_bundle,
     read_github_read_only_evidence_receipt_bundle,
     render_github_actions_failure_workroom_html,
+    render_github_issue_draft_workroom_html,
     render_github_patch_plan_workroom_html,
     render_github_repo_status_workroom_html,
     render_github_pr_safety_workroom_html,
@@ -843,6 +848,29 @@ class GatewayGitHubPatchPlanDraftRequest(BaseModel):
         default_factory=lambda: [
             "Evidence summaries are bounded and authorized for this actor and workspace.",
             "Patch planning does not edit repository files, create branches, create pull requests, or write to GitHub.",
+        ]
+    )
+
+
+class GatewayGitHubIssueDraftRequest(BaseModel):
+    """Draft a governed local GitHub issue proposal from bounded evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    actor_id: str = "operator:gateway"
+    workspace_id: str = "workspace:mullusi-control-plane"
+    repo: str = "tamirat-wubie/mullu-control-plane"
+    problem_summary: str = ""
+    evidence_refs: list[str] = Field(default_factory=list)
+    acceptance_criteria: list[str] = Field(default_factory=list)
+    suggested_labels: list[str] = Field(default_factory=list)
+    surface_event_id: str = ""
+    requested_at: str = ""
+    authority_ref: str = "policy.github.issue_draft.local_draft_only"
+    assumptions: list[str] = Field(
+        default_factory=lambda: [
+            "Evidence references are bounded and authorized for this actor and workspace.",
+            "Issue drafting does not create GitHub issues, apply labels, assign users, comment, or mutate repositories.",
         ]
     )
 
@@ -10047,6 +10075,116 @@ def create_gateway_app(
         return {
             "github_patch_plan_draft": draft.to_json_dict(),
             "github_patch_plan_receipt": receipt.to_json_dict(),
+            "outcome": "SolvedUnverified" if draft.status == "drafted" else "AwaitingEvidence",
+            "governed": True,
+            "execution_allowed": True,
+            "live_connector_call_performed": False,
+            "write_authority_granted": False,
+            "effect_boundary": {
+                "execution_allowed": True,
+                "live_connector_execution_allowed": False,
+                "github_call_allowed": False,
+                "repository_read_allowed": False,
+                "repository_mutation_allowed": False,
+                "pull_request_mutation_allowed": False,
+                "branch_push_allowed": False,
+                "issue_creation_allowed": False,
+                "review_submission_allowed": False,
+                "deployment_mutation_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+        }
+
+    @app.get("/operator/github-operations/issue-draft/read-model")
+    def operator_github_operations_issue_draft_read_model(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = surface_event_id or f"operator-github-issue-draft:{repo}:{now}"
+            return build_github_issue_draft_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+
+    @app.get("/operator/github-operations/issue-draft", response_class=HTMLResponse)
+    def operator_github_operations_issue_draft_panel(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = surface_event_id or f"operator-github-issue-draft:{repo}:{now}"
+            read_model = build_github_issue_draft_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return HTMLResponse(render_github_issue_draft_workroom_html(read_model))
+
+    @app.post("/operator/github-operations/issue-draft/draft")
+    def operator_github_operations_issue_draft(
+        request: Request,
+        req: GatewayGitHubIssueDraftRequest,
+    ):
+        _require_authority_operator(request)
+        try:
+            now = req.requested_at or _clock()
+            surface_event_id = req.surface_event_id or f"operator-github-issue-draft:{req.repo}:{now}"
+            draft_request = GitHubIssueDraftRequest(
+                actor_id=req.actor_id,
+                workspace_id=req.workspace_id,
+                repo=req.repo,
+                problem_summary=req.problem_summary,
+                evidence_refs=tuple(req.evidence_refs),
+                acceptance_criteria=tuple(req.acceptance_criteria),
+                suggested_labels=tuple(req.suggested_labels),
+                surface_event_id=surface_event_id,
+                requested_at=now,
+                authority_ref=req.authority_ref,
+                assumptions=tuple(req.assumptions),
+            )
+            draft = evaluate_github_issue_draft(request=draft_request, clock=lambda: now)
+            receipt = build_github_issue_draft_receipt(
+                request=draft_request,
+                draft=draft,
+                occurred_at=now,
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid GitHub issue draft request",
+                    "error_code": "invalid_github_issue_draft",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "github_issue_draft": draft.to_json_dict(),
+            "github_issue_draft_receipt": receipt.to_json_dict(),
             "outcome": "SolvedUnverified" if draft.status == "drafted" else "AwaitingEvidence",
             "governed": True,
             "execution_allowed": True,

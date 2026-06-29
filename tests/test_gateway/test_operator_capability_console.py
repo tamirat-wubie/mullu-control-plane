@@ -321,7 +321,7 @@ def test_operator_capability_read_model_projects_friction_controls_for_software_
     workflow = read_model["friction_control"]["developer_workflow_v1"]
     sandbox_to_pr = read_model["friction_control"]["sandbox_to_pr_now"]
 
-    assert read_model["capability_count"] == 9
+    assert read_model["capability_count"] == 10
     assert read_model["unlock_level_counts"]["L4"] == 1
     assert read_model["unlock_level_counts"]["L5"] == 1
     assert read_model["friction_control"]["fast_mode_lab_ready_count"] == 2
@@ -382,7 +382,7 @@ def test_operator_friction_control_endpoint_projects_developer_workflow() -> Non
     assert payload["live_execution_enabled"] is False
     assert payload["source_refs"]["capability_surface"] == "governed_capability_records"
     assert payload["source_refs"]["domain_filter"] == "software_dev"
-    assert payload["summary"]["capability_count"] == 9
+    assert payload["summary"]["capability_count"] == 10
     assert payload["summary"]["fast_mode_lab_ready_count"] == 2
     assert payload["summary"]["real_world_mode_allowed_count"] == 0
     assert workflow["workflow_id"] == "mullu_developer_workflow.v1"
@@ -597,7 +597,7 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert payload["overall_health"] == "missing"
     assert payload["missing_panel_count"] == payload["panel_count"] - 4
     assert capability_panel["source_surface"] == "capability_friction_control"
-    assert capability_panel["item_count"] == 9
+    assert capability_panel["item_count"] == 10
     assert capability_panel["blocked_count"] >= 1
     assert capability_panel["review_count"] >= 1
     assert capability_panel["metadata"]["safe_automatic_zone_count"] == 7
@@ -668,7 +668,7 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert rollback_control["external_effects_allowed"] is False
     registry_summary = capability_panel["metadata"]["capability_registry_summary"]
     assert registry_summary["summary_id"] == "capability_registry.foundation"
-    assert registry_summary["capability_count"] == 9
+    assert registry_summary["capability_count"] == 10
     assert registry_summary["blocked_count"] == capability_panel["blocked_count"]
     assert registry_summary["approval_required_count"] == capability_panel["review_count"]
     assert registry_summary["pending_unlock_count"] == len(unlock_queue)
@@ -713,7 +713,7 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert control_system["status"] == "preflight_ready"
     assert control_system["recommended_mode"] == "fast"
     assert control_system["lab_mode_allowed"] is True
-    assert control_system["capability_count"] == 9
+    assert control_system["capability_count"] == 10
     assert control_system["pending_unlock_count"] >= 1
     assert control_system["safe_candidate_count"] == 7
     assert control_system["dangerous_blocker_count"] == 7
@@ -725,7 +725,7 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert control_system["execution_boundary"] == "local_lab_only"
     assert control_system["external_effects_allowed"] is False
     assert capability_panel["metadata"]["next_unlock_queue_count"] >= 1
-    assert capability_panel["metadata"]["capability_passport_count"] == 9
+    assert capability_panel["metadata"]["capability_passport_count"] == 10
     pr_unlock = next(item for item in unlock_queue if item["capability_id"] == "software_dev.pr_candidate.prepare")
     assert pr_unlock["next_unlock"] == "approval"
     assert "approval" in pr_unlock["required_evidence"]
@@ -2106,14 +2106,14 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
     assert receipt["rollback_control_summary"]["summary_id"] == "rollback_control.foundation"
     assert receipt["rollback_control_summary"]["rollback_default_count"] >= 1
     assert receipt["rollback_control_summary"]["rollback_required_count"] >= 1
-    assert receipt["rollback_control_summary"]["capability_count"] == 9
+    assert receipt["rollback_control_summary"]["capability_count"] == 10
     assert receipt["rollback_control_summary"]["rollback_default_ready"] is True
     assert receipt["rollback_control_summary"]["sandbox_to_pr_policy_ready"] is True
     assert "rollback execution remains receipt-bound" in receipt["rollback_control_summary"]["operator_message"]
     assert receipt["rollback_control_summary"]["execution_boundary"] == "local_lab_only"
     assert receipt["rollback_control_summary"]["external_effects_allowed"] is False
     assert receipt["capability_registry_summary"]["summary_id"] == "capability_registry.foundation"
-    assert receipt["capability_registry_summary"]["capability_count"] == 9
+    assert receipt["capability_registry_summary"]["capability_count"] == 10
     assert receipt["capability_registry_summary"]["blocked_count"] >= 1
     assert receipt["capability_registry_summary"]["approval_required_count"] >= 1
     assert receipt["capability_registry_summary"]["pending_unlock_count"] >= 1
@@ -2152,7 +2152,7 @@ def test_operator_control_tower_status_receipt_route_exports_focus() -> None:
     assert receipt["control_system_summary"]["status"] == "preflight_ready"
     assert receipt["control_system_summary"]["recommended_mode"] == "fast"
     assert receipt["control_system_summary"]["lab_mode_allowed"] is True
-    assert receipt["control_system_summary"]["capability_count"] == 9
+    assert receipt["control_system_summary"]["capability_count"] == 10
     assert receipt["control_system_summary"]["pending_unlock_count"] >= 1
     assert receipt["control_system_summary"]["safe_candidate_count"] == 7
     assert receipt["control_system_summary"]["dangerous_blocker_count"] == 7
