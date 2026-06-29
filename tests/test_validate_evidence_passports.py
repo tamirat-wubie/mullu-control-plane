@@ -75,6 +75,17 @@ def test_evidence_passports_answer_core_proof_questions() -> None:
     assert email["missing_evidence"]
     assert email["blocked"]["blocked_action_count"] >= 1
     assert email["replay"]["replay_required"] is True
+    assert email["replay"]["missing_replay_refs"] == [
+        "replay_record",
+        "replay_input_digest",
+        "replay_output_digest",
+        "connector_id",
+        "recipient_hashes",
+        "draft_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+    ]
+    assert "replay_input_digest" in email["replay"]["next_replay_action"]
     assert email["rollback"]["rollback_status"] in {"review_only", "missing"}
     assert email["rollback"]["rollback_or_compensation_available"] is False
     assert email["rollback"]["missing_rollback_refs"] == [
