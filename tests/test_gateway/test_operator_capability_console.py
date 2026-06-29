@@ -791,6 +791,28 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert "Control system in fast mode" in control_system["operator_message"]
     assert control_system["execution_boundary"] == "local_lab_only"
     assert control_system["external_effects_allowed"] is False
+    assert control_system["control_summary"] == {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": "control_system.control_summary.v1",
+        "operator_message": (
+            "Control system in fast mode; 7 safe local candidates; "
+            "next unlock approval"
+        ),
+        "action_banner": (
+            "Control system in fast mode; 7 safe local candidates; "
+            "next unlock approval"
+        ),
+        "capability_id": "control_system.foundation",
+        "mode": "lab",
+        "current_level": "L4",
+        "next_level": "L5",
+        "status": "preflight_ready",
+        "blocked_reason": "none",
+        "next_unlock": "approval",
+        "next_evidence_count": control_system["next_required_evidence_count"],
+        "external_effects_allowed": False,
+        "rollback_required": True,
+    }
     assert capability_panel["metadata"]["next_unlock_queue_count"] >= 1
     assert capability_panel["metadata"]["capability_passport_count"] == 9
     pr_unlock = next(item for item in unlock_queue if item["capability_id"] == "software_dev.pr_candidate.prepare")
@@ -1751,6 +1773,7 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Approval blockers" in response.text
     assert "Control System Summary" in response.text
     assert "Control system in fast mode" in response.text
+    assert "control_system.control_summary.v1" in response.text
     assert "Next developer workflow action" in response.text
     assert "Developer Workflow Milestone" in response.text
     assert "collect_sandbox_receipts" in response.text

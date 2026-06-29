@@ -1703,6 +1703,27 @@ def _capability_friction_control_panel_read_model(friction_control: Mapping[str,
         f"{control_system_summary['safe_candidate_count']} safe local candidates; "
         f"next unlock {control_system_summary['next_unlock']}"
     )
+    final_control_summary = operator_dashboard_control_summary(
+        summary_id="control_system.control_summary.v1",
+        operator_message=str(control_system_summary["operator_message"]),
+        next_unlock=str(control_system_summary["next_unlock"]),
+        capability_summary={
+            "capability_id": "control_system.foundation",
+            "mode": "lab",
+            "current_level": "L4" if workflow_status == "preflight_ready" else "L2",
+            "next_level": "L5",
+            "status": workflow_status,
+            "blocked_reason": "none" if workflow_status == "preflight_ready" else str(control_system_summary["next_unlock"]),
+            "next_evidence_count": int(control_system_summary["next_required_evidence_count"]),
+            "external_effects_allowed": False,
+            "rollback_required": True,
+        },
+    )
+    control_system_summary["control_summary"] = {
+        key: value
+        for key, value in final_control_summary.items()
+        if key != "capability_summary"
+    }
     return {
         "source_surface": "capability_friction_control",
         "item_count": int(summary.get("capability_count", len(capability_cards)) or 0),
@@ -2004,10 +2025,31 @@ def _control_system_summary(
     safe_candidate_count = int(safe_vs_dangerous_summary.get("safe_candidate_count") or 0)
     dangerous_blocker_count = int(safe_vs_dangerous_summary.get("dangerous_blocker_count") or 0)
     next_unlock = str(unlock_readiness_summary.get("next_unlock") or workflow.get("next_unlock") or "approval")
+    status = workflow_status or "awaiting_evidence"
+    operator_message = (
+        f"Control system in {recommended_mode} mode; "
+        f"{safe_candidate_count} safe local candidates; next unlock {next_unlock}"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="control_system.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock=next_unlock,
+        capability_summary={
+            "capability_id": "control_system.foundation",
+            "mode": "lab",
+            "current_level": "L4" if status == "preflight_ready" else "L2",
+            "next_level": "L5",
+            "status": status,
+            "blocked_reason": "none" if status == "preflight_ready" else next_unlock,
+            "next_evidence_count": len(next_required_evidence),
+            "external_effects_allowed": False,
+            "rollback_required": True,
+        },
+    )
     return {
         "summary_id": "control_system.foundation",
         "task": "Mullu Developer Workflow v1",
-        "status": workflow_status or "awaiting_evidence",
+        "status": status,
         "recommended_mode": recommended_mode,
         "lab_mode_allowed": lab_real_world_summary.get("lab_mode_allowed") is True,
         "capability_count": int(capability_registry_summary.get("capability_count") or 0),
@@ -2020,12 +2062,14 @@ def _control_system_summary(
         "next_required_evidence_count": len(next_required_evidence),
         "risk": "low, local lab only",
         "action_needed": action_needed or "inspect workflow receipts",
-        "operator_message": (
-            f"Control system in {recommended_mode} mode; "
-            f"{safe_candidate_count} safe local candidates; next unlock {next_unlock}"
-        ),
+        "operator_message": operator_message,
         "execution_boundary": "local_lab_only",
         "external_effects_allowed": False,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 

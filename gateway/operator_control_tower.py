@@ -4130,6 +4130,19 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     control_system_action = str(control_system_summary.get("action_needed") or workflow_summary.get("action_needed") or "")
     control_system_boundary = str(control_system_summary.get("execution_boundary") or "local_lab_only")
     control_system_external_effects = control_system_summary.get("external_effects_allowed") is True
+    control_system_control = control_system_summary.get("control_summary", {})
+    if not isinstance(control_system_control, Mapping):
+        control_system_control = {}
+    control_system_control_contract = str(
+        control_system_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    )
+    control_system_control_summary_id = str(
+        control_system_control.get("summary_id") or "control_system.control_summary.v1"
+    )
+    control_system_control_status = str(control_system_control.get("status") or control_system_status)
+    control_system_control_level = str(control_system_control.get("current_level") or "L2")
+    control_system_control_next_level = str(control_system_control.get("next_level") or "L5")
+    control_system_control_next_unlock = str(control_system_control.get("next_unlock") or control_system_next_unlock)
     checklist_rows = "\n".join(
         "<tr>"
         f"<td>{escape(str(item.get('label', '')))}</td>"
@@ -5701,6 +5714,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <h2>Control System Summary</h2>
     <div class="task">
       <span class="field"><strong>Message</strong>{escape(control_system_message)}</span>
+      <span class="field"><strong>Control contract</strong>{escape(control_system_control_contract)}</span>
+      <span class="field"><strong>Control summary</strong>{escape(control_system_control_summary_id)}</span>
+      <span class="field"><strong>Control status</strong>{escape(control_system_control_status)}</span>
+      <span class="field"><strong>Control level</strong>{escape(control_system_control_level)} -> {escape(control_system_control_next_level)}</span>
+      <span class="field"><strong>Control next unlock</strong>{escape(control_system_control_next_unlock)}</span>
       <span class="field"><strong>Task</strong>{escape(control_system_task)}</span>
       <span class="field"><strong>Status</strong>{escape(control_system_status)}</span>
       <span class="field"><strong>Recommended mode</strong>{escape(control_system_mode)}</span>
