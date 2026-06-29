@@ -6380,6 +6380,74 @@
         "emit_receipt"
       ],
       "allowed_tools": [
+        "mullusi.local_github_issue_draft"
+      ],
+      "autonomy_ready": false,
+      "blocked_actions": [
+        "github_issue_created",
+        "github_label_applied",
+        "github_issue_assigned",
+        "github_comment_posted",
+        "repository_mutated",
+        "issue_created_claimed",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "blockers": [
+        "sandbox_receipt_missing",
+        "live_read_receipt_missing",
+        "worker_deployment_evidence_missing",
+        "recovery_evidence_missing",
+        "autonomy_controls_missing"
+      ],
+      "capability_id": "software_dev.github_issue.draft",
+      "capability_name": "Draft GitHub issue",
+      "certification_status": "certified",
+      "current_unlock_level": "C3",
+      "evidence_refs": [
+        "capability_registry:software_dev.github_issue.draft",
+        "capability_certification:certified"
+      ],
+      "family": "software_dev",
+      "next_unlock_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "passport_id": "capability_passport.software_dev.github_issue.draft.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "production_ready": false,
+      "required_gates": [
+        "gate.uao.admission",
+        "gate.capability.registry",
+        "gate.evidence.intake",
+        "gate.evidence.verification",
+        "gate.receipt.append",
+        "gate.production.evidence"
+      ],
+      "required_receipts": [
+        "problem_summary",
+        "evidence_refs",
+        "acceptance_criteria",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "rollback_status": {
+        "compensation_capability": "",
+        "review_required_on_failure": true,
+        "rollback_capability": "",
+        "status": "not_required"
+      },
+      "source_ref": "capabilities/software_dev/capability_pack.json",
+      "unlock_label": "Implemented",
+      "version": "0.1.0"
+    },
+    {
+      "allowed_actions": [
+        "prepare_draft",
+        "verify_evidence",
+        "emit_receipt"
+      ],
+      "allowed_tools": [
         "mullusi.local_patch_plan_draft"
       ],
       "autonomy_ready": false,
@@ -7230,7 +7298,7 @@
   "summary": {
     "approval_required_count": 24,
     "blocked_count": 0,
-    "capability_count": 104,
+    "capability_count": 105,
     "family_counts": {
       "agentic_control": 17,
       "browser": 6,
@@ -7246,25 +7314,25 @@
       "personal_assistant": 12,
       "phone": 5,
       "physical": 2,
-      "software_dev": 9,
+      "software_dev": 10,
       "voice": 6
     },
     "operator_status_counts": {
       "Blocked": 0,
       "Evidence missing": 0,
-      "Live action disabled": 102,
+      "Live action disabled": 103,
       "Needs approval": 1,
       "Prepare-only": 0,
       "Ready": 1
     },
-    "passport_count": 104,
-    "receipt_required_count": 104,
-    "rollback_ready_count": 92,
+    "passport_count": 105,
+    "receipt_required_count": 105,
+    "rollback_ready_count": 93,
     "unlock_level_counts": {
       "C0": 0,
       "C1": 0,
       "C2": 12,
-      "C3": 87,
+      "C3": 88,
       "C4": 3,
       "C5": 0,
       "C6": 2,

@@ -27,6 +27,7 @@ if str(_ROOT) not in sys.path:
 import gateway.server as gateway_server  # noqa: E402
 from gateway.github_operations_workroom import (  # noqa: E402
     GitHubActionsFailureEvidenceAdmissionRequest,
+    GitHubIssueDraftRequest,
     GitHubPatchPlanDraftRequest,
     GitHubRepoStatusEvidenceAdmissionRequest,
     GitHubReadOnlyEvidenceFetcher,
@@ -38,6 +39,8 @@ from gateway.github_operations_workroom import (  # noqa: E402
     admit_github_read_only_evidence_collection,
     build_github_actions_failure_diagnosis_receipt,
     build_github_actions_failure_workroom_read_model,
+    build_github_issue_draft_receipt,
+    build_github_issue_draft_workroom_read_model,
     build_github_patch_plan_draft_receipt,
     build_github_patch_plan_workroom_read_model,
     build_github_repo_status_summary_receipt,
@@ -48,6 +51,7 @@ from gateway.github_operations_workroom import (  # noqa: E402
     build_github_pr_safety_workroom_projection,
     build_github_pr_safety_workroom_read_model,
     evaluate_github_actions_failure_diagnosis,
+    evaluate_github_issue_draft,
     evaluate_github_patch_plan_draft,
     evaluate_github_repo_status_summary,
     evaluate_github_pr_safety_judgment,
@@ -1216,6 +1220,119 @@ def test_operator_github_patch_plan_panel_renders_local_draft_form_without_token
     assert "Mullusi GitHub Patch Plan Draft Workroom" in response.text
     assert 'fetch("/operator/github-operations/patch-plan/draft"' in response.text
     assert "No GitHub token or write authority is accepted." in response.text
+    assert "access_token" not in response.text
+
+
+def test_github_issue_draft_and_receipt_are_draft_only() -> None:
+    request = GitHubIssueDraftRequest(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        problem_summary="Gateway route should expose a governed issue draft from patch-plan evidence.",
+        evidence_refs=("github-patch-plan-receipt:abc",),
+        acceptance_criteria=("Issue draft includes evidence refs and no GitHub write.",),
+        suggested_labels=("governance", "github-workroom"),
+        surface_event_id="issue-draft",
+        requested_at="2026-06-29T12:00:00+00:00",
+    )
+
+    draft = evaluate_github_issue_draft(request=request, clock=_clock)
+    receipt = build_github_issue_draft_receipt(
+        request=request,
+        draft=draft,
+        occurred_at="2026-06-29T12:00:00+00:00",
+    )
+
+    assert draft.status == "drafted"
+    assert draft.write_authority_granted is False
+    assert "github-patch-plan-receipt:abc" in draft.issue_body
+    assert receipt.risk_class is FabricRiskClass.CLASS_1_PREPARE
+    assert receipt.policy_decision is FabricPolicyDecision.ALLOW_DRAFT_ONLY
+    assert "create_github_issue_without_explicit_approval" in receipt.actions_blocked
+
+
+def test_github_issue_draft_needs_evidence_without_problem_or_refs() -> None:
+    request = GitHubIssueDraftRequest(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        problem_summary="",
+        evidence_refs=(),
+        acceptance_criteria=(),
+        suggested_labels=(),
+        surface_event_id="issue-draft-gap",
+        requested_at="2026-06-29T12:00:00+00:00",
+    )
+
+    draft = evaluate_github_issue_draft(request=request, clock=_clock)
+    receipt = build_github_issue_draft_receipt(
+        request=request,
+        draft=draft,
+        occurred_at="2026-06-29T12:00:00+00:00",
+    )
+
+    assert draft.status == "needs_evidence"
+    assert draft.evidence_refs == ("missing_issue_draft_evidence",)
+    assert receipt.memory_update is FabricMemoryDecisionStatus.DEFER
+    assert receipt.partial_failure_reasons == ("collect_missing_issue_draft_evidence",)
+
+
+def test_github_issue_draft_read_model_awaits_evidence() -> None:
+    read_model = build_github_issue_draft_workroom_read_model(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        surface_event_id="issue-draft-model",
+        occurred_at="2026-06-29T12:00:00+00:00",
+        clock=_clock,
+    )
+
+    assert read_model["status"] == "awaiting_evidence"
+    assert read_model["outcome"] == "AwaitingEvidence"
+    assert read_model["passport"]["risk_class"] == "class_1_prepare"
+    assert read_model["effect_boundary"]["issue_creation_allowed"] is False
+    assert "create_github_issue_without_explicit_approval" in read_model["blocked_actions"]
+
+
+def test_operator_github_issue_draft_endpoint_returns_receipt_without_write_authority() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.post(
+        "/operator/github-operations/issue-draft/draft",
+        json={
+            "repo": "tamiratl/mullu-control-plane",
+            "problem_summary": "Patch-plan evidence should become a draft issue only.",
+            "evidence_refs": ["github-patch-plan-receipt:abc"],
+            "acceptance_criteria": ["Draft has no GitHub write authority."],
+            "suggested_labels": ["governance"],
+            "requested_at": "2026-06-29T12:00:00+00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    serialized = json.dumps(payload, sort_keys=True)
+    assert payload["github_issue_draft"]["status"] == "drafted"
+    assert payload["github_issue_draft_receipt"]["policy_decision"] == "allow_draft_only"
+    assert payload["effect_boundary"]["issue_creation_allowed"] is False
+    assert payload["write_authority_granted"] is False
+    assert "access_token" not in serialized
+
+
+def test_operator_github_issue_draft_panel_renders_local_draft_form_without_token() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get(
+        "/operator/github-operations/issue-draft",
+        params={"repo": "tamiratl/mullu-control-plane", "occurred_at": "2026-06-29T12:00:00+00:00"},
+    )
+
+    assert response.status_code == 200
+    assert "Mullusi GitHub Issue Draft Workroom" in response.text
+    assert 'fetch("/operator/github-operations/issue-draft/draft"' in response.text
+    assert "No GitHub token or issue creation authority is accepted." in response.text
     assert "access_token" not in response.text
 
 
