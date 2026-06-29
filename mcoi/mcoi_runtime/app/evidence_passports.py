@@ -276,16 +276,38 @@ def _replay_packet(
     present_evidence_refs: list[str],
     production_ready: bool,
 ) -> dict[str, Any]:
-    required_receipts = set(_string_list(passport.get("required_receipts")))
+    required_receipts = _string_list(passport.get("required_receipts"))
     replay_required = bool(required_receipts)
     replay_refs = [ref for ref in present_evidence_refs if "replay" in ref.lower()]
     replayable = production_ready and (not replay_required or bool(replay_refs))
+    missing_refs = _replay_missing_refs(replay_required, replay_refs, required_receipts)
     return {
         "replay_required": replay_required,
         "replayable": replayable,
         "replay_refs": replay_refs,
         "missing_replay_evidence": replay_required and not replay_refs,
+        "missing_replay_refs": missing_refs,
+        "next_replay_action": (
+            f"collect deterministic replay evidence: {', '.join(missing_refs)}"
+            if missing_refs
+            else "no replay evidence required"
+        ),
     }
+
+
+def _replay_missing_refs(
+    replay_required: bool,
+    replay_refs: list[str],
+    required_receipts: list[str],
+) -> list[str]:
+    if not replay_required or replay_refs:
+        return []
+    return _dedupe([
+        "replay_record",
+        "replay_input_digest",
+        "replay_output_digest",
+        *required_receipts,
+    ])
 
 
 def _blocked_by_gate_ids(

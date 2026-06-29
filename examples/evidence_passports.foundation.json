@@ -127,7 +127,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "change_boundary",
+          "code_change_physics_packet",
+          "test_contract",
+          "rollback_plan",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, change_boundary, code_change_physics_packet, test_contract, rollback_plan, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -249,7 +261,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "ledger_record_id",
+          "ledger_record_hash",
+          "lineage_ref",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, ledger_record_id, ledger_record_hash, lineage_ref, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -343,7 +366,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "proof_state",
+          "policy_refs",
+          "blocked_actions",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, proof_state, policy_refs, blocked_actions, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -441,7 +475,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "rollback_plan_hash",
+          "containment_actions",
+          "verification_steps",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, rollback_plan_hash, containment_actions, verification_steps, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -539,7 +584,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "question_set_hash",
+          "unknowns",
+          "evidence_requests",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, question_set_hash, unknowns, evidence_requests, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -633,7 +689,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "complexity_bound",
+          "invariant_refs",
+          "failure_modes",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, complexity_bound, invariant_refs, failure_modes, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -727,7 +794,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "learning_admission_policy_ref",
+          "redaction_plan",
+          "forget_path",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, learning_admission_policy_ref, redaction_plan, forget_path, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -847,7 +925,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "mission_contract_hash",
+          "halt_conditions",
+          "success_criteria",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, mission_contract_hash, halt_conditions, success_criteria, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -945,7 +1034,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "ranking_hash",
+          "dependency_blockers",
+          "risk_weights",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, ranking_hash, dependency_blockers, risk_weights, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -1043,7 +1143,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "roadmap_hash",
+          "success_metrics",
+          "handoff_risks",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, roadmap_hash, success_metrics, handoff_risks, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -1137,7 +1248,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "commit_boundary",
+          "ci_gate_plan",
+          "rollback_path",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, commit_boundary, ci_gate_plan, rollback_path, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -1231,7 +1353,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "budget_envelope_hash",
+          "halt_thresholds",
+          "resource_floor",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, budget_envelope_hash, halt_thresholds, resource_floor, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -1325,7 +1458,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "threat_model_hash",
+          "mitigation_refs",
+          "residual_risk",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, threat_model_hash, mitigation_refs, residual_risk, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -1419,7 +1563,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "weakness_refs",
+          "gap_closure_plan",
+          "residual_risk",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, weakness_refs, gap_closure_plan, residual_risk, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -1513,7 +1668,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "role_assignment_hash",
+          "shard_boundaries",
+          "consensus_rule",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, role_assignment_hash, shard_boundaries, consensus_rule, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -1611,7 +1777,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "telemetry_window",
+          "threshold_contract",
+          "remediation_order",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, telemetry_window, threshold_contract, remediation_order, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -1705,7 +1882,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "verification_plan_hash",
+          "required_gates",
+          "closure_rule",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, verification_plan_hash, required_gates, closure_rule, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -1811,7 +1999,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "url_before",
+          "url_after",
+          "element_selector_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, url_before, url_after, element_selector_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -1919,7 +2118,17 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "url_after",
+          "text_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, url_after, text_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -2021,7 +2230,17 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "url_after",
+          "screenshot_after_ref",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, url_after, screenshot_after_ref, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -2121,7 +2340,16 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "screenshot_after_ref",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, screenshot_after_ref, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -2251,7 +2479,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "url_before",
+          "url_after",
+          "element_selector_hash",
+          "approval_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, url_before, url_after, element_selector_hash, approval_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -2363,7 +2603,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "url_before",
+          "url_after",
+          "element_selector_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, url_before, url_after, element_selector_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -2473,7 +2724,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "query_hash",
+          "conflict_digest",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, conflict_digest, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -2601,7 +2863,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "attendee_hashes",
+          "approval_id",
+          "provider_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, attendee_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -2705,7 +2979,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "query_hash",
+          "response_digest",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, response_digest, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -2835,7 +3120,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "event_id",
+          "approval_id",
+          "before_after_event_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, event_id, approval_id, before_after_event_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -2963,7 +3260,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "attendee_hashes",
+          "approval_id",
+          "provider_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, attendee_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -3063,7 +3372,17 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "patch_id",
+          "patch_status",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, patch_id, patch_status, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -3185,7 +3504,17 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "sandbox_receipt_id",
+          "verification_status",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, sandbox_receipt_id, verification_status, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -3287,7 +3616,17 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "workspace_root_hash",
+          "file_count",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, workspace_root_hash, file_count, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -3389,7 +3728,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "workspace_file_preflight_receipt_id",
+          "risk_level",
+          "decision",
+          "autonomy_mode",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, workspace_file_preflight_receipt_id, risk_level, decision, autonomy_mode, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -3478,7 +3829,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "resource_digest",
+          "scope_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, resource_digest, scope_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -3602,7 +3964,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "before_after_resource_hash",
+          "approval_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, before_after_resource_hash, approval_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -3706,7 +4079,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "resource_digest",
+          "scope_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, resource_digest, scope_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -3834,7 +4218,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "before_after_resource_hash",
+          "approval_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, before_after_resource_hash, approval_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -3934,7 +4329,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "query_hash",
+          "result_digest",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, result_digest, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -4058,7 +4464,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "before_after_row_hash",
+          "approval_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, before_after_row_hash, approval_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -4154,7 +4571,17 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "row_count",
+          "column_count",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, row_count, column_count, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -4252,7 +4679,17 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "document_id",
+          "content_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, document_id, content_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -4350,7 +4787,17 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "translation_prompt",
+          "target_lang",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, translation_prompt, target_lang, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -4452,7 +4899,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "gateway_health_status",
+          "runtime_witness_signature_status",
+          "runtime_conformance_signature_status",
+          "deployment_witness_json",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, gateway_health_status, runtime_witness_signature_status, runtime_conformance_signature_status, deployment_witness_json, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -4578,7 +5037,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "published_deployment_witness",
+          "public_health_endpoint",
+          "runtime_conformance_certificate",
+          "operator_approval_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, published_deployment_witness, public_health_endpoint, runtime_conformance_certificate, operator_approval_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -4682,7 +5153,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "document_id",
+          "table_count",
+          "parser_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, document_id, table_count, parser_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -4786,7 +5268,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "document_id",
+          "text_hash",
+          "parser_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, document_id, text_hash, parser_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -4894,7 +5387,17 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "artifact_ref",
+          "artifact_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, artifact_ref, artifact_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -5002,7 +5505,17 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "artifact_ref",
+          "artifact_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, artifact_ref, artifact_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -5106,7 +5619,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "document_id",
+          "summary_hash",
+          "parser_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, document_id, summary_hash, parser_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -5210,7 +5734,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "query_hash",
+          "classification_digest",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, classification_digest, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -5317,7 +5852,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "recipient_hashes",
+          "draft_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, draft_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -5427,7 +5973,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "query_hash",
+          "response_digest",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, response_digest, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -5531,7 +6088,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "message_digest",
+          "suggestion_digest",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, message_digest, suggestion_digest, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -5635,7 +6203,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "query_hash",
+          "response_digest",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, response_digest, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -5764,7 +6343,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "recipient_hashes",
+          "approval_id",
+          "provider_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -5864,7 +6455,16 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "total_chunks_searched",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, total_chunks_searched, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -5960,7 +6560,16 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "receipt_status",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, receipt_status, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -6056,7 +6665,16 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "task_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, task_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -6150,7 +6768,16 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "receipt_status",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, receipt_status, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -6278,7 +6905,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "refund_id",
+          "ledger_hash",
+          "payment_state",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, refund_id, ledger_hash, payment_state, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -6396,7 +7034,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "tx_id",
+          "ledger_hash",
+          "payment_state",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, tx_id, ledger_hash, payment_state, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -6490,7 +7139,16 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "receipt_status",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, receipt_status, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -6584,7 +7242,16 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "receipt_status",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, receipt_status, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -6715,7 +7382,20 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "approval_id",
+          "base_branch",
+          "head_branch",
+          "repository",
+          "review_packet_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, approval_id, base_branch, head_branch, repository, review_packet_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -6822,7 +7502,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "recipient_hashes",
+          "draft_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, draft_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -6957,7 +7648,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "recipient_hashes",
+          "approval_id",
+          "provider_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -7070,7 +7773,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "recipient_hashes",
+          "draft_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, draft_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -7205,7 +7919,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "recipient_hashes",
+          "approval_id",
+          "provider_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, recipient_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -7315,7 +8041,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "query_hash",
+          "response_digest",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, query_hash, response_digest, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -7414,7 +8151,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "plan_id",
+          "risk_level",
+          "approval_matrix_ref",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, plan_id, risk_level, approval_matrix_ref, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -7513,7 +8261,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "request_id",
+          "missing_bindings",
+          "clarification_request_ids",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, missing_bindings, clarification_request_ids, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -7618,7 +8377,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "request_id",
+          "github_connector_proof_ref",
+          "operator_supplied_change_summary",
+          "receipt_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, github_connector_proof_ref, operator_supplied_change_summary, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -7717,7 +8488,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "request_id",
+          "governance_refs",
+          "risk_level",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, governance_refs, risk_level, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -7825,7 +8607,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "request_id",
+          "operator_supplied_known_value",
+          "unit_check",
+          "receipt_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, operator_supplied_known_value, unit_check, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -7922,7 +8716,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "receipt_id",
+          "source_ref",
+          "confidence",
+          "scope",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, receipt_id, source_ref, confidence, scope, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -8023,7 +8829,20 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "review_id",
+          "memory_observation_id",
+          "reviewer_ref",
+          "reason_codes",
+          "receipt_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, review_id, memory_observation_id, reviewer_ref, reason_codes, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -8140,7 +8959,20 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "request_id",
+          "operator_supplied_time_window",
+          "operator_supplied_work_item",
+          "capacity_summary",
+          "receipt_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, operator_supplied_time_window, operator_supplied_work_item, capacity_summary, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -8241,7 +9073,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "plan_id",
+          "actions_taken",
+          "actions_not_taken",
+          "redaction_policy",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, plan_id, actions_taken, actions_not_taken, redaction_policy, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -8348,7 +9192,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "request_id",
+          "operator_supplied_source_summary",
+          "citation_ref",
+          "receipt_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, operator_supplied_source_summary, citation_ref, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -8447,7 +9303,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "skill_registry_ref",
+          "approval_matrix_ref",
+          "plan_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, skill_registry_ref, approval_matrix_ref, plan_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -8553,7 +9420,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "request_id",
+          "gmail_connector_proof_ref",
+          "operator_handoff_projection",
+          "receipt_id",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, request_id, gmail_connector_proof_ref, operator_handoff_projection, receipt_id, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -8681,7 +9560,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "callee_hashes",
+          "approval_id",
+          "provider_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, callee_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -8783,7 +9674,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "caller_hashes",
+          "provider_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, caller_hashes, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -8911,7 +9813,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "call_id",
+          "approval_id",
+          "provider_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, call_id, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "review_only",
@@ -9021,7 +9935,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "call_id",
+          "transcript_hash",
+          "redaction_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, call_id, transcript_hash, redaction_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -9149,7 +10074,20 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "connector_id",
+          "call_id",
+          "transferee_hashes",
+          "approval_id",
+          "provider_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, connector_id, call_id, transferee_hashes, approval_id, provider_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -9277,7 +10215,9 @@
         "replay_refs": [
           "capability_registry:physical.sandbox_replay"
         ],
-        "missing_replay_evidence": false
+        "missing_replay_evidence": false,
+        "missing_replay_refs": [],
+        "next_replay_action": "no replay evidence required"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -9405,7 +10345,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "physical_action_receipt",
+          "simulation_ref",
+          "operator_approval_ref",
+          "sensor_confirmation_ref",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, physical_action_receipt, simulation_ref, operator_approval_ref, sensor_confirmation_ref, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -9503,7 +10455,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "product_spec_hash",
+          "task_graph_hash",
+          "software_request_count",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, product_spec_hash, task_graph_hash, software_request_count, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -9633,7 +10596,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "software_change_receipt_id",
+          "quality_gate_summary",
+          "rollback_snapshot_ref",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, software_change_receipt_id, quality_gate_summary, rollback_snapshot_ref, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -9731,7 +10705,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "context_bundle_hash",
+          "affected_file_count",
+          "token_estimate",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, context_bundle_hash, affected_file_count, token_estimate, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -9829,7 +10814,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "gate_plan_hash",
+          "affected_file_count",
+          "risk_level",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, gate_plan_hash, affected_file_count, risk_level, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -9929,7 +10925,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "workflow_run_hash",
+          "workflow_jobs_hash",
+          "failed_job_log_digest",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, workflow_run_hash, workflow_jobs_hash, failed_job_log_digest, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -10031,7 +11038,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "diagnosis_or_problem_summary",
+          "affected_file_or_component_refs",
+          "verification_expectations",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, diagnosis_or_problem_summary, affected_file_or_component_refs, verification_expectations, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -10133,7 +11151,19 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "repository_metadata_hash",
+          "recent_commits_hash",
+          "open_pull_requests_hash",
+          "workflow_runs_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, repository_metadata_hash, recent_commits_hash, open_pull_requests_hash, workflow_runs_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -10263,7 +11293,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "review_packet_hash",
+          "software_change_receipt_ids",
+          "approval_status",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, review_packet_hash, software_change_receipt_ids, approval_status, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "ready",
@@ -10361,7 +11402,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "repository_ref",
+          "commit_sha",
+          "repo_map_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, repository_ref, commit_sha, repo_map_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -10465,7 +11517,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "row_count",
+          "column_count",
+          "analysis_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, row_count, column_count, analysis_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -10573,7 +11636,17 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "artifact_ref",
+          "artifact_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, artifact_ref, artifact_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "compensation_only",
@@ -10677,7 +11750,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "transcript_hash",
+          "action_items_hash",
+          "redaction_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, transcript_hash, action_items_hash, redaction_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -10781,7 +11865,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "transcript_hash",
+          "intent_summary_hash",
+          "confirmation_requirement",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, transcript_hash, intent_summary_hash, confirmation_requirement, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -10885,7 +11980,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "transcript_hash",
+          "intent_summary_hash",
+          "confirmation_status",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, transcript_hash, intent_summary_hash, confirmation_status, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -10989,7 +12095,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "transcript_hash",
+          "meeting_summary_hash",
+          "redaction_hash",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, transcript_hash, meeting_summary_hash, redaction_hash, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -11093,7 +12210,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "transcript_hash",
+          "redaction_hash",
+          "transcript_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, transcript_hash, redaction_hash, transcript_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",
@@ -11197,7 +12325,18 @@
         "replay_required": true,
         "replayable": false,
         "replay_refs": [],
-        "missing_replay_evidence": true
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "text_hash",
+          "audio_ref",
+          "synthesis_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, text_hash, audio_ref, synthesis_receipt, terminal_closure_certificate, effect_reconciliation_receipt"
       },
       "rollback": {
         "rollback_status": "not_required",

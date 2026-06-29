@@ -445,7 +445,9 @@
         "replay_required",
         "replayable",
         "replay_refs",
-        "missing_replay_evidence"
+        "missing_replay_evidence",
+        "missing_replay_refs",
+        "next_replay_action"
       ],
       "properties": {
         "replay_required": {
@@ -459,6 +461,14 @@
         },
         "missing_replay_evidence": {
           "type": "boolean"
+        },
+        "missing_replay_refs": {
+          "$ref": "#/$defs/string_list"
+        },
+        "next_replay_action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320
         }
       }
     },
