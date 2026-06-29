@@ -1604,13 +1604,13 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     pr_creation_execution_admission_row = re.search(
-        r"^\| GitHub PR creation execution admission dry-run binding PR \| READY \| .+agentic_service_harness_github_pr_creation_execution_admission.+PR creation dry-run receipt.+execution admission.+operator approval.+branch-write authority.+UAO.+rollback.+receipt-store write-path.+effect reconciliation.+pull-request creation.+repository writes.+connector calls.+mutation routes.+secret material.+terminal closure remain blocked\. \|$",
+        r"^\| GitHub PR creation execution admission command-preview dry-run receipt binding PR \| READY \| .+agentic_service_harness_github_pr_creation_execution_admission.+command-preview dry-run receipt evidence.+source dry-run ref.+source read-model id/ref.+source certificate id.+source minting ref.+redacted command preview.+no-runtime-PR evidence.+no-pull-request-opened evidence.+no-branch-created evidence.+no-repository-write evidence.+no-receipt-store-append evidence.+no-adapter-execution evidence.+no-connector-call evidence.+no-mutation-route evidence.+no-terminal-closure evidence.+no-success-claim evidence.+no-secret-value evidence.+operator approval.+branch-write authority.+UAO.+rollback.+receipt-store write-path.+effect reconciliation.+pull-request creation.+repository writes.+connector calls.+mutation routes.+secret material.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
     if pr_creation_execution_admission_row is None:
         errors.append(
-            "missing ready row: GitHub PR creation execution admission dry-run binding PR"
+            "missing ready row: GitHub PR creation execution admission command-preview dry-run receipt binding PR"
         )
 
     pr_creation_command_preview_row = re.search(
@@ -1646,7 +1646,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind PR creation execution admission to command-preview dry-run receipt evidence",
+        "harness(pr): bind PR creation command preview to command-preview execution admission evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:
