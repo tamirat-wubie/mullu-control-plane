@@ -1657,7 +1657,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind UAO PR admission to command-preview branch-write authority evidence",
+        "harness(pr): bind repository-effect rollback to command-preview UAO admission evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:
