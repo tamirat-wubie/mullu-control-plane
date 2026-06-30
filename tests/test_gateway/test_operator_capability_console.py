@@ -1825,6 +1825,11 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Control System Summary" in response.text
     assert "Control system in fast mode" in response.text
     assert "control_system.control_summary.v1" in response.text
+    assert "Control System Task Cards" in response.text
+    assert "Capability Control Registry" in response.text
+    assert "software_dev.change.run" in response.text
+    assert "software_dev.pr_candidate.prepare" in response.text
+    assert "Fast mode lab ready" in response.text
     assert "Next developer workflow action" in response.text
     assert "Developer Workflow Milestone" in response.text
     assert "collect_sandbox_receipts" in response.text

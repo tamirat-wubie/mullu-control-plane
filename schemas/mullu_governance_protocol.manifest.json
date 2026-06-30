@@ -557,6 +557,12 @@
       "urn": "urn:mullusi:schema:capability-evidence-endpoint:1"
     },
     {
+      "path": "schemas/capability_control_system.schema.json",
+      "schema_id": "capability-control-system",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:capability-control-system:1"
+    },
+    {
       "path": "schemas/capability_friction_control.schema.json",
       "schema_id": "capability-friction-control",
       "surface": "capability",
