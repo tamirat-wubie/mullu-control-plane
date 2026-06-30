@@ -139,6 +139,38 @@ def test_github_pr_terminal_closure_operator_approval_gate_rejects_command_previ
     assert "approval_gate.command_preview_candidate_evidence.command_preview_bound must be true" in serialized_errors
 
 
+def test_github_pr_terminal_closure_operator_approval_gate_rejects_command_preview_certificate_candidate_capsule_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_operator_approval_gate(
+        approval_gate__command_preview_certificate_candidate_evidence__source_binding_id="other_terminal_witness",
+        approval_gate__command_preview_certificate_candidate_evidence__source_command_preview_ref=(
+            "examples/other-command-preview.json"
+        ),
+        approval_gate__command_preview_certificate_candidate_evidence__source_argument_vector_template=[
+            "gh",
+            "pr",
+            "create",
+            "--body",
+            "leaked",
+        ],
+        approval_gate__command_preview_certificate_candidate_evidence__source_terminal_closure_certificate_collected=True,
+        approval_gate__command_preview_certificate_candidate_evidence__source_authority_granted=True,
+        approval_gate__command_preview_certificate_candidate_evidence__candidate_consumes_command_preview_terminal_closure_certificate_evidence=False,
+        approval_gate__command_preview_certificate_candidate_evidence__certificate_minting_remains_blocked=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_operator_approval_gate_semantics(payload, _source_candidate(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "approval_gate.command_preview_certificate_candidate_evidence.source_binding_id expected" in serialized_errors
+    assert "approval_gate.command_preview_certificate_candidate_evidence.source_command_preview_ref expected" in serialized_errors
+    assert "approval_gate.command_preview_certificate_candidate_evidence.source_argument_vector_template expected" in serialized_errors
+    assert "approval_gate.command_preview_certificate_candidate_evidence.source_terminal_closure_certificate_collected must be false" in serialized_errors
+    assert "approval_gate.command_preview_certificate_candidate_evidence.source_authority_granted must be false" in serialized_errors
+    assert "approval_gate.command_preview_certificate_candidate_evidence.candidate_consumes_command_preview_terminal_closure_certificate_evidence must be true" in serialized_errors
+    assert "approval_gate.command_preview_certificate_candidate_evidence.certificate_minting_remains_blocked must be true" in serialized_errors
+
+
 def test_github_pr_terminal_closure_operator_approval_gate_rejects_mutation_authority() -> None:
     payload = validator.build_mutated_terminal_closure_operator_approval_gate(
         authority_granted=True,
