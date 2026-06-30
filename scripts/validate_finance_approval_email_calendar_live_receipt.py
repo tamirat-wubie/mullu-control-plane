@@ -116,6 +116,20 @@ def _validate_worker_receipt(receipt: dict[str, Any], errors: list[str]) -> None
             errors.append(f"worker_receipt {field_name} must match receipt {field_name}")
     if worker_receipt.get("external_write") is not False:
         errors.append("worker_receipt external_write must be false")
+    if worker_receipt.get("effect_mode") != "plan_only":
+        errors.append("worker_receipt effect_mode must be plan_only")
+    if worker_receipt.get("external_effect_claimed") is not False:
+        errors.append("worker_receipt external_effect_claimed must be false")
+    for field_name in (
+        "provider_receipt_hash",
+        "provider_receipt_ref",
+        "idempotency_key",
+        "rollback_or_recovery_ref",
+    ):
+        if worker_receipt.get(field_name) != "":
+            errors.append(f"worker_receipt {field_name} must be empty")
+    if worker_receipt.get("secret_values_disclosed") is not False:
+        errors.append("worker_receipt secret_values_disclosed must be false")
     if receipt.get("status") != "passed":
         return
     if worker_receipt.get("verification_status") != "passed":
@@ -157,6 +171,13 @@ def _worker_receipt_ready(receipt: dict[str, Any]) -> bool:
         and worker_receipt.get("capability_id") in READ_ONLY_OPERATIONS
         and worker_receipt.get("action") in READ_ONLY_OPERATIONS
         and worker_receipt.get("external_write") is False
+        and worker_receipt.get("effect_mode") == "plan_only"
+        and worker_receipt.get("external_effect_claimed") is False
+        and worker_receipt.get("provider_receipt_hash") == ""
+        and worker_receipt.get("provider_receipt_ref") == ""
+        and worker_receipt.get("idempotency_key") == ""
+        and worker_receipt.get("rollback_or_recovery_ref") == ""
+        and worker_receipt.get("secret_values_disclosed") is False
         and worker_receipt.get("forbidden_effects_observed") is False
         and bool(str(worker_receipt.get("query_hash", "")).strip())
         and isinstance(worker_receipt.get("evidence_refs"), list)

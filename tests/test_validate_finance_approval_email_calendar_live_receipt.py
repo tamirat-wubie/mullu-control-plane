@@ -58,6 +58,29 @@ def test_validate_finance_email_calendar_live_receipt_allows_blocked_failed_prob
     assert result.blockers == ("email_calendar_probe_exception",)
 
 
+def test_validate_finance_email_calendar_live_receipt_allows_bounded_failed_probe_diagnostics(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "email-calendar-live-receipt.json"
+    payload = _ready_receipt() | {
+        "status": "failed",
+        "verification_status": "failed",
+        "blockers": ["email_calendar_worker_probe_failed"],
+        "failure_class": "worker_probe_failed",
+        "provider_operation": "email.search",
+        "worker_error": "email/calendar adapter unavailable",
+        "provider_diagnostic": "email/calendar adapter unavailable",
+    }
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_finance_approval_email_calendar_live_receipt(receipt_path=receipt_path)
+
+    assert result.valid is True
+    assert result.ready is False
+    assert result.failure_class == "worker_probe_failed"
+    assert result.blockers == ("email_calendar_worker_probe_failed",)
+
+
 def test_validate_finance_email_calendar_live_receipt_require_ready_blocks_failed_probe(tmp_path: Path) -> None:
     receipt_path = tmp_path / "email-calendar-live-receipt.json"
     payload = _ready_receipt() | {
@@ -103,6 +126,23 @@ def test_validate_finance_email_calendar_live_receipt_rejects_worker_receipt_dri
     assert result.valid is False
     assert result.ready is False
     assert "worker_receipt response_digest must match receipt response_digest" in result.errors
+
+
+def test_validate_finance_email_calendar_live_receipt_rejects_secret_disclosure(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "email-calendar-live-receipt.json"
+    payload = _ready_receipt()
+    payload["worker_receipt"] = dict(payload["worker_receipt"]) | {
+        "secret_values_disclosed": True,
+    }
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_finance_approval_email_calendar_live_receipt(receipt_path=receipt_path)
+
+    assert result.valid is False
+    assert result.ready is False
+    assert any("secret_values_disclosed" in error for error in result.errors)
 
 
 def test_validate_finance_email_calendar_live_receipt_rejects_raw_query_field(tmp_path: Path) -> None:
@@ -191,6 +231,13 @@ def _ready_receipt() -> dict[str, object]:
             "recipient_hashes": [],
             "attendee_hashes": [],
             "external_write": False,
+            "effect_mode": "plan_only",
+            "external_effect_claimed": False,
+            "provider_receipt_hash": "",
+            "provider_receipt_ref": "",
+            "idempotency_key": "",
+            "rollback_or_recovery_ref": "",
+            "secret_values_disclosed": False,
             "forbidden_effects_observed": False,
             "evidence_refs": ["email_calendar_action:aaaaaaaaaaaaaaaa"],
             "approval_id": "",
