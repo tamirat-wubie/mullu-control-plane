@@ -407,6 +407,16 @@
         },
         "reason": {
           "type": "string"
+        },
+        "recovery_class": {
+          "type": "string",
+          "enum": [
+            "",
+            "exact_rollback",
+            "compensating_action",
+            "containment_only",
+            "impossible"
+          ]
         }
       }
     },

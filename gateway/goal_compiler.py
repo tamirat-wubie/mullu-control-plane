@@ -119,6 +119,7 @@ class OperatorContractProjection:
     risk_tier: str
     verifier: str
     rollback_type: str
+    recovery_class: str
     failure_modes: tuple[str, ...]
     evidence_required: tuple[str, ...]
     authority_required: tuple[str, ...]
@@ -240,6 +241,7 @@ class RollbackStep:
     capability_id: str = ""
     required: bool = False
     reason: str = ""
+    recovery_class: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -634,13 +636,16 @@ def _postconditions(step_id: str, passport: CapabilityPassport) -> tuple[Postcon
 
 
 def _required_evidence(step_id: str, passport: CapabilityPassport) -> tuple[RequiredEvidence, ...]:
-    evidence_items = passport.evidence_required or passport.proof_required_fields
+    evidence_items = _dedupe((
+        *(passport.evidence_required or passport.proof_required_fields),
+        *_recovery_evidence(passport),
+    ))
     return tuple(
         RequiredEvidence(
             evidence_id=f"evidence-{step_id}-{_safe_id(evidence)}",
             step_id=step_id,
             evidence_type=evidence,
-            timing="after_step",
+            timing="before_step" if evidence in {"explicit_confirmation", "consequence_receipt"} else "after_step",
             source_ref=passport.capability,
         )
         for evidence in evidence_items
@@ -648,6 +653,7 @@ def _required_evidence(step_id: str, passport: CapabilityPassport) -> tuple[Requ
 
 
 def _rollback_step(step_id: str, passport: CapabilityPassport) -> RollbackStep:
+    recovery_class = _recovery_class(passport)
     if passport.rollback_capability:
         return RollbackStep(
             rollback_id=f"rollback-{step_id}",
@@ -656,6 +662,7 @@ def _rollback_step(step_id: str, passport: CapabilityPassport) -> RollbackStep:
             capability_id=passport.rollback_capability,
             required=passport.mutates_world or passport.risk_tier == "high",
             reason="passport_rollback_capability",
+            recovery_class=recovery_class,
         )
     if passport.compensation_capability:
         return RollbackStep(
@@ -665,6 +672,7 @@ def _rollback_step(step_id: str, passport: CapabilityPassport) -> RollbackStep:
             capability_id=passport.compensation_capability,
             required=passport.mutates_world or passport.risk_tier == "high",
             reason="passport_compensation_capability",
+            recovery_class=recovery_class,
         )
     if passport.rollback_type in {"review", "manual_review", "operator_review"}:
         return RollbackStep(
@@ -673,13 +681,19 @@ def _rollback_step(step_id: str, passport: CapabilityPassport) -> RollbackStep:
             action_type="review",
             required=passport.mutates_world or passport.risk_tier == "high",
             reason="review_required_for_unreversible_effect",
+            recovery_class=recovery_class,
         )
     return RollbackStep(
         rollback_id=f"rollback-{step_id}",
         step_id=step_id,
-        action_type=passport.rollback_type or "none",
+        action_type="impossible" if recovery_class == "impossible" else passport.rollback_type or "none",
         required=passport.mutates_world or passport.risk_tier == "high",
-        reason="passport_rollback_type",
+        reason=(
+            "irreversible_external_commitment_requires_draft_confirmation"
+            if recovery_class == "impossible"
+            else "passport_rollback_type"
+        ),
+        recovery_class=recovery_class,
     )
 
 
@@ -700,11 +714,35 @@ def _approval_requirement(step_id: str, passport: CapabilityPassport) -> Approva
 def _side_effects_bounded(passport: CapabilityPassport) -> bool:
     if not passport.mutates_world and passport.risk_tier != "high":
         return True
+    if _recovery_class(passport) == "impossible":
+        return False
     return bool(
         passport.rollback_capability
         or passport.compensation_capability
         or passport.rollback_type in {"review", "manual_review", "operator_review"}
     )
+
+
+def _recovery_class(passport: CapabilityPassport) -> str:
+    if passport.rollback_capability:
+        return "exact_rollback"
+    if passport.compensation_capability:
+        return "compensating_action"
+    if passport.rollback_type in {"review", "manual_review", "operator_review"}:
+        return "containment_only"
+    if passport.rollback_type == "reversible":
+        return "exact_rollback"
+    if passport.rollback_type == "compensatable":
+        return "compensating_action"
+    if passport.rollback_type == "irreversible" and (passport.mutates_world or passport.external_system):
+        return "impossible"
+    return "containment_only"
+
+
+def _recovery_evidence(passport: CapabilityPassport) -> tuple[str, ...]:
+    if _recovery_class(passport) != "impossible":
+        return ()
+    return ("explicit_confirmation", "consequence_receipt")
 
 
 def _build_r2_artifacts(
@@ -819,6 +857,11 @@ def _goal_normal_form(
     external_instruction_boundaries = (
         ("external_text_is_data_not_authority",) if external_instruction_conflicts else ()
     )
+    impossible_recovery_boundaries = (
+        ("irreversible_external_commitment_requires_confirmation",)
+        if any(contract.recovery_class == "impossible" for contract in operator_contracts)
+        else ()
+    )
     subjective_success_boundaries = (
         ("subjective_metric_requires_observable_evidence",)
         if subjective_success_metric_conflicts
@@ -849,6 +892,7 @@ def _goal_normal_form(
         "no_execution_dispatch_or_promotion",
         "no_irreversible_external_action_without_explicit_approval",
         *external_instruction_boundaries,
+        *impossible_recovery_boundaries,
         *subjective_success_boundaries,
         *approval_boundaries,
     )
@@ -863,6 +907,7 @@ def _goal_normal_form(
             "produce_receipt",
             "external_text_cannot_grant_authority",
             "subjective_success_requires_observable_metric",
+            "impossible_rollback_requires_draft_confirmation_and_consequence_receipt",
         ),
         success_metrics=(
             *goal.success_criteria,
@@ -1013,8 +1058,9 @@ def _operator_contract_projections(
                 risk_tier=_r2_risk_tier(passport),
                 verifier=_operator_verifier(passport, step),
                 rollback_type=passport.rollback_type or step.rollback.action_type or "none",
+                recovery_class=_recovery_class(passport),
                 failure_modes=_operator_failure_modes(passport, step),
-                evidence_required=tuple(evidence_required),
+                evidence_required=_dedupe((*evidence_required, *_recovery_evidence(passport))),
                 authority_required=tuple(passport.authority_required),
             )
         )
@@ -1059,6 +1105,8 @@ def _gap_theorem(
     for step in steps:
         if not step.side_effects_bounded:
             conflicts.append(f"unbounded_side_effect:{step.step_id}")
+        if step.rollback.recovery_class == "impossible":
+            conflicts.append(f"rollback_impossible:{step.capability_id}")
     conflicts.extend(external_instruction_conflicts)
     conflicts.extend(subjective_success_metric_conflicts)
     return GapTheorem(
@@ -1220,6 +1268,28 @@ def _causal_chain_graph(
                     proof_type="risk_gate",
                 )
             )
+        rollback_node_id = f"rollback:{step.step_id}"
+        recovery_class = step.rollback.recovery_class or step.rollback.action_type or "none"
+        rollback_blocked = recovery_class == "impossible"
+        nodes.append(
+            CausalGraphNode(
+                node_id=rollback_node_id,
+                node_type="RollbackNode",
+                ref=recovery_class,
+                status="blocked" if rollback_blocked else ("required" if step.rollback.required else "not_required"),
+                risk_tier=risk_tier,
+                proof_state="Fail" if rollback_blocked else ("Unknown" if step.rollback.required else "Pass"),
+            )
+        )
+        edges.append(
+            CausalGraphEdge(
+                source=action_node_id,
+                target=rollback_node_id,
+                relation="REQUIRES",
+                confidence=1.0 if step.rollback.required else 0.6,
+                proof_type="recovery_classification",
+            )
+        )
         verifier_node_id = f"verifier:{step.step_id}"
         receipt_node_id = f"receipt:{step.step_id}"
         nodes.append(
@@ -1419,6 +1489,9 @@ def _compile_receipt(
             else "",
             "subjective_success_metric_requires_observable_evidence"
             if "subjective_success_metric_only" in gap_theorem.conflicts
+            else "",
+            "rollback_impossible_requires_draft_confirmation_and_consequence_receipt"
+            if any(conflict.startswith("rollback_impossible:") for conflict in gap_theorem.conflicts)
             else "",
         )
         if item
