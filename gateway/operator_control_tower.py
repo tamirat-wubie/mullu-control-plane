@@ -5274,6 +5274,7 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
       <a href="/operator/control-tower/read-model">json read model</a>
       <a href="/operator/control-tower/status-receipt">status receipt</a>
       <a href="/operator/control-tower/developer-workflow-status/read-model">developer workflow status</a>
+      <a href="/operator/control-tower/local-developer-workflow-receipt">local workflow receipt</a>
       <a href="/operator/control-tower?include_developer_workflow_operator_receipt=true">generated receipt view</a>
       <a href="/operator/capabilities">capability console</a>
       <a href="/operator/capabilities/friction-control/read-model?domain=software_dev">friction control</a>

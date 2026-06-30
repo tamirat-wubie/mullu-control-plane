@@ -1811,6 +1811,7 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "Mullu Operator Control Tower" in response.text
     assert "/operator/control-tower/status-receipt" in response.text
     assert "/operator/control-tower/developer-workflow-status/read-model" in response.text
+    assert "/operator/control-tower/local-developer-workflow-receipt" in response.text
     assert "/operator/control-tower?include_developer_workflow_operator_receipt=true" in response.text
     assert "Control Tower Headline" in response.text
     assert "Control tower headline: local lab can continue" in response.text
@@ -3870,6 +3871,80 @@ def test_operator_control_tower_developer_workflow_status_read_model_route(monke
     assert control_summary["next_evidence_count"] == capability_summary["next_evidence_count"]
     assert control_summary["external_effects_allowed"] is False
     assert control_summary["rollback_required"] is True
+
+
+def test_operator_control_tower_local_developer_workflow_receipt_read_model_route(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "developer_workflow_operator_receipt.generated.json"
+    receipt_path.write_text(
+        json.dumps(_developer_workflow_operator_receipt(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server_module, "LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH", receipt_path)
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/operator/control-tower/local-developer-workflow-receipt/read-model")
+
+    assert response.status_code == 200
+    read_model = response.json()
+    assert read_model["read_model_id"] == "operator_local_developer_workflow_receipt.read_model"
+    assert read_model["projection_only"] is True
+    assert read_model["execution_performed"] is False
+    assert read_model["external_effects_allowed"] is False
+    assert read_model["task"] == "Mullu Developer Workflow v1"
+    assert read_model["status"] == "awaiting_external_pr_approval"
+    assert read_model["next_unlock"] == "external_approval_witness"
+    assert read_model["safe_local_action"]["candidate_id"] == "safe_zone.write_docs"
+    assert read_model["safe_local_action"]["execution_boundary"] == "local_lab_only"
+    assert read_model["safe_local_action"]["approval_required"] is False
+    assert read_model["receipt_card"]["workflow_run_id"] == "developer_workflow_v1_foundation_run"
+    assert read_model["receipt_card"]["rollback_required"] is True
+    assert read_model["operator_controls"]["projection_only"] is True
+    assert read_model["operator_controls"]["external_effects_allowed"] is False
+    assert "create_pr" in read_model["operator_controls"]["blocked_effects"]
+    assert "deploy" in read_model["operator_controls"]["blocked_effects"]
+    assert [stage["stage_id"] for stage in read_model["stage_plan"]] == [
+        "request_intake",
+        "safe_local_action_selected",
+        "sandbox_receipts",
+        "test_gate",
+        "diff_review",
+        "terminal_receipt",
+        "approval_handoff",
+    ]
+    assert read_model["stage_plan"][-1]["stage_type"] == "approval_gate"
+    assert read_model["stage_plan"][-1]["status"] == "blocked"
+    assert read_model["workflow_status"]["read_model_id"] == "operator_developer_workflow_status.read_model"
+
+
+def test_operator_control_tower_local_developer_workflow_receipt_html_route(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "developer_workflow_operator_receipt.generated.json"
+    receipt_path.write_text(
+        json.dumps(_developer_workflow_operator_receipt(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server_module, "LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH", receipt_path)
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/operator/control-tower/local-developer-workflow-receipt")
+
+    assert response.status_code == 200
+    assert "Local Developer Workflow Receipt" in response.text
+    assert "/operator/control-tower/local-developer-workflow-receipt/read-model" in response.text
+    assert "safe_zone.write_docs" in response.text
+    assert "Prepare documentation update in local sandbox" in response.text
+    assert "local_lab_only" in response.text
+    assert "approval_handoff" in response.text
+    assert "create_pr, push_branch, merge, deploy, connector_call" in response.text
+    assert "Projection only: true" in response.text
+    assert "external effects allowed: false" in response.text
 
 
 def test_operator_control_tower_read_model_surfaces_generated_operator_receipt(
