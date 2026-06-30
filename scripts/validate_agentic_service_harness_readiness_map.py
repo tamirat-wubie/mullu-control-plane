@@ -563,6 +563,8 @@ REQUIRED_GITHUB_PR_UAO_ACTUAL_DIFF_BRANCH_WRITE_BINDING_TERMS = (
     "GitHub PR UAO admission command-preview branch-write binding PR",
     "agentic_service_harness_github_pr_uao_admission_witness",
     "command-preview branch-write authority binding",
+    "command-preview branch-write authority evidence",
+    "source branch-write binding id/ref",
     "command-preview operator response binding",
     "redacted command preview",
     "argument vector template",
@@ -1439,7 +1441,7 @@ def _validate_github_pr_uao_actual_diff_branch_write_binding_ready(
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| GitHub PR UAO admission command-preview branch-write binding PR \| READY \| .+command-preview branch-write authority binding.+actual non-empty diff receipt ref.+terminal closure fail closed\. \|$",
+        r"^\| GitHub PR UAO admission command-preview branch-write binding PR \| READY \| .+command-preview branch-write authority binding.+command-preview branch-write authority evidence.+source branch-write binding id/ref.+actual non-empty diff receipt ref.+terminal closure fail closed\. \|$",
         map_text,
         re.MULTILINE,
     )
