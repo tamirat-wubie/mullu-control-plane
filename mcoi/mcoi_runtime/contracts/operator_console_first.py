@@ -81,6 +81,7 @@ class ConsoleEpisodeStatus(StrEnum):
     VERIFYING = "verifying"
     CLOSED = "closed"
     BLOCKED = "blocked"
+    PAUSED = "paused"
     APPROVAL_EXPIRED = "approval_expired"
     STALE_STATE = "stale_state"
     POLICY_DENIED = "policy_denied"
@@ -162,6 +163,47 @@ class SideEffectManifest(ContractRecord):
                 self.uses_network,
                 self.stores_logs,
                 self.touches_secrets,
+            )
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class HostileInputBoundary(ContractRecord):
+    """External-content authority boundary for prompt-injection resistance."""
+
+    external_content_refs: tuple[str, ...] = ()
+    attempts_authority_grant: bool = False
+    attempts_policy_override: bool = False
+    attempts_operator_intent_override: bool = False
+    attempts_approval_claim: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "external_content_refs",
+            _freeze_text_tuple(
+                self.external_content_refs,
+                "external_content_refs",
+                allow_empty=True,
+            ),
+        )
+        for field_name in (
+            "attempts_authority_grant",
+            "attempts_policy_override",
+            "attempts_operator_intent_override",
+            "attempts_approval_claim",
+        ):
+            if not isinstance(getattr(self, field_name), bool):
+                raise ValueError(f"{field_name} must be a boolean")
+
+    @property
+    def blocks_dispatch(self) -> bool:
+        return any(
+            (
+                self.attempts_authority_grant,
+                self.attempts_policy_override,
+                self.attempts_operator_intent_override,
+                self.attempts_approval_claim,
             )
         )
 
@@ -277,6 +319,7 @@ class ConsolePlannedAction(ContractRecord):
     recovery_plan_ref: str = ""
     evidence_required: tuple[str, ...] = ()
     estimated_cost: float = 0.0
+    hostile_input_boundary: HostileInputBoundary = field(default_factory=HostileInputBoundary)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "action_id", require_non_empty_text(self.action_id, "action_id"))
@@ -315,6 +358,8 @@ class ConsolePlannedAction(ContractRecord):
             "estimated_cost",
             require_non_negative_float(self.estimated_cost, "estimated_cost"),
         )
+        if not isinstance(self.hostile_input_boundary, HostileInputBoundary):
+            raise ValueError("hostile_input_boundary must be a HostileInputBoundary")
 
     @property
     def recovery_declared(self) -> bool:
@@ -414,6 +459,7 @@ class GatewayDispatchResult(ContractRecord):
     observed_effects: tuple[str, ...] = ()
     evidence_refs: tuple[str, ...] = ()
     actual_side_effects: SideEffectManifest | None = None
+    escalated_risk_score: int | None = None
     failure_reason: str = ""
 
     def __post_init__(self) -> None:
@@ -435,6 +481,12 @@ class GatewayDispatchResult(ContractRecord):
             SideEffectManifest,
         ):
             raise ValueError("actual_side_effects must be a SideEffectManifest")
+        if self.escalated_risk_score is not None:
+            object.__setattr__(
+                self,
+                "escalated_risk_score",
+                _require_risk_score(self.escalated_risk_score, "escalated_risk_score"),
+            )
         if self.failure_reason:
             object.__setattr__(
                 self,
