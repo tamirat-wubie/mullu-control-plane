@@ -3,13 +3,13 @@
     {
       "blocks_template_emission": false,
       "control_id": "source_runtime_authorization_request_valid",
-      "evidence_ref": "governed-planning-profile-runtime-authorization-request-43a3c2f6064f0c02",
+      "evidence_ref": "governed-planning-profile-runtime-authorization-request-ed50c930a433ac9a",
       "status": "Pass"
     },
     {
       "blocks_template_emission": false,
       "control_id": "source_generic_continuation_rejection_valid",
-      "evidence_ref": "governed-planning-profile-runtime-authorization-generic-continuation-rejection-5c584077eca160d2",
+      "evidence_ref": "governed-planning-profile-runtime-authorization-generic-continuation-rejection-927a4df834eb4825",
       "status": "Pass"
     },
     {
@@ -246,22 +246,22 @@
     "runtime_authorization_response_kind": "record_governed_planning_profile_runtime_authorization_rejection_witness",
     "runtime_authorization_response_status": "RejectedNoEffect",
     "signed_approval_present": false,
-    "witness_hash": "5c584077eca160d20f8e507bcb48e82f36f769100d0ce22beb6c39476f2b4771",
-    "witness_id": "governed-planning-profile-runtime-authorization-generic-continuation-rejection-5c584077eca160d2"
+    "witness_hash": "927a4df834eb48255b7e715de525c78fd6ce07f85025a1449c8df7277785fde5",
+    "witness_id": "governed-planning-profile-runtime-authorization-generic-continuation-rejection-927a4df834eb4825"
   },
   "source_runtime_authorization_request": {
     "operator_response_collected": false,
     "operator_response_required": true,
-    "request_hash": "43a3c2f6064f0c02079701e983900aea8857f79dc1b372ad21bcd66a304fdeec",
-    "request_id": "governed-planning-profile-runtime-authorization-request-43a3c2f6064f0c02",
+    "request_hash": "ed50c930a433ac9a69f404f0047f43f1a93d2e43a144d2b3ad798850500e3863",
+    "request_id": "governed-planning-profile-runtime-authorization-request-ed50c930a433ac9a",
     "runtime_authorization_gate_satisfied": false,
     "runtime_authorization_request_status": "SubmittedNoEffect",
     "runtime_authorization_request_submitted": true
   },
   "success_claim_allowed": false,
   "template_accepted_as_approval": false,
-  "template_hash": "f52c70b7fdf4ae4a530a99100b3c1ac8acc2472ceb8bde727a235bdc446b8bc0",
-  "template_id": "governed-planning-profile-runtime-authorization-approval-witness-template-f52c70b7fdf4ae4a",
+  "template_hash": "3f22596dc2647ca2539829880176275c1c26dc06f86b7e31b652b631ee519890",
+  "template_id": "governed-planning-profile-runtime-authorization-approval-witness-template-3f22596dc2647ca2",
   "template_status": "TemplateNoEffect",
   "terminal_closure": false,
   "validators": [

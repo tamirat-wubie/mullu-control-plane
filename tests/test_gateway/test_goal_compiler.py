@@ -20,7 +20,9 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from gateway.command_spine import CapabilityPassport, capability_passport_for
 from gateway.goal_compiler import CompiledGoalPlan, GoalCompiler, GoalPlanCertificate
+from gateway.plan import CapabilityPlanBuilder
 from gateway.world_state import WorldState
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
@@ -148,6 +150,48 @@ def test_goal_compiler_requires_observable_success_metrics_for_subjective_metric
     assert "BLOCKS" in graph_edges
     assert (
         "subjective_success_metric_requires_observable_evidence"
+        in compiled.compile_receipt.assumptions
+    )
+
+
+def test_goal_compiler_classifies_impossible_rollback_as_requiring_confirmation() -> None:
+    compiler = GoalCompiler(
+        plan_builder=CapabilityPlanBuilder(capability_passport_loader=_contract_acceptance_loader),
+        capability_passport_loader=_contract_acceptance_loader,
+    )
+
+    compiled = compiler.compile(
+        message=(
+            '/run legal.contract_acceptance.send '
+            '{"contract_id": "contract-1", "recipient": "counterparty-a"}'
+        ),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        world_state=_world_state(),
+    )
+    step = compiled.steps[0]
+    evidence_types = {evidence.evidence_type for evidence in step.required_evidence}
+    evidence_timing = {evidence.evidence_type: evidence.timing for evidence in step.required_evidence}
+    graph_nodes = {node.node_id: node for node in compiled.causal_chain_graph.nodes}
+
+    assert step.capability_id == "legal.contract_acceptance.send"
+    assert step.rollback.required is True
+    assert step.rollback.action_type == "impossible"
+    assert step.rollback.recovery_class == "impossible"
+    assert step.side_effects_bounded is False
+    assert {"explicit_confirmation", "consequence_receipt"}.issubset(evidence_types)
+    assert evidence_timing["explicit_confirmation"] == "before_step"
+    assert evidence_timing["consequence_receipt"] == "before_step"
+    assert compiled.operator_contracts[0].recovery_class == "impossible"
+    assert "irreversible_external_commitment_requires_confirmation" in compiled.goal_normal_form.boundaries
+    assert "rollback_impossible:legal.contract_acceptance.send" in compiled.gap_theorem.conflicts
+    assert graph_nodes["rollback:step-1"].node_type == "RollbackNode"
+    assert graph_nodes["rollback:step-1"].ref == "impossible"
+    assert graph_nodes["rollback:step-1"].proof_state == "Fail"
+    assert compiled.certificate.status == "requires_review"
+    assert compiled.judgment == "unsafe"
+    assert (
+        "rollback_impossible_requires_draft_confirmation_and_consequence_receipt"
         in compiled.compile_receipt.assumptions
     )
 
@@ -324,6 +368,27 @@ def _world_state(*, metadata: dict[str, Any] | None = None) -> WorldState:
         projected_at="2026-05-04T12:00:00Z",
         state_hash="world-state-hash-1",
         metadata=metadata or {},
+    )
+
+
+def _contract_acceptance_loader(capability_id: str) -> CapabilityPassport:
+    if capability_id != "legal.contract_acceptance.send":
+        return capability_passport_for(capability_id)
+    return CapabilityPassport(
+        capability="legal.contract_acceptance.send",
+        version="1",
+        risk_tier="high",
+        input_schema="LegalContractAcceptanceSendIntent.v1",
+        output_schema="LegalContractAcceptanceSendReceipt.v1",
+        authority_required=("legal_approver",),
+        requires=("tenant_bound", "approval:high_risk", "idempotency_key"),
+        mutates_world=True,
+        external_system="contract_counterparty",
+        rollback_type="irreversible",
+        proof_required_fields=("sent_message_id", "contract_id", "recipient_hash"),
+        declared_effects=("external_contract_acceptance_sent",),
+        forbidden_effects=("acceptance_sent_without_approval", "recipient_mismatch"),
+        evidence_required=("sent_message_id", "contract_id", "recipient_hash"),
     )
 
 
