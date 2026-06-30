@@ -84,6 +84,66 @@ such as `replay_record`, `replay_input_digest`, `replay_output_digest`, and the
 capability-specific receipts required to reproduce the action. This keeps replay
 work actionable while remaining a read-only planning record.
 
+## Current Operator Ranking
+
+Audit date: 2026-06-30
+
+Current validated report:
+
+```text
+examples/capability_debt_report.foundation.json
+capability_count=107
+total_debt_item_count=461
+live_action_enabled_count=0
+```
+
+Debt distribution:
+
+| Dimension | Count |
+| --- | ---: |
+| High-severity rows | 106 |
+| Medium-severity rows | 1 |
+| High-severity debt items | 141 |
+| Medium-severity debt items | 213 |
+| Low-severity debt items | 107 |
+| Approval debt items | 24 |
+| Evidence debt items | 105 |
+| Replay debt items | 106 |
+| Promotion debt items | 107 |
+| Live-action disabled items | 107 |
+
+Largest debt families:
+
+| Family | Debt items |
+| --- | ---: |
+| `agentic_control` | 70 |
+| `communication` | 50 |
+| `software_dev` | 50 |
+| `personal_assistant` | 48 |
+| `connector` | 31 |
+
+Highest-risk first batch:
+
+| Capability | Reason to handle early | First missing evidence class |
+| --- | --- | --- |
+| `browser.submit` | Can submit external forms. | Governed approval evidence. |
+| `computer.command.run` | Can execute machine commands. | Governed approval evidence. |
+| `email.send.with_approval` | Can send external messages. | Governed approval evidence. |
+| `financial.refund` | Can affect money movement. | Governed approval evidence. |
+| `messaging.chat.send.with_approval` | Can send external chat messages. | Governed approval evidence. |
+| `messaging.sms.send.with_approval` | Can send external SMS messages. | Governed approval evidence. |
+| `phone.call.terminate` | Can affect live communication. | Governed approval evidence. |
+
+Recommended first closure lane: define one reusable approval-decision evidence
+packet for approval-bound live actions, then bind it to one low-blast-radius
+capability before widening the pattern. The first practical target is
+`email.send.with_approval` in draft-only rehearsal mode because the personal
+assistant examples already contain related approval queue, review packet, and
+decision evidence records.
+
+Do not enable live execution from this ranking. The ranking chooses the next
+evidence work only.
+
 ## Validation
 
 Run:
@@ -113,6 +173,8 @@ Fracture deltas: none. This is additive and does not alter execution authority.
 
 ## Status
 
-Outcome: AwaitingEvidence until validators pass in the active workspace.
+Outcome: SolvedVerified for report structure and runtime projection in the
+active workspace. Capability evidence closure remains AwaitingEvidence, and
+live action remains disabled.
 
 Next action: use the report to select targeted evidence-closure work.
