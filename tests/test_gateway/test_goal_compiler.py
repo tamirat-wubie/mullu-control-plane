@@ -78,6 +78,25 @@ def test_goal_compiler_emits_usccgc_r2_audit_kernel_for_high_risk_payment() -> N
     assert compiled.judgment == "needs_permission"
 
 
+def test_goal_compiler_marks_explicitly_stale_world_state_as_unresolved() -> None:
+    compiler = GoalCompiler()
+
+    compiled = compiler.compile(
+        message="search knowledge docs",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        world_state=_world_state(metadata={"freshness_status": "stale"}),
+    )
+
+    assert compiled.world_facts[0].status == "stale"
+    assert compiled.world_facts[0].confidence == 0.4
+    assert compiled.gap_theorem.missing_facts == ("fresh_world_state_projection",)
+    assert "world_state_projection_stale" in compiled.verification_bundle.unresolved
+    assert compiled.causal_chain_graph.proof_state == "Unknown"
+    assert compiled.judgment == "needs_more_evidence"
+    assert "fresh_world_state_projection" in compiled.compile_receipt.fracture_deltas
+
+
 def test_goal_compiler_blocks_message_without_capability_plan() -> None:
     compiler = GoalCompiler()
 
@@ -237,7 +256,7 @@ def test_goal_compiler_import_boundary_is_causal_simulator_only() -> None:
     )
 
 
-def _world_state() -> WorldState:
+def _world_state(*, metadata: dict[str, Any] | None = None) -> WorldState:
     return WorldState(
         tenant_id="tenant-1",
         state_id="world-state-1",
@@ -249,6 +268,7 @@ def _world_state() -> WorldState:
         open_contradiction_count=0,
         projected_at="2026-05-04T12:00:00Z",
         state_hash="world-state-hash-1",
+        metadata=metadata or {},
     )
 
 

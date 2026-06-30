@@ -861,6 +861,9 @@ def _world_facts(world_state: WorldState | None) -> tuple[WorldFact, ...]:
                 permission_ref="planning",
             ),
         )
+    stale = _world_state_requires_refresh(world_state)
+    observed_status = "stale" if stale else "observed"
+    observed_confidence = 0.4 if stale else 1.0
     contradiction_status = "contradicted" if world_state.open_contradiction_count else "observed"
     contradiction_confidence = 1.0 if world_state.open_contradiction_count else 0.0
     return (
@@ -868,8 +871,8 @@ def _world_facts(world_state: WorldState | None) -> tuple[WorldFact, ...]:
             fact_id="fact-world-state-hash",
             value=world_state.state_hash,
             source="world_state_projection",
-            status="observed",
-            confidence=1.0,
+            status=observed_status,
+            confidence=observed_confidence,
             freshness_ref=world_state.projected_at,
             permission_ref="planning",
         ),
@@ -877,8 +880,8 @@ def _world_facts(world_state: WorldState | None) -> tuple[WorldFact, ...]:
             fact_id="fact-world-state-tenant",
             value=world_state.tenant_id,
             source="world_state_projection",
-            status="observed",
-            confidence=1.0,
+            status=observed_status,
+            confidence=observed_confidence,
             freshness_ref=world_state.projected_at,
             permission_ref="planning",
         ),
@@ -892,6 +895,15 @@ def _world_facts(world_state: WorldState | None) -> tuple[WorldFact, ...]:
             permission_ref="planning",
         ),
     )
+
+
+def _world_state_requires_refresh(world_state: WorldState | None) -> bool:
+    if world_state is None:
+        return False
+    freshness_status = str(world_state.metadata.get("freshness_status", "")).strip().lower()
+    if freshness_status in {"stale", "expired", "requires_refresh"}:
+        return True
+    return world_state.metadata.get("requires_refresh") is True
 
 
 def _operator_contract_projections(
@@ -938,6 +950,8 @@ def _gap_theorem(
     operator_contracts: tuple[OperatorContractProjection, ...],
 ) -> GapTheorem:
     missing_facts = () if world_state is not None else ("world_state_projection",)
+    if _world_state_requires_refresh(world_state):
+        missing_facts = (*missing_facts, "fresh_world_state_projection")
     missing_tools = () if capability_plan is not None else ("typed_capability_plan",)
     missing_permissions = _dedupe(
         f"approval:{authority}"
@@ -1165,7 +1179,11 @@ def _causal_chain_graph(
         )
 
     proof_state = "Fail" if certificate.status == "blocked" else (
-        "Unknown" if gap_theorem.conflicts or gap_theorem.missing_permissions else "Pass"
+        "Unknown" if (
+            gap_theorem.conflicts
+            or gap_theorem.missing_permissions
+            or gap_theorem.missing_facts
+        ) else "Pass"
     )
     graph_payload = {
         "goal_id": goal.goal_id,
@@ -1207,6 +1225,8 @@ def _r2_verification_bundle(
         failures.append(certificate.reason or "requires_review")
     if world_state is None:
         unresolved.append("world_state_projection_unknown")
+    if _world_state_requires_refresh(world_state):
+        unresolved.append("world_state_projection_stale")
     unresolved.extend(f"permission_pending:{permission}" for permission in gap_theorem.missing_permissions)
     unresolved.extend(f"post_step_evidence_pending:{evidence}" for evidence in gap_theorem.missing_evidence)
     unresolved.extend(f"conflict_pending:{conflict}" for conflict in gap_theorem.conflicts if conflict not in failures)
