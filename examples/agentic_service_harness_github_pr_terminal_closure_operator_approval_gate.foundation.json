@@ -73,6 +73,62 @@
       "binds_merge_state": true,
       "binds_branch_deletion_state": true
     },
+    "command_preview_certificate_candidate_evidence": {
+      "source_terminal_closure_certificate_witness_ref": "examples/agentic_service_harness_github_pr_terminal_closure_certificate_witness.foundation.json",
+      "source_binding_id": "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
+      "source_requested_evidence_ref": "evidence://github-pr-terminal-closure-certificate",
+      "source_terminal_closure_certificate_request_id": "terminal-closure.github-pr-chain",
+      "source_command_preview_effect_reconciliation_evidence_ref": "command_preview_effect_reconciliation_evidence",
+      "source_effect_reconciliation_witness_ref": "examples/agentic_service_harness_github_pr_effect_reconciliation_witness.foundation.json",
+      "source_effect_reconciliation_binding_id": "agentic_service_harness_github_pr_effect_reconciliation_witness",
+      "source_ci_gate_before_ready_for_review_witness_ref": "examples/agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.foundation.json",
+      "source_ci_gate_binding_id": "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
+      "source_repository_effect_rollback_plan_witness_id": "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+      "source_repository_effect_rollback_plan_witness_ref": "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json",
+      "source_uao_admission_witness_id": "agentic_service_harness_github_pr_uao_admission_witness",
+      "source_uao_admission_witness_ref": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
+      "source_branch_write_binding_id": "agentic_service_harness_github_pr_branch_write_authority_binding",
+      "source_branch_write_binding_ref": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+      "source_command_preview_ref": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
+      "source_redacted_command_preview": "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> --body-file <redacted-body-file-ref>",
+      "source_argument_vector_template": [
+        "gh",
+        "pr",
+        "create",
+        "--base",
+        "main",
+        "--head",
+        "<branch-ref>",
+        "--title",
+        "<redacted-title-ref>",
+        "--body-file",
+        "<redacted-body-file-ref>"
+      ],
+      "source_placeholder_refs": [
+        "placeholder://branch-ref",
+        "placeholder://redacted-title-ref",
+        "placeholder://redacted-body-file-ref"
+      ],
+      "source_actual_non_empty_diff_receipt_ref": "witness://actual-non-empty-diff-receipt",
+      "source_changed_file_refs": [
+        "evidence://redacted-file-change-candidate/schema-addition"
+      ],
+      "source_diff_refs": [
+        "evidence://redacted-diff-candidate/schema-addition"
+      ],
+      "source_redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+      "source_redacted_output_ref": "witness://filesystem-write-output-redacted",
+      "source_terminal_closure_certificate_collected": false,
+      "source_terminal_closure_authorized": false,
+      "source_effect_reconciliation_collected": false,
+      "source_authority_granted": false,
+      "candidate_consumes_command_preview_terminal_closure_certificate_evidence": true,
+      "candidate_consumes_command_preview_effect_reconciliation_evidence": true,
+      "operator_approval_required": true,
+      "certificate_minting_remains_blocked": true,
+      "terminal_closure_remains_blocked": true,
+      "repository_write_remains_blocked": true
+    },
     "operator_approval_collected": false,
     "operator_can_approve_terminal_certificate": true,
     "terminal_closure_certificate_minted": false,
