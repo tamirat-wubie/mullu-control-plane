@@ -19,87 +19,293 @@
     "step_results",
     "plan_certificate_id",
     "state_hash",
-    "receipt_hash"
+    "engine_version",
+    "timestamp",
+    "actor",
+    "action_id",
+    "action_type",
+    "target",
+    "goal",
+    "simulation_boundary",
+    "state_snapshot_hash",
+    "snapshot_freshness",
+    "permissions_checked",
+    "assumptions",
+    "unknowns",
+    "causal_graph_summary",
+    "branch_summary",
+    "predicted_direct_effects",
+    "predicted_indirect_effects",
+    "predicted_delayed_effects",
+    "constraint_checks",
+    "violations",
+    "risk_scores",
+    "compensation_plans",
+    "compensation_verification_status",
+    "confidence_components",
+    "confidence_score",
+    "verdict",
+    "required_guards",
+    "post_execution_verification_plan",
+    "limitations",
+    "valid_until",
+    "invalid_if",
+    "receipt_hash",
+    "metadata"
   ],
   "properties": {
-    "simulation_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "goal_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "plan_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "tenant_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "action": {
-      "type": "string",
-      "minLength": 1
-    },
-    "risk": {
-      "type": "string",
-      "enum": [
-        "low",
-        "medium",
-        "high",
-        "critical"
-      ]
-    },
-    "would_execute": {
-      "type": "boolean"
-    },
-    "reason": {
-      "type": "string",
-      "minLength": 1
-    },
-    "required_controls": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    },
-    "failure_modes": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      }
-    },
-    "compensation_path": {
-      "type": "string",
-      "minLength": 1
-    },
+    "simulation_id": {"type": "string", "minLength": 1},
+    "goal_id": {"type": "string", "minLength": 1},
+    "plan_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "action": {"type": "string", "minLength": 1},
+    "risk": {"$ref": "#/$defs/risk_tier"},
+    "would_execute": {"type": "boolean"},
+    "reason": {"type": "string", "minLength": 1},
+    "required_controls": {"$ref": "#/$defs/string_array"},
+    "failure_modes": {"$ref": "#/$defs/string_array"},
+    "compensation_path": {"type": "string", "minLength": 1},
     "step_results": {
       "type": "array",
-      "items": {
-        "$ref": "#/$defs/simulation_step_result"
+      "items": {"$ref": "#/$defs/simulation_step_result"}
+    },
+    "plan_certificate_id": {"type": "string", "minLength": 1},
+    "state_hash": {"type": "string", "minLength": 1},
+    "engine_version": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "minLength": 1},
+    "actor": {"type": "string", "minLength": 1},
+    "action_id": {"type": "string", "minLength": 1},
+    "action_type": {"type": "string", "minLength": 1},
+    "target": {"type": "string", "minLength": 1},
+    "goal": {"type": "string", "minLength": 1},
+    "simulation_boundary": {"$ref": "#/$defs/simulation_boundary"},
+    "state_snapshot_hash": {"type": "string", "minLength": 1},
+    "snapshot_freshness": {"$ref": "#/$defs/snapshot_freshness"},
+    "permissions_checked": {"$ref": "#/$defs/string_array"},
+    "assumptions": {"$ref": "#/$defs/string_array"},
+    "unknowns": {"$ref": "#/$defs/string_array"},
+    "causal_graph_summary": {"$ref": "#/$defs/causal_graph_summary"},
+    "branch_summary": {"$ref": "#/$defs/branch_summary"},
+    "predicted_direct_effects": {"$ref": "#/$defs/string_array"},
+    "predicted_indirect_effects": {"$ref": "#/$defs/string_array"},
+    "predicted_delayed_effects": {"$ref": "#/$defs/string_array"},
+    "constraint_checks": {"$ref": "#/$defs/string_array"},
+    "violations": {"$ref": "#/$defs/string_array"},
+    "risk_scores": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/risk_score"}
+    },
+    "compensation_plans": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/compensation_plan"}
+    },
+    "compensation_verification_status": {"$ref": "#/$defs/compensation_status"},
+    "confidence_components": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
       }
     },
-    "plan_certificate_id": {
-      "type": "string",
-      "minLength": 1
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
     },
-    "state_hash": {
-      "type": "string",
-      "minLength": 1
-    },
-    "receipt_hash": {
-      "type": "string",
-      "minLength": 1
-    },
+    "verdict": {"$ref": "#/$defs/verdict"},
+    "required_guards": {"$ref": "#/$defs/string_array"},
+    "post_execution_verification_plan": {"$ref": "#/$defs/string_array"},
+    "limitations": {"$ref": "#/$defs/string_array"},
+    "valid_until": {"type": "string", "minLength": 1},
+    "invalid_if": {"$ref": "#/$defs/string_array"},
+    "receipt_hash": {"type": "string", "minLength": 1},
     "metadata": {
       "type": "object",
       "additionalProperties": true
     }
   },
   "$defs": {
+    "risk_tier": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "string_array": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "APPROVE",
+        "APPROVE_WITH_GUARDS",
+        "APPROVE_ONLY_IN_SANDBOX",
+        "REQUIRE_HUMAN_REVIEW",
+        "REQUIRE_MORE_EVIDENCE",
+        "MODIFY_ACTION",
+        "BLOCK",
+        "SIMULATION_INCONCLUSIVE"
+      ]
+    },
+    "compensation_status": {
+      "type": "string",
+      "enum": [
+        "VERIFIED",
+        "PLAUSIBLE",
+        "UNTESTED",
+        "PARTIAL",
+        "UNAVAILABLE",
+        "DANGEROUS",
+        "NOT_REQUIRED"
+      ]
+    },
+    "simulation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "sandbox",
+        "real_mutation_allowed",
+        "external_mutation_allowed",
+        "success_certification_allowed"
+      ],
+      "properties": {
+        "mode": {"type": "string", "const": "dry_run"},
+        "sandbox": {"type": "string", "minLength": 1},
+        "real_mutation_allowed": {"type": "boolean", "const": false},
+        "external_mutation_allowed": {"type": "boolean", "const": false},
+        "success_certification_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "snapshot_freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "score",
+        "expected_state_hash",
+        "observed_state_hash",
+        "projected_at"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["fresh", "stale", "conflicted", "unknown"]
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "expected_state_hash": {"type": "string", "minLength": 1},
+        "observed_state_hash": {"type": "string"},
+        "projected_at": {"type": "string"}
+      }
+    },
+    "causal_graph_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "graph_id",
+        "node_count",
+        "edge_count",
+        "proof_state",
+        "coverage_score"
+      ],
+      "properties": {
+        "graph_id": {"type": "string"},
+        "node_count": {"type": "integer", "minimum": 0},
+        "edge_count": {"type": "integer", "minimum": 0},
+        "proof_state": {"type": "string", "minLength": 1},
+        "coverage_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "branch_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_branches",
+        "simulated_branches",
+        "required_branch_count",
+        "simulated_branch_count",
+        "branch_coverage_score",
+        "dependency_coverage_score"
+      ],
+      "properties": {
+        "required_branches": {"$ref": "#/$defs/string_array"},
+        "simulated_branches": {"$ref": "#/$defs/string_array"},
+        "required_branch_count": {"type": "integer", "minimum": 0},
+        "simulated_branch_count": {"type": "integer", "minimum": 0},
+        "branch_coverage_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "dependency_coverage_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "risk_score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "risk_id",
+        "branch_id",
+        "risk_type",
+        "score",
+        "severity",
+        "likelihood",
+        "exposure",
+        "irreversibility",
+        "uncertainty",
+        "cascade_potential",
+        "mitigation_strength",
+        "description"
+      ],
+      "properties": {
+        "risk_id": {"type": "string", "minLength": 1},
+        "branch_id": {"type": "string", "minLength": 1},
+        "risk_type": {"type": "string", "minLength": 1},
+        "score": {"type": "number", "minimum": 0, "maximum": 1},
+        "severity": {"type": "number", "minimum": 0, "maximum": 1},
+        "likelihood": {"type": "number", "minimum": 0, "maximum": 1},
+        "exposure": {"type": "number", "minimum": 0, "maximum": 1},
+        "irreversibility": {"type": "number", "minimum": 0, "maximum": 1},
+        "uncertainty": {"type": "number", "minimum": 0, "maximum": 1},
+        "cascade_potential": {"type": "number", "minimum": 0, "maximum": 1},
+        "mitigation_strength": {"type": "number", "minimum": 0, "maximum": 1},
+        "description": {"type": "string", "minLength": 1}
+      }
+    },
+    "compensation_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "strategy",
+        "step_id",
+        "capability_id",
+        "verification_status",
+        "recovery_type",
+        "steps",
+        "limitations"
+      ],
+      "properties": {
+        "strategy": {"type": "string", "minLength": 1},
+        "step_id": {"type": "string", "minLength": 1},
+        "capability_id": {"type": "string", "minLength": 1},
+        "verification_status": {"$ref": "#/$defs/compensation_status"},
+        "recovery_type": {"type": "string", "minLength": 1},
+        "steps": {"$ref": "#/$defs/string_array"},
+        "limitations": {"$ref": "#/$defs/string_array"}
+      }
+    },
     "simulation_step_result": {
       "type": "object",
       "additionalProperties": false,
@@ -116,62 +322,16 @@
         "evidence_required"
       ],
       "properties": {
-        "step_id": {
-          "type": "string",
-          "minLength": 1
-        },
-        "capability_id": {
-          "type": "string",
-          "minLength": 1
-        },
-        "risk": {
-          "type": "string",
-          "enum": [
-            "low",
-            "medium",
-            "high",
-            "critical"
-          ]
-        },
-        "would_execute": {
-          "type": "boolean"
-        },
-        "reason": {
-          "type": "string",
-          "minLength": 1
-        },
-        "required_controls": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "failed_preconditions": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "failure_modes": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "compensation_path": {
-          "type": "string",
-          "minLength": 1
-        },
-        "evidence_required": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        }
+        "step_id": {"type": "string", "minLength": 1},
+        "capability_id": {"type": "string", "minLength": 1},
+        "risk": {"$ref": "#/$defs/risk_tier"},
+        "would_execute": {"type": "boolean"},
+        "reason": {"type": "string", "minLength": 1},
+        "required_controls": {"$ref": "#/$defs/string_array"},
+        "failed_preconditions": {"$ref": "#/$defs/string_array"},
+        "failure_modes": {"$ref": "#/$defs/string_array"},
+        "compensation_path": {"type": "string", "minLength": 1},
+        "evidence_required": {"$ref": "#/$defs/string_array"}
       }
     }
   }
