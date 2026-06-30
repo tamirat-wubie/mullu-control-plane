@@ -38,6 +38,7 @@ from gateway.sandbox_runner import (  # noqa: E402
 )
 
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "browser_sandbox_evidence.json"
+DEFAULT_WORKSPACE_ROOT = REPO_ROOT / ".tmp" / "browser_sandbox_workspace"
 DEFAULT_REQUEST_ID = "browser-sandbox-evidence"
 DEFAULT_TENANT_ID = "tenant-adapter-evidence"
 DEFAULT_CAPABILITY_ID = "browser.extract_text"
@@ -75,7 +76,7 @@ class BrowserSandboxEvidenceResult:
 def produce_browser_sandbox_evidence(
     *,
     output_path: Path = DEFAULT_OUTPUT,
-    workspace_root: Path = REPO_ROOT,
+    workspace_root: Path | None = None,
     request_id: str = DEFAULT_REQUEST_ID,
     tenant_id: str = DEFAULT_TENANT_ID,
     capability_id: str = DEFAULT_CAPABILITY_ID,
@@ -86,8 +87,10 @@ def produce_browser_sandbox_evidence(
     clock: Callable[[], str] | None = None,
 ) -> BrowserSandboxEvidenceResult:
     """Produce and write one browser sandbox evidence receipt."""
+    resolved_workspace_root = workspace_root or DEFAULT_WORKSPACE_ROOT
+    _prepare_workspace_root(resolved_workspace_root)
     resolved_runner = DockerRootlessSandboxRunner(
-        host_workspace_root=str(workspace_root),
+        host_workspace_root=str(resolved_workspace_root),
         runner=runner if runner is not None else subprocess.run,
         platform_system=platform_system or platform.system,
     )
@@ -107,7 +110,7 @@ def produce_browser_sandbox_evidence(
         "evidence_id": evidence_id,
         "status": status,
         "checked_at": (clock or _validation_clock)(),
-        "workspace_root_hash": _sha256_text(str(Path(workspace_root).resolve(strict=False))),
+        "workspace_root_hash": _sha256_text(str(Path(resolved_workspace_root).resolve(strict=False))),
         "sandbox_profile": {
             "sandbox_id": resolved_runner.profile.sandbox_id,
             "image": resolved_runner.profile.image,
@@ -182,6 +185,17 @@ def _write_json(path: Path, payload: dict[str, Any]) -> Path:
     return path
 
 
+def _prepare_workspace_root(path: Path) -> Path:
+    """Create the default probe workspace without mutating caller-owned roots."""
+    if path.resolve(strict=False) != DEFAULT_WORKSPACE_ROOT.resolve(strict=False):
+        return path
+    path.mkdir(parents=True, exist_ok=True)
+    marker_path = path / "README.txt"
+    if not marker_path.exists():
+        marker_path.write_text("browser sandbox probe workspace\n", encoding="utf-8")
+    return path
+
+
 def _validation_clock() -> str:
     return "2026-05-01T12:00:00+00:00"
 
@@ -190,7 +204,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse browser sandbox evidence producer arguments."""
     parser = argparse.ArgumentParser(description="Produce governed browser sandbox evidence.")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
-    parser.add_argument("--workspace-root", default=str(REPO_ROOT))
+    parser.add_argument("--workspace-root", default=str(DEFAULT_WORKSPACE_ROOT))
     parser.add_argument("--request-id", default=DEFAULT_REQUEST_ID)
     parser.add_argument("--tenant-id", default=DEFAULT_TENANT_ID)
     parser.add_argument("--capability-id", default=DEFAULT_CAPABILITY_ID)

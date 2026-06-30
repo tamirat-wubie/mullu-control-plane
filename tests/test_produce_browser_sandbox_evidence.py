@@ -89,6 +89,40 @@ def test_browser_sandbox_evidence_blocks_on_non_linux_without_launch(tmp_path: P
     assert payload["blockers"] == list(result.blockers)
 
 
+def test_browser_sandbox_evidence_default_workspace_is_probe_scoped(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    captured: dict[str, object] = {}
+    output_path = tmp_path / "browser-sandbox-evidence.json"
+    default_workspace = tmp_path / "mullusi_browser_sandbox_workspace"
+    monkeypatch.setattr(
+        "scripts.produce_browser_sandbox_evidence.DEFAULT_WORKSPACE_ROOT",
+        default_workspace,
+    )
+
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        captured["argv"] = args[0]
+        return subprocess.CompletedProcess(args[0], 0, stdout="Python 3.13", stderr="")
+
+    result = produce_browser_sandbox_evidence(
+        output_path=output_path,
+        runner=fake_runner,
+        platform_system=lambda: "Linux",
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    docker_argv = captured["argv"]
+
+    assert result.passed is True
+    assert default_workspace.is_dir()
+    assert (default_workspace / "README.txt").read_text(encoding="utf-8") == (
+        "browser sandbox probe workspace\n"
+    )
+    assert str(default_workspace.resolve()) in " ".join(docker_argv)
+    assert str(_ROOT.resolve()) not in payload["sandbox_profile"]["workspace_mount"]
+    assert payload["receipt"]["changed_file_count"] == 0
+
+
 def test_browser_sandbox_evidence_cli_outputs_json_for_blocked_probe(
     tmp_path: Path,
     monkeypatch,
