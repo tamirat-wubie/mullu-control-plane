@@ -79,6 +79,19 @@ def test_forbidden_scan_skips_nested_git_worktree(tmp_path: Path) -> None:
     assert errors == []
 
 
+def test_forbidden_scan_skips_local_control_plane_scratch_directory(tmp_path: Path) -> None:
+    scratch_dir = tmp_path / "mullu-control-plane-terminal-approval-command-preview-v2"
+    scratch_dir.mkdir()
+    (scratch_dir / "README.md").write_text("Header\n" + "MIT" + " License\n", encoding="utf-8")
+    active_doc = tmp_path / "README.md"
+    active_doc.write_text("Mullusi proprietary boundary text.\n", encoding="utf-8")
+
+    errors = validate_proprietary_boundary.scan_forbidden_text_patterns(root=tmp_path)
+
+    assert errors == []
+    assert len(errors) == 0
+
+
 def test_forbidden_scan_skips_patch_artifacts(tmp_path: Path) -> None:
     patch_artifact = tmp_path / "review.patch"
     patch_artifact.write_bytes(b"\xff\xfeM\x00I\x00T\x00 \x00L\x00i\x00c\x00e\x00n\x00s\x00e\x00")

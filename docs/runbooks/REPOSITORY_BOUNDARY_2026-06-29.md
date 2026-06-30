@@ -29,23 +29,34 @@ they were branches of one repository.
 | Repository | Role | Boundary |
 | --- | --- | --- |
 | `tamirat-wubie/mullu-control-plane` | Canonical full platform | Contains `gateway`, `governance`, `capabilities`, `mcoi`, `maf`, release notes, and governed deployment evidence. |
-| `mullusi/mullusi-control-plane` | Deployment extraction | Contains a small `apps/api` and `apps/dashboard` surface used during Render deployment hardening. |
+| `mullusi/mullusi-control-plane` | Public deployment extraction for now | Contains a small `apps/api` and `apps/dashboard` surface used during Render deployment hardening. It is intentionally public for the current phase and must not contain production secrets. |
 
 ## Local Checkout Rule
 
 Use this checkout for full-platform development:
 
 ```text
-C:\Users\tmrtl\Projects\Agentic framwork and computer uses inteligence\mullu-control-plane
+C:\Users\tmrtl\Projects\Agentic framwork and computer uses inteligence
 ```
 
-Do not use this checkout for full-platform development:
+The local remotes must keep these names:
+
+```text
+personal-control-plane -> tamirat-wubie/mullu-control-plane
+org-control-plane      -> mullusi/mullusi-control-plane
+origin                 -> tamirat-wubie/mullu-governed-swarm, when present
+```
+
+Do not use deployment-extraction checkouts for full-platform development,
+including:
 
 ```text
 D:\mullusi-control-plane
+C:\Users\tmrtl\Projects\mullusi-control-plane-private-fix
+C:\Users\tmrtl\Projects\mullu_control_plane
 ```
 
-That `D:\` checkout points to the deployment extraction repository.
+Those checkouts point to the deployment extraction repository.
 
 ## Guard Command
 
@@ -64,6 +75,14 @@ canonical_repo=tamirat-wubie/mullu-control-plane
 
 If the guard reports `deployment_extraction`, stop and switch to the canonical
 checkout before continuing.
+
+Plain `git push` must remain blocked with `push.default=nothing`. Pushes must
+name the intended remote and branch ref:
+
+```powershell
+git push personal-control-plane HEAD:refs/heads/<branch-name>
+git push org-control-plane HEAD:refs/heads/<branch-name>
+```
 
 ## Porting Rule
 

@@ -110,6 +110,9 @@ EXCLUDED_DIR_NAMES = frozenset(
         ".change_assurance",
     }
 )
+EXCLUDED_DIR_PREFIXES = (
+    "mullu-control-plane",
+)
 
 
 def _relative(path: Path) -> str:
@@ -243,6 +246,8 @@ def iter_scannable_files(root: Path = REPO_ROOT) -> list[Path]:
 def _skip_scan_directory(path: Path, relative_path: Path, root: Path) -> bool:
     """Return whether a directory is outside the proprietary scan boundary."""
     if any(part in EXCLUDED_DIR_NAMES for part in relative_path.parts):
+        return True
+    if path != root and any(part.startswith(EXCLUDED_DIR_PREFIXES) for part in relative_path.parts):
         return True
     if path != root and (path / ".git").exists():
         return True

@@ -38,6 +38,25 @@ def test_classify_repository_accepts_canonical_full_platform(tmp_path: Path) -> 
     assert report.missing_canonical_paths == ()
 
 
+def test_classify_repository_accepts_named_canonical_remote(tmp_path: Path) -> None:
+    """Input contract: multiple remotes. Output contract: canonical boundary."""
+
+    for relative_path in ("gateway", "governance", "capabilities", "mcoi", "maf"):
+        (tmp_path / relative_path).mkdir()
+
+    report = classify_repository(
+        tmp_path,
+        (
+            "https://github.com/tamirat-wubie/mullu-governed-swarm.git",
+            f"https://github.com/{CANONICAL_REPO}.git",
+        ),
+    )
+
+    assert report.boundary == "canonical"
+    assert report.push_allowed_for_full_platform is True
+    assert CANONICAL_REPO in report.origin
+
+
 def test_classify_repository_blocks_deployment_extraction(tmp_path: Path) -> None:
     """Input contract: extraction indicators. Output contract: blocked boundary. Error contract: assertion failure."""
 
