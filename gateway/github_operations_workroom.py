@@ -51,6 +51,7 @@ GITHUB_REPO_STATUS_CAPABILITY_ID = "github.repo_status_summary.read_only.v1"
 GITHUB_PATCH_PLAN_CAPABILITY_ID = "github.patch_plan_draft.prepare.v1"
 GITHUB_ISSUE_DRAFT_CAPABILITY_ID = "github.issue_draft.prepare.v1"
 GITHUB_RELEASE_READINESS_CAPABILITY_ID = "github.release_readiness.prepare.v1"
+GITHUB_PR_MERGE_APPROVAL_REQUEST_CAPABILITY_ID = "github.pr_merge_approval_request.prepare.v1"
 GITHUB_READ_ONLY_CONNECTOR_CAPABILITY_ID = "connector.github.read"
 GITHUB_PR_SAFETY_INTENT = "REVIEW_PR_MERGE_SAFETY"
 GITHUB_ACTIONS_FAILURE_INTENT = "DIAGNOSE_GITHUB_ACTIONS_FAILURE"
@@ -58,6 +59,7 @@ GITHUB_REPO_STATUS_INTENT = "SUMMARIZE_GITHUB_REPOSITORY_STATUS"
 GITHUB_PATCH_PLAN_INTENT = "DRAFT_GITHUB_PATCH_PLAN"
 GITHUB_ISSUE_DRAFT_INTENT = "DRAFT_GITHUB_ISSUE"
 GITHUB_RELEASE_READINESS_INTENT = "ASSESS_GITHUB_RELEASE_READINESS"
+GITHUB_PR_MERGE_APPROVAL_REQUEST_INTENT = "PREPARE_GITHUB_PR_MERGE_APPROVAL_REQUEST"
 GITHUB_WORKROOM_SURFACE = "github_operations_workroom"
 
 _REQUIRED_EVIDENCE = (
@@ -111,6 +113,16 @@ _RELEASE_READINESS_BLOCKED_ACTIONS = (
     "merge_or_mutate_repository_without_write_admission",
     "claim_release_ready_without_required_evidence",
 )
+_PR_MERGE_APPROVAL_REQUEST_BLOCKED_ACTIONS = (
+    "merge_pull_request_without_explicit_human_approval",
+    "merge_pull_request_without_fresh_ci_evidence",
+    "merge_pull_request_without_pr_safety_receipt",
+    "merge_pull_request_without_review_approval_evidence",
+    "merge_pull_request_without_rollback_or_revert_plan",
+    "delete_branch_without_post_merge_cleanup_approval",
+    "deploy_after_merge_without_deployment_witness",
+    "mutate_repository_from_approval_request_packet",
+)
 _ALLOWED_TOOLS = (
     "github.read.pull_request",
     "github.read.diff",
@@ -139,6 +151,14 @@ _RELEASE_READINESS_REQUIRED_EVIDENCE = (
     "ci_status_ref",
     "change_summary_ref",
     "risk_or_rollback_ref",
+)
+_PR_MERGE_APPROVAL_REQUEST_REQUIRED_EVIDENCE = (
+    "pull_request_number",
+    "pr_safety_receipt_ref",
+    "ci_status_ref",
+    "review_approval_ref",
+    "rollback_ref",
+    "explicit_approver_ref",
 )
 _EFFECT_BOUNDARY = {
     "execution_allowed": False,
@@ -1804,6 +1824,126 @@ class GitHubReleaseReadinessAssessment(ContractRecord):
         object.__setattr__(self, "assessed_at", require_datetime_text(self.assessed_at, "assessed_at"))
 
 
+@dataclass(frozen=True, slots=True)
+class GitHubPrMergeApprovalRequest(ContractRecord):
+    """Input contract for a governed local PR merge approval request packet."""
+
+    actor_id: str
+    workspace_id: str
+    repo: str
+    pull_request_number: int
+    pr_safety_receipt_ref: str
+    ci_status_refs: tuple[str, ...]
+    review_approval_refs: tuple[str, ...]
+    rollback_refs: tuple[str, ...]
+    explicit_approver_ref: str
+    merge_objective: str
+    known_blockers: tuple[str, ...]
+    surface_event_id: str
+    requested_at: str
+    authority_ref: str = "policy.github.pr_merge.local_approval_request_only"
+    assumptions: tuple[str, ...] = (
+        "Evidence references are bounded and authorized for this actor and workspace.",
+        "PR merge approval request preparation does not merge, push, delete branches, deploy, or mutate GitHub.",
+    )
+    write_authority_granted: bool = False
+    merge_authority_granted: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "actor_id",
+            "workspace_id",
+            "repo",
+            "surface_event_id",
+            "authority_ref",
+        ):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if not isinstance(self.pull_request_number, int) or isinstance(self.pull_request_number, bool):
+            raise ValueError("pull_request_number must be an integer")
+        if self.pull_request_number <= 0:
+            raise ValueError("pull_request_number must be positive")
+        if self.pr_safety_receipt_ref:
+            object.__setattr__(
+                self,
+                "pr_safety_receipt_ref",
+                require_non_empty_text(self.pr_safety_receipt_ref, "pr_safety_receipt_ref"),
+            )
+        if self.explicit_approver_ref:
+            object.__setattr__(
+                self,
+                "explicit_approver_ref",
+                require_non_empty_text(self.explicit_approver_ref, "explicit_approver_ref"),
+            )
+        if self.merge_objective:
+            object.__setattr__(self, "merge_objective", require_non_empty_text(self.merge_objective, "merge_objective"))
+        object.__setattr__(self, "requested_at", require_datetime_text(self.requested_at, "requested_at"))
+        for field_name in ("ci_status_refs", "review_approval_refs", "rollback_refs", "known_blockers", "assumptions"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple):
+                raise ValueError(f"{field_name} must be a tuple")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if self.write_authority_granted is not False:
+            raise ValueError("PR merge approval request cannot grant write authority")
+        if self.merge_authority_granted is not False:
+            raise ValueError("PR merge approval request cannot grant merge authority")
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubPrMergeApprovalPacket(ContractRecord):
+    """Prepare-only approval request packet; it never grants merge authority."""
+
+    packet_id: str
+    repo: str
+    pull_request_number: int
+    status: str
+    approval_question: str
+    required_next_evidence: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    blockers: tuple[str, ...]
+    allowed_response_kinds: tuple[str, ...]
+    default_response_kind: str
+    blocked_actions: tuple[str, ...]
+    recommended_next_action: str
+    confidence: float
+    write_authority_granted: bool
+    merge_authority_granted: bool
+    prepared_at: str
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "packet_id",
+            "repo",
+            "status",
+            "approval_question",
+            "default_response_kind",
+            "recommended_next_action",
+        ):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if not isinstance(self.pull_request_number, int) or isinstance(self.pull_request_number, bool):
+            raise ValueError("pull_request_number must be an integer")
+        if self.pull_request_number <= 0:
+            raise ValueError("pull_request_number must be positive")
+        if self.status not in {"ready_for_approval", "blocked", "awaiting_evidence"}:
+            raise ValueError("status must be ready_for_approval, blocked, or awaiting_evidence")
+        for field_name in ("required_next_evidence", "evidence_refs", "blockers", "allowed_response_kinds", "blocked_actions"):
+            values = getattr(self, field_name)
+            if not isinstance(values, tuple) or not values:
+                raise ValueError(f"{field_name} must contain at least one item")
+            for index, value in enumerate(values):
+                require_non_empty_text(value, f"{field_name}[{index}]")
+        if not isinstance(self.confidence, (int, float)) or isinstance(self.confidence, bool):
+            raise ValueError("confidence must be a number")
+        if not 0.0 <= float(self.confidence) <= 1.0:
+            raise ValueError("confidence must be between 0.0 and 1.0")
+        object.__setattr__(self, "confidence", float(self.confidence))
+        if self.write_authority_granted is not False:
+            raise ValueError("PR merge approval packet cannot grant write authority")
+        if self.merge_authority_granted is not False:
+            raise ValueError("PR merge approval packet cannot grant merge authority")
+        object.__setattr__(self, "prepared_at", require_datetime_text(self.prepared_at, "prepared_at"))
+
+
 def admit_github_repo_status_evidence_collection(
     request: GitHubRepoStatusEvidenceAdmissionRequest,
     *,
@@ -2378,6 +2518,147 @@ def build_github_release_readiness_receipt(
         ),
         final_judgment=assessment.readiness_judgment,
         memory_update=FabricMemoryDecisionStatus.STORE if assessment.status == "ready" else FabricMemoryDecisionStatus.DEFER,
+        timestamp=occurred_at,
+        partial_failure_reasons=partial_failure_reasons,
+    )
+
+
+def evaluate_github_pr_merge_approval_request(
+    *,
+    request: GitHubPrMergeApprovalRequest,
+    clock: Callable[[], str],
+) -> GitHubPrMergeApprovalPacket:
+    """Prepare a bounded PR merge approval request without merging or writing."""
+
+    if not isinstance(request, GitHubPrMergeApprovalRequest):
+        raise ValueError("request must be a GitHubPrMergeApprovalRequest")
+    prepared_at = require_datetime_text(clock(), "prepared_at")
+    missing: list[str] = []
+    if not request.pr_safety_receipt_ref.strip():
+        missing.append("missing_pr_safety_receipt_ref")
+    if not request.ci_status_refs:
+        missing.append("missing_ci_status_refs")
+    if not request.review_approval_refs:
+        missing.append("missing_review_approval_refs")
+    if not request.rollback_refs:
+        missing.append("missing_rollback_refs")
+    if not request.explicit_approver_ref.strip():
+        missing.append("missing_explicit_approver_ref")
+    if not request.merge_objective.strip():
+        missing.append("missing_merge_objective")
+
+    collected_evidence_refs: list[str] = []
+    if request.pr_safety_receipt_ref.strip():
+        collected_evidence_refs.append(request.pr_safety_receipt_ref.strip())
+    collected_evidence_refs.extend(request.ci_status_refs)
+    collected_evidence_refs.extend(request.review_approval_refs)
+    collected_evidence_refs.extend(request.rollback_refs)
+    if request.explicit_approver_ref.strip():
+        collected_evidence_refs.append(request.explicit_approver_ref.strip())
+    evidence_refs = tuple(dict.fromkeys(collected_evidence_refs or ["missing_pr_merge_approval_evidence"]))
+    merge_objective = request.merge_objective.strip() or "Awaiting bounded PR merge objective."
+    approval_question = (
+        f"Should an authorized human approve merge consideration for {request.repo} "
+        f"PR #{request.pull_request_number}: {merge_objective}"
+    )
+
+    if missing:
+        status = "awaiting_evidence"
+        required_next_evidence = tuple(missing)
+        blockers = ("merge_approval_request_blocked_until_required_evidence_is_present",)
+        recommended_next_action = "collect_pr_safety_ci_review_rollback_and_explicit_approver_refs"
+        confidence = 0.28
+    elif request.known_blockers:
+        status = "blocked"
+        required_next_evidence = ("blocker_resolution_receipt", "fresh_pr_safety_and_ci_receipts_after_blocker_resolution")
+        blockers = tuple(dict.fromkeys(request.known_blockers))
+        recommended_next_action = "resolve_declared_merge_blockers_then_prepare_new_approval_request"
+        confidence = 0.58
+    else:
+        status = "ready_for_approval"
+        required_next_evidence = ("explicit_human_merge_approval_response", "fresh_merge_execution_receipt_before_merge_claim")
+        blockers = ("no_declared_blockers_in_bounded_request",)
+        recommended_next_action = "present_approval_request_to_authorized_human_without_merging"
+        confidence = 0.68
+
+    packet_hash = _stable_hash(
+        {
+            "actor_id": request.actor_id,
+            "repo": request.repo,
+            "pull_request_number": request.pull_request_number,
+            "evidence_refs": evidence_refs,
+            "status": status,
+            "prepared_at": prepared_at,
+        }
+    )
+    return GitHubPrMergeApprovalPacket(
+        packet_id=f"github-pr-merge-approval-request:{packet_hash}",
+        repo=request.repo,
+        pull_request_number=request.pull_request_number,
+        status=status,
+        approval_question=approval_question,
+        required_next_evidence=required_next_evidence,
+        evidence_refs=evidence_refs,
+        blockers=blockers,
+        allowed_response_kinds=("record_human_merge_approval", "record_human_merge_rejection"),
+        default_response_kind="record_human_merge_rejection",
+        blocked_actions=_PR_MERGE_APPROVAL_REQUEST_BLOCKED_ACTIONS,
+        recommended_next_action=recommended_next_action,
+        confidence=confidence,
+        write_authority_granted=False,
+        merge_authority_granted=False,
+        prepared_at=prepared_at,
+    )
+
+
+def build_github_pr_merge_approval_request_receipt(
+    *,
+    request: GitHubPrMergeApprovalRequest,
+    packet: GitHubPrMergeApprovalPacket,
+    occurred_at: str,
+) -> CausalCapabilityReceipt:
+    """Emit a Class 1 receipt for a local PR merge approval request packet."""
+
+    if not isinstance(request, GitHubPrMergeApprovalRequest):
+        raise ValueError("request must be a GitHubPrMergeApprovalRequest")
+    if not isinstance(packet, GitHubPrMergeApprovalPacket):
+        raise ValueError("packet must be a GitHubPrMergeApprovalPacket")
+    occurred_at = require_datetime_text(occurred_at, "occurred_at")
+    receipt_hash = _stable_hash(
+        {
+            "actor_id": request.actor_id,
+            "packet_id": packet.packet_id,
+            "surface_event_id": request.surface_event_id,
+            "occurred_at": occurred_at,
+        }
+    )
+    partial_failure_reasons = () if packet.status == "ready_for_approval" else tuple(packet.required_next_evidence)
+    return CausalCapabilityReceipt(
+        receipt_id=f"github-pr-merge-approval-request-receipt:{receipt_hash}",
+        event_id=request.surface_event_id,
+        actor_id=request.actor_id,
+        surface=GITHUB_WORKROOM_SURFACE,
+        intent=GITHUB_PR_MERGE_APPROVAL_REQUEST_INTENT,
+        target_object=f"github_repository:{request.repo}:pull_request:{request.pull_request_number}",
+        risk_class=FabricRiskClass.CLASS_1_PREPARE,
+        evidence_used=packet.evidence_refs,
+        policy_decision=FabricPolicyDecision.ALLOW_DRAFT_ONLY,
+        actions_taken=(
+            ("prepared_pr_merge_approval_request", "emitted_causal_receipt")
+            if packet.status == "ready_for_approval"
+            else ("reported_pr_merge_approval_request_gap", "emitted_causal_receipt")
+        ),
+        actions_blocked=packet.blocked_actions,
+        assumptions=request.assumptions,
+        verification_result=(
+            "PR merge approval request prepared from bounded evidence; no merge, branch deletion, deployment, or GitHub write was performed."
+            if packet.status == "ready_for_approval"
+            else "PR merge approval request remains blocked or awaiting evidence; no merge or GitHub write was performed."
+        ),
+        final_judgment=packet.approval_question,
+        memory_update=FabricMemoryDecisionStatus.STORE
+        if packet.status == "ready_for_approval"
+        else FabricMemoryDecisionStatus.DEFER,
         timestamp=occurred_at,
         partial_failure_reasons=partial_failure_reasons,
     )
@@ -3074,6 +3355,79 @@ def build_github_release_readiness_workroom_read_model(
     }
 
 
+def build_github_pr_merge_approval_request_workroom_read_model(
+    *,
+    actor_id: str,
+    workspace_id: str,
+    repo: str,
+    pull_request_number: int,
+    surface_event_id: str,
+    occurred_at: str,
+    clock: Callable[[], str],
+) -> dict[str, Any]:
+    """Build the operator Workroom read model for local PR merge approval request preparation."""
+
+    generated_at = require_datetime_text(clock(), "generated_at")
+    passport = UniversalCapabilityPassport(
+        passport_id=GITHUB_PR_MERGE_APPROVAL_REQUEST_CAPABILITY_ID,
+        name="GitHub PR Merge Approval Request",
+        domain="software_governance",
+        inputs=(
+            "repo",
+            "actor_id",
+            "pull_request_number",
+            "pr_safety_receipt_ref",
+            "ci_status_refs",
+            "review_approval_refs",
+            "rollback_refs",
+            "explicit_approver_ref",
+            "merge_objective",
+            "known_blockers",
+        ),
+        outputs=("approval_question", "required_next_evidence", "blockers", "receipt"),
+        required_evidence=_PR_MERGE_APPROVAL_REQUEST_REQUIRED_EVIDENCE,
+        allowed_tools=("mullusi.local_pr_merge_approval_request",),
+        blocked_actions=_PR_MERGE_APPROVAL_REQUEST_BLOCKED_ACTIONS,
+        risk_class=FabricRiskClass.CLASS_1_PREPARE,
+        verification_rules=(
+            "no_merge_approval_request_without_pr_safety_receipt",
+            "no_merge_approval_request_without_fresh_ci_status_ref",
+            "no_merge_approval_request_without_review_approval_ref",
+            "no_merge_approval_request_without_rollback_ref",
+            "no_merge_execution_from_approval_request_packet",
+        ),
+        receipt_fields=("actor", "repo", "pull_request_number", "evidence_used", "approval_question", "actions_blocked"),
+        memory_policy="Store PR merge approval request receipt metadata only after the request is evidence-complete; defer memory when blocked or awaiting evidence.",
+    )
+    if not isinstance(pull_request_number, int) or isinstance(pull_request_number, bool) or pull_request_number <= 0:
+        raise ValueError("pull_request_number must be a positive integer")
+    return {
+        "schema_ref": "urn:mullusi:read-model:github-operations-pr-merge-approval-request-workroom:1",
+        "generated_at": generated_at,
+        "capability_id": GITHUB_PR_MERGE_APPROVAL_REQUEST_CAPABILITY_ID,
+        "surface": GITHUB_WORKROOM_SURFACE,
+        "actor_id": require_non_empty_text(actor_id, "actor_id"),
+        "workspace_id": require_non_empty_text(workspace_id, "workspace_id"),
+        "repo": require_non_empty_text(repo, "repo"),
+        "pull_request_number": pull_request_number,
+        "surface_event_id": require_non_empty_text(surface_event_id, "surface_event_id"),
+        "occurred_at": require_datetime_text(occurred_at, "occurred_at"),
+        "status": "awaiting_evidence",
+        "outcome": "AwaitingEvidence",
+        "required_evidence": list(passport.required_evidence),
+        "allowed_tools": list(passport.allowed_tools),
+        "blocked_actions": list(_PR_MERGE_APPROVAL_REQUEST_BLOCKED_ACTIONS),
+        "passport": passport.to_json_dict(),
+        "effect_boundary": dict(_EFFECT_BOUNDARY),
+        "raw_tool_surface_exposed": False,
+        "governed": True,
+        "execution_allowed": False,
+        "write_authority_granted": False,
+        "merge_authority_granted": False,
+        "approval_collected": False,
+    }
+
+
 def render_github_pr_safety_workroom_html(read_model: Mapping[str, Any]) -> str:
     """Render the browser-facing operator Workroom panel."""
 
@@ -3725,6 +4079,122 @@ releaseReadinessForm.addEventListener("submit", async (event) => {{
   }});
   const data = await response.json();
   releaseReadinessOutput.textContent = JSON.stringify(data, null, 2);
+}});
+</script>
+</body>
+</html>"""
+
+
+def render_github_pr_merge_approval_request_workroom_html(read_model: Mapping[str, Any]) -> str:
+    """Render the local GitHub PR merge approval request Workroom panel."""
+
+    repo = _html(read_model.get("repo", ""))
+    actor_id = _html(read_model.get("actor_id", "operator:gateway"))
+    workspace_id = _html(read_model.get("workspace_id", "workspace:mullusi-control-plane"))
+    surface_event_id = _html(read_model.get("surface_event_id", ""))
+    occurred_at = _html(read_model.get("occurred_at", ""))
+    pull_request_number = _html(str(read_model.get("pull_request_number", "")))
+    status = _html(read_model.get("status", "awaiting_evidence"))
+    outcome = _html(read_model.get("outcome", "AwaitingEvidence"))
+    blocked_actions = "".join(f"<li>{_html(action)}</li>" for action in read_model.get("blocked_actions", ()))
+    required_evidence = "".join(f"<li>{_html(item)}</li>" for item in read_model.get("required_evidence", ()))
+    merge_authority = str(read_model.get("merge_authority_granted", False)).lower()
+    write_authority = str(read_model.get("write_authority_granted", False)).lower()
+    approval_collected = str(read_model.get("approval_collected", False)).lower()
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullusi GitHub PR Merge Approval Request Workroom</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 2rem; color: #17202a; background: #f7f9fb; }}
+    main {{ max-width: 1080px; margin: 0 auto; }}
+    section, form {{ background: #fff; border: 1px solid #d8dee8; border-radius: 8px; padding: 1rem; margin: 1rem 0; }}
+    label {{ display: block; font-weight: 650; margin-top: .75rem; }}
+    input, textarea {{ width: 100%; box-sizing: border-box; margin-top: .25rem; padding: .55rem; border: 1px solid #aeb8c7; border-radius: 6px; }}
+    textarea {{ min-height: 5.5rem; }}
+    button {{ margin-top: .9rem; padding: .55rem .85rem; border: 1px solid #1f5f9f; border-radius: 6px; background: #1f5f9f; color: #fff; font-weight: 700; }}
+    pre {{ overflow: auto; background: #0f1720; color: #e8eef7; padding: .85rem; border-radius: 6px; min-height: 4rem; }}
+    dl {{ display: grid; grid-template-columns: 230px 1fr; gap: .5rem 1rem; }}
+    dt {{ font-weight: 700; }}
+    dd {{ margin: 0; }}
+    code {{ background: #eef2f6; padding: .15rem .35rem; border-radius: 4px; }}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mullusi GitHub PR Merge Approval Request Workroom</h1>
+  <section>
+    <dl>
+      <dt>Repository</dt><dd><code>{repo}</code></dd>
+      <dt>Pull request</dt><dd><code>{pull_request_number}</code></dd>
+      <dt>Status</dt><dd>{status}</dd>
+      <dt>Outcome</dt><dd>{outcome}</dd>
+      <dt>Approval collected</dt><dd><code>{approval_collected}</code></dd>
+      <dt>Merge authority granted</dt><dd><code>{merge_authority}</code></dd>
+      <dt>Write authority granted</dt><dd><code>{write_authority}</code></dd>
+    </dl>
+  </section>
+  <form id="pr-merge-approval-request">
+    <input name="actor_id" type="hidden" value="{actor_id}">
+    <input name="workspace_id" type="hidden" value="{workspace_id}">
+    <input name="surface_event_id" type="hidden" value="{surface_event_id}">
+    <input name="requested_at" type="hidden" value="{occurred_at}">
+    <label>Repository <input name="repo" value="{repo}"></label>
+    <label>Pull request <input name="pull_request_number" value="{pull_request_number}" inputmode="numeric"></label>
+    <label>Merge objective <input name="merge_objective" value=""></label>
+    <label>PR safety receipt ref <input name="pr_safety_receipt_ref" value=""></label>
+    <label>CI status refs <textarea name="ci_status_refs" placeholder="One CI status reference per line."></textarea></label>
+    <label>Review approval refs <textarea name="review_approval_refs" placeholder="One review approval reference per line."></textarea></label>
+    <label>Rollback refs <textarea name="rollback_refs" placeholder="One rollback or revert-plan reference per line."></textarea></label>
+    <label>Explicit approver ref <input name="explicit_approver_ref" value=""></label>
+    <label>Known blockers <textarea name="known_blockers" placeholder="One unresolved blocker per line."></textarea></label>
+    <button type="submit">Prepare Approval Request</button>
+  </form>
+  <section>
+    <h2>Approval Request Result</h2>
+    <pre id="pr-merge-approval-request-output">Awaiting local merge evidence. No GitHub token, merge command, branch deletion, or repository write authority is accepted.</pre>
+  </section>
+  <section>
+    <h2>Required Evidence</h2>
+    <ul>{required_evidence}</ul>
+  </section>
+  <section>
+    <h2>Blocked Actions</h2>
+    <ul>{blocked_actions}</ul>
+  </section>
+</main>
+<script>
+const prMergeApprovalRequestForm = document.getElementById("pr-merge-approval-request");
+const prMergeApprovalRequestOutput = document.getElementById("pr-merge-approval-request-output");
+function mergeLines(value) {{
+  return value.split("\\n").map((item) => item.trim()).filter(Boolean);
+}}
+prMergeApprovalRequestForm.addEventListener("submit", async (event) => {{
+  event.preventDefault();
+  const form = new FormData(event.target);
+  const payload = {{
+    actor_id: form.get("actor_id"),
+    workspace_id: form.get("workspace_id"),
+    repo: form.get("repo"),
+    pull_request_number: Number(form.get("pull_request_number")),
+    merge_objective: form.get("merge_objective"),
+    pr_safety_receipt_ref: form.get("pr_safety_receipt_ref"),
+    ci_status_refs: mergeLines(form.get("ci_status_refs") || ""),
+    review_approval_refs: mergeLines(form.get("review_approval_refs") || ""),
+    rollback_refs: mergeLines(form.get("rollback_refs") || ""),
+    explicit_approver_ref: form.get("explicit_approver_ref"),
+    known_blockers: mergeLines(form.get("known_blockers") || ""),
+    surface_event_id: form.get("surface_event_id"),
+    requested_at: form.get("requested_at")
+  }};
+  const response = await fetch("/operator/github-operations/pr-merge-approval-request/prepare", {{
+    method: "POST",
+    headers: {{ "Content-Type": "application/json" }},
+    body: JSON.stringify(payload)
+  }});
+  const data = await response.json();
+  prMergeApprovalRequestOutput.textContent = JSON.stringify(data, null, 2);
 }});
 </script>
 </body>

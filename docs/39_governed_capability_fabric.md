@@ -457,6 +457,47 @@ returns `AwaitingEvidence` and defers memory update. Declared blockers return
 execution still requires explicit human approval and fresh release/deployment
 witness evidence.
 
+## GitHub PR Merge Approval Request
+
+The PR merge-approval-request path is the seventh narrow Workroom capability.
+It is a `Class 1 - Prepare` path that converts bounded PR safety, CI, review,
+rollback, and explicit approver evidence refs into a local approval request
+packet. It does not read GitHub, accept an access token, merge, push, delete a
+branch, deploy, post a comment, mutate repository state, or treat generic
+continuation as merge approval.
+
+Required evidence:
+
+```text
+pull_request_number
+pr_safety_receipt_ref
+ci_status_ref
+review_approval_ref
+rollback_ref
+explicit_approver_ref
+```
+
+Blocked actions:
+
+```text
+merge_pull_request_without_explicit_human_approval
+merge_pull_request_without_fresh_ci_evidence
+merge_pull_request_without_pr_safety_receipt
+merge_pull_request_without_review_approval_evidence
+merge_pull_request_without_rollback_or_revert_plan
+delete_branch_without_post_merge_cleanup_approval
+deploy_after_merge_without_deployment_witness
+mutate_repository_from_approval_request_packet
+```
+
+The result is a prepare-only causal receipt containing the approval question,
+evidence refs, required next evidence, blockers, allowed response kinds, default
+rejection response, and blocked actions. Missing PR safety, CI, review,
+rollback, approver, or objective evidence returns `AwaitingEvidence` and defers
+memory update. Declared blockers return `blocked`. A `ready_for_approval`
+packet earns only an approval question; merge execution still requires explicit
+human approval and a separate fresh merge-execution receipt.
+
 `evaluate_github_pr_safety_judgment` converts the read-only fetch result and
 fetch receipt into one bounded status:
 

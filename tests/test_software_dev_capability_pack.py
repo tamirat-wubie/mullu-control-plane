@@ -53,7 +53,7 @@ def test_software_dev_capability_entries_are_schema_valid() -> None:
     payload = _load_json(SOFTWARE_DEV_CAPABILITY_PACK_PATH)
     entries = payload["capabilities"]
 
-    assert len(entries) == 11
+    assert len(entries) == 12
     assert all(_validate_schema_instance(schema, entry) == [] for entry in entries)
     assert all(CapabilityRegistryEntry.from_mapping(entry).domain == "software_dev" for entry in entries)
 
@@ -63,7 +63,7 @@ def test_software_dev_input_schema_refs_are_materialized_and_strict() -> None:
     schema_refs = tuple(entry.input_schema_ref for entry in entries)
     output_refs = tuple(entry.output_schema_ref for entry in entries)
 
-    assert len(schema_refs) == 11
+    assert len(schema_refs) == 12
     assert all(ref.startswith("schemas/software_dev/") for ref in schema_refs)
     assert all((ROOT / ref).exists() for ref in schema_refs)
     assert all(ref.startswith("urn:mullusi:schema:") for ref in output_refs)
@@ -77,8 +77,8 @@ def test_software_dev_output_schema_refs_are_materialized_and_strict() -> None:
     output_refs = tuple(entry.output_schema_ref for entry in _software_dev_entries())
     schemas_by_id = _software_dev_output_schemas_by_id()
 
-    assert len(output_refs) == 11
-    assert len(schemas_by_id) == 11
+    assert len(output_refs) == 12
+    assert len(schemas_by_id) == 12
     assert set(output_refs) == set(schemas_by_id)
     for schema_id, schema in schemas_by_id.items():
         assert schema_id.startswith("urn:mullusi:schema:")
@@ -107,6 +107,7 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
     patch_plan_payload = deepcopy(payloads["schemas/software_dev/github_patch_plan.input.schema.json"])
     issue_draft_payload = deepcopy(payloads["schemas/software_dev/github_issue_draft.input.schema.json"])
     release_readiness_payload = deepcopy(payloads["schemas/software_dev/github_release_readiness.input.schema.json"])
+    merge_approval_payload = deepcopy(payloads["schemas/software_dev/github_pr_merge_approval_request.input.schema.json"])
     issue_draft_missing_evidence_payload = deepcopy(issue_draft_payload)
 
     context_payload["affected_files"] = ["../secrets.py"]
@@ -117,6 +118,7 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
     patch_plan_payload["write_authority_granted"] = True
     issue_draft_payload["write_authority_granted"] = True
     release_readiness_payload["write_authority_granted"] = True
+    merge_approval_payload["merge_authority_granted"] = True
     issue_draft_missing_evidence_payload["evidence_refs"] = []
 
     assert _validate_schema_instance(
@@ -151,6 +153,10 @@ def test_software_dev_input_schemas_reject_boundary_violations() -> None:
         _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "github_release_readiness.input.schema.json"),
         release_readiness_payload,
     )
+    assert _validate_schema_instance(
+        _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "github_pr_merge_approval_request.input.schema.json"),
+        merge_approval_payload,
+    )
     issue_draft_evidence_errors = _validate_schema_instance(
         _load_schema(SOFTWARE_DEV_SCHEMA_DIR / "github_issue_draft.input.schema.json"),
         issue_draft_missing_evidence_payload,
@@ -183,6 +189,7 @@ def test_software_dev_output_schemas_reject_effect_overclaims() -> None:
     patch_plan_payload = deepcopy(payloads["urn:mullusi:schema:github-patch-plan-receipt:1"])
     issue_draft_payload = deepcopy(payloads["urn:mullusi:schema:github-issue-draft-receipt:1"])
     release_readiness_payload = deepcopy(payloads["urn:mullusi:schema:github-release-readiness-receipt:1"])
+    merge_approval_payload = deepcopy(payloads["urn:mullusi:schema:github-pr-merge-approval-request-receipt:1"])
 
     repo_payload["files"] = ["C:\\secrets.py"]
     app_graph_payload["metadata"]["direct_deployment_allowed"] = True
@@ -192,6 +199,7 @@ def test_software_dev_output_schemas_reject_effect_overclaims() -> None:
     patch_plan_payload["policy_decision"] = "allow"
     issue_draft_payload["policy_decision"] = "allow"
     release_readiness_payload["policy_decision"] = "allow"
+    merge_approval_payload["metadata"]["merge_authority_granted"] = True
 
     assert _validate_schema_instance(schemas_by_id["urn:mullusi:schema:repo-map:1"], repo_payload)
     assert _validate_schema_instance(schemas_by_id["urn:mullusi:schema:app-task-graph:1"], app_graph_payload)
@@ -215,6 +223,10 @@ def test_software_dev_output_schemas_reject_effect_overclaims() -> None:
     assert _validate_schema_instance(
         schemas_by_id["urn:mullusi:schema:github-release-readiness-receipt:1"],
         release_readiness_payload,
+    )
+    assert _validate_schema_instance(
+        schemas_by_id["urn:mullusi:schema:github-pr-merge-approval-request-receipt:1"],
+        merge_approval_payload,
     )
 
 
@@ -245,10 +257,10 @@ def test_software_dev_named_loader_installs_only_software_dev_domain() -> None:
     read_model = gate.read_model()
 
     assert capsule.domain == "software_dev"
-    assert len(entries) == 11
+    assert len(entries) == 12
     assert all(entry.domain == "software_dev" for entry in entries)
     assert read_model["capsule_count"] == 1
-    assert read_model["capability_count"] == 11
+    assert read_model["capability_count"] == 12
     assert read_model["domains"] == ({"domain": "software_dev", "capability_ids": tuple(sorted(capsule.capability_refs))},)
     assert read_model["capability_manifest_registry_configured"] is False
     assert read_model["capability_manifest_registry"]["manifest_count"] == 0
@@ -271,11 +283,11 @@ def test_software_dev_named_loader_projects_manifest_registry_when_configured() 
 
     assert read_model["capability_manifest_registry_configured"] is True
     assert read_model["capability_manifest_coverage_status"] == "complete"
-    assert read_model["capability_manifest_covered_count"] == 11
+    assert read_model["capability_manifest_covered_count"] == 12
     assert read_model["capability_manifest_missing_count"] == 0
-    assert len(read_model["capability_manifest_coverage"]) == 11
-    assert manifest_registry["manifest_count"] == 11
-    assert manifest_registry["admission_count"] == 11
+    assert len(read_model["capability_manifest_coverage"]) == 12
+    assert manifest_registry["manifest_count"] == 12
+    assert manifest_registry["admission_count"] == 12
     assert manifest_registry["capability_abi_coverage_status"] == "complete"
     assert set(manifest_registry["capability_ids"]) == {
         entry.capability_id for entry in load_software_dev_capability_entries()
@@ -290,7 +302,7 @@ def test_software_dev_pack_declares_reusable_unlock_ladder_profiles() -> None:
     expected_levels = _expected_unlock_levels()
     ladder_by_level = {level.level: level for level in default_capability_unlock_ladder()}
 
-    assert len(entries) == 11
+    assert len(entries) == 12
     assert set(expected_levels) == {entry["capability_id"] for entry in entries}
     for entry in entries:
         capability_id = entry["capability_id"]
@@ -310,7 +322,7 @@ def test_software_dev_manifests_declare_same_unlock_profiles_as_pack() -> None:
     }
     manifest_paths = tuple(sorted((ROOT / "capabilities" / "software_dev" / "manifests").glob("*.json")))
 
-    assert len(manifest_paths) == 11
+    assert len(manifest_paths) == 12
     assert set(pack_profiles) == set(_expected_unlock_levels())
     for manifest_path in manifest_paths:
         manifest = _load_json(manifest_path)
@@ -358,6 +370,10 @@ def test_software_dev_pack_installs_through_explicit_capability_fabric() -> None
         command_id="cmd-release-readiness",
         intent_name="software_dev.github_release.readiness",
     )
+    merge_approval_decision = gate.admit(
+        command_id="cmd-merge-approval",
+        intent_name="software_dev.github_pr_merge_approval.request",
+    )
     change_decision = gate.admit(command_id="cmd-change", intent_name="software_dev.change.run")
     direct_deploy_decision = gate.admit(command_id="cmd-deploy", intent_name="software_dev.deploy.production")
 
@@ -373,10 +389,12 @@ def test_software_dev_pack_installs_through_explicit_capability_fabric() -> None
     assert issue_draft_decision.capability_id == "software_dev.github_issue.draft"
     assert release_readiness_decision.status.value == "accepted"
     assert release_readiness_decision.capability_id == "software_dev.github_release.readiness"
+    assert merge_approval_decision.status.value == "accepted"
+    assert merge_approval_decision.capability_id == "software_dev.github_pr_merge_approval.request"
     assert change_decision.status.value == "accepted"
     assert change_decision.capability_id == "software_dev.change.run"
     assert direct_deploy_decision.status.value == "rejected"
-    assert read_model["capability_count"] == 11
+    assert read_model["capability_count"] == 12
     assert set(capabilities) == set(governed)
     assert read_model["domains"] == ({"domain": "software_dev", "capability_ids": tuple(sorted(capabilities))},)
 
@@ -390,6 +408,7 @@ def test_software_dev_governed_records_bind_read_and_effect_boundaries() -> None
     patch_plan_record = governed["software_dev.github_patch_plan.draft"]
     issue_draft_record = governed["software_dev.github_issue.draft"]
     release_readiness_record = governed["software_dev.github_release.readiness"]
+    merge_approval_record = governed["software_dev.github_pr_merge_approval.request"]
     change_record = governed["software_dev.change.run"]
     pr_record = governed["software_dev.pr_candidate.prepare"]
 
@@ -428,6 +447,13 @@ def test_software_dev_governed_records_bind_read_and_effect_boundaries() -> None
     assert release_readiness_record["allowed_tools"] == ["mullusi.local_release_readiness_assessment"]
     assert release_readiness_record["allowed_networks"] == []
     assert "github_release_created" in release_readiness_record["forbidden_effects"]
+    assert merge_approval_record["read_only"] is False
+    assert merge_approval_record["world_mutating"] is False
+    assert merge_approval_record["requires_approval"] is False
+    assert merge_approval_record["allowed_tools"] == ["mullusi.local_pr_merge_approval_request"]
+    assert merge_approval_record["allowed_networks"] == []
+    assert "pull_request_merged" in merge_approval_record["forbidden_effects"]
+    assert "merge_authority_granted" in merge_approval_record["forbidden_effects"]
     assert change_record["read_only"] is False
     assert change_record["world_mutating"] is True
     assert change_record["requires_approval"] is True
@@ -477,6 +503,7 @@ def _expected_unlock_levels() -> dict[str, int]:
         "software_dev.github_patch_plan.draft": 1,
         "software_dev.github_issue.draft": 1,
         "software_dev.github_release.readiness": 1,
+        "software_dev.github_pr_merge_approval.request": 1,
         "software_dev.context_bundle.build": 2,
         "software_dev.gate_plan.select": 2,
         "software_dev.change.run": 4,
@@ -568,6 +595,26 @@ def _representative_software_dev_schema_payloads() -> dict[str, dict]:
             "assumptions": ["Release readiness remains prepare-only."],
             "write_authority_granted": False,
             "metadata": {"fixture": "software_dev_capability_pack", "release_execution_allowed": False},
+        },
+        "schemas/software_dev/github_pr_merge_approval_request.input.schema.json": {
+            "capability_id": "software_dev.github_pr_merge_approval.request",
+            "repo": "tamiratl/mullu-control-plane",
+            "pull_request_number": 2410,
+            "pr_safety_receipt_ref": "github-pr-safety-receipt:abc123",
+            "ci_status_refs": ["ci:81-checks-pass"],
+            "review_approval_refs": ["review:approved"],
+            "rollback_refs": ["rollback:revert-merge"],
+            "explicit_approver_ref": "operator:tamirat",
+            "merge_objective": "Prepare a bounded PR merge approval request.",
+            "known_blockers": [],
+            "assumptions": ["PR merge approval request remains prepare-only."],
+            "write_authority_granted": False,
+            "merge_authority_granted": False,
+            "metadata": {
+                "fixture": "software_dev_capability_pack",
+                "approval_collected": False,
+                "merge_execution_allowed": False,
+            },
         },
         "schemas/software_dev/context_bundle.input.schema.json": {
             "capability_id": "software_dev.context_bundle.build",
@@ -851,6 +898,46 @@ def _representative_software_dev_output_payloads() -> dict[str, dict]:
             "write_authority_granted": False,
             "metadata": {
                 "release_execution_allowed": False,
+                "write_authority_granted": False,
+            },
+        },
+        "urn:mullusi:schema:github-pr-merge-approval-request-receipt:1": {
+            "receipt_id": "github-pr-merge-approval-request-receipt:abc123",
+            "event_id": "github-pr-merge-approval-request:abc123",
+            "actor_id": "operator:tamirat",
+            "surface": "github_operations_workroom",
+            "intent": "PREPARE_GITHUB_PR_MERGE_APPROVAL_REQUEST",
+            "target_object": "github_repository:tamiratl/mullu-control-plane:pull_request:2410",
+            "risk_class": "class_1_prepare",
+            "evidence_used": [
+                "github-pr-safety-receipt:abc123",
+                "ci:81-checks-pass",
+                "review:approved",
+                "rollback:revert-merge",
+                "operator:tamirat",
+            ],
+            "policy_decision": "allow_draft_only",
+            "actions_taken": ["prepared_pr_merge_approval_request", "emitted_causal_receipt"],
+            "actions_blocked": [
+                "merge_pull_request_without_explicit_human_approval",
+                "merge_pull_request_without_fresh_ci_evidence",
+                "merge_pull_request_without_pr_safety_receipt",
+                "merge_pull_request_without_review_approval_evidence",
+                "merge_pull_request_without_rollback_or_revert_plan",
+                "delete_branch_without_post_merge_cleanup_approval",
+                "deploy_after_merge_without_deployment_witness",
+                "mutate_repository_from_approval_request_packet",
+            ],
+            "assumptions": ["PR merge approval request preparation does not merge or write to GitHub."],
+            "verification_result": "PR merge approval request prepared from bounded evidence; no merge, branch deletion, deployment, or GitHub write was performed.",
+            "final_judgment": "Should an authorized human approve merge consideration for tamiratl/mullu-control-plane PR #2410.",
+            "memory_update": "store",
+            "timestamp": "2026-06-30T09:00:00+00:00",
+            "partial_failure_reasons": [],
+            "write_authority_granted": False,
+            "metadata": {
+                "approval_collected": False,
+                "merge_authority_granted": False,
                 "write_authority_granted": False,
             },
         },
