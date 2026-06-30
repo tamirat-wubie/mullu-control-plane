@@ -1648,6 +1648,22 @@ def _validate_github_pr_terminal_closure_ready(
             "missing ready row: GitHub PR creation dry-run receipt command-preview read-model binding PR"
         )
 
+    live_producer_admission_gate_row = re.search(
+        r"^\| Live producer admission gate PR \| READY \| .+agentic_service_harness_live_producer_admission_gate.+blocked pending live authority.+local rehearsal evidence.+operator approval.+effect receipt.+external adapter evidence.+secret handoff.+rollback proof.+live execution.+terminal closure remain blocked\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if live_producer_admission_gate_row is None:
+        errors.append("missing ready row: Live producer admission gate PR")
+
+    live_producer_witness_requirements_row = re.search(
+        r"^\| Live producer witness requirements PR \| READY \| .+agentic_service_harness_live_producer_witness_requirements.+five separate governed witnesses.+operator approval.+effect receipt.+external adapter evidence.+secret handoff.+rollback proof.+Each witness remains AwaitingEvidence.+blocks live producer admission.+grants no authority.+live-execution authority\. \|$",
+        map_text,
+        re.MULTILINE,
+    )
+    if live_producer_witness_requirements_row is None:
+        errors.append("missing ready row: Live producer witness requirements PR")
+
     pr_creation_execution_admission_row = re.search(
         r"^\| GitHub PR creation execution admission command-preview dry-run receipt binding PR \| READY \| .+agentic_service_harness_github_pr_creation_execution_admission.+command-preview dry-run receipt evidence.+source dry-run ref.+source read-model id/ref.+source certificate id.+source minting ref.+redacted command preview.+no-runtime-PR evidence.+no-pull-request-opened evidence.+no-branch-created evidence.+no-repository-write evidence.+no-receipt-store-append evidence.+no-adapter-execution evidence.+no-connector-call evidence.+no-mutation-route evidence.+no-terminal-closure evidence.+no-success-claim evidence.+no-secret-value evidence.+operator approval.+branch-write authority.+UAO.+rollback.+receipt-store write-path.+effect reconciliation.+pull-request creation.+repository writes.+connector calls.+mutation routes.+secret material.+terminal closure remain blocked\. \|$",
         map_text,
@@ -1691,7 +1707,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure operator decision contract to command-preview approval gate evidence",
+        "harness(live-producer): collect governed live producer witness requirements",
     )
     positions: list[int] = []
     for marker in sequence_markers:
