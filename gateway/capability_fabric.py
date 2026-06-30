@@ -75,6 +75,10 @@ _AGENTIC_CONTROL_CAPSULE_PATH = _REPO_ROOT / "capsules" / "agentic_control.json"
 _AGENTIC_CONTROL_CAPABILITY_PACK_PATH = (
     _REPO_ROOT / "capabilities" / "agentic_control" / "capability_pack.json"
 )
+_UNIVERSAL_DOMAIN_OPS_CAPSULE_PATH = _REPO_ROOT / "capsules" / "universal_domain_ops.json"
+_UNIVERSAL_DOMAIN_OPS_CAPABILITY_PACK_PATH = (
+    _REPO_ROOT / "capabilities" / "universal_domain_ops" / "capability_pack.json"
+)
 _GENERAL_AGENT_PLAN_DEFINITIONS = (
     {
         "plane_index": 0,
@@ -459,6 +463,32 @@ def build_software_dev_capability_admission_gate(
         require_certified=require_certified,
         require_production_ready=require_production_ready,
         capability_manifest_registry_read_model=capability_manifest_registry_read_model,
+        clock=clock,
+    )
+
+
+def load_universal_domain_ops_domain_capsule() -> DomainCapsule:
+    """Load the explicit Universal Domain Operating Pack capsule."""
+    return DomainCapsule.from_mapping(_load_object(_UNIVERSAL_DOMAIN_OPS_CAPSULE_PATH))
+
+
+def load_universal_domain_ops_capability_entries() -> tuple[CapabilityRegistryEntry, ...]:
+    """Load explicit Universal Domain Operating Pack capability entries."""
+    return tuple(_load_capability_pack(_UNIVERSAL_DOMAIN_OPS_CAPABILITY_PACK_PATH))
+
+
+def build_universal_domain_ops_capability_admission_gate(
+    *,
+    clock: Callable[[], str],
+    require_certified: bool = True,
+    require_production_ready: bool = False,
+) -> CommandCapabilityAdmissionGate:
+    """Build an admission gate for only the Universal Domain Operating Pack capsule."""
+    return build_capability_admission_gate(
+        capsules=(load_universal_domain_ops_domain_capsule(),),
+        capabilities=load_universal_domain_ops_capability_entries(),
+        require_certified=require_certified,
+        require_production_ready=require_production_ready,
         clock=clock,
     )
 

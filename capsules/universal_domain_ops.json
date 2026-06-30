@@ -1,0 +1,29 @@
+{
+  "capsule_id": "universal_domain_ops.domain_pack_kernel.v0",
+  "domain": "universal_domain_ops",
+  "version": "0.1.0",
+  "ontology_refs": ["schemas/universal_domain_ops/domain_pack.schema.json"],
+  "capability_refs": [
+    "universal_domain_ops.registry.validate",
+    "universal_domain_ops.pack.lint",
+    "universal_domain_ops.episode.simulate",
+    "universal_domain_ops.claim.bound"
+  ],
+  "policy_refs": ["policies/universal_domain_ops/domain_pack_kernel.policy.json"],
+  "evidence_rules": ["evidence/universal_domain_ops/domain_pack_kernel.evidence.json"],
+  "approval_rules": ["approval/universal_domain_ops/domain_pack_kernel.approval.json"],
+  "recovery_rules": ["recovery/universal_domain_ops/domain_pack_kernel.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/universal_domain_ops"],
+  "read_model_refs": ["read_models/universal_domain_ops/domain_pack_kernel.json"],
+  "operator_view_refs": ["operator_views/universal_domain_ops/domain_pack_kernel.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified local-first Universal Domain Operating Pack kernel for pack validation, linting, simulation, and output-claim boundary checks"
+  },
+  "extensions": {
+    "foundation_mode": true,
+    "external_action_authority": false,
+    "source_kernels": ["UDOP-CCK", "UDOP-RAK-v2"]
+  }
+}

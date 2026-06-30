@@ -226,6 +226,7 @@
             "foundation_website_posture_boundary",
             "foundation_research_notebook_boundary",
             "foundation_evidence_ledger_boundary",
+            "evidence_ledger_foundation_source",
             "foundation_decision_journal_boundary",
             "foundation_next_action_boundary",
             "foundation_test_evidence_boundary",

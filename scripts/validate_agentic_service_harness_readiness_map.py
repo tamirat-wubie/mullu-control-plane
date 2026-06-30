@@ -586,6 +586,9 @@ REQUIRED_GITHUB_PR_UAO_ACTUAL_DIFF_BRANCH_WRITE_BINDING_TERMS = (
 REQUIRED_GITHUB_PR_ROLLBACK_ACTUAL_DIFF_UAO_BINDING_TERMS = (
     "GitHub PR repository-effect rollback command-preview UAO binding PR",
     "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+    "command-preview UAO admission evidence",
+    "source UAO witness id/ref",
+    "source branch-write binding id/ref",
     "command-preview UAO admission witness",
     "command-preview branch-write binding",
     "command-preview operator response binding",
@@ -610,6 +613,10 @@ REQUIRED_GITHUB_PR_ROLLBACK_ACTUAL_DIFF_UAO_BINDING_TERMS = (
 REQUIRED_GITHUB_PR_CI_GATE_TERMS = (
     "GitHub PR CI gate before ready-for-review command-preview rollback binding PR",
     "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
+    "command-preview repository-effect rollback evidence",
+    "source rollback witness id/ref",
+    "source UAO witness id/ref",
+    "source branch-write binding id/ref",
     "command-preview repository-effect rollback witness",
     "command-preview UAO admission witness",
     "command-preview branch-write binding",
@@ -635,6 +642,11 @@ REQUIRED_GITHUB_PR_CI_GATE_TERMS = (
 REQUIRED_GITHUB_PR_EFFECT_RECONCILIATION_TERMS = (
     "GitHub PR effect reconciliation command-preview CI gate binding PR",
     "agentic_service_harness_github_pr_effect_reconciliation_witness",
+    "command-preview CI gate evidence",
+    "source CI gate witness id/ref",
+    "source rollback witness id/ref",
+    "source UAO witness id/ref",
+    "source branch-write binding id/ref",
     "command-preview CI gate before ready-for-review witness",
     "command-preview repository-effect rollback witness",
     "command-preview UAO admission witness",
@@ -1454,7 +1466,7 @@ def _validate_github_pr_rollback_actual_diff_uao_binding_ready(
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| GitHub PR repository-effect rollback command-preview UAO binding PR \| READY \| .+command-preview UAO admission witness.+actual-diff UAO admission witness.+terminal closure fail closed\. \|$",
+        r"^\| GitHub PR repository-effect rollback command-preview UAO binding PR \| READY \| .+command-preview UAO admission evidence.+source UAO witness id/ref.+source branch-write binding id/ref.+command-preview UAO admission witness.+actual-diff UAO admission witness.+terminal closure fail closed\. \|$",
         map_text,
         re.MULTILINE,
     )
@@ -1467,7 +1479,7 @@ def _validate_github_pr_ci_gate_ready(
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| GitHub PR CI gate before ready-for-review command-preview rollback binding PR \| READY \| .+command-preview repository-effect rollback witness.+actual-diff repository-effect rollback witness.+terminal authority is granted\. \|$",
+        r"^\| GitHub PR CI gate before ready-for-review command-preview rollback binding PR \| READY \| .+command-preview repository-effect rollback evidence.+source rollback witness id/ref.+source UAO witness id/ref.+source branch-write binding id/ref.+command-preview repository-effect rollback witness.+actual-diff repository-effect rollback witness.+terminal authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
@@ -1480,7 +1492,7 @@ def _validate_github_pr_effect_reconciliation_ready(
     errors: list[str],
 ) -> None:
     witness_row = re.search(
-        r"^\| GitHub PR effect reconciliation command-preview CI gate binding PR \| READY \| .+command-preview CI gate before ready-for-review witness.+actual-diff CI gate before ready-for-review witness.+effect reconciliation remains AwaitingEvidence.+terminal authority is granted\. \|$",
+        r"^\| GitHub PR effect reconciliation command-preview CI gate binding PR \| READY \| .+command-preview CI gate evidence.+source CI gate witness id/ref.+source rollback witness id/ref.+source UAO witness id/ref.+source branch-write binding id/ref.+command-preview CI gate before ready-for-review witness.+actual-diff CI gate before ready-for-review witness.+effect reconciliation remains AwaitingEvidence.+terminal authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
@@ -1659,7 +1671,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind repository-effect rollback to command-preview UAO admission evidence",
+        "harness(pr): bind terminal closure certificate to command-preview effect reconciliation evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:

@@ -77,6 +77,59 @@
     "repository_effect_rollback_plan_effect": "permits_pull_request_creation_request_only_after_ci_gate_and_effect_reconciliation",
     "pr_creation_authorized_after_rollback_plan": false
   },
+  "command_preview_uao_admission_evidence": {
+    "source_uao_admission_witness_ref": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
+    "source_binding_id": "agentic_service_harness_github_pr_uao_admission_witness",
+    "source_requested_evidence_ref": "evidence://uao-pr-admission",
+    "source_authority_request_id": "uao-admission.github-pr",
+    "source_approval_request_id": "approval-request.github-pr-admission",
+    "source_response_record_ref": "evidence://operator-pr-approval-response-record",
+    "source_command_preview_branch_write_authority_evidence_ref": "command_preview_branch_write_authority_evidence",
+    "source_command_preview_branch_write_binding_ref": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+    "source_branch_write_binding_id": "agentic_service_harness_github_pr_branch_write_authority_binding",
+    "source_branch_write_binding_ref": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+    "source_command_preview_ref": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
+    "source_redacted_command_preview": "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> --body-file <redacted-body-file-ref>",
+    "source_argument_vector_template": [
+      "gh",
+      "pr",
+      "create",
+      "--base",
+      "main",
+      "--head",
+      "<branch-ref>",
+      "--title",
+      "<redacted-title-ref>",
+      "--body-file",
+      "<redacted-body-file-ref>"
+    ],
+    "source_placeholder_refs": [
+      "placeholder://branch-ref",
+      "placeholder://redacted-title-ref",
+      "placeholder://redacted-body-file-ref"
+    ],
+    "source_actual_diff_branch_write_binding_ref": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+    "source_actual_non_empty_diff_receipt_ref": "witness://actual-non-empty-diff-receipt",
+    "source_changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "source_diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
+    "source_redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "source_redacted_output_ref": "witness://filesystem-write-output-redacted",
+    "source_uao_pr_admission_effect": "permits_pull_request_creation_request_only_after_rollback_and_ci_witnesses",
+    "source_uao_pr_admission_collected": false,
+    "source_pr_creation_authorized_after_binding": false,
+    "source_authority_granted": false,
+    "source_pull_request_creation_enabled": false,
+    "rollback_planning_consumes_command_preview_uao_admission_evidence": true,
+    "rollback_planning_consumes_actual_diff_uao_admission_evidence": true,
+    "repository_effect_rollback_remains_uncollected": true,
+    "repository_effect_rollback_remains_non_authorizing": true,
+    "pull_request_creation_remains_blocked": true,
+    "terminal_closure_remains_blocked": true
+  },
   "remaining_witnesses": [
     {
       "witness_kind": "ci_gate_before_ready_for_review",

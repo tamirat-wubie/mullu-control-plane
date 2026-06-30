@@ -1133,6 +1133,12 @@
       "urn": "urn:mullusi:schema:evidence-classification-manifest:1"
     },
     {
+      "path": "schemas/evidence_ledger_foundation_source.schema.json",
+      "schema_id": "evidence-ledger-foundation-source",
+      "surface": "evidence",
+      "urn": "urn:mullusi:schema:evidence-ledger-foundation-source:1"
+    },
+    {
       "path": "schemas/evidence_passports.schema.json",
       "schema_id": "evidence-passports",
       "surface": "evidence",

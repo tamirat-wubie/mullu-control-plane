@@ -140,6 +140,12 @@ REQUIRED_FALSE_FLAGS = (
     "effect_reconciliation_collected",
     "authority_granted",
     "terminal_closure",
+    "source_ci_gate_before_ready_for_review_collected",
+    "source_ready_for_review_authorized_after_ci_gate",
+    "source_pull_request_creation_authorized_after_ci_gate",
+    "source_authority_granted",
+    "source_ready_for_review_enabled",
+    "source_pull_request_creation_enabled",
     "ci_gate_before_ready_for_review_satisfied",
     "terminal_closure_authorized_after_reconciliation",
     "branch_write_enabled",
@@ -179,6 +185,13 @@ REQUIRED_TRUE_FLAGS = (
     "reconciles_pull_request_state",
     "reconciles_check_state",
     "reconciles_merge_state",
+    "effect_reconciliation_consumes_command_preview_ci_gate_evidence",
+    "effect_reconciliation_consumes_actual_diff_ci_gate_evidence",
+    "effect_reconciliation_remains_uncollected",
+    "effect_reconciliation_remains_non_authorizing",
+    "terminal_closure_remains_blocked",
+    "pull_request_merge_remains_blocked",
+    "repository_write_remains_blocked",
 )
 ALLOWED_SECRET_KEYS = {
     "dns_mutation_enabled",
@@ -503,6 +516,83 @@ def _validate_effect_reconciliation_witness_semantics(
     )
     _require_equal(payload, ("effect_reconciliation", "command_preview_bound"), True, errors, label)
     _require_equal(payload, ("effect_reconciliation", "operator_response_bound"), True, errors, label)
+    _require_equal(
+        payload,
+        ("command_preview_ci_gate_evidence", "source_ci_gate_before_ready_for_review_witness_ref"),
+        EXPECTED_SOURCE_CI_GATE_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_ci_gate_evidence", "source_binding_id"),
+        "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_ci_gate_evidence", "source_requested_evidence_ref"),
+        EXPECTED_SOURCE_CI_GATE_EVIDENCE_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_ci_gate_evidence", "source_ci_gate_request_id"),
+        EXPECTED_SOURCE_CI_GATE_REQUEST_ID,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_ci_gate_evidence", "source_command_preview_repository_effect_rollback_evidence_ref"),
+        "command_preview_repository_effect_rollback_evidence",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_ci_gate_evidence", "source_repository_effect_rollback_plan_witness_id"),
+        "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_ci_gate_evidence", "source_repository_effect_rollback_plan_witness_ref"),
+        EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_ci_gate_evidence", "source_uao_admission_witness_id"),
+        "agentic_service_harness_github_pr_uao_admission_witness",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_ci_gate_evidence", "source_uao_admission_witness_ref"),
+        EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_ci_gate_evidence", "source_branch_write_binding_id"),
+        "agentic_service_harness_github_pr_branch_write_authority_binding",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_ci_gate_evidence", "source_branch_write_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
     if source_ci_gate_witness:
         _require_equal(
@@ -520,6 +610,9 @@ def _validate_effect_reconciliation_witness_semantics(
             label,
         )
         source_ci_gate = _mapping(source_ci_gate_witness.get("ci_gate"))
+        source_ci_gate_evidence = _mapping(
+            _get_nested(source_ci_gate_witness, ("command_preview_repository_effect_rollback_evidence",))
+        )
         _require_equal(
             payload,
             ("effect_reconciliation", "command_preview_repository_effect_rollback_plan_witness_ref"),
@@ -657,6 +750,181 @@ def _validate_effect_reconciliation_witness_semantics(
             payload,
             ("effect_reconciliation", "redacted_output_ref"),
             source_ci_gate.get("redacted_output_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_binding_id"),
+            source_ci_gate_witness.get("binding_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_requested_evidence_ref"),
+            source_ci_gate_witness.get("requested_evidence_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_ci_gate_request_id"),
+            source_ci_gate.get("ci_gate_request_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_repository_effect_rollback_plan_witness_id"),
+            source_ci_gate_evidence.get("source_binding_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_repository_effect_rollback_plan_witness_ref"),
+            source_ci_gate_evidence.get("source_repository_effect_rollback_plan_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_uao_admission_witness_id"),
+            source_ci_gate_evidence.get("source_uao_admission_witness_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_uao_admission_witness_ref"),
+            source_ci_gate_evidence.get("source_uao_admission_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_branch_write_binding_id"),
+            source_ci_gate_evidence.get("source_branch_write_binding_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_branch_write_binding_ref"),
+            source_ci_gate_evidence.get("source_branch_write_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_command_preview_ref"),
+            source_ci_gate.get("command_preview_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_redacted_command_preview"),
+            source_ci_gate.get("redacted_command_preview"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_argument_vector_template"),
+            source_ci_gate.get("argument_vector_template"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_placeholder_refs"),
+            source_ci_gate.get("placeholder_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_actual_non_empty_diff_receipt_ref"),
+            source_ci_gate.get("actual_non_empty_diff_receipt_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_changed_file_refs"),
+            source_ci_gate.get("changed_file_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_diff_refs"),
+            source_ci_gate.get("diff_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_redacted_diff_bundle_ref"),
+            source_ci_gate.get("redacted_diff_bundle_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_redacted_output_ref"),
+            source_ci_gate.get("redacted_output_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_required_check_result"),
+            source_ci_gate.get("required_check_result"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_ci_gate_before_ready_for_review_collected"),
+            source_ci_gate.get("ci_gate_before_ready_for_review_collected"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_ready_for_review_authorized_after_ci_gate"),
+            source_ci_gate.get("ready_for_review_authorized_after_ci_gate"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_pull_request_creation_authorized_after_ci_gate"),
+            source_ci_gate.get("pull_request_creation_authorized_after_ci_gate"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_authority_granted"),
+            source_ci_gate_witness.get("authority_granted"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_ready_for_review_enabled"),
+            _get_nested(source_ci_gate_witness, ("authority_denials", "ready_for_review_enabled")),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_ci_gate_evidence", "source_pull_request_creation_enabled"),
+            _get_nested(source_ci_gate_witness, ("authority_denials", "pull_request_creation_enabled")),
             errors,
             label,
         )

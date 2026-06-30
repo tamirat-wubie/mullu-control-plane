@@ -133,6 +133,42 @@ def operator_dashboard_control_summary(
     }
 
 
+@dataclass(frozen=True, slots=True)
+class OperatorDashboardControlDisplay:
+    """Renderer-safe fields for the operator dashboard control summary."""
+
+    contract_id: str
+    summary_id: str
+    status: str
+    current_level: str
+    next_level: str
+    next_unlock: str
+
+
+def operator_dashboard_control_display(
+    summary: Mapping[str, Any],
+    *,
+    default_summary_id: str,
+    default_status: str,
+    default_current_level: str,
+    default_next_level: str,
+    default_next_unlock: str,
+) -> OperatorDashboardControlDisplay:
+    """Return stable display fields from a nested control summary."""
+
+    control = summary.get("control_summary", {})
+    if not isinstance(control, Mapping):
+        control = {}
+    return OperatorDashboardControlDisplay(
+        contract_id=str(control.get("contract_id") or "operator_dashboard_control_summary.v1"),
+        summary_id=str(control.get("summary_id") or default_summary_id),
+        status=str(control.get("status") or default_status),
+        current_level=str(control.get("current_level") or default_current_level),
+        next_level=str(control.get("next_level") or default_next_level),
+        next_unlock=str(control.get("next_unlock") or default_next_unlock),
+    )
+
+
 def developer_workflow_operator_action_banner(
     *,
     external_ready: bool,
@@ -3921,19 +3957,20 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
         safe_local_action_queue_summary.get("local_execution_boundary") or "local_lab_only"
     )
     safe_local_queue_external_effects = safe_local_action_queue_summary.get("external_effects_allowed") is True
-    safe_local_queue_control = safe_local_action_queue_summary.get("control_summary", {})
-    if not isinstance(safe_local_queue_control, Mapping):
-        safe_local_queue_control = {}
-    safe_local_queue_control_contract = str(
-        safe_local_queue_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    safe_local_queue_control = operator_dashboard_control_display(
+        safe_local_action_queue_summary,
+        default_summary_id="safe_local_action_queue.control_summary.v1",
+        default_status="preflight_ready",
+        default_current_level="L3",
+        default_next_level="L4",
+        default_next_unlock="none",
     )
-    safe_local_queue_control_summary_id = str(
-        safe_local_queue_control.get("summary_id") or "safe_local_action_queue.control_summary.v1"
-    )
-    safe_local_queue_control_status = str(safe_local_queue_control.get("status") or "preflight_ready")
-    safe_local_queue_control_level = str(safe_local_queue_control.get("current_level") or "L3")
-    safe_local_queue_control_next_level = str(safe_local_queue_control.get("next_level") or "L4")
-    safe_local_queue_control_next_unlock = str(safe_local_queue_control.get("next_unlock") or "none")
+    safe_local_queue_control_contract = safe_local_queue_control.contract_id
+    safe_local_queue_control_summary_id = safe_local_queue_control.summary_id
+    safe_local_queue_control_status = safe_local_queue_control.status
+    safe_local_queue_control_level = safe_local_queue_control.current_level
+    safe_local_queue_control_next_level = safe_local_queue_control.next_level
+    safe_local_queue_control_next_unlock = safe_local_queue_control.next_unlock
     dangerous_zone_blocker_rows = "\n".join(
         "<tr>"
         f"<td>{escape(str(item.get('zone', '')))}</td>"
@@ -3992,19 +4029,20 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
         dangerous_action_blocker_summary.get("real_world_execution_boundary") or "real_world"
     )
     dangerous_blocker_external_effects = dangerous_action_blocker_summary.get("external_effects_allowed") is True
-    dangerous_blocker_control = dangerous_action_blocker_summary.get("control_summary", {})
-    if not isinstance(dangerous_blocker_control, Mapping):
-        dangerous_blocker_control = {}
-    dangerous_blocker_control_contract = str(
-        dangerous_blocker_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    dangerous_blocker_control = operator_dashboard_control_display(
+        dangerous_action_blocker_summary,
+        default_summary_id="dangerous_action_blocker.control_summary.v1",
+        default_status="blocked",
+        default_current_level="L0",
+        default_next_level="L9",
+        default_next_unlock="approval",
     )
-    dangerous_blocker_control_summary_id = str(
-        dangerous_blocker_control.get("summary_id") or "dangerous_action_blocker.control_summary.v1"
-    )
-    dangerous_blocker_control_status = str(dangerous_blocker_control.get("status") or "blocked")
-    dangerous_blocker_control_level = str(dangerous_blocker_control.get("current_level") or "L0")
-    dangerous_blocker_control_next_level = str(dangerous_blocker_control.get("next_level") or "L9")
-    dangerous_blocker_control_next_unlock = str(dangerous_blocker_control.get("next_unlock") or "approval")
+    dangerous_blocker_control_contract = dangerous_blocker_control.contract_id
+    dangerous_blocker_control_summary_id = dangerous_blocker_control.summary_id
+    dangerous_blocker_control_status = dangerous_blocker_control.status
+    dangerous_blocker_control_level = dangerous_blocker_control.current_level
+    dangerous_blocker_control_next_level = dangerous_blocker_control.next_level
+    dangerous_blocker_control_next_unlock = dangerous_blocker_control.next_unlock
     lab_real_world_message = str(
         lab_real_world_summary.get("operator_message")
         or "Lab mode can prepare 0 local candidates; real-world writes remain blocked; 0 dangerous zones need approval"
@@ -4019,19 +4057,20 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     lab_real_world_lab_boundary = str(lab_real_world_summary.get("lab_execution_boundary") or "local_lab_only")
     lab_real_world_real_boundary = str(lab_real_world_summary.get("real_world_execution_boundary") or "real_world")
     lab_real_world_external_effects = lab_real_world_summary.get("external_effects_allowed") is True
-    lab_real_world_control = lab_real_world_summary.get("control_summary", {})
-    if not isinstance(lab_real_world_control, Mapping):
-        lab_real_world_control = {}
-    lab_real_world_control_contract = str(
-        lab_real_world_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    lab_real_world_control = operator_dashboard_control_display(
+        lab_real_world_summary,
+        default_summary_id="lab_real_world.control_summary.v1",
+        default_status="blocked",
+        default_current_level="L3",
+        default_next_level="L9",
+        default_next_unlock="approval",
     )
-    lab_real_world_control_summary_id = str(
-        lab_real_world_control.get("summary_id") or "lab_real_world.control_summary.v1"
-    )
-    lab_real_world_control_status = str(lab_real_world_control.get("status") or "blocked")
-    lab_real_world_control_level = str(lab_real_world_control.get("current_level") or "L3")
-    lab_real_world_control_next_level = str(lab_real_world_control.get("next_level") or "L9")
-    lab_real_world_control_next_unlock = str(lab_real_world_control.get("next_unlock") or "approval")
+    lab_real_world_control_contract = lab_real_world_control.contract_id
+    lab_real_world_control_summary_id = lab_real_world_control.summary_id
+    lab_real_world_control_status = lab_real_world_control.status
+    lab_real_world_control_level = lab_real_world_control.current_level
+    lab_real_world_control_next_level = lab_real_world_control.next_level
+    lab_real_world_control_next_unlock = lab_real_world_control.next_unlock
     approval_boundary_message = str(
         approval_boundary_summary.get("operator_message")
         or "0 local automatic candidates; 0 capability unlocks need approval; 0 dangerous zones remain approval-bound"
@@ -4048,19 +4087,20 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     approval_boundary_next_capability = str(approval_boundary_summary.get("next_approval_capability_id") or "")
     approval_boundary_execution = str(approval_boundary_summary.get("execution_boundary") or "local_lab_only")
     approval_boundary_external_effects = approval_boundary_summary.get("external_effects_allowed") is True
-    approval_boundary_control = approval_boundary_summary.get("control_summary", {})
-    if not isinstance(approval_boundary_control, Mapping):
-        approval_boundary_control = {}
-    approval_boundary_control_contract = str(
-        approval_boundary_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    approval_boundary_control = operator_dashboard_control_display(
+        approval_boundary_summary,
+        default_summary_id="approval_boundary.control_summary.v1",
+        default_status="approval_required",
+        default_current_level="L3",
+        default_next_level="L5",
+        default_next_unlock="approval",
     )
-    approval_boundary_control_summary_id = str(
-        approval_boundary_control.get("summary_id") or "approval_boundary.control_summary.v1"
-    )
-    approval_boundary_control_status = str(approval_boundary_control.get("status") or "approval_required")
-    approval_boundary_control_level = str(approval_boundary_control.get("current_level") or "L3")
-    approval_boundary_control_next_level = str(approval_boundary_control.get("next_level") or "L5")
-    approval_boundary_control_next_unlock = str(approval_boundary_control.get("next_unlock") or "approval")
+    approval_boundary_control_contract = approval_boundary_control.contract_id
+    approval_boundary_control_summary_id = approval_boundary_control.summary_id
+    approval_boundary_control_status = approval_boundary_control.status
+    approval_boundary_control_level = approval_boundary_control.current_level
+    approval_boundary_control_next_level = approval_boundary_control.next_level
+    approval_boundary_control_next_unlock = approval_boundary_control.next_unlock
     rollback_control_message = str(
         rollback_control_summary.get("operator_message")
         or "0 capabilities carry rollback default; 0 unlocks require rollback evidence; rollback execution remains receipt-bound"
@@ -4098,6 +4138,20 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     registry_evidence_count = int(capability_registry_summary.get("next_required_evidence_count") or 0)
     registry_boundary = str(capability_registry_summary.get("execution_boundary") or "local_lab_only")
     registry_external_effects = capability_registry_summary.get("external_effects_allowed") is True
+    registry_control = operator_dashboard_control_display(
+        capability_registry_summary,
+        default_summary_id="capability_registry.control_summary.v1",
+        default_status="approval_required",
+        default_current_level="L0",
+        default_next_level="L3",
+        default_next_unlock=registry_next_reason,
+    )
+    registry_control_contract = registry_control.contract_id
+    registry_control_summary_id = registry_control.summary_id
+    registry_control_status = registry_control.status
+    registry_control_level = registry_control.current_level
+    registry_control_next_level = registry_control.next_level
+    registry_control_next_unlock = registry_control.next_unlock
     safe_vs_dangerous_message = str(
         safe_vs_dangerous_summary.get("operator_message")
         or "0 local-lab candidates available; 0 real-world zones blocked pending explicit approval"
@@ -4120,6 +4174,20 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
         safe_vs_dangerous_summary.get("dangerous_execution_boundary") or "real_world"
     )
     safe_vs_dangerous_external_effects = safe_vs_dangerous_summary.get("external_effects_allowed") is True
+    safe_vs_dangerous_control = operator_dashboard_control_display(
+        safe_vs_dangerous_summary,
+        default_summary_id="safe_vs_dangerous.control_summary.v1",
+        default_status="blocked",
+        default_current_level="L3",
+        default_next_level="L9",
+        default_next_unlock="approval",
+    )
+    safe_vs_dangerous_control_contract = safe_vs_dangerous_control.contract_id
+    safe_vs_dangerous_control_summary_id = safe_vs_dangerous_control.summary_id
+    safe_vs_dangerous_control_status = safe_vs_dangerous_control.status
+    safe_vs_dangerous_control_level = safe_vs_dangerous_control.current_level
+    safe_vs_dangerous_control_next_level = safe_vs_dangerous_control.next_level
+    safe_vs_dangerous_control_next_unlock = safe_vs_dangerous_control.next_unlock
     unlock_readiness_message = str(
         unlock_readiness_summary.get("operator_message")
         or "0 pending unlocks; next evidence for capability review is approval; 0 dangerous zones require explicit approval"
@@ -4142,21 +4210,20 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     )
     unlock_readiness_boundary = str(unlock_readiness_summary.get("execution_boundary") or "local_lab_only")
     unlock_readiness_external_effects = unlock_readiness_summary.get("external_effects_allowed") is True
-    unlock_readiness_control = unlock_readiness_summary.get("control_summary", {})
-    if not isinstance(unlock_readiness_control, Mapping):
-        unlock_readiness_control = {}
-    unlock_readiness_control_contract = str(
-        unlock_readiness_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    unlock_readiness_control = operator_dashboard_control_display(
+        unlock_readiness_summary,
+        default_summary_id="unlock_readiness.control_summary.v1",
+        default_status="approval_required",
+        default_current_level="L4",
+        default_next_level="L5",
+        default_next_unlock=unlock_readiness_next_unlock,
     )
-    unlock_readiness_control_summary_id = str(
-        unlock_readiness_control.get("summary_id") or "unlock_readiness.control_summary.v1"
-    )
-    unlock_readiness_control_status = str(unlock_readiness_control.get("status") or "approval_required")
-    unlock_readiness_control_level = str(unlock_readiness_control.get("current_level") or "L4")
-    unlock_readiness_control_next_level = str(unlock_readiness_control.get("next_level") or "L5")
-    unlock_readiness_control_next_unlock = str(
-        unlock_readiness_control.get("next_unlock") or unlock_readiness_next_unlock
-    )
+    unlock_readiness_control_contract = unlock_readiness_control.contract_id
+    unlock_readiness_control_summary_id = unlock_readiness_control.summary_id
+    unlock_readiness_control_status = unlock_readiness_control.status
+    unlock_readiness_control_level = unlock_readiness_control.current_level
+    unlock_readiness_control_next_level = unlock_readiness_control.next_level
+    unlock_readiness_control_next_unlock = unlock_readiness_control.next_unlock
     control_system_evidence = control_system_summary.get("next_required_evidence", ())
     if not isinstance(control_system_evidence, list):
         control_system_evidence = []
@@ -4191,19 +4258,20 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     control_system_action = str(control_system_summary.get("action_needed") or workflow_summary.get("action_needed") or "")
     control_system_boundary = str(control_system_summary.get("execution_boundary") or "local_lab_only")
     control_system_external_effects = control_system_summary.get("external_effects_allowed") is True
-    control_system_control = control_system_summary.get("control_summary", {})
-    if not isinstance(control_system_control, Mapping):
-        control_system_control = {}
-    control_system_control_contract = str(
-        control_system_control.get("contract_id") or "operator_dashboard_control_summary.v1"
+    control_system_control = operator_dashboard_control_display(
+        control_system_summary,
+        default_summary_id="control_system.control_summary.v1",
+        default_status=control_system_status,
+        default_current_level="L2",
+        default_next_level="L5",
+        default_next_unlock=control_system_next_unlock,
     )
-    control_system_control_summary_id = str(
-        control_system_control.get("summary_id") or "control_system.control_summary.v1"
-    )
-    control_system_control_status = str(control_system_control.get("status") or control_system_status)
-    control_system_control_level = str(control_system_control.get("current_level") or "L2")
-    control_system_control_next_level = str(control_system_control.get("next_level") or "L5")
-    control_system_control_next_unlock = str(control_system_control.get("next_unlock") or control_system_next_unlock)
+    control_system_control_contract = control_system_control.contract_id
+    control_system_control_summary_id = control_system_control.summary_id
+    control_system_control_status = control_system_control.status
+    control_system_control_level = control_system_control.current_level
+    control_system_control_next_level = control_system_control.next_level
+    control_system_control_next_unlock = control_system_control.next_unlock
     control_projection, control_projection_error = _build_operator_capability_control_system_projection()
     control_projection_tasks = control_projection.get("dashboard_tasks", ())
     if not isinstance(control_projection_tasks, list):
@@ -5158,6 +5226,20 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     friction_fast_blocked = int(friction_mode_summary.get("fast_blocked_count") or 0)
     friction_mode_boundary = str(friction_mode_summary.get("execution_boundary") or "local_lab_only")
     friction_mode_external_effects = friction_mode_summary.get("external_effects_allowed") is True
+    friction_mode_control = operator_dashboard_control_display(
+        friction_mode_summary,
+        default_summary_id="friction_mode.control_summary.v1",
+        default_status="preflight_ready",
+        default_current_level="L3",
+        default_next_level="L5",
+        default_next_unlock="approval",
+    )
+    friction_mode_control_contract = friction_mode_control.contract_id
+    friction_mode_control_summary_id = friction_mode_control.summary_id
+    friction_mode_control_status = friction_mode_control.status
+    friction_mode_control_level = friction_mode_control.current_level
+    friction_mode_control_next_level = friction_mode_control.next_level
+    friction_mode_control_next_unlock = friction_mode_control.next_unlock
     workflow_run_href = str(workflow_panel_metadata.get("developer_workflow_href") or "/operator/developer-workflow")
     workflow_run_read_model_href = str(
         workflow_panel_metadata.get("developer_workflow_read_model_href")
@@ -5794,6 +5876,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <h2>Capability Registry Summary</h2>
     <div class="task">
       <span class="field"><strong>Message</strong>{escape(registry_message)}</span>
+      <span class="field"><strong>Control contract</strong>{escape(registry_control_contract)}</span>
+      <span class="field"><strong>Control summary</strong>{escape(registry_control_summary_id)}</span>
+      <span class="field"><strong>Control status</strong>{escape(registry_control_status)}</span>
+      <span class="field"><strong>Control level</strong>{escape(registry_control_level)} -> {escape(registry_control_next_level)}</span>
+      <span class="field"><strong>Control next unlock</strong>{escape(registry_control_next_unlock)}</span>
       <span class="field"><strong>Capabilities</strong>{registry_capability_count}</span>
       <span class="field"><strong>Preflight ready</strong>{registry_preflight_ready_count}</span>
       <span class="field"><strong>Blocked</strong>{registry_blocked_count}</span>
@@ -5811,6 +5898,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <h2>Friction Mode Summary</h2>
     <div class="task">
       <span class="field"><strong>Message</strong>{escape(friction_mode_message)}</span>
+      <span class="field"><strong>Control contract</strong>{escape(friction_mode_control_contract)}</span>
+      <span class="field"><strong>Control summary</strong>{escape(friction_mode_control_summary_id)}</span>
+      <span class="field"><strong>Control status</strong>{escape(friction_mode_control_status)}</span>
+      <span class="field"><strong>Control level</strong>{escape(friction_mode_control_level)} -> {escape(friction_mode_control_next_level)}</span>
+      <span class="field"><strong>Control next unlock</strong>{escape(friction_mode_control_next_unlock)}</span>
       <span class="field"><strong>Default mode</strong>{escape(friction_mode_default)}</span>
       <span class="field"><strong>Recommended mode</strong>{escape(friction_mode_recommended)}</span>
       <span class="field"><strong>Strict</strong>{friction_strict_allowed} allowed; {friction_strict_approval} approval; {friction_strict_blocked} blocked</span>
@@ -5824,6 +5916,11 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     <h2>Safe vs Dangerous Summary</h2>
     <div class="task">
       <span class="field"><strong>Message</strong>{escape(safe_vs_dangerous_message)}</span>
+      <span class="field"><strong>Control contract</strong>{escape(safe_vs_dangerous_control_contract)}</span>
+      <span class="field"><strong>Control summary</strong>{escape(safe_vs_dangerous_control_summary_id)}</span>
+      <span class="field"><strong>Control status</strong>{escape(safe_vs_dangerous_control_status)}</span>
+      <span class="field"><strong>Control level</strong>{escape(safe_vs_dangerous_control_level)} -> {escape(safe_vs_dangerous_control_next_level)}</span>
+      <span class="field"><strong>Control next unlock</strong>{escape(safe_vs_dangerous_control_next_unlock)}</span>
       <span class="field"><strong>Safe candidates</strong>{safe_vs_dangerous_safe_count}</span>
       <span class="field"><strong>Dangerous blockers</strong>{safe_vs_dangerous_blocked_count}</span>
       <span class="field"><strong>First safe zone</strong>{escape(safe_vs_dangerous_first_safe)}</span>
