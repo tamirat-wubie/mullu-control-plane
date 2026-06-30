@@ -168,6 +168,11 @@ def test_github_surface_requires_protocol_document_anchor() -> None:
     )
 
     assert errors == []
+    assert "Public surface mode" in content
+    assert "quiet" in content
+    assert "Expected description" in content
+    assert "(none)" in content
+    assert "No repository topics are required while quiet mode is active." in content
     assert "docs/52_mullu_governance_protocol.md" in content
     assert "docs/00_platform_overview.md" in content
     assert "docs/PRODUCT_BOUNDARY.md" in content
