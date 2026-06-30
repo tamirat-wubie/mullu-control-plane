@@ -20,6 +20,10 @@ from mcoi_runtime.app.capability_debt_report import (
     CapabilityDebtReportError,
     build_capability_debt_report,
 )
+from mcoi_runtime.app.capability_control_system import (
+    CapabilityControlSystemError,
+    build_capability_control_system,
+)
 from mcoi_runtime.app.capability_passport_dashboard import (
     CapabilityPassportDashboardError,
     build_capability_passport_dashboard,
@@ -98,7 +102,8 @@ def components_capability_governance_read_model() -> dict[str, Any]:
     try:
         dashboard = build_capability_passport_dashboard()
         debt_report = build_capability_debt_report()
-    except (CapabilityPassportDashboardError, CapabilityDebtReportError) as exc:
+        control_system = build_capability_control_system(dashboard=dashboard)
+    except (CapabilityPassportDashboardError, CapabilityDebtReportError, CapabilityControlSystemError) as exc:
         raise HTTPException(
             status_code=500,
             detail={
@@ -110,6 +115,7 @@ def components_capability_governance_read_model() -> dict[str, Any]:
         ) from exc
     dashboard_summary = dict(dashboard["summary"])
     debt_summary = dict(debt_report["summary"])
+    control_summary = dict(control_system["summary"])
     return {
         "read_model_id": "capability_governance_operator_read_model.foundation.v1",
         "governed": True,
@@ -127,8 +133,12 @@ def components_capability_governance_read_model() -> dict[str, Any]:
             "total_debt_item_count": debt_summary["total_debt_item_count"],
             "critical_debt_count": debt_summary["severity_counts"]["critical"],
             "high_debt_count": debt_summary["severity_counts"]["high"],
+            "control_unlocked_count": control_summary["unlocked_count"],
+            "control_blocked_count": control_summary["blocked_count"],
+            "fast_mode_lab_ready_count": control_summary["fast_mode_lab_ready_count"],
             "live_action_disabled": True,
         },
+        "control_system": control_system,
         "dashboard": dashboard,
         "debt_report": debt_report,
     }

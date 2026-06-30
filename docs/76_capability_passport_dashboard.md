@@ -68,12 +68,19 @@ The route returns:
 
 1. `summary` counters for capability count, ready count, attention-required
    count, debt rows, and debt item totals.
-2. `dashboard` from `build_capability_passport_dashboard()`.
-3. `debt_report` from `build_capability_debt_report()`.
+2. `control_system` from `build_capability_control_system()`.
+3. `dashboard` from `build_capability_passport_dashboard()`.
+4. `debt_report` from `build_capability_debt_report()`.
 
 The endpoint is selectable for operator inspection only. It does not execute a
 capability, mutate files, send connector traffic, open a pull request, publish
 deployment state, or grant terminal closure authority.
+
+The `control_system` field is the compact master surface for reducing friction.
+It exposes L0-L9 unlock levels, Strict/Balanced/Fast modes, Lab versus
+Real-world boundaries, safe automatic zones, dangerous zones, registry rows,
+and dashboard task cards. It remains projection-only and keeps external effects
+disabled.
 
 ## Governance Boundary
 

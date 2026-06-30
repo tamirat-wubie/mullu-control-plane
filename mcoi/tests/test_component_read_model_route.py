@@ -101,9 +101,16 @@ def test_capability_governance_read_model_route_is_selectable_and_read_only() ->
     assert payload["live_connector_send_enabled"] is False
     assert payload["terminal_closure_required"] is True
     assert summary["capability_count"] == payload["dashboard"]["summary"]["capability_count"]
+    assert summary["capability_count"] == payload["control_system"]["summary"]["capability_count"]
     assert summary["debt_row_count"] == payload["debt_report"]["summary"]["debt_row_count"]
     assert summary["total_debt_item_count"] == payload["debt_report"]["summary"]["total_debt_item_count"]
+    assert summary["control_unlocked_count"] == payload["control_system"]["summary"]["unlocked_count"]
+    assert summary["control_blocked_count"] == payload["control_system"]["summary"]["blocked_count"]
+    assert summary["fast_mode_lab_ready_count"] == payload["control_system"]["summary"]["fast_mode_lab_ready_count"]
     assert summary["live_action_disabled"] is True
+    assert payload["control_system"]["control_system_is_not_execution_authority"] is True
+    assert payload["control_system"]["friction_modes"][2]["mode_id"] == "fast"
+    assert payload["control_system"]["friction_modes"][2]["default_boundary"] == "lab"
     assert payload["dashboard"]["dashboard_is_not_execution_authority"] is True
     assert payload["debt_report"]["debt_report_is_not_execution_authority"] is True
     assert post_response.status_code == 405

@@ -123,6 +123,17 @@ def write_capability_passport_dashboard_validation(
     return output_path
 
 
+def write_capability_passport_dashboard_example(output_path: Path = DEFAULT_DASHBOARD) -> Path:
+    """Write the current runtime projection as the checked dashboard example."""
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(build_capability_passport_dashboard(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return output_path
+
+
 def _validate_dashboard(
     dashboard: dict[str, Any],
     runtime_dashboard: dict[str, Any],
@@ -376,6 +387,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--schema", default=str(DEFAULT_SCHEMA))
     parser.add_argument("--dashboard", default=str(DEFAULT_DASHBOARD))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    parser.add_argument("--write-example", action="store_true")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
 
@@ -384,6 +396,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     """CLI entry point for dashboard validation."""
 
     args = parse_args(argv)
+    if args.write_example:
+        write_capability_passport_dashboard_example(Path(args.dashboard))
     validation = validate_capability_passport_dashboard(
         schema_path=Path(args.schema),
         dashboard_path=Path(args.dashboard),
