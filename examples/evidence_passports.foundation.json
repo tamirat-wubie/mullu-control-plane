@@ -11143,6 +11143,120 @@
         "required_approval_receipts": []
       },
       "blocked": {
+        "blocked_action_count": 10,
+        "blocked_actions": [
+          "pull_request_merged",
+          "branch_deleted",
+          "deployment_started",
+          "github_comment_posted",
+          "repository_mutated",
+          "merge_authority_granted",
+          "claim_success_without_terminal_certificate",
+          "claim_production_ready",
+          "live_action_enablement",
+          "claim_autonomous_live_action"
+        ],
+        "blocked_by_gate_ids": [
+          "gate.production.evidence"
+        ]
+      },
+      "capability_id": "software_dev.github_pr_merge_approval.request",
+      "capability_name": "Prepare GitHub PR merge approval request",
+      "continuation": {
+        "continuation_mode": "live_action_disabled",
+        "live_action_disabled": true,
+        "safe_for_live_action": false,
+        "safe_to_continue": true
+      },
+      "current_unlock_level": "C3",
+      "evidence_exists": {
+        "present_evidence_count": 2,
+        "present_evidence_refs": [
+          "capability_registry:software_dev.github_pr_merge_approval.request",
+          "capability_certification:certified"
+        ]
+      },
+      "evidence_passport_id": "evidence_passport.software_dev.github_pr_merge_approval.request.foundation.v1",
+      "evidence_passport_is_not_execution_authority": true,
+      "family": "software_dev",
+      "missing_evidence": [
+        "pr_safety_receipt_ref",
+        "ci_status_ref",
+        "review_approval_ref",
+        "rollback_ref",
+        "explicit_approver_ref",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "production_evidence_receipt"
+      ],
+      "next_evidence_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "outcome": "AwaitingEvidence",
+      "proof_state": "Unknown",
+      "replay": {
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "pr_safety_receipt_ref",
+          "ci_status_ref",
+          "review_approval_ref",
+          "rollback_ref",
+          "explicit_approver_ref",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, pr_safety_receipt_ref, ci_status_ref, review_approval_ref, rollback_ref, explicit_approver_ref, terminal_closure_certificate, effect_reconciliation_receipt",
+        "replay_refs": [],
+        "replay_required": true,
+        "replayable": false
+      },
+      "required_evidence": [
+        "pr_safety_receipt_ref",
+        "ci_status_ref",
+        "review_approval_ref",
+        "rollback_ref",
+        "explicit_approver_ref",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "production_evidence_receipt"
+      ],
+      "rollback": {
+        "can_compensate": false,
+        "can_rollback": true,
+        "compensation_capability": "",
+        "missing_rollback_refs": [],
+        "next_rollback_action": "no rollback evidence required",
+        "rollback_capability": "",
+        "rollback_evidence_missing": false,
+        "rollback_or_compensation_available": true,
+        "rollback_status": "not_required"
+      }
+    },
+    {
+      "approval": {
+        "approval_blocked_actions": [],
+        "approval_refs": [],
+        "approval_required": false,
+        "approval_state": "not_required",
+        "approved": false,
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
+      },
+      "blocked": {
         "blocked_action_count": 11,
         "blocked_actions": [
           "git_tag_created",
@@ -12541,9 +12655,9 @@
   },
   "summary": {
     "approval_required_count": 24,
-    "blocked_action_count": 893,
-    "capability_count": 106,
-    "evidence_passport_count": 106,
+    "blocked_action_count": 903,
+    "capability_count": 107,
+    "evidence_passport_count": 107,
     "family_counts": {
       "agentic_control": 17,
       "browser": 6,
@@ -12559,12 +12673,12 @@
       "personal_assistant": 12,
       "phone": 5,
       "physical": 2,
-      "software_dev": 11,
+      "software_dev": 12,
       "voice": 6
     },
-    "missing_evidence_count": 104,
+    "missing_evidence_count": 105,
     "outcome_counts": {
-      "AwaitingEvidence": 105,
+      "AwaitingEvidence": 106,
       "BudgetExhausted": 0,
       "GovernanceBlocked": 0,
       "ImpossibleProved": 0,
@@ -12576,12 +12690,12 @@
       "BudgetUnknown": 0,
       "Fail": 0,
       "Pass": 1,
-      "Unknown": 105
+      "Unknown": 106
     },
     "replayable_count": 0,
-    "rollback_ready_count": 94,
+    "rollback_ready_count": 95,
     "safe_for_live_action_count": 1,
-    "safe_to_continue_count": 106
+    "safe_to_continue_count": 107
   },
   "validators": [
     {
