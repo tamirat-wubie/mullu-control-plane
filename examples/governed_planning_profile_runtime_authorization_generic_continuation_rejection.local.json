@@ -1,179 +1,13 @@
 {
-  "witness_id": "governed-planning-profile-runtime-authorization-generic-continuation-rejection-5c584077eca160d2",
-  "schema_version": "governed_planning_profile_runtime_authorization_generic_continuation_rejection.v1",
-  "profile_id": "governed-planning-profile-foundation-v1",
-  "recorded_at": "2026-06-19T00:00:00Z",
-  "solver_outcome": "GovernanceBlocked",
-  "runtime_authorization_response_status": "RejectedNoEffect",
-  "runtime_authorization_response_kind": "record_governed_planning_profile_runtime_authorization_rejection_witness",
-  "generic_continuation_rejected": true,
-  "operator_response_recorded": true,
-  "operator_approval_collected": false,
-  "signed_approval_present": false,
-  "runtime_authorization_gate_satisfied": false,
-  "local_witness_only": true,
-  "read_only": true,
-  "mutation_route": false,
-  "runtime_behavior_change": false,
-  "runtime_activation_allowed": false,
-  "runtime_promotion_authorized": false,
-  "execution_allowed": false,
-  "dispatch_allowed": false,
-  "runtime_replanning_enabled": false,
-  "success_claim_allowed": false,
-  "terminal_closure": false,
-  "source_runtime_authorization_request": {
-    "request_id": "governed-planning-profile-runtime-authorization-request-43a3c2f6064f0c02",
-    "request_hash": "43a3c2f6064f0c02079701e983900aea8857f79dc1b372ad21bcd66a304fdeec",
-    "runtime_authorization_request_status": "SubmittedNoEffect",
-    "runtime_authorization_request_submitted": true,
-    "operator_response_required": true,
-    "operator_response_collected": false,
-    "runtime_authorization_gate_satisfied": false
-  },
-  "expected_plan_classes": [
-    "uncompiled_conversation",
-    "read_only_search",
-    "compound_search_notification",
-    "high_risk_payment",
-    "world_contradiction_search"
-  ],
-  "rejection_controls": [
-    {
-      "control_id": "source_runtime_authorization_request_valid",
-      "status": "Pass",
-      "evidence_ref": "governed-planning-profile-runtime-authorization-request-43a3c2f6064f0c02",
-      "blocks_runtime_authorization": false
-    },
-    {
-      "control_id": "generic_continuation_not_valid_authorization",
-      "status": "Pass",
-      "evidence_ref": "operator_response_boundary.observed_input",
-      "blocks_runtime_authorization": true
-    },
-    {
-      "control_id": "signed_approval_absent",
-      "status": "Pass",
-      "evidence_ref": "signed_approval_present",
-      "blocks_runtime_authorization": true
-    },
-    {
-      "control_id": "rejection_witness_recorded",
-      "status": "Pass",
-      "evidence_ref": "runtime_authorization_response_kind",
-      "blocks_runtime_authorization": true
-    },
-    {
-      "control_id": "runtime_authorization_gate_blocked",
-      "status": "Pass",
-      "evidence_ref": "runtime_authorization_gate_satisfied",
-      "blocks_runtime_authorization": true
-    },
-    {
-      "control_id": "authority_denials_preserved",
-      "status": "Pass",
-      "evidence_ref": "authority_denials",
-      "blocks_runtime_authorization": true
-    },
-    {
-      "control_id": "foundation_no_effect_boundary_preserved",
-      "status": "Pass",
-      "evidence_ref": "local_witness_only",
-      "blocks_runtime_authorization": true
-    },
-    {
-      "control_id": "rejection_witness_hash_bound",
-      "status": "Pass",
-      "evidence_ref": "witness_hash",
-      "blocks_runtime_authorization": true
-    }
-  ],
-  "scenario_rejections": [
-    {
-      "scenario_id": "scenario-uncompiled-conversation",
-      "plan_class": "uncompiled_conversation",
-      "source_authorization_request_status": "SubmittedNoEffect",
-      "observed_input_kind": "generic_continuation",
-      "rejection_status": "RejectedNoEffect",
-      "runtime_authorization_response_approved": false,
-      "runtime_promotion_authorized": false,
-      "runtime_execution_performed": false
-    },
-    {
-      "scenario_id": "scenario-read-only-search",
-      "plan_class": "read_only_search",
-      "source_authorization_request_status": "SubmittedNoEffect",
-      "observed_input_kind": "generic_continuation",
-      "rejection_status": "RejectedNoEffect",
-      "runtime_authorization_response_approved": false,
-      "runtime_promotion_authorized": false,
-      "runtime_execution_performed": false
-    },
-    {
-      "scenario_id": "scenario-compound-search-notification",
-      "plan_class": "compound_search_notification",
-      "source_authorization_request_status": "SubmittedNoEffect",
-      "observed_input_kind": "generic_continuation",
-      "rejection_status": "RejectedNoEffect",
-      "runtime_authorization_response_approved": false,
-      "runtime_promotion_authorized": false,
-      "runtime_execution_performed": false
-    },
-    {
-      "scenario_id": "scenario-high-risk-payment",
-      "plan_class": "high_risk_payment",
-      "source_authorization_request_status": "SubmittedNoEffect",
-      "observed_input_kind": "generic_continuation",
-      "rejection_status": "RejectedNoEffect",
-      "runtime_authorization_response_approved": false,
-      "runtime_promotion_authorized": false,
-      "runtime_execution_performed": false
-    },
-    {
-      "scenario_id": "scenario-world-contradiction-search",
-      "plan_class": "world_contradiction_search",
-      "source_authorization_request_status": "SubmittedNoEffect",
-      "observed_input_kind": "generic_continuation",
-      "rejection_status": "RejectedNoEffect",
-      "runtime_authorization_response_approved": false,
-      "runtime_promotion_authorized": false,
-      "runtime_execution_performed": false
-    }
-  ],
-  "operator_response_boundary": {
-    "observed_input": "continue",
-    "observed_input_kind": "generic_continuation",
-    "explicit_signed_authorization_required": true,
-    "generic_continuation_satisfies_authorization": false,
-    "rejection_witness_records_non_authorization": true,
-    "future_signed_approval_still_allowed": true,
-    "runtime_activation_performed": false
-  },
-  "promotion_gate_summary": {
-    "satisfied_promotion_gate_ids": [
-      "operator_shadow_pilot_observation",
-      "runtime_promotion_approval",
-      "replay_recovery_witness",
-      "terminal_closure_certificate"
-    ],
-    "remaining_promotion_gate_ids": [
-      "signed_runtime_authorization_approval_witness"
-    ],
-    "rejection_control_count": 8,
-    "scenario_rejection_count": 5,
-    "runtime_authorization_request_submitted": true,
-    "runtime_authorization_response_recorded": true,
-    "runtime_authorization_response_approved": false,
-    "runtime_promotion_authorized": false
-  },
   "authority_denials": {
-    "runtime_promotion_authorized": false,
-    "execution_allowed": false,
     "dispatch_allowed": false,
+    "execution_allowed": false,
+    "runtime_promotion_authorized": false,
     "runtime_replanning_enabled": false,
     "success_claim_allowed": false,
     "terminal_closure": false
   },
+  "dispatch_allowed": false,
   "evidence_refs": [
     "scripts/validate_governed_planning_profile_runtime_authorization_request.py",
     "scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py",
@@ -181,12 +15,178 @@
     "examples/governed_planning_profile_runtime_authorization_generic_continuation_rejection.local.json",
     "tests/test_validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py"
   ],
-  "validators": [
+  "execution_allowed": false,
+  "expected_plan_classes": [
+    "uncompiled_conversation",
+    "read_only_search",
+    "compound_search_notification",
+    "high_risk_payment",
+    "world_contradiction_search"
+  ],
+  "generic_continuation_rejected": true,
+  "local_witness_only": true,
+  "mutation_route": false,
+  "next_action": "record explicit signed runtime authorization approval witness before activation",
+  "operator_approval_collected": false,
+  "operator_response_boundary": {
+    "explicit_signed_authorization_required": true,
+    "future_signed_approval_still_allowed": true,
+    "generic_continuation_satisfies_authorization": false,
+    "observed_input": "continue",
+    "observed_input_kind": "generic_continuation",
+    "rejection_witness_records_non_authorization": true,
+    "runtime_activation_performed": false
+  },
+  "operator_response_recorded": true,
+  "profile_id": "governed-planning-profile-foundation-v1",
+  "promotion_gate_summary": {
+    "rejection_control_count": 8,
+    "remaining_promotion_gate_ids": [
+      "signed_runtime_authorization_approval_witness"
+    ],
+    "runtime_authorization_request_submitted": true,
+    "runtime_authorization_response_approved": false,
+    "runtime_authorization_response_recorded": true,
+    "runtime_promotion_authorized": false,
+    "satisfied_promotion_gate_ids": [
+      "operator_shadow_pilot_observation",
+      "runtime_promotion_approval",
+      "replay_recovery_witness",
+      "terminal_closure_certificate"
+    ],
+    "scenario_rejection_count": 5
+  },
+  "read_only": true,
+  "recorded_at": "2026-06-19T00:00:00Z",
+  "rejection_controls": [
     {
-      "validator_id": "governed-planning-profile-runtime-authorization-generic-continuation-rejection",
-      "command": "python scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py"
+      "blocks_runtime_authorization": false,
+      "control_id": "source_runtime_authorization_request_valid",
+      "evidence_ref": "governed-planning-profile-runtime-authorization-request-43a3c2f6064f0c02",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_authorization": true,
+      "control_id": "generic_continuation_not_valid_authorization",
+      "evidence_ref": "operator_response_boundary.observed_input",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_authorization": true,
+      "control_id": "signed_approval_absent",
+      "evidence_ref": "signed_approval_present",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_authorization": true,
+      "control_id": "rejection_witness_recorded",
+      "evidence_ref": "runtime_authorization_response_kind",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_authorization": true,
+      "control_id": "runtime_authorization_gate_blocked",
+      "evidence_ref": "runtime_authorization_gate_satisfied",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_authorization": true,
+      "control_id": "authority_denials_preserved",
+      "evidence_ref": "authority_denials",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_authorization": true,
+      "control_id": "foundation_no_effect_boundary_preserved",
+      "evidence_ref": "local_witness_only",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_authorization": true,
+      "control_id": "rejection_witness_hash_bound",
+      "evidence_ref": "witness_hash",
+      "status": "Pass"
     }
   ],
-  "next_action": "record explicit signed runtime authorization approval witness before activation",
-  "witness_hash": "5c584077eca160d20f8e507bcb48e82f36f769100d0ce22beb6c39476f2b4771"
+  "runtime_activation_allowed": false,
+  "runtime_authorization_gate_satisfied": false,
+  "runtime_authorization_response_kind": "record_governed_planning_profile_runtime_authorization_rejection_witness",
+  "runtime_authorization_response_status": "RejectedNoEffect",
+  "runtime_behavior_change": false,
+  "runtime_promotion_authorized": false,
+  "runtime_replanning_enabled": false,
+  "scenario_rejections": [
+    {
+      "observed_input_kind": "generic_continuation",
+      "plan_class": "uncompiled_conversation",
+      "rejection_status": "RejectedNoEffect",
+      "runtime_authorization_response_approved": false,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-uncompiled-conversation",
+      "source_authorization_request_status": "SubmittedNoEffect"
+    },
+    {
+      "observed_input_kind": "generic_continuation",
+      "plan_class": "read_only_search",
+      "rejection_status": "RejectedNoEffect",
+      "runtime_authorization_response_approved": false,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-read-only-search",
+      "source_authorization_request_status": "SubmittedNoEffect"
+    },
+    {
+      "observed_input_kind": "generic_continuation",
+      "plan_class": "compound_search_notification",
+      "rejection_status": "RejectedNoEffect",
+      "runtime_authorization_response_approved": false,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-compound-search-notification",
+      "source_authorization_request_status": "SubmittedNoEffect"
+    },
+    {
+      "observed_input_kind": "generic_continuation",
+      "plan_class": "high_risk_payment",
+      "rejection_status": "RejectedNoEffect",
+      "runtime_authorization_response_approved": false,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-high-risk-payment",
+      "source_authorization_request_status": "SubmittedNoEffect"
+    },
+    {
+      "observed_input_kind": "generic_continuation",
+      "plan_class": "world_contradiction_search",
+      "rejection_status": "RejectedNoEffect",
+      "runtime_authorization_response_approved": false,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-world-contradiction-search",
+      "source_authorization_request_status": "SubmittedNoEffect"
+    }
+  ],
+  "schema_version": "governed_planning_profile_runtime_authorization_generic_continuation_rejection.v1",
+  "signed_approval_present": false,
+  "solver_outcome": "GovernanceBlocked",
+  "source_runtime_authorization_request": {
+    "operator_response_collected": false,
+    "operator_response_required": true,
+    "request_hash": "43a3c2f6064f0c02079701e983900aea8857f79dc1b372ad21bcd66a304fdeec",
+    "request_id": "governed-planning-profile-runtime-authorization-request-43a3c2f6064f0c02",
+    "runtime_authorization_gate_satisfied": false,
+    "runtime_authorization_request_status": "SubmittedNoEffect",
+    "runtime_authorization_request_submitted": true
+  },
+  "success_claim_allowed": false,
+  "terminal_closure": false,
+  "validators": [
+    {
+      "command": "python scripts/validate_governed_planning_profile_runtime_authorization_generic_continuation_rejection.py",
+      "validator_id": "governed-planning-profile-runtime-authorization-generic-continuation-rejection"
+    }
+  ],
+  "witness_hash": "5c584077eca160d20f8e507bcb48e82f36f769100d0ce22beb6c39476f2b4771",
+  "witness_id": "governed-planning-profile-runtime-authorization-generic-continuation-rejection-5c584077eca160d2"
 }
