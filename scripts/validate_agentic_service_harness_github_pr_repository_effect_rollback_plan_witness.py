@@ -126,6 +126,8 @@ REQUIRED_FALSE_FLAGS = (
     "authority_granted",
     "terminal_closure",
     "uao_admission_witness_satisfied",
+    "source_uao_pr_admission_collected",
+    "source_pr_creation_authorized_after_binding",
     "repository_effect_rollback_plan_collected",
     "pr_creation_authorized_after_rollback_plan",
     "branch_write_enabled",
@@ -156,6 +158,12 @@ REQUIRED_TRUE_FLAGS = (
     "operator_response_bound",
     "uao_admission_witness_required",
     "repository_effect_rollback_plan_required",
+    "rollback_planning_consumes_command_preview_uao_admission_evidence",
+    "rollback_planning_consumes_actual_diff_uao_admission_evidence",
+    "repository_effect_rollback_remains_uncollected",
+    "repository_effect_rollback_remains_non_authorizing",
+    "pull_request_creation_remains_blocked",
+    "terminal_closure_remains_blocked",
     "blocks_pr_admission",
 )
 ALLOWED_SECRET_KEYS = {
@@ -435,9 +443,68 @@ def _validate_repository_effect_rollback_plan_witness_semantics(
         errors,
         label,
     )
+    _require_equal(
+        payload,
+        ("command_preview_uao_admission_evidence", "source_uao_admission_witness_ref"),
+        EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_uao_admission_evidence", "source_binding_id"),
+        "agentic_service_harness_github_pr_uao_admission_witness",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_uao_admission_evidence", "source_requested_evidence_ref"),
+        "evidence://uao-pr-admission",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_uao_admission_evidence", "source_authority_request_id"),
+        "uao-admission.github-pr",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_uao_admission_evidence", "source_command_preview_branch_write_authority_evidence_ref"),
+        "command_preview_branch_write_authority_evidence",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_uao_admission_evidence", "source_branch_write_binding_id"),
+        "agentic_service_harness_github_pr_branch_write_authority_binding",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_uao_admission_evidence", "source_branch_write_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_uao_admission_evidence", "source_uao_pr_admission_effect"),
+        "permits_pull_request_creation_request_only_after_rollback_and_ci_witnesses",
+        errors,
+        label,
+    )
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
     if source_uao_admission_witness:
         source_uao_admission = _mapping(_get_nested(source_uao_admission_witness, ("uao_admission",)))
+        source_branch_write_evidence = _mapping(
+            _get_nested(source_uao_admission_witness, ("command_preview_branch_write_authority_evidence",))
+        )
         _require_equal(
             payload,
             ("rollback_plan", "command_preview_branch_write_binding_ref"),
@@ -547,6 +614,167 @@ def _validate_repository_effect_rollback_plan_witness_semantics(
             payload,
             ("rollback_plan", "redacted_output_ref"),
             source_uao_admission.get("redacted_output_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_binding_id"),
+            source_uao_admission_witness.get("binding_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_requested_evidence_ref"),
+            source_uao_admission_witness.get("requested_evidence_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_authority_request_id"),
+            source_uao_admission.get("authority_request_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_approval_request_id"),
+            source_uao_admission.get("source_approval_request_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_response_record_ref"),
+            source_uao_admission.get("source_response_record_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_command_preview_branch_write_binding_ref"),
+            source_uao_admission.get("command_preview_branch_write_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_branch_write_binding_id"),
+            source_branch_write_evidence.get("source_binding_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_branch_write_binding_ref"),
+            source_branch_write_evidence.get("source_branch_write_authority_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_command_preview_ref"),
+            source_uao_admission.get("command_preview_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_redacted_command_preview"),
+            source_uao_admission.get("redacted_command_preview"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_argument_vector_template"),
+            source_uao_admission.get("argument_vector_template"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_placeholder_refs"),
+            source_uao_admission.get("placeholder_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_actual_diff_branch_write_binding_ref"),
+            source_uao_admission.get("actual_diff_branch_write_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_actual_non_empty_diff_receipt_ref"),
+            source_uao_admission.get("actual_non_empty_diff_receipt_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_changed_file_refs"),
+            source_uao_admission.get("changed_file_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_diff_refs"),
+            source_uao_admission.get("diff_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_redacted_diff_bundle_ref"),
+            source_uao_admission.get("redacted_diff_bundle_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_redacted_output_ref"),
+            source_uao_admission.get("redacted_output_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_uao_pr_admission_effect"),
+            source_uao_admission.get("uao_pr_admission_effect"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_uao_pr_admission_collected"),
+            source_uao_admission.get("uao_pr_admission_collected"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_pr_creation_authorized_after_binding"),
+            source_uao_admission.get("pr_creation_authorized_after_binding"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_authority_granted"),
+            source_uao_admission_witness.get("authority_granted"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_uao_admission_evidence", "source_pull_request_creation_enabled"),
+            _get_nested(source_uao_admission_witness, ("authority_denials", "pull_request_creation_enabled")),
             errors,
             label,
         )
