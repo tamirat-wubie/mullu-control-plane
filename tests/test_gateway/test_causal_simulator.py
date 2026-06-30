@@ -62,6 +62,12 @@ def test_causal_simulator_projects_high_risk_controls() -> None:
     assert "approval_pending" in receipt.failure_modes
     assert receipt.compensation_path == "financial.refund"
     assert step.compensation_path == "financial.refund"
+    assert receipt.verdict == "REQUIRE_HUMAN_REVIEW"
+    assert receipt.simulation_boundary["real_mutation_allowed"] is False
+    assert receipt.compensation_verification_status == "PLAUSIBLE"
+    assert receipt.branch_summary["required_branch_count"] >= 6
+    assert receipt.metadata["dry_run_success_is_not_execution_success"] is True
+    assert any(risk.risk_type == "governance" for risk in receipt.risk_scores)
 
 
 def test_causal_simulator_blocks_open_world_contradictions() -> None:
@@ -101,6 +107,29 @@ def test_causal_simulator_blocks_stale_world_state_projection() -> None:
     assert "world_state_mismatch" in receipt.failure_modes
     assert receipt.state_hash == "world-state-hash-1"
     assert receipt.metadata["observed_world_state_hash"] == "world-state-hash-2"
+    assert receipt.verdict == "REQUIRE_MORE_EVIDENCE"
+    assert receipt.snapshot_freshness["status"] == "stale"
+    assert receipt.snapshot_freshness["score"] < 1.0
+    assert "world_state_hash_changes" in receipt.invalid_if
+    assert "world_state_mismatch" in receipt.violations
+
+
+def test_causal_simulator_dry_run_success_is_not_success_certification() -> None:
+    compiled = GoalCompiler().compile(
+        message="search knowledge docs",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        world_state=_world_state(),
+    )
+
+    receipt = CausalSimulator().simulate(compiled, world_state=_world_state())
+
+    assert receipt.would_execute is True
+    assert receipt.verdict == "APPROVE_WITH_GUARDS"
+    assert "post_execution_verification_receipt" in receipt.required_guards
+    assert "dry_run_success_does_not_certify_real_execution_success" in receipt.limitations
+    assert "compare_predicted_effects_against_observed_effects" in receipt.post_execution_verification_plan
+    assert receipt.metadata["anti_false_success_barrier"] is True
 
 
 def test_simulation_receipt_schema_accepts_dry_run_receipt() -> None:
@@ -121,6 +150,11 @@ def test_simulation_receipt_schema_accepts_dry_run_receipt() -> None:
     assert payload["simulation_id"].startswith("sim-")
     assert payload["receipt_hash"]
     assert payload["step_results"][0]["step_id"] == "step-1"
+    assert payload["engine_version"] == "causal_preview_engine.v2"
+    assert payload["simulation_boundary"]["external_mutation_allowed"] is False
+    assert payload["snapshot_freshness"]["status"] == "fresh"
+    assert payload["verdict"] == "APPROVE_WITH_GUARDS"
+    assert payload["confidence_score"] == min(payload["confidence_components"].values())
 
 
 def _world_state(

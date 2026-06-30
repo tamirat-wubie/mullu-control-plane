@@ -3,7 +3,7 @@
     {
       "blocks_runtime_promotion": false,
       "criterion_id": "source_observation_receipt_valid",
-      "evidence_ref": "governed-planning-profile-operator-shadow-pilot-observation-receipt-5cb0a7a9a7d1bc33",
+      "evidence_ref": "governed-planning-profile-operator-shadow-pilot-observation-receipt-7063b590e67cc4fb",
       "status": "Pass"
     },
     {
@@ -71,8 +71,8 @@
   "local_approval_only": true,
   "mutation_route": false,
   "next_action": "obtain replay/recovery witness and terminal closure certificate before runtime promotion",
-  "packet_hash": "c2bf975e8279ecea8ab7fffb6159d51f0431d15660b44d22fb8547b456ff0aae",
-  "packet_id": "governed-planning-profile-runtime-promotion-approval-packet-c2bf975e8279ecea",
+  "packet_hash": "0f20f173e2a9dc55ed4afc2fb75fa51fe47e808b56c2cb1c00878fe881187111",
+  "packet_id": "governed-planning-profile-runtime-promotion-approval-packet-0f20f173e2a9dc55",
   "profile_id": "governed-planning-profile-foundation-v1",
   "promotion_gate_summary": {
     "approval_criterion_count": 7,
@@ -160,8 +160,8 @@
   "source_observation_receipt": {
     "operator_observation_collected": true,
     "operator_observation_status": "Collected",
-    "receipt_hash": "5cb0a7a9a7d1bc333cb81d8178052142a226ee3ba58f8dae313c8f898231b36d",
-    "receipt_id": "governed-planning-profile-operator-shadow-pilot-observation-receipt-5cb0a7a9a7d1bc33",
+    "receipt_hash": "7063b590e67cc4fbbf16b575ec82074f5e718b24151927b8ce2686695e08b9ca",
+    "receipt_id": "governed-planning-profile-operator-shadow-pilot-observation-receipt-7063b590e67cc4fb",
     "remaining_promotion_gate_count": 3,
     "scenario_observation_count": 5
   },
