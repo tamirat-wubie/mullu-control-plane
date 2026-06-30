@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """Validate the proprietary GitHub repository metadata surface for governed reflection.
 
-Purpose: compare versioned proprietary-surface witnesses with GitHub metadata and
-latest-release state.
+Purpose: compare versioned repository-surface witnesses with GitHub metadata and
+latest-release state while quiet public-surface mode is active.
 Governance scope: repository description, topics, latest release, deployment
-status witness, authenticated metadata access, and required proprietary
+status witness, authenticated metadata access, and required repository
 documents.
 Dependencies: Python standard library, GITHUB_SURFACE.md, DEPLOYMENT_STATUS.md,
 STATUS.md, docs/00_platform_overview.md, GitHub REST endpoints, and optional
 authenticated GitHub CLI access.
 Invariants:
-  - Repository metadata must match the versioned proprietary witness.
+  - Repository metadata must match the versioned quiet-surface witness.
   - Latest release must match the governed release tag.
   - Deployment health must match the governed endpoint evidence declared in
     DEPLOYMENT_STATUS.md.
-  - No required proprietary witness document may be absent.
+  - No required repository witness document may be absent.
   - Private repository metadata must be verified through authenticated access,
     not treated as a public endpoint.
 """
@@ -45,25 +45,11 @@ def expected_protocol_manifest_result() -> str:
 
 EXPECTED_PROTOCOL_MANIFEST_RESULT = expected_protocol_manifest_result()
 
-EXPECTED_DESCRIPTION = (
-    "Proprietary Mullusi symbolic intelligence control plane - multi-tenant governed orchestration "
-    "with budget enforcement, audit trails, and policy-driven governance"
-)
+QUIET_PUBLIC_SURFACE_MODE = "quiet"
+EXPECTED_DESCRIPTION: str | None = None
+ALLOWED_REPOSITORY_DESCRIPTIONS = frozenset({None, ""})
 EXPECTED_LATEST_RELEASE = "v3.13.3"
-REQUIRED_TOPICS = frozenset(
-    {
-        "audit-trail",
-        "budget-enforcement",
-        "fastapi",
-        "governance",
-        "llm",
-        "multi-tenant",
-        "orchestration",
-        "python",
-        "rust",
-        "symbolic-intelligence",
-    }
-)
+REQUIRED_TOPICS = frozenset()
 FORBIDDEN_TOPIC = "a" + "i"
 REQUIRED_PUBLIC_DOCUMENTS = (
     "STATUS.md",
@@ -81,9 +67,12 @@ CI_WORKFLOW_PATH = ".github/workflows/ci.yml"
 GOVERNANCE_PROTOCOL_DOC_PATH = "docs/52_mullu_governance_protocol.md"
 GITHUB_SURFACE_REQUIRED_LITERALS = (
     "GitHub Surface Witness",
-    EXPECTED_DESCRIPTION,
+    "Public surface mode",
+    QUIET_PUBLIC_SURFACE_MODE,
+    "Expected description",
+    "(none)",
     EXPECTED_LATEST_RELEASE,
-    "symbolic-intelligence",
+    "No repository topics are required while quiet mode is active.",
     "docs/00_platform_overview.md",
     "docs/PRODUCT_BOUNDARY.md",
     "docs/52_mullu_governance_protocol.md",
@@ -514,13 +503,14 @@ def read_json_url(url: str) -> dict[str, Any]:
 
 
 def validate_repository_payload(payload: dict[str, Any]) -> list[str]:
-    """Validate repository metadata against the governed proprietary witness."""
+    """Validate repository metadata against the governed quiet-surface witness."""
     errors: list[str] = []
 
     description = payload.get("description")
-    if description != EXPECTED_DESCRIPTION:
+    if description not in ALLOWED_REPOSITORY_DESCRIPTIONS:
         errors.append(
-            f"repository description mismatch: {description!r} != {EXPECTED_DESCRIPTION!r}"
+            "repository description mismatch: "
+            f"{description!r} is not empty for quiet public surface mode"
         )
 
     raw_topics = payload.get("topics")
@@ -531,9 +521,14 @@ def validate_repository_payload(payload: dict[str, Any]) -> list[str]:
         return errors
 
     topics = frozenset(raw_topics)
-    missing_topics = REQUIRED_TOPICS - topics
-    if missing_topics:
-        errors.append(f"repository missing required topics: {sorted(missing_topics)}")
+    if REQUIRED_TOPICS:
+        missing_topics = REQUIRED_TOPICS - topics
+        if missing_topics:
+            errors.append(f"repository missing required topics: {sorted(missing_topics)}")
+    elif topics:
+        errors.append(
+            f"repository topics must be empty in quiet public surface mode: {sorted(topics)}"
+        )
     if FORBIDDEN_TOPIC in topics:
         errors.append("repository contains forbidden legacy topic")
 

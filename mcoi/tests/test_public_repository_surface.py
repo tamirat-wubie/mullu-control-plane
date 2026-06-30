@@ -31,9 +31,8 @@ def test_validate_repository_payload_accepts_expected_metadata() -> None:
 
     assert errors == []
     assert len(errors) == 0
-    assert validate_public_repository_surface.EXPECTED_DESCRIPTION.startswith(
-        "Proprietary Mullusi symbolic intelligence control plane"
-    )
+    assert validate_public_repository_surface.EXPECTED_DESCRIPTION is None
+    assert validate_public_repository_surface.REQUIRED_TOPICS == frozenset()
 
 
 def test_github_api_path_supports_authenticated_fallback_endpoint() -> None:
@@ -56,7 +55,7 @@ def test_validate_repository_payload_rejects_mismatch_and_legacy_topic() -> None
 
     assert len(errors) == 3
     assert any("repository description mismatch" in error for error in errors)
-    assert any("repository missing required topics" in error for error in errors)
+    assert any("repository topics must be empty" in error for error in errors)
     assert any("forbidden legacy topic" in error for error in errors)
 
 

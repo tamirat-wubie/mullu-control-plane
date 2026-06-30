@@ -2272,6 +2272,13 @@ FOUNDATION_NAVIGATION_LINK_FILES = (
     "docs/CURRENT_READINESS_SNAPSHOT.md",
 )
 
+QUIET_PUBLIC_README_REQUIRED_PHRASES = (
+    "# Repository Notice",
+    "Public documentation is intentionally minimized at this time.",
+    "This repository is not accepting public use, issues, or external contributions.",
+    "See `LICENSE` for usage terms.",
+)
+
 START_HERE_ORDER_START = '## 3. The "I\'m brand new" path (do these in order)'
 START_HERE_ORDER_END = "Now you can wander into"
 FOUNDATION_PREREQUISITE_ORDER_START = "## Recommended Order"
@@ -2358,6 +2365,16 @@ def validate_required_phrases(repo_root: Path = REPO_ROOT) -> list[FoundationMod
             text = read_required_text(repo_root, relative_path)
         except OSError as exc:
             findings.append(FoundationModeFinding("foundation_file_missing", str(exc)))
+            continue
+        if is_quiet_public_readme(relative_path, text):
+            for phrase in QUIET_PUBLIC_README_REQUIRED_PHRASES:
+                if phrase not in text:
+                    findings.append(
+                        FoundationModeFinding(
+                            "foundation_quiet_readme_phrase_missing",
+                            f"{relative_path} missing quiet public README phrase: {phrase}",
+                        )
+                    )
             continue
         for phrase in required_phrases:
             if phrase not in text:
@@ -2528,6 +2545,8 @@ def validate_foundation_boundary_routing_surfaces(repo_root: Path = REPO_ROOT) -
         except OSError as exc:
             findings.append(FoundationModeFinding("foundation_file_missing", str(exc)))
             continue
+        if is_quiet_public_readme(relative_path, text):
+            continue
         missing_boundary_doc_names = [boundary_doc_name for boundary_doc_name in boundary_doc_names if boundary_doc_name not in text]
         if missing_boundary_doc_names:
             findings.append(
@@ -2537,6 +2556,14 @@ def validate_foundation_boundary_routing_surfaces(repo_root: Path = REPO_ROOT) -
                 )
             )
     return findings
+
+
+def is_quiet_public_readme(relative_path: str, text: str) -> bool:
+    """Return true when the top-level README is intentionally minimized."""
+    return (
+        relative_path == "README.md"
+        and "Public documentation is intentionally minimized at this time." in text
+    )
 
 
 def validate_foundation_boundary_status_blocks(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:

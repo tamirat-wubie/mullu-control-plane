@@ -20,7 +20,9 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.validate_foundation_mode import (  # noqa: E402
     FOUNDATION_CORE_GUIDANCE_SURFACES,
+    QUIET_PUBLIC_README_REQUIRED_PHRASES,
     REQUIRED_PHRASES_BY_FILE,
+    is_quiet_public_readme,
     validate_central_foundation_dependency_headers,
     validate_core_guidance_surface_registration,
     validate_foundation_boundary_status_blocks,
@@ -155,10 +157,16 @@ def test_all_foundation_boundary_docs_are_registered_and_routed() -> None:
 
     assert findings == []
     assert boundary_docs
+    readme_text = (REPO_ROOT / "README.md").read_text(encoding="utf-8-sig")
+    assert is_quiet_public_readme("README.md", readme_text)
+    for phrase in QUIET_PUBLIC_README_REQUIRED_PHRASES:
+        assert phrase in readme_text
     for boundary_doc in boundary_docs:
         required_key = f"docs/{boundary_doc.name}"
         assert required_key in REQUIRED_PHRASES_BY_FILE
         for routing_surface in routing_surfaces:
+            if routing_surface.name == "README.md":
+                continue
             assert boundary_doc.name in routing_surface.read_text(encoding="utf-8-sig")
 
 
