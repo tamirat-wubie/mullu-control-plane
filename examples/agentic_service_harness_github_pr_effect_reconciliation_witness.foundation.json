@@ -85,6 +85,62 @@
     "reconciles_merge_state": true,
     "terminal_closure_authorized_after_reconciliation": false
   },
+  "command_preview_ci_gate_evidence": {
+    "source_ci_gate_before_ready_for_review_witness_ref": "examples/agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness.foundation.json",
+    "source_binding_id": "agentic_service_harness_github_pr_ci_gate_before_ready_for_review_witness",
+    "source_requested_evidence_ref": "evidence://ci-gate-before-ready-for-review",
+    "source_ci_gate_request_id": "ci-gate.github-pr-before-ready-for-review",
+    "source_command_preview_repository_effect_rollback_evidence_ref": "command_preview_repository_effect_rollback_evidence",
+    "source_repository_effect_rollback_plan_witness_id": "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+    "source_repository_effect_rollback_plan_witness_ref": "examples/agentic_service_harness_github_pr_repository_effect_rollback_plan_witness.foundation.json",
+    "source_uao_admission_witness_id": "agentic_service_harness_github_pr_uao_admission_witness",
+    "source_uao_admission_witness_ref": "examples/agentic_service_harness_github_pr_uao_admission_witness.foundation.json",
+    "source_branch_write_binding_id": "agentic_service_harness_github_pr_branch_write_authority_binding",
+    "source_branch_write_binding_ref": "examples/agentic_service_harness_github_pr_branch_write_authority_binding.foundation.json",
+    "source_command_preview_ref": "examples/agentic_service_harness_github_pr_creation_command_preview.foundation.json",
+    "source_redacted_command_preview": "gh pr create --base main --head <branch-ref> --title <redacted-title-ref> --body-file <redacted-body-file-ref>",
+    "source_argument_vector_template": [
+      "gh",
+      "pr",
+      "create",
+      "--base",
+      "main",
+      "--head",
+      "<branch-ref>",
+      "--title",
+      "<redacted-title-ref>",
+      "--body-file",
+      "<redacted-body-file-ref>"
+    ],
+    "source_placeholder_refs": [
+      "placeholder://branch-ref",
+      "placeholder://redacted-title-ref",
+      "placeholder://redacted-body-file-ref"
+    ],
+    "source_actual_non_empty_diff_receipt_ref": "witness://actual-non-empty-diff-receipt",
+    "source_changed_file_refs": [
+      "evidence://redacted-file-change-candidate/schema-addition"
+    ],
+    "source_diff_refs": [
+      "evidence://redacted-diff-candidate/schema-addition"
+    ],
+    "source_redacted_diff_bundle_ref": "digest://redacted-filesystem-write-diff-bundle-candidate",
+    "source_redacted_output_ref": "witness://filesystem-write-output-redacted",
+    "source_required_check_result": "all_required_checks_passed_before_ready_for_review",
+    "source_ci_gate_before_ready_for_review_collected": false,
+    "source_ready_for_review_authorized_after_ci_gate": false,
+    "source_pull_request_creation_authorized_after_ci_gate": false,
+    "source_authority_granted": false,
+    "source_ready_for_review_enabled": false,
+    "source_pull_request_creation_enabled": false,
+    "effect_reconciliation_consumes_command_preview_ci_gate_evidence": true,
+    "effect_reconciliation_consumes_actual_diff_ci_gate_evidence": true,
+    "effect_reconciliation_remains_uncollected": true,
+    "effect_reconciliation_remains_non_authorizing": true,
+    "terminal_closure_remains_blocked": true,
+    "pull_request_merge_remains_blocked": true,
+    "repository_write_remains_blocked": true
+  },
   "remaining_witnesses": [],
   "authority_denials": {
     "authority_granted": false,
