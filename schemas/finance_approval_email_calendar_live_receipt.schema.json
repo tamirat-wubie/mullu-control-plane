@@ -87,6 +87,12 @@
         "worker_probe_failed"
       ]
     },
+    "worker_error": {
+      "type": "string"
+    },
+    "provider_diagnostic": {
+      "type": "string"
+    },
     "recovery_actions": {
       "type": "array",
       "items": {
@@ -179,6 +185,13 @@
         "recipient_hashes",
         "attendee_hashes",
         "external_write",
+        "effect_mode",
+        "external_effect_claimed",
+        "provider_receipt_hash",
+        "provider_receipt_ref",
+        "idempotency_key",
+        "rollback_or_recovery_ref",
+        "secret_values_disclosed",
         "forbidden_effects_observed",
         "verification_status",
         "evidence_refs",
@@ -252,6 +265,42 @@
           "$ref": "#/$defs/string_array"
         },
         "external_write": {
+          "type": "boolean",
+          "const": false
+        },
+        "effect_mode": {
+          "type": "string",
+          "const": "plan_only"
+        },
+        "external_effect_claimed": {
+          "type": "boolean",
+          "const": false
+        },
+        "provider_receipt_hash": {
+          "type": "string",
+          "enum": [
+            ""
+          ]
+        },
+        "provider_receipt_ref": {
+          "type": "string",
+          "enum": [
+            ""
+          ]
+        },
+        "idempotency_key": {
+          "type": "string",
+          "enum": [
+            ""
+          ]
+        },
+        "rollback_or_recovery_ref": {
+          "type": "string",
+          "enum": [
+            ""
+          ]
+        },
+        "secret_values_disclosed": {
           "type": "boolean",
           "const": false
         },
