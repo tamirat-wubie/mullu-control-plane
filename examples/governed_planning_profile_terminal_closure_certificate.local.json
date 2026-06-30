@@ -1,185 +1,26 @@
 {
-  "certificate_id": "governed-planning-profile-terminal-closure-certificate-e93007c1e9ab27b7",
-  "schema_version": "governed_planning_profile_terminal_closure_certificate.v1",
-  "profile_id": "governed-planning-profile-foundation-v1",
-  "certified_at": "2026-06-19T00:00:00Z",
-  "solver_outcome": "SolvedVerified",
-  "terminal_closure_certificate_status": "CollectedNoEffect",
-  "terminal_closure_gate_satisfied": true,
   "all_promotion_evidence_satisfied": true,
-  "local_certificate_only": true,
-  "read_only": true,
-  "mutation_route": false,
-  "runtime_behavior_change": false,
-  "runtime_promotion_authorized": false,
-  "execution_allowed": false,
-  "dispatch_allowed": false,
-  "runtime_replanning_enabled": false,
-  "success_claim_allowed": false,
-  "terminal_closure": false,
-  "source_replay_recovery_witness": {
-    "witness_id": "governed-planning-profile-replay-recovery-witness-f55bf8010f4b2b3d",
-    "witness_hash": "f55bf8010f4b2b3dc7c459143892857353d308d91e74a64eabaf10afab169ec1",
-    "replay_recovery_witness_status": "CollectedNoEffect",
-    "replay_recovery_gate_satisfied": true,
-    "scenario_witness_count": 5,
-    "remaining_promotion_gate_count": 1
-  },
-  "expected_plan_classes": [
-    "uncompiled_conversation",
-    "read_only_search",
-    "compound_search_notification",
-    "high_risk_payment",
-    "world_contradiction_search"
-  ],
-  "terminal_closure_controls": [
-    {
-      "control_id": "source_replay_recovery_witness_valid",
-      "status": "Pass",
-      "evidence_ref": "governed-planning-profile-replay-recovery-witness-f55bf8010f4b2b3d",
-      "blocks_runtime_promotion_evidence": false
-    },
-    {
-      "control_id": "all_promotion_gates_satisfied",
-      "status": "Pass",
-      "evidence_ref": "promotion_gate_summary.satisfied_promotion_gate_ids",
-      "blocks_runtime_promotion_evidence": false
-    },
-    {
-      "control_id": "zero_shadow_mismatches_preserved",
-      "status": "Pass",
-      "evidence_ref": "source_runtime_promotion_approval_packet",
-      "blocks_runtime_promotion_evidence": false
-    },
-    {
-      "control_id": "zero_replay_mismatches_preserved",
-      "status": "Pass",
-      "evidence_ref": "scenario_terminal_closures.replay_mismatch_count",
-      "blocks_runtime_promotion_evidence": false
-    },
-    {
-      "control_id": "rollback_and_recovery_handoff_bound",
-      "status": "Pass",
-      "evidence_ref": "source_replay_recovery_witness.recovery_boundary",
-      "blocks_runtime_promotion_evidence": false
-    },
-    {
-      "control_id": "authority_denials_preserved",
-      "status": "Pass",
-      "evidence_ref": "authority_denials",
-      "blocks_runtime_promotion_evidence": false
-    },
-    {
-      "control_id": "foundation_no_effect_boundary_preserved",
-      "status": "Pass",
-      "evidence_ref": "local_certificate_only",
-      "blocks_runtime_promotion_evidence": false
-    },
-    {
-      "control_id": "terminal_certificate_hash_bound",
-      "status": "Pass",
-      "evidence_ref": "certificate_hash",
-      "blocks_runtime_promotion_evidence": false
-    }
-  ],
-  "scenario_terminal_closures": [
-    {
-      "scenario_id": "scenario-uncompiled-conversation",
-      "plan_class": "uncompiled_conversation",
-      "source_replay_probe_ref": "hash://sha256/d1a9e60b49637fa593ff5f6f935648e942779930c3812768a69ef998ec23152c",
-      "source_recovery_path_ref": "recovery://governed-planning-profile/uncompiled_conversation",
-      "terminal_closure_status": "ClosedNoEffect",
-      "replay_mismatch_count": 0,
-      "rollback_path_documented": true,
-      "incident_handoff_documented": true,
-      "runtime_promotion_authorization_required": true,
-      "runtime_promotion_authorized": false,
-      "runtime_execution_performed": false
-    },
-    {
-      "scenario_id": "scenario-read-only-search",
-      "plan_class": "read_only_search",
-      "source_replay_probe_ref": "hash://sha256/9b2155da0067cdf937b9894bb8f67402f3031115caa314a2966f8930596ebbe8",
-      "source_recovery_path_ref": "recovery://governed-planning-profile/read_only_search",
-      "terminal_closure_status": "ClosedNoEffect",
-      "replay_mismatch_count": 0,
-      "rollback_path_documented": true,
-      "incident_handoff_documented": true,
-      "runtime_promotion_authorization_required": true,
-      "runtime_promotion_authorized": false,
-      "runtime_execution_performed": false
-    },
-    {
-      "scenario_id": "scenario-compound-search-notification",
-      "plan_class": "compound_search_notification",
-      "source_replay_probe_ref": "hash://sha256/a2180c85af659fdebe3af7b3a214ca939c2ff98720062e82d669a84cf1e01729",
-      "source_recovery_path_ref": "recovery://governed-planning-profile/compound_search_notification",
-      "terminal_closure_status": "ClosedNoEffect",
-      "replay_mismatch_count": 0,
-      "rollback_path_documented": true,
-      "incident_handoff_documented": true,
-      "runtime_promotion_authorization_required": true,
-      "runtime_promotion_authorized": false,
-      "runtime_execution_performed": false
-    },
-    {
-      "scenario_id": "scenario-high-risk-payment",
-      "plan_class": "high_risk_payment",
-      "source_replay_probe_ref": "hash://sha256/e6073d1d6f29ccdb2931522483b2943504ed27ef35ff8d0798daa8b5d660d500",
-      "source_recovery_path_ref": "recovery://governed-planning-profile/high_risk_payment",
-      "terminal_closure_status": "ClosedNoEffect",
-      "replay_mismatch_count": 0,
-      "rollback_path_documented": true,
-      "incident_handoff_documented": true,
-      "runtime_promotion_authorization_required": true,
-      "runtime_promotion_authorized": false,
-      "runtime_execution_performed": false
-    },
-    {
-      "scenario_id": "scenario-world-contradiction-search",
-      "plan_class": "world_contradiction_search",
-      "source_replay_probe_ref": "hash://sha256/d62923127a445712c1850573a8291aebd53fb9676dd3583912f84b095b11d897",
-      "source_recovery_path_ref": "recovery://governed-planning-profile/world_contradiction_search",
-      "terminal_closure_status": "ClosedNoEffect",
-      "replay_mismatch_count": 0,
-      "rollback_path_documented": true,
-      "incident_handoff_documented": true,
-      "runtime_promotion_authorization_required": true,
-      "runtime_promotion_authorized": false,
-      "runtime_execution_performed": false
-    }
-  ],
-  "certificate_boundary": {
-    "source_replay_recovery_witness_bound": true,
-    "all_prior_gates_satisfied": true,
-    "terminal_certificate_collected": true,
-    "runtime_promotion_authorization_required": true,
-    "runtime_promotion_authorization_performed": false,
-    "runtime_execution_performed": false,
-    "terminal_closure_authority_granted": false
-  },
-  "promotion_gate_summary": {
-    "satisfied_promotion_gate_ids": [
-      "operator_shadow_pilot_observation",
-      "runtime_promotion_approval",
-      "replay_recovery_witness",
-      "terminal_closure_certificate"
-    ],
-    "remaining_promotion_gate_ids": [],
-    "terminal_closure_control_count": 8,
-    "scenario_closure_count": 5,
-    "all_promotion_evidence_satisfied": true,
-    "runtime_promotion_authorized": false
-  },
-  "remaining_promotion_gates": [],
   "authority_denials": {
-    "runtime_promotion_authorized": false,
-    "execution_allowed": false,
     "dispatch_allowed": false,
+    "execution_allowed": false,
+    "runtime_promotion_authorized": false,
     "runtime_replanning_enabled": false,
     "success_claim_allowed": false,
     "terminal_closure": false
   },
+  "certificate_boundary": {
+    "all_prior_gates_satisfied": true,
+    "runtime_execution_performed": false,
+    "runtime_promotion_authorization_performed": false,
+    "runtime_promotion_authorization_required": true,
+    "source_replay_recovery_witness_bound": true,
+    "terminal_certificate_collected": true,
+    "terminal_closure_authority_granted": false
+  },
+  "certificate_hash": "e93007c1e9ab27b723b6dcb8bc3bef5af9577df2089ec2d9e02ffb6c97aea834",
+  "certificate_id": "governed-planning-profile-terminal-closure-certificate-e93007c1e9ab27b7",
+  "certified_at": "2026-06-19T00:00:00Z",
+  "dispatch_allowed": false,
   "evidence_refs": [
     "scripts/validate_governed_planning_profile_replay_recovery_witness.py",
     "scripts/validate_governed_planning_profile_terminal_closure_certificate.py",
@@ -187,12 +28,171 @@
     "examples/governed_planning_profile_terminal_closure_certificate.local.json",
     "tests/test_validate_governed_planning_profile_terminal_closure_certificate.py"
   ],
-  "validators": [
+  "execution_allowed": false,
+  "expected_plan_classes": [
+    "uncompiled_conversation",
+    "read_only_search",
+    "compound_search_notification",
+    "high_risk_payment",
+    "world_contradiction_search"
+  ],
+  "local_certificate_only": true,
+  "mutation_route": false,
+  "next_action": "submit separate runtime promotion authorization request before activation",
+  "profile_id": "governed-planning-profile-foundation-v1",
+  "promotion_gate_summary": {
+    "all_promotion_evidence_satisfied": true,
+    "remaining_promotion_gate_ids": [],
+    "runtime_promotion_authorized": false,
+    "satisfied_promotion_gate_ids": [
+      "operator_shadow_pilot_observation",
+      "runtime_promotion_approval",
+      "replay_recovery_witness",
+      "terminal_closure_certificate"
+    ],
+    "scenario_closure_count": 5,
+    "terminal_closure_control_count": 8
+  },
+  "read_only": true,
+  "remaining_promotion_gates": [],
+  "runtime_behavior_change": false,
+  "runtime_promotion_authorized": false,
+  "runtime_replanning_enabled": false,
+  "scenario_terminal_closures": [
     {
-      "validator_id": "governed-planning-profile-terminal-closure-certificate",
-      "command": "python scripts/validate_governed_planning_profile_terminal_closure_certificate.py"
+      "incident_handoff_documented": true,
+      "plan_class": "uncompiled_conversation",
+      "replay_mismatch_count": 0,
+      "rollback_path_documented": true,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorization_required": true,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-uncompiled-conversation",
+      "source_recovery_path_ref": "recovery://governed-planning-profile/uncompiled_conversation",
+      "source_replay_probe_ref": "hash://sha256/d1a9e60b49637fa593ff5f6f935648e942779930c3812768a69ef998ec23152c",
+      "terminal_closure_status": "ClosedNoEffect"
+    },
+    {
+      "incident_handoff_documented": true,
+      "plan_class": "read_only_search",
+      "replay_mismatch_count": 0,
+      "rollback_path_documented": true,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorization_required": true,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-read-only-search",
+      "source_recovery_path_ref": "recovery://governed-planning-profile/read_only_search",
+      "source_replay_probe_ref": "hash://sha256/9b2155da0067cdf937b9894bb8f67402f3031115caa314a2966f8930596ebbe8",
+      "terminal_closure_status": "ClosedNoEffect"
+    },
+    {
+      "incident_handoff_documented": true,
+      "plan_class": "compound_search_notification",
+      "replay_mismatch_count": 0,
+      "rollback_path_documented": true,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorization_required": true,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-compound-search-notification",
+      "source_recovery_path_ref": "recovery://governed-planning-profile/compound_search_notification",
+      "source_replay_probe_ref": "hash://sha256/a2180c85af659fdebe3af7b3a214ca939c2ff98720062e82d669a84cf1e01729",
+      "terminal_closure_status": "ClosedNoEffect"
+    },
+    {
+      "incident_handoff_documented": true,
+      "plan_class": "high_risk_payment",
+      "replay_mismatch_count": 0,
+      "rollback_path_documented": true,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorization_required": true,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-high-risk-payment",
+      "source_recovery_path_ref": "recovery://governed-planning-profile/high_risk_payment",
+      "source_replay_probe_ref": "hash://sha256/e6073d1d6f29ccdb2931522483b2943504ed27ef35ff8d0798daa8b5d660d500",
+      "terminal_closure_status": "ClosedNoEffect"
+    },
+    {
+      "incident_handoff_documented": true,
+      "plan_class": "world_contradiction_search",
+      "replay_mismatch_count": 0,
+      "rollback_path_documented": true,
+      "runtime_execution_performed": false,
+      "runtime_promotion_authorization_required": true,
+      "runtime_promotion_authorized": false,
+      "scenario_id": "scenario-world-contradiction-search",
+      "source_recovery_path_ref": "recovery://governed-planning-profile/world_contradiction_search",
+      "source_replay_probe_ref": "hash://sha256/d62923127a445712c1850573a8291aebd53fb9676dd3583912f84b095b11d897",
+      "terminal_closure_status": "ClosedNoEffect"
     }
   ],
-  "next_action": "submit separate runtime promotion authorization request before activation",
-  "certificate_hash": "e93007c1e9ab27b723b6dcb8bc3bef5af9577df2089ec2d9e02ffb6c97aea834"
+  "schema_version": "governed_planning_profile_terminal_closure_certificate.v1",
+  "solver_outcome": "SolvedVerified",
+  "source_replay_recovery_witness": {
+    "remaining_promotion_gate_count": 1,
+    "replay_recovery_gate_satisfied": true,
+    "replay_recovery_witness_status": "CollectedNoEffect",
+    "scenario_witness_count": 5,
+    "witness_hash": "f55bf8010f4b2b3dc7c459143892857353d308d91e74a64eabaf10afab169ec1",
+    "witness_id": "governed-planning-profile-replay-recovery-witness-f55bf8010f4b2b3d"
+  },
+  "success_claim_allowed": false,
+  "terminal_closure": false,
+  "terminal_closure_certificate_status": "CollectedNoEffect",
+  "terminal_closure_controls": [
+    {
+      "blocks_runtime_promotion_evidence": false,
+      "control_id": "source_replay_recovery_witness_valid",
+      "evidence_ref": "governed-planning-profile-replay-recovery-witness-f55bf8010f4b2b3d",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion_evidence": false,
+      "control_id": "all_promotion_gates_satisfied",
+      "evidence_ref": "promotion_gate_summary.satisfied_promotion_gate_ids",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion_evidence": false,
+      "control_id": "zero_shadow_mismatches_preserved",
+      "evidence_ref": "source_runtime_promotion_approval_packet",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion_evidence": false,
+      "control_id": "zero_replay_mismatches_preserved",
+      "evidence_ref": "scenario_terminal_closures.replay_mismatch_count",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion_evidence": false,
+      "control_id": "rollback_and_recovery_handoff_bound",
+      "evidence_ref": "source_replay_recovery_witness.recovery_boundary",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion_evidence": false,
+      "control_id": "authority_denials_preserved",
+      "evidence_ref": "authority_denials",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion_evidence": false,
+      "control_id": "foundation_no_effect_boundary_preserved",
+      "evidence_ref": "local_certificate_only",
+      "status": "Pass"
+    },
+    {
+      "blocks_runtime_promotion_evidence": false,
+      "control_id": "terminal_certificate_hash_bound",
+      "evidence_ref": "certificate_hash",
+      "status": "Pass"
+    }
+  ],
+  "terminal_closure_gate_satisfied": true,
+  "validators": [
+    {
+      "command": "python scripts/validate_governed_planning_profile_terminal_closure_certificate.py",
+      "validator_id": "governed-planning-profile-terminal-closure-certificate"
+    }
+  ]
 }
