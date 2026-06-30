@@ -448,15 +448,74 @@ def test_full_console(client: TestClient) -> None:
     assert "whqr_clarifications" in data
     assert "spatial_map" in data
     assert "personal_assistant" in data
+    assert "operator_console_first" in data
     assert data["spatial_map"]["frame"].startswith("gateway_architecture_space")
     assert data["personal_assistant"]["status"] == "foundation_read_only"
     assert data["personal_assistant"]["effect_boundary"]["execution_allowed"] is False
+    assert data["operator_console_first"]["governed"] is True
+    assert data["operator_console_first"]["projection_only"] is True
+    assert data["operator_console_first"]["execution_authority"] is False
+    assert data["operator_console_first"]["route_boundary"]["dispatch_allowed"] is False
     assert data["spatial_map"]["metrics"][0]["id"] == "readiness_subsystems"
     judgments = {judgment["path_id"]: judgment for judgment in data["spatial_map"]["judgments"]}
     assert judgments["dashboard_health_check"]["status"] == "allowed"
     assert judgments["readiness_launch_gate"]["status"] == "unknown"
     assert judgments["source_to_secret"]["status"] == "blocked"
     assert "blocked_boundary:secrets" in judgments["source_to_secret"]["reasons"]
+
+
+def test_console_operator_console_first_panel_read_model(client: TestClient) -> None:
+    resp = client.get("/api/v1/console/operator-console-first")
+    assert resp.status_code == 200
+    data = resp.json()
+    panels = data["panels"]
+
+    assert data["governed"] is True
+    assert data["read_only"] is True
+    assert data["projection_only"] is True
+    assert data["execution_authority"] is False
+    assert data["receipt_attached"] is False
+    assert data["status"] == "waiting_approval"
+    assert data["read_model_id"].startswith("ocf-console-read-model-")
+    assert data["route_boundary"]["projection_only"] is True
+    assert data["route_boundary"]["execution_allowed"] is False
+    assert data["route_boundary"]["dispatch_allowed"] is False
+    assert data["route_boundary"]["approval_write_allowed"] is False
+    assert data["panel_keys"] == [
+        "current_task",
+        "state_snapshot",
+        "proposed_plan",
+        "risk_and_side_effects",
+        "approval_lease",
+        "controlled_execution_log",
+        "verification_result",
+        "receipt_bundle",
+        "controls",
+    ]
+    assert panels["current_task"]["scope"]["mode"] == "foundation_read_only"
+    assert panels["state_snapshot"]["present"] is True
+    assert panels["proposed_plan"]["approval_needed"] is True
+    assert panels["risk_and_side_effects"]["max_risk_score"] == 60
+    assert panels["risk_and_side_effects"]["effect_bearing_action_count"] == 0
+    assert panels["approval_lease"]["present"] is False
+    assert panels["verification_result"]["present"] is False
+    assert panels["receipt_bundle"]["present"] is False
+    assert panels["controls"]["can_approve"] is True
+    assert panels["controls"]["control_execution_authority"] is False
+    assert "approval_required" in data["attention"]
+    assert "approval_lease_missing" in data["attention"]
+    assert "missing_state_snapshot" not in data["attention"]
+
+
+@pytest.mark.parametrize("method", ["post", "put", "delete"])
+def test_console_operator_console_first_route_rejects_mutation_methods(
+    client: TestClient,
+    method: str,
+) -> None:
+    resp = client.request(method.upper(), "/api/v1/console/operator-console-first", json={})
+
+    assert resp.status_code == 405
+    assert resp.json()["detail"] == "Method Not Allowed"
 
 
 def test_console_personal_assistant_panel_read_model(client: TestClient) -> None:
