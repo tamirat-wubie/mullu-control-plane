@@ -29,7 +29,7 @@ they were branches of one repository.
 | Repository | Role | Boundary |
 | --- | --- | --- |
 | `tamirat-wubie/mullu-control-plane` | Canonical full platform | Contains `gateway`, `governance`, `capabilities`, `mcoi`, `maf`, release notes, and governed deployment evidence. |
-| `mullusi/mullusi-control-plane` | Deployment extraction | Contains a small `apps/api` and `apps/dashboard` surface used during Render deployment hardening. |
+| `mullusi/mullusi-control-plane` | Public deployment extraction for now | Contains a small `apps/api` and `apps/dashboard` surface used during Render deployment hardening. It is intentionally public for the current phase and must not contain production secrets. |
 
 ## Local Checkout Rule
 
