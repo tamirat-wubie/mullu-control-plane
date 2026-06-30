@@ -14,6 +14,7 @@ import os
 import socket
 from dataclasses import asdict
 from hashlib import sha256
+from html import escape
 import json
 from pathlib import Path
 from typing import Any, Mapping
@@ -290,6 +291,10 @@ from scripts.validate_developer_workflow_local_rollback_execution_receipt import
 )
 from scripts.build_developer_workflow_operator_receipt import (
     validate_developer_workflow_operator_receipt,
+)
+from scripts.build_operator_local_developer_workflow_receipt_read_model import (
+    build_operator_local_developer_workflow_receipt_read_model,
+    validate_operator_local_developer_workflow_receipt_read_model,
 )
 from gateway.physical_capability_promotion_store import build_physical_capability_promotion_receipt_store_from_env
 from gateway.signature_verification import (
@@ -2861,6 +2866,135 @@ def _developer_workflow_status_read_model(receipt: Mapping[str, Any]) -> dict[st
         },
         "source_ref": str(LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH.as_posix()),
     }
+
+
+def _operator_local_developer_workflow_receipt_card_read_model(
+    *,
+    operator_receipt: Mapping[str, Any],
+    control_tower_status_receipt: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Return the no-effect local Developer Workflow receipt card."""
+
+    read_model = build_operator_local_developer_workflow_receipt_read_model(
+        operator_receipt=operator_receipt,
+        operator_receipt_source_ref=str(LOCAL_DEVELOPER_WORKFLOW_OPERATOR_RECEIPT_PATH.as_posix()),
+        control_tower_status_receipt=control_tower_status_receipt,
+        control_tower_source_ref="operator_control_tower_status_receipt(snapshot)",
+    )
+    validation = validate_operator_local_developer_workflow_receipt_read_model(read_model=read_model)
+    if not validation.ok:
+        raise HTTPException(status_code=422, detail="local_developer_workflow_receipt_card_invalid")
+    return read_model
+
+
+def _render_operator_local_developer_workflow_receipt_card(read_model: Mapping[str, Any]) -> str:
+    """Render the local Developer Workflow receipt card."""
+
+    receipt_card = read_model.get("receipt_card", {})
+    if not isinstance(receipt_card, Mapping):
+        receipt_card = {}
+    safe_action = read_model.get("safe_local_action", {})
+    if not isinstance(safe_action, Mapping):
+        safe_action = {}
+    operator_controls = read_model.get("operator_controls", {})
+    if not isinstance(operator_controls, Mapping):
+        operator_controls = {}
+    stage_plan = read_model.get("stage_plan", ())
+    if not isinstance(stage_plan, list):
+        stage_plan = []
+    blocked_effects = operator_controls.get("blocked_effects", ())
+    if not isinstance(blocked_effects, list):
+        blocked_effects = []
+    stage_rows = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(stage.get('stage_id') or ''))}</td>"
+        f"<td>{escape(str(stage.get('stage_type') or ''))}</td>"
+        f"<td>{escape(str(stage.get('status') or ''))}</td>"
+        f"<td>{escape(', '.join(str(item) for item in stage.get('predecessors', ()) if str(item).strip()))}</td>"
+        f"<td>{escape(str(stage.get('evidence') or ''))}</td>"
+        "</tr>"
+        for stage in stage_plan
+        if isinstance(stage, Mapping)
+    )
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Local Developer Workflow Receipt</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 2rem; color: #1f2937; background: #f8fafc; }}
+    main {{ max-width: 1080px; margin: auto; }}
+    nav a {{ margin-right: 1rem; color: #0f766e; }}
+    section {{ background: white; border: 1px solid #d8dee9; border-radius: 8px; padding: 1rem; margin: 1rem 0; }}
+    .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .75rem; }}
+    .metric {{ border: 1px solid #e5e7eb; border-radius: 6px; padding: .75rem; background: #f9fafb; }}
+    .metric strong {{ display: block; color: #475569; font-size: .85rem; margin-bottom: .25rem; }}
+    table {{ width: 100%; border-collapse: collapse; }}
+    th, td {{ text-align: left; border-bottom: 1px solid #e5e7eb; padding: .55rem; vertical-align: top; }}
+    th {{ background: #f1f5f9; color: #334155; }}
+    code {{ background: #eef2f7; padding: .1rem .25rem; border-radius: 4px; }}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Local Developer Workflow Receipt</h1>
+    <nav>
+      <a href="/operator/control-tower/local-developer-workflow-receipt/read-model">json read model</a>
+      <a href="/operator/control-tower">control tower</a>
+      <a href="/operator/control-tower/status-receipt">status receipt</a>
+      <a href="/operator/control-tower/developer-workflow-status/read-model">developer workflow status</a>
+    </nav>
+  </header>
+  <section>
+    <h2>Task</h2>
+    <div class="metrics">
+      <div class="metric"><strong>Status</strong>{escape(str(read_model.get("status") or ""))}</div>
+      <div class="metric"><strong>Reason</strong>{escape(str(read_model.get("reason") or ""))}</div>
+      <div class="metric"><strong>Next unlock</strong>{escape(str(read_model.get("next_unlock") or ""))}</div>
+      <div class="metric"><strong>Risk</strong>{escape(str(read_model.get("risk") or ""))}</div>
+      <div class="metric"><strong>Action needed</strong>{escape(str(read_model.get("action_needed") or ""))}</div>
+      <div class="metric"><strong>Mode</strong>{escape(str(read_model.get("mode") or ""))}</div>
+    </div>
+  </section>
+  <section>
+    <h2>Receipt Card</h2>
+    <div class="metrics">
+      <div class="metric"><strong>Workflow run</strong>{escape(str(receipt_card.get("workflow_run_id") or ""))}</div>
+      <div class="metric"><strong>Solver outcome</strong>{escape(str(receipt_card.get("solver_outcome") or ""))}</div>
+      <div class="metric"><strong>Sandbox receipts</strong>{escape(str(receipt_card.get("sandbox_receipts_completed") or 0))}/{escape(str(receipt_card.get("sandbox_receipts_required") or 0))}</div>
+      <div class="metric"><strong>Rollback required</strong>{escape(str(receipt_card.get("rollback_required")).lower())}</div>
+      <div class="metric"><strong>Rollback commands</strong>{escape(str(receipt_card.get("rollback_command_count") or 0))}</div>
+      <div class="metric"><strong>External effects allowed</strong>{escape(str(receipt_card.get("external_effects_allowed")).lower())}</div>
+    </div>
+  </section>
+  <section>
+    <h2>Safe Local Action</h2>
+    <div class="metrics">
+      <div class="metric"><strong>Candidate</strong>{escape(str(safe_action.get("candidate_id") or ""))}</div>
+      <div class="metric"><strong>Zone</strong>{escape(str(safe_action.get("zone") or ""))}</div>
+      <div class="metric"><strong>Primary action</strong>{escape(str(safe_action.get("primary_action") or ""))}</div>
+      <div class="metric"><strong>Boundary</strong>{escape(str(safe_action.get("execution_boundary") or ""))}</div>
+      <div class="metric"><strong>Approval required</strong>{escape(str(safe_action.get("approval_required")).lower())}</div>
+      <div class="metric"><strong>Queue</strong>{escape(str(safe_action.get("queue_status") or ""))}</div>
+    </div>
+  </section>
+  <section>
+    <h2>Stage Plan</h2>
+    <table>
+      <thead><tr><th>Stage</th><th>Type</th><th>Status</th><th>Predecessors</th><th>Evidence</th></tr></thead>
+      <tbody>{stage_rows}</tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Blocked Effects</h2>
+    <p>{escape(", ".join(str(effect) for effect in blocked_effects))}</p>
+    <p>Projection only: {escape(str(read_model.get("projection_only")).lower())}; execution performed: {escape(str(read_model.get("execution_performed")).lower())}; external effects allowed: {escape(str(read_model.get("external_effects_allowed")).lower())}</p>
+  </section>
+</main>
+</body>
+</html>"""
+
 
 def _developer_workflow_status_reason(readiness_status: str, next_evidence: str) -> str:
     if readiness_status == "awaiting_external_pr_approval":
@@ -10463,6 +10597,49 @@ def create_gateway_app(
     ):
         _require_authority_operator(request)
         return _developer_workflow_status_read_model(_load_local_developer_workflow_operator_receipt())
+
+    @app.get("/operator/control-tower/local-developer-workflow-receipt/read-model")
+    def operator_control_tower_local_developer_workflow_receipt_read_model(
+        request: Request,
+        tenant_id: str = "operator",
+        domain: str = "software_dev",
+        risk_level: str = "",
+        include_local_sandbox_receipts: bool = False,
+    ):
+        _require_authority_operator(request)
+        snapshot = _operator_control_tower_snapshot(
+            tenant_id=tenant_id,
+            domain=domain,
+            risk_level=risk_level,
+            include_local_sandbox_receipts=include_local_sandbox_receipts,
+            include_developer_workflow_operator_receipt=True,
+        )
+        return _operator_local_developer_workflow_receipt_card_read_model(
+            operator_receipt=_load_local_developer_workflow_operator_receipt(),
+            control_tower_status_receipt=operator_control_tower_status_receipt(snapshot),
+        )
+
+    @app.get("/operator/control-tower/local-developer-workflow-receipt", response_class=HTMLResponse)
+    def operator_control_tower_local_developer_workflow_receipt(
+        request: Request,
+        tenant_id: str = "operator",
+        domain: str = "software_dev",
+        risk_level: str = "",
+        include_local_sandbox_receipts: bool = False,
+    ):
+        _require_authority_operator(request)
+        snapshot = _operator_control_tower_snapshot(
+            tenant_id=tenant_id,
+            domain=domain,
+            risk_level=risk_level,
+            include_local_sandbox_receipts=include_local_sandbox_receipts,
+            include_developer_workflow_operator_receipt=True,
+        )
+        read_model = _operator_local_developer_workflow_receipt_card_read_model(
+            operator_receipt=_load_local_developer_workflow_operator_receipt(),
+            control_tower_status_receipt=operator_control_tower_status_receipt(snapshot),
+        )
+        return HTMLResponse(_render_operator_local_developer_workflow_receipt_card(read_model))
 
     @app.get("/operator/control-tower/local-rollback-receipt/read-model")
     def operator_control_tower_local_rollback_receipt_read_model(
