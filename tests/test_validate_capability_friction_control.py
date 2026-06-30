@@ -154,6 +154,9 @@ def test_capability_friction_control_runtime_projection_is_bounded() -> None:
     assert validators["operator_developer_workflow_status_read_model_builder"]["command"] == (
         "python scripts/build_operator_developer_workflow_status_read_model.py --json"
     )
+    assert validators["operator_safe_local_action_read_model_builder"]["command"] == (
+        "python scripts/build_operator_safe_local_action_read_model.py --json"
+    )
     assert validators["operator_control_tower_status_receipt_validator"]["command"] == (
         "python scripts/validate_operator_control_tower_status_receipt.py"
     )
@@ -213,6 +216,9 @@ def test_capability_friction_control_runtime_projection_is_bounded() -> None:
     )
     assert validators["operator_developer_workflow_status_read_model_tests"]["command"] == (
         "python -m pytest tests/test_build_operator_developer_workflow_status_read_model.py -q"
+    )
+    assert validators["operator_safe_local_action_read_model_tests"]["command"] == (
+        "python -m pytest tests/test_build_operator_safe_local_action_read_model.py -q"
     )
     assert validators["operator_control_tower_status_receipt_tests"]["command"] == (
         "python -m pytest tests/test_validate_operator_control_tower_status_receipt.py -q"
