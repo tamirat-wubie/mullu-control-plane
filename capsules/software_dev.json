@@ -10,6 +10,7 @@
     "software_dev.github_patch_plan.draft",
     "software_dev.github_issue.draft",
     "software_dev.github_release.readiness",
+    "software_dev.github_pr_merge_approval.request",
     "software_dev.context_bundle.build",
     "software_dev.gate_plan.select",
     "software_dev.change.run",

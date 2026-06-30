@@ -29,6 +29,7 @@ from gateway.github_operations_workroom import (  # noqa: E402
     GitHubActionsFailureEvidenceAdmissionRequest,
     GitHubIssueDraftRequest,
     GitHubPatchPlanDraftRequest,
+    GitHubPrMergeApprovalRequest,
     GitHubRepoStatusEvidenceAdmissionRequest,
     GitHubReleaseReadinessRequest,
     GitHubReadOnlyEvidenceFetcher,
@@ -44,6 +45,8 @@ from gateway.github_operations_workroom import (  # noqa: E402
     build_github_issue_draft_workroom_read_model,
     build_github_patch_plan_draft_receipt,
     build_github_patch_plan_workroom_read_model,
+    build_github_pr_merge_approval_request_receipt,
+    build_github_pr_merge_approval_request_workroom_read_model,
     build_github_repo_status_summary_receipt,
     build_github_repo_status_workroom_read_model,
     build_github_release_readiness_receipt,
@@ -56,6 +59,7 @@ from gateway.github_operations_workroom import (  # noqa: E402
     evaluate_github_actions_failure_diagnosis,
     evaluate_github_issue_draft,
     evaluate_github_patch_plan_draft,
+    evaluate_github_pr_merge_approval_request,
     evaluate_github_repo_status_summary,
     evaluate_github_release_readiness,
     evaluate_github_pr_safety_judgment,
@@ -68,6 +72,7 @@ from mcoi_runtime.contracts.universal_capability_fabric import (  # noqa: E402
     FabricPolicyDecision,
     FabricRiskClass,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
 
 class StubPlatform:
@@ -1516,6 +1521,169 @@ def test_operator_github_release_readiness_panel_renders_local_assessment_form_w
     assert 'fetch("/operator/github-operations/release-readiness/assess"' in response.text
     assert "No GitHub token, tag, release, or deployment authority is accepted." in response.text
     assert "access_token" not in response.text
+
+
+def test_github_pr_merge_approval_request_ready_receipt_is_prepare_only() -> None:
+    request = GitHubPrMergeApprovalRequest(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        pull_request_number=2409,
+        pr_safety_receipt_ref="github-pr-safety-receipt:abc",
+        ci_status_refs=("ci:81-checks-pass",),
+        review_approval_refs=("review:approved",),
+        rollback_refs=("rollback:revert-merge",),
+        explicit_approver_ref="operator:tamirat",
+        merge_objective="Merge governed repository boundary guard after clean CI.",
+        known_blockers=(),
+        surface_event_id="pr-merge-approval",
+        requested_at="2026-06-30T09:00:00+00:00",
+    )
+
+    packet = evaluate_github_pr_merge_approval_request(request=request, clock=_clock)
+    receipt = build_github_pr_merge_approval_request_receipt(
+        request=request,
+        packet=packet,
+        occurred_at="2026-06-30T09:00:00+00:00",
+    )
+
+    assert packet.status == "ready_for_approval"
+    assert packet.merge_authority_granted is False
+    assert packet.write_authority_granted is False
+    assert "explicit_human_merge_approval_response" in packet.required_next_evidence
+    assert receipt.risk_class is FabricRiskClass.CLASS_1_PREPARE
+    assert receipt.policy_decision is FabricPolicyDecision.ALLOW_DRAFT_ONLY
+    assert "merge_pull_request_without_explicit_human_approval" in receipt.actions_blocked
+    assert not _validate_schema_instance(
+        _load_schema(_ROOT / "schemas/software_dev/github_pr_merge_approval_request.output.schema.json"),
+        receipt.to_json_dict(),
+    )
+
+
+def test_github_pr_merge_approval_request_awaits_required_evidence() -> None:
+    request = GitHubPrMergeApprovalRequest(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        pull_request_number=2409,
+        pr_safety_receipt_ref="",
+        ci_status_refs=(),
+        review_approval_refs=(),
+        rollback_refs=(),
+        explicit_approver_ref="",
+        merge_objective="",
+        known_blockers=(),
+        surface_event_id="pr-merge-approval-gap",
+        requested_at="2026-06-30T09:00:00+00:00",
+    )
+
+    packet = evaluate_github_pr_merge_approval_request(request=request, clock=_clock)
+    receipt = build_github_pr_merge_approval_request_receipt(
+        request=request,
+        packet=packet,
+        occurred_at="2026-06-30T09:00:00+00:00",
+    )
+
+    assert packet.status == "awaiting_evidence"
+    assert "missing_ci_status_refs" in packet.required_next_evidence
+    assert packet.evidence_refs == ("missing_pr_merge_approval_evidence",)
+    assert receipt.memory_update is FabricMemoryDecisionStatus.DEFER
+    assert "missing_pr_safety_receipt_ref" in receipt.partial_failure_reasons
+
+
+def test_github_pr_merge_approval_request_blocks_declared_blockers() -> None:
+    request = GitHubPrMergeApprovalRequest(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        pull_request_number=2410,
+        pr_safety_receipt_ref="github-pr-safety-receipt:abc",
+        ci_status_refs=("ci:passing",),
+        review_approval_refs=("review:approved",),
+        rollback_refs=("rollback:revert-merge",),
+        explicit_approver_ref="operator:tamirat",
+        merge_objective="Merge causal repair admission engine.",
+        known_blockers=("branch_protection_pending",),
+        surface_event_id="pr-merge-approval-blocked",
+        requested_at="2026-06-30T09:00:00+00:00",
+    )
+
+    packet = evaluate_github_pr_merge_approval_request(request=request, clock=_clock)
+
+    assert packet.status == "blocked"
+    assert packet.blockers == ("branch_protection_pending",)
+    assert packet.recommended_next_action == "resolve_declared_merge_blockers_then_prepare_new_approval_request"
+
+
+def test_github_pr_merge_approval_request_read_model_awaits_evidence() -> None:
+    read_model = build_github_pr_merge_approval_request_workroom_read_model(
+        actor_id="operator:tamirat",
+        workspace_id="workspace:mullusi-control-plane",
+        repo="tamiratl/mullu-control-plane",
+        pull_request_number=2410,
+        surface_event_id="pr-merge-approval-model",
+        occurred_at="2026-06-30T09:00:00+00:00",
+        clock=_clock,
+    )
+
+    assert read_model["status"] == "awaiting_evidence"
+    assert read_model["passport"]["risk_class"] == "class_1_prepare"
+    assert read_model["merge_authority_granted"] is False
+    assert read_model["approval_collected"] is False
+    assert "merge_pull_request_without_explicit_human_approval" in read_model["blocked_actions"]
+
+
+def test_operator_github_pr_merge_approval_request_endpoint_returns_receipt_without_merge_authority() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.post(
+        "/operator/github-operations/pr-merge-approval-request/prepare",
+        json={
+            "repo": "tamiratl/mullu-control-plane",
+            "pull_request_number": 2410,
+            "pr_safety_receipt_ref": "github-pr-safety-receipt:abc",
+            "ci_status_refs": ["ci:81-checks-pass"],
+            "review_approval_refs": ["review:approved"],
+            "rollback_refs": ["rollback:revert-merge"],
+            "explicit_approver_ref": "operator:tamirat",
+            "merge_objective": "Merge causal repair admission engine.",
+            "known_blockers": [],
+            "requested_at": "2026-06-30T09:00:00+00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    serialized = json.dumps(payload, sort_keys=True)
+    assert payload["github_pr_merge_approval_request"]["status"] == "ready_for_approval"
+    assert payload["github_pr_merge_approval_request_receipt"]["policy_decision"] == "allow_draft_only"
+    assert payload["effect_boundary"]["merge_execution_allowed"] is False
+    assert payload["approval_collected"] is False
+    assert payload["merge_authority_granted"] is False
+    assert payload["write_authority_granted"] is False
+    assert "access_token" not in serialized
+
+
+def test_operator_github_pr_merge_approval_request_panel_renders_local_form_without_token_or_merge_command() -> None:
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get(
+        "/operator/github-operations/pr-merge-approval-request",
+        params={
+            "repo": "tamiratl/mullu-control-plane",
+            "pull_request_number": 2410,
+            "occurred_at": "2026-06-30T09:00:00+00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    assert "Mullusi GitHub PR Merge Approval Request Workroom" in response.text
+    assert 'fetch("/operator/github-operations/pr-merge-approval-request/prepare"' in response.text
+    assert "No GitHub token, merge command, branch deletion, or repository write authority is accepted." in response.text
+    assert "access_token" not in response.text
+    assert "gh pr merge" not in response.text
 
 
 def test_operator_github_read_only_evidence_execution_endpoint_returns_receipts_without_token(

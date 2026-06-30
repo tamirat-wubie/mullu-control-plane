@@ -1,0 +1,82 @@
+{
+  "$id": "urn:mullusi:schema:github-pr-merge-approval-request-receipt:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Receipt for governed local GitHub PR merge approval request preparation.",
+  "properties": {
+    "actions_blocked": {
+      "contains": { "const": "merge_pull_request_without_explicit_human_approval" },
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "actions_taken": {
+      "items": {
+        "enum": [
+          "prepared_pr_merge_approval_request",
+          "reported_pr_merge_approval_request_gap",
+          "emitted_causal_receipt"
+        ],
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "assumptions": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "actor_id": { "minLength": 1, "type": "string" },
+    "evidence_used": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "event_id": { "minLength": 1, "type": "string" },
+    "final_judgment": { "minLength": 1, "type": "string" },
+    "intent": { "const": "PREPARE_GITHUB_PR_MERGE_APPROVAL_REQUEST", "type": "string" },
+    "memory_update": { "enum": ["store", "defer"], "type": "string" },
+    "metadata": {
+      "additionalProperties": true,
+      "properties": {
+        "approval_collected": { "const": false, "type": "boolean" },
+        "merge_authority_granted": { "const": false, "type": "boolean" },
+        "write_authority_granted": { "const": false, "type": "boolean" }
+      },
+      "required": ["approval_collected", "merge_authority_granted", "write_authority_granted"],
+      "type": "object"
+    },
+    "partial_failure_reasons": {
+      "items": { "minLength": 1, "type": "string" },
+      "type": "array"
+    },
+    "policy_decision": { "const": "allow_draft_only", "type": "string" },
+    "receipt_id": { "pattern": "^github-pr-merge-approval-request-receipt:", "type": "string" },
+    "risk_class": { "const": "class_1_prepare", "type": "string" },
+    "surface": { "const": "github_operations_workroom", "type": "string" },
+    "target_object": { "pattern": "^github_repository:", "type": "string" },
+    "timestamp": { "format": "date-time", "type": "string" },
+    "verification_result": { "minLength": 1, "type": "string" },
+    "write_authority_granted": { "const": false, "type": "boolean" }
+  },
+  "required": [
+    "receipt_id",
+    "event_id",
+    "actor_id",
+    "surface",
+    "intent",
+    "target_object",
+    "risk_class",
+    "evidence_used",
+    "policy_decision",
+    "actions_taken",
+    "actions_blocked",
+    "assumptions",
+    "verification_result",
+    "final_judgment",
+    "memory_update",
+    "timestamp"
+  ],
+  "type": "object"
+}

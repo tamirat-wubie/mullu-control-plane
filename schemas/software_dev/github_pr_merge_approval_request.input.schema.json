@@ -1,0 +1,67 @@
+{
+  "$id": "urn:mullusi:schema:software-dev:github-pr-merge-approval-request-input:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Input for governed local GitHub PR merge approval request preparation.",
+  "properties": {
+    "assumptions": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "capability_id": { "const": "software_dev.github_pr_merge_approval.request", "type": "string" },
+    "ci_status_refs": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "explicit_approver_ref": { "minLength": 1, "type": "string" },
+    "known_blockers": {
+      "items": { "minLength": 1, "type": "string" },
+      "type": "array"
+    },
+    "merge_authority_granted": { "const": false, "type": "boolean" },
+    "merge_objective": { "minLength": 1, "type": "string" },
+    "metadata": {
+      "additionalProperties": true,
+      "properties": {
+        "approval_collected": { "const": false, "type": "boolean" },
+        "fixture": { "const": "software_dev_capability_pack", "type": "string" },
+        "merge_execution_allowed": { "const": false, "type": "boolean" }
+      },
+      "required": ["fixture", "approval_collected", "merge_execution_allowed"],
+      "type": "object"
+    },
+    "pr_safety_receipt_ref": { "minLength": 1, "type": "string" },
+    "pull_request_number": { "minimum": 1, "type": "integer" },
+    "repo": { "minLength": 1, "type": "string" },
+    "review_approval_refs": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "rollback_refs": {
+      "items": { "minLength": 1, "type": "string" },
+      "minItems": 1,
+      "type": "array"
+    },
+    "write_authority_granted": { "const": false, "type": "boolean" }
+  },
+  "required": [
+    "capability_id",
+    "repo",
+    "pull_request_number",
+    "pr_safety_receipt_ref",
+    "ci_status_refs",
+    "review_approval_refs",
+    "rollback_refs",
+    "explicit_approver_ref",
+    "merge_objective",
+    "known_blockers",
+    "assumptions",
+    "write_authority_granted",
+    "merge_authority_granted",
+    "metadata"
+  ],
+  "type": "object"
+}

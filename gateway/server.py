@@ -148,6 +148,7 @@ from gateway.github_operations_workroom import (
     GitHubActionsFailureEvidenceAdmissionRequest,
     GitHubIssueDraftRequest,
     GitHubPatchPlanDraftRequest,
+    GitHubPrMergeApprovalRequest,
     GitHubRepoStatusEvidenceAdmissionRequest,
     GitHubReleaseReadinessRequest,
     GitHubReadOnlyEvidenceFetchError,
@@ -163,6 +164,8 @@ from gateway.github_operations_workroom import (
     build_github_issue_draft_workroom_read_model,
     build_github_patch_plan_draft_receipt,
     build_github_patch_plan_workroom_read_model,
+    build_github_pr_merge_approval_request_receipt,
+    build_github_pr_merge_approval_request_workroom_read_model,
     build_github_repo_status_summary_receipt,
     build_github_repo_status_workroom_read_model,
     build_github_release_readiness_receipt,
@@ -174,6 +177,7 @@ from gateway.github_operations_workroom import (
     evaluate_github_actions_failure_diagnosis,
     evaluate_github_issue_draft,
     evaluate_github_patch_plan_draft,
+    evaluate_github_pr_merge_approval_request,
     evaluate_github_repo_status_summary,
     evaluate_github_release_readiness,
     evaluate_github_pr_safety_judgment,
@@ -182,6 +186,7 @@ from gateway.github_operations_workroom import (
     render_github_actions_failure_workroom_html,
     render_github_issue_draft_workroom_html,
     render_github_patch_plan_workroom_html,
+    render_github_pr_merge_approval_request_workroom_html,
     render_github_repo_status_workroom_html,
     render_github_release_readiness_workroom_html,
     render_github_pr_safety_workroom_html,
@@ -912,6 +917,33 @@ class GatewayGitHubReleaseReadinessRequest(BaseModel):
         default_factory=lambda: [
             "Evidence references are bounded and authorized for this actor and workspace.",
             "Release readiness assessment does not tag, publish, deploy, trigger workflows, merge, or mutate GitHub.",
+        ]
+    )
+
+
+class GatewayGitHubPrMergeApprovalRequest(BaseModel):
+    """Prepare a governed local GitHub PR merge approval request packet."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    actor_id: str = "operator:gateway"
+    workspace_id: str = "workspace:mullusi-control-plane"
+    repo: str = "tamirat-wubie/mullu-control-plane"
+    pull_request_number: int
+    pr_safety_receipt_ref: str = ""
+    ci_status_refs: list[str] = Field(default_factory=list)
+    review_approval_refs: list[str] = Field(default_factory=list)
+    rollback_refs: list[str] = Field(default_factory=list)
+    explicit_approver_ref: str = ""
+    merge_objective: str = ""
+    known_blockers: list[str] = Field(default_factory=list)
+    surface_event_id: str = ""
+    requested_at: str = ""
+    authority_ref: str = "policy.github.pr_merge.local_approval_request_only"
+    assumptions: list[str] = Field(
+        default_factory=lambda: [
+            "Evidence references are bounded and authorized for this actor and workspace.",
+            "PR merge approval request preparation does not merge, push, delete branches, deploy, or mutate GitHub.",
         ]
     )
 
@@ -10781,6 +10813,134 @@ def create_gateway_app(
                 "release_execution_allowed": False,
                 "tag_creation_allowed": False,
                 "workflow_trigger_allowed": False,
+                "system_of_record_write_allowed": False,
+            },
+        }
+
+    @app.get("/operator/github-operations/pr-merge-approval-request/read-model")
+    def operator_github_operations_pr_merge_approval_request_read_model(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        pull_request_number: int = 1,
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = surface_event_id or (
+                f"operator-github-pr-merge-approval-request:{repo}:pr{pull_request_number}:{now}"
+            )
+            return build_github_pr_merge_approval_request_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                pull_request_number=pull_request_number,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+
+    @app.get("/operator/github-operations/pr-merge-approval-request", response_class=HTMLResponse)
+    def operator_github_operations_pr_merge_approval_request_panel(
+        request: Request,
+        repo: str = "tamirat-wubie/mullu-control-plane",
+        pull_request_number: int = 1,
+        actor_id: str = "operator:gateway",
+        workspace_id: str = "workspace:mullusi-control-plane",
+        surface_event_id: str = "",
+        occurred_at: str = "",
+    ):
+        _require_authority_operator(request)
+        try:
+            now = occurred_at or _clock()
+            normalized_surface_event_id = surface_event_id or (
+                f"operator-github-pr-merge-approval-request:{repo}:pr{pull_request_number}:{now}"
+            )
+            read_model = build_github_pr_merge_approval_request_workroom_read_model(
+                actor_id=actor_id,
+                workspace_id=workspace_id,
+                repo=repo,
+                pull_request_number=pull_request_number,
+                surface_event_id=normalized_surface_event_id,
+                occurred_at=now,
+                clock=lambda: now,
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return HTMLResponse(render_github_pr_merge_approval_request_workroom_html(read_model))
+
+    @app.post("/operator/github-operations/pr-merge-approval-request/prepare")
+    def operator_github_operations_pr_merge_approval_request_prepare(
+        request: Request,
+        req: GatewayGitHubPrMergeApprovalRequest,
+    ):
+        _require_authority_operator(request)
+        try:
+            now = req.requested_at or _clock()
+            surface_event_id = req.surface_event_id or (
+                f"operator-github-pr-merge-approval-request:{req.repo}:pr{req.pull_request_number}:{now}"
+            )
+            approval_request = GitHubPrMergeApprovalRequest(
+                actor_id=req.actor_id,
+                workspace_id=req.workspace_id,
+                repo=req.repo,
+                pull_request_number=req.pull_request_number,
+                pr_safety_receipt_ref=req.pr_safety_receipt_ref,
+                ci_status_refs=tuple(req.ci_status_refs),
+                review_approval_refs=tuple(req.review_approval_refs),
+                rollback_refs=tuple(req.rollback_refs),
+                explicit_approver_ref=req.explicit_approver_ref,
+                merge_objective=req.merge_objective,
+                known_blockers=tuple(req.known_blockers),
+                surface_event_id=surface_event_id,
+                requested_at=now,
+                authority_ref=req.authority_ref,
+                assumptions=tuple(req.assumptions),
+            )
+            packet = evaluate_github_pr_merge_approval_request(request=approval_request, clock=lambda: now)
+            receipt = build_github_pr_merge_approval_request_receipt(
+                request=approval_request,
+                packet=packet,
+                occurred_at=now,
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                400,
+                detail={
+                    "error": "invalid GitHub PR merge approval request",
+                    "error_code": "invalid_github_pr_merge_approval_request",
+                    "governed": True,
+                },
+            ) from exc
+
+        return {
+            "github_pr_merge_approval_request": packet.to_json_dict(),
+            "github_pr_merge_approval_request_receipt": receipt.to_json_dict(),
+            "outcome": "SolvedUnverified" if packet.status == "ready_for_approval" else "AwaitingEvidence",
+            "governed": True,
+            "execution_allowed": True,
+            "live_connector_call_performed": False,
+            "approval_collected": False,
+            "write_authority_granted": False,
+            "merge_authority_granted": False,
+            "effect_boundary": {
+                "execution_allowed": True,
+                "live_connector_execution_allowed": False,
+                "github_call_allowed": False,
+                "repository_read_allowed": False,
+                "repository_mutation_allowed": False,
+                "pull_request_mutation_allowed": False,
+                "branch_push_allowed": False,
+                "issue_creation_allowed": False,
+                "review_submission_allowed": False,
+                "deployment_mutation_allowed": False,
+                "merge_execution_allowed": False,
+                "branch_deletion_allowed": False,
                 "system_of_record_write_allowed": False,
             },
         }
