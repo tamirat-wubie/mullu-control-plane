@@ -721,7 +721,7 @@ def test_readiness_map_rejects_missing_actual_diff_collection_receipt_row(
     )
 
 
-def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
+def test_readiness_map_rejects_missing_current_next_pr_marker(
     tmp_path: Path,
 ) -> None:
     map_text = Path("MULLUSI_AGENTIC_SERVICE_HARNESS_READINESS_MAP.md").read_text(
@@ -730,8 +730,8 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(pr): bind terminal closure operator decision contract to command-preview approval gate evidence`",
-            "1. `harness(pr): request terminal closure certificate approval again`",
+            "1. `harness(live-producer): collect governed live producer witness requirements`",
+            "1. `harness(live-producer): request live producer execution authority`",
         ),
         encoding="utf-8",
     )
@@ -741,7 +741,7 @@ def test_readiness_map_rejects_missing_concrete_filesystem_write_next_pr(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(pr): bind terminal closure operator decision contract to command-preview approval gate evidence"
+        "missing next PR marker: harness(live-producer): collect governed live producer witness requirements"
         in serialized_errors
     )
 
