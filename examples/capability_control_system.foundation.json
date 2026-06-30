@@ -1,0 +1,5470 @@
+{
+  "control_system_id": "capability_control_system.foundation.v1",
+  "control_system_is_not_execution_authority": true,
+  "dangerous_zones": [
+    "delete_files",
+    "touch_secrets",
+    "send_email",
+    "move_money",
+    "deploy",
+    "merge_to_main",
+    "write_production_data"
+  ],
+  "dashboard_tasks": [
+    {
+      "action_needed": "add live read receipt evidence",
+      "capability_id": "software_dev.change.run",
+      "next_unlock": "add live read receipt evidence",
+      "reason": "required evidence or hard governance condition is missing",
+      "risk": "medium",
+      "status": "blocked",
+      "task": "Run governed software change"
+    },
+    {
+      "action_needed": "add live read receipt evidence",
+      "capability_id": "software_dev.pr_candidate.prepare",
+      "next_unlock": "add live read receipt evidence",
+      "reason": "required evidence or hard governance condition is missing",
+      "risk": "medium",
+      "status": "blocked",
+      "task": "Prepare PR candidate review packet"
+    },
+    {
+      "action_needed": "bind bounded autonomy controls",
+      "capability_id": "financial.send_payment",
+      "next_unlock": "bind bounded autonomy controls",
+      "reason": "required evidence or hard governance condition is missing",
+      "risk": "high",
+      "status": "blocked",
+      "task": "Send governed payment"
+    },
+    {
+      "action_needed": "add sandbox receipt evidence",
+      "capability_id": "messaging.chat.send.with_approval",
+      "next_unlock": "add sandbox receipt evidence",
+      "reason": "required evidence or hard governance condition is missing",
+      "risk": "low",
+      "status": "blocked",
+      "task": "Send chat message with approval"
+    }
+  ],
+  "friction_modes": [
+    {
+      "approval_policy": "approval_before_sensitive_or_external_effects",
+      "automatic_zones": [],
+      "blocked_zones": [
+        "delete_files",
+        "touch_secrets",
+        "send_email",
+        "move_money",
+        "deploy",
+        "merge_to_main",
+        "write_production_data"
+      ],
+      "default_boundary": "real_world",
+      "label": "Strict Mode",
+      "mode_id": "strict"
+    },
+    {
+      "approval_policy": "approval_before_risky_or_external_actions",
+      "automatic_zones": [
+        "docs",
+        "tests",
+        "examples",
+        "schemas",
+        "validators"
+      ],
+      "blocked_zones": [
+        "delete_files",
+        "touch_secrets",
+        "send_email",
+        "move_money",
+        "deploy",
+        "merge_to_main",
+        "write_production_data"
+      ],
+      "default_boundary": "lab",
+      "label": "Balanced Mode",
+      "mode_id": "balanced"
+    },
+    {
+      "approval_policy": "auto_admit_reversible_local_lab_actions_with_receipts",
+      "automatic_zones": [
+        "docs",
+        "tests",
+        "examples",
+        "readme",
+        "schemas",
+        "validators",
+        "local_demo_files"
+      ],
+      "blocked_zones": [
+        "delete_files",
+        "touch_secrets",
+        "send_email",
+        "move_money",
+        "deploy",
+        "merge_to_main",
+        "write_production_data"
+      ],
+      "default_boundary": "lab",
+      "label": "Fast Mode",
+      "mode_id": "fast"
+    }
+  ],
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "next_action": "Use this read model as the master operator surface for reducing friction before wiring additional capability families into live execution paths.",
+  "operating_boundaries": [
+    {
+      "allowed": [
+        "write_local_files",
+        "run_tests",
+        "create_demos",
+        "prepare_pr_packet"
+      ],
+      "blocked": [
+        "touch_real_users",
+        "move_money",
+        "send_email",
+        "deploy",
+        "write_production_data"
+      ],
+      "boundary_id": "lab",
+      "label": "Lab mode"
+    },
+    {
+      "allowed": [
+        "approved_live_read",
+        "approved_live_write",
+        "monitored_customer_workflow"
+      ],
+      "blocked": [
+        "unapproved_external_write",
+        "receiptless_mutation",
+        "unmonitored_production_action"
+      ],
+      "boundary_id": "real_world",
+      "label": "Real-world mode"
+    }
+  ],
+  "registry": [
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "workspace_file_written",
+        "git_state_mutated",
+        "test_result_fabricated",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.code_change.plan",
+      "danger_zone": "none",
+      "display_name": "Plan code change",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "change_boundary",
+        "code_change_physics_packet",
+        "test_contract",
+        "rollback_plan",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "ledger_record_deleted",
+        "ledger_record_rewritten",
+        "external_message_sent",
+        "execute_without_approval",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.evidence.append",
+      "danger_zone": "none",
+      "display_name": "Append evidence ledger",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "ledger_record_id",
+        "ledger_record_hash",
+        "lineage_ref",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "blocked_action_executed",
+        "approval_forged",
+        "policy_bypassed",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.governance_gate.evaluate",
+      "danger_zone": "none",
+      "display_name": "Evaluate governance gate",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "proof_state",
+        "policy_refs",
+        "blocked_actions",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "rollback_executed",
+        "incident_closed_without_evidence",
+        "external_message_sent",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.incident_recovery.plan",
+      "danger_zone": "none",
+      "display_name": "Plan incident recovery",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "rollback_plan_hash",
+        "containment_actions",
+        "verification_steps",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "hard_unknown_ignored",
+        "external_message_sent",
+        "workspace_file_written",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.interrogation.plan",
+      "danger_zone": "none",
+      "display_name": "Plan evidence interrogation",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "question_set_hash",
+        "unknowns",
+        "evidence_requests",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "code_executed",
+        "workspace_file_written",
+        "unbounded_search_authorized",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.math_algorithm.analyze",
+      "danger_zone": "none",
+      "display_name": "Analyze math and algorithm",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "complexity_bound",
+        "invariant_refs",
+        "failure_modes",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "memory_written",
+        "raw_logs_admitted",
+        "unverified_summary_generalized",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.memory_admission.plan",
+      "danger_zone": "none",
+      "display_name": "Plan memory admission",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "learning_admission_policy_ref",
+        "redaction_plan",
+        "forget_path",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "workspace_file_written",
+        "external_message_sent",
+        "tool_executed_without_gate",
+        "execute_without_approval",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.mission.define",
+      "danger_zone": "none",
+      "display_name": "Define bounded mission",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "mission_contract_hash",
+        "halt_conditions",
+        "success_criteria",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "task_executed",
+        "external_message_sent",
+        "workspace_file_written",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.priority.rank",
+      "danger_zone": "none",
+      "display_name": "Rank autonomous work",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "ranking_hash",
+        "dependency_blockers",
+        "risk_weights",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "scope_expanded_without_mandate",
+        "external_message_sent",
+        "task_scheduled",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.product_management.plan",
+      "danger_zone": "none",
+      "display_name": "Plan product management",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "roadmap_hash",
+        "success_metrics",
+        "handoff_risks",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "git_push_executed",
+        "pull_request_opened",
+        "release_published",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.release_handoff.plan",
+      "danger_zone": "none",
+      "display_name": "Plan release handoff",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "commit_boundary",
+        "ci_gate_plan",
+        "rollback_path",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "budget_limit_increased",
+        "unbounded_loop_authorized",
+        "paid_service_invoked",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.resource_budget.bound",
+      "danger_zone": "none",
+      "display_name": "Bound resource budget",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "budget_envelope_hash",
+        "halt_thresholds",
+        "resource_floor",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "secret_value_exposed",
+        "exploit_executed",
+        "policy_exception_granted",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.security_threat_model.build",
+      "danger_zone": "none",
+      "display_name": "Build threat model",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "threat_model_hash",
+        "mitigation_refs",
+        "residual_risk",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "unbounded_recursion_authorized",
+        "action_executed_without_verification",
+        "workspace_file_written",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.self_audit.refine",
+      "danger_zone": "none",
+      "display_name": "Refine weakness and gaps",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "weakness_refs",
+        "gap_closure_plan",
+        "residual_risk",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "subagent_spawned",
+        "duplicate_work_authorized",
+        "budget_limit_increased",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.swarm.coordinate",
+      "danger_zone": "none",
+      "display_name": "Coordinate agent swarm",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "role_assignment_hash",
+        "shard_boundaries",
+        "consensus_rule",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "threshold_mutated",
+        "alert_suppressed",
+        "external_message_sent",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.telemetry_triage.plan",
+      "danger_zone": "none",
+      "display_name": "Plan telemetry triage",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "telemetry_window",
+        "threshold_contract",
+        "remediation_order",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "verification_fabricated",
+        "quality_gate_executed",
+        "workspace_file_written",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "agentic_control.verification.plan",
+      "danger_zone": "none",
+      "display_name": "Plan verification gates",
+      "family": "agentic_control",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "verification_plan_hash",
+        "required_gates",
+        "closure_rule",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "test_process_started",
+        "test_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_form_submitted",
+        "payment_created",
+        "credential_submitted",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "browser.click",
+      "danger_zone": "none",
+      "display_name": "Click browser element",
+      "family": "browser",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "url_before",
+        "url_after",
+        "element_selector_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "review_only",
+      "safe_zone": "local_lab",
+      "status": "blocked",
+      "unlock_level": "L4",
+      "unlock_level_number": 4,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_form_submitted",
+        "payment_created",
+        "credential_submitted",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "browser.extract_text",
+      "danger_zone": "none",
+      "display_name": "Extract browser text",
+      "family": "browser",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "url_after",
+        "text_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_form_submitted",
+        "payment_created",
+        "credential_submitted",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "browser.open",
+      "danger_zone": "none",
+      "display_name": "Open browser page",
+      "family": "browser",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "url_after",
+        "screenshot_after_ref",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_form_submitted",
+        "payment_created",
+        "credential_submitted",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "browser.screenshot",
+      "danger_zone": "none",
+      "display_name": "Capture browser screenshot",
+      "family": "browser",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "screenshot_after_ref",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "credential_submitted",
+        "payment_created",
+        "irreversible_external_submission",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "browser.submit",
+      "danger_zone": "live_connector_write",
+      "display_name": "Submit browser form",
+      "family": "browser",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "url_before",
+        "url_after",
+        "element_selector_hash",
+        "approval_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "review_only",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L8",
+      "unlock_level_number": 8,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "test_process_started",
+        "test_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_form_submitted",
+        "payment_created",
+        "credential_submitted",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "browser.type",
+      "danger_zone": "none",
+      "display_name": "Type into browser element",
+      "family": "browser",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "url_before",
+        "url_after",
+        "element_selector_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "review_only",
+      "safe_zone": "local_lab",
+      "status": "blocked",
+      "unlock_level": "L4",
+      "unlock_level_number": 4,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "calendar_event_modified",
+        "external_invite_sent",
+        "credential_scope_exceeded",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "calendar.conflict_check",
+      "danger_zone": "live_connector_read",
+      "display_name": "Check calendar conflicts",
+      "family": "communication",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "query_hash",
+        "conflict_digest",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_invite_sent_without_approval",
+        "credential_scope_exceeded",
+        "attendee_unapproved",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "calendar.invite",
+      "danger_zone": "live_connector_write",
+      "display_name": "Send calendar invite with approval",
+      "family": "communication",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "attendee_hashes",
+        "approval_id",
+        "provider_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "ready",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L8",
+      "unlock_level_number": 8,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "calendar_event_modified",
+        "external_invite_sent",
+        "credential_scope_exceeded",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "calendar.read",
+      "danger_zone": "live_connector_read",
+      "display_name": "Read calendar event",
+      "family": "communication",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "query_hash",
+        "response_digest",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "calendar_event_modified_without_approval",
+        "external_invite_sent_without_approval",
+        "credential_scope_exceeded",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "calendar.reschedule",
+      "danger_zone": "live_connector_write",
+      "display_name": "Reschedule calendar event with approval",
+      "family": "communication",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "event_id",
+        "approval_id",
+        "before_after_event_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "ready",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L8",
+      "unlock_level_number": 8,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "calendar_event_created_without_approval",
+        "external_invite_sent_without_approval",
+        "credential_scope_exceeded",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "calendar.schedule",
+      "danger_zone": "live_connector_write",
+      "display_name": "Schedule calendar event with approval",
+      "family": "communication",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "attendee_hashes",
+        "approval_id",
+        "provider_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "ready",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L8",
+      "unlock_level_number": 8,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "path_outside_workspace_written",
+        "credential_file_read",
+        "host_root_modified",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "computer.code.patch",
+      "danger_zone": "none",
+      "display_name": "Patch workspace code",
+      "family": "computer",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "patch_id",
+        "patch_status",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "ready",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "host_shell_executed",
+        "unrestricted_network",
+        "docker_socket_mounted",
+        "execute_without_approval",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "computer.command.run",
+      "danger_zone": "none",
+      "display_name": "Run sandboxed command",
+      "family": "computer",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "sandbox_receipt_id",
+        "verification_status",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "review_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "file_written",
+        "host_root_read",
+        "credential_file_read",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "computer.filesystem.observe",
+      "danger_zone": "none",
+      "display_name": "Observe workspace files",
+      "family": "computer",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "workspace_root_hash",
+        "file_count",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "workspace_file_written",
+        "workspace_file_deleted",
+        "workspace_file_moved",
+        "permission_changed",
+        "credential_file_read",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "computer.workspace_file.preflight",
+      "danger_zone": "none",
+      "display_name": "Preflight workspace file operation",
+      "family": "computer",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "workspace_file_preflight_receipt_id",
+        "risk_level",
+        "decision",
+        "autonomy_mode",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "repository_modified",
+        "external_message_sent",
+        "credential_scope_exceeded",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "connector.github.read",
+      "danger_zone": "live_connector_read",
+      "display_name": "Read GitHub resource",
+      "family": "connector",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "bind bounded autonomy controls",
+      "operator_status": "Ready",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "resource_digest",
+        "scope_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "credential_scope_exceeded",
+        "cross_tenant_write",
+        "unreviewed_repository_write",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "connector.github.write.with_approval",
+      "danger_zone": "live_connector_write",
+      "display_name": "Write GitHub resource with approval",
+      "family": "connector",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "before_after_resource_hash",
+        "approval_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "ready",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L8",
+      "unlock_level_number": 8,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_file_modified",
+        "external_message_sent",
+        "credential_scope_exceeded",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "connector.google_drive.read",
+      "danger_zone": "live_connector_read",
+      "display_name": "Read Google Drive resource",
+      "family": "connector",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "resource_digest",
+        "scope_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_message_sent",
+        "credential_scope_exceeded",
+        "cross_tenant_write",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "connector.google_drive.write.with_approval",
+      "danger_zone": "live_connector_write",
+      "display_name": "Write Google Drive resource with approval",
+      "family": "connector",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "before_after_resource_hash",
+        "approval_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "ready",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L8",
+      "unlock_level_number": 8,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "database_row_modified",
+        "credential_scope_exceeded",
+        "cross_tenant_read",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "connector.postgres.query",
+      "danger_zone": "live_connector_read",
+      "display_name": "Run read-only Postgres query",
+      "family": "connector",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "query_hash",
+        "result_digest",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "credential_scope_exceeded",
+        "cross_tenant_write",
+        "unlogged_database_write",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "connector.postgres.write.with_approval",
+      "danger_zone": "live_connector_write",
+      "display_name": "Write Postgres rows with approval",
+      "family": "connector",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "before_after_row_hash",
+        "approval_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "ready",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L8",
+      "unlock_level_number": 8,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "payment_created",
+        "external_email_sent",
+        "file_written",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "creative.data_analyze",
+      "danger_zone": "none",
+      "display_name": "Analyze data",
+      "family": "creative",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "row_count",
+        "column_count",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "payment_created",
+        "external_email_sent",
+        "file_written",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "creative.document_generate",
+      "danger_zone": "none",
+      "display_name": "Generate document",
+      "family": "creative",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "document_id",
+        "content_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "payment_created",
+        "external_email_sent",
+        "file_written",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "creative.translate",
+      "danger_zone": "none",
+      "display_name": "Translate text",
+      "family": "creative",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "translation_prompt",
+        "target_lang",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "deployment_state_published",
+        "repository_status_modified",
+        "public_health_claim_created",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "deployment.witness.collect",
+      "danger_zone": "none",
+      "display_name": "Collect signed deployment witness",
+      "family": "deployment",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "gateway_health_status",
+        "runtime_witness_signature_status",
+        "runtime_conformance_signature_status",
+        "deployment_witness_json",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "unverified_health_claim_created",
+        "unsigned_witness_published",
+        "secret_value_exposed",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "deployment.witness.publish.with_approval",
+      "danger_zone": "none",
+      "display_name": "Publish deployment witness claim",
+      "family": "deployment",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "published_deployment_witness",
+        "public_health_endpoint",
+        "runtime_conformance_certificate",
+        "operator_approval_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "inspect",
+        "explain",
+        "summarize"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "document_sent_external",
+        "document_signed",
+        "source_document_modified",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "document.extract_tables",
+      "danger_zone": "none",
+      "display_name": "Extract document tables",
+      "family": "document",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate"
+      ],
+      "required_receipts": [
+        "document_id",
+        "table_count",
+        "parser_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L0",
+      "unlock_level_number": 0,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "inspect",
+        "explain",
+        "summarize"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "document_sent_external",
+        "document_signed",
+        "source_document_modified",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "document.extract_text",
+      "danger_zone": "none",
+      "display_name": "Extract document text",
+      "family": "document",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate"
+      ],
+      "required_receipts": [
+        "document_id",
+        "text_hash",
+        "parser_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L0",
+      "unlock_level_number": 0,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "document_sent_external",
+        "document_signed",
+        "source_document_modified",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "document.generate_docx",
+      "danger_zone": "none",
+      "display_name": "Generate DOCX artifact",
+      "family": "document",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "artifact_ref",
+        "artifact_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L2",
+      "unlock_level_number": 2,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "document_sent_external",
+        "document_signed",
+        "source_document_modified",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "document.generate_pdf",
+      "danger_zone": "none",
+      "display_name": "Generate PDF artifact",
+      "family": "document",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "artifact_ref",
+        "artifact_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L2",
+      "unlock_level_number": 2,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "document_sent_external",
+        "document_signed",
+        "source_document_modified",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "document.summarize",
+      "danger_zone": "none",
+      "display_name": "Summarize document",
+      "family": "document",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "document_id",
+        "summary_hash",
+        "parser_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L2",
+      "unlock_level_number": 2,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_message_sent",
+        "mailbox_modified",
+        "credential_scope_exceeded",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "email.classify",
+      "danger_zone": "live_connector_read",
+      "display_name": "Classify email content",
+      "family": "communication",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "query_hash",
+        "classification_digest",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_message_sent",
+        "credential_scope_exceeded",
+        "recipient_unapproved",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "email.draft",
+      "danger_zone": "none",
+      "display_name": "Create email draft",
+      "family": "communication",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "recipient_hashes",
+        "draft_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "review_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L2",
+      "unlock_level_number": 2,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_message_sent",
+        "mailbox_modified",
+        "credential_scope_exceeded",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "email.read",
+      "danger_zone": "live_connector_read",
+      "display_name": "Read email message",
+      "family": "communication",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "query_hash",
+        "response_digest",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_message_sent",
+        "mailbox_modified",
+        "credential_scope_exceeded",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "email.reply_suggest",
+      "danger_zone": "live_connector_read",
+      "display_name": "Suggest email reply",
+      "family": "communication",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "message_digest",
+        "suggestion_digest",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_message_sent",
+        "mailbox_modified",
+        "credential_scope_exceeded",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "email.search",
+      "danger_zone": "live_connector_read",
+      "display_name": "Search email messages",
+      "family": "communication",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "query_hash",
+        "response_digest",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "message_sent_without_approval",
+        "credential_scope_exceeded",
+        "recipient_unapproved",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "email.send.with_approval",
+      "danger_zone": "live_connector_write",
+      "display_name": "Send email with approval",
+      "family": "communication",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "recipient_hashes",
+        "approval_id",
+        "provider_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "review_only",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L8",
+      "unlock_level_number": 8,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "cross_tenant_read",
+        "file_written",
+        "payment_created",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "enterprise.knowledge_search",
+      "danger_zone": "none",
+      "display_name": "Search knowledge",
+      "family": "enterprise",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "total_chunks_searched",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "payment_created",
+        "file_written",
+        "cross_tenant_message",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "enterprise.notification_send",
+      "danger_zone": "none",
+      "display_name": "Send notification",
+      "family": "enterprise",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "receipt_status",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "payment_created",
+        "external_email_sent",
+        "cross_tenant_write",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "enterprise.task_schedule",
+      "danger_zone": "none",
+      "display_name": "Schedule task",
+      "family": "enterprise",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "task_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "ready",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "payment_created",
+        "refund_created",
+        "account_modified",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "financial.balance_check",
+      "danger_zone": "live_connector_read",
+      "display_name": "Check balance",
+      "family": "financial",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "receipt_status",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "refund_without_case",
+        "refund_without_approval",
+        "payment_created",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "financial.refund",
+      "danger_zone": "live_connector_write",
+      "display_name": "Refund governed payment",
+      "family": "financial",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "refund_id",
+        "ledger_hash",
+        "payment_state",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "review_only",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L8",
+      "unlock_level_number": 8,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "payment_without_approval",
+        "payment_without_idempotency_key",
+        "payment_without_named_recipient",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "financial.send_payment",
+      "danger_zone": "live_connector_write",
+      "display_name": "Send governed payment",
+      "family": "financial",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "bind bounded autonomy controls",
+      "operator_status": "Needs approval",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "tx_id",
+        "ledger_hash",
+        "payment_state",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "compensation_only",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L8",
+      "unlock_level_number": 8,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "payment_created",
+        "refund_created",
+        "account_modified",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "financial.spending_insights",
+      "danger_zone": "live_connector_read",
+      "display_name": "Generate spending insights",
+      "family": "financial",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "receipt_status",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "payment_created",
+        "refund_created",
+        "account_modified",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "financial.transaction_history",
+      "danger_zone": "live_connector_read",
+      "display_name": "Read transaction history",
+      "family": "financial",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "receipt_status",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L7",
+      "unlock_level_number": 7,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "credential_scope_exceeded",
+        "cross_tenant_write",
+        "git_push_executed",
+        "production_deployment_started",
+        "pull_request_opened_without_approval",
+        "unreviewed_repository_write",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "github.open_pull_request",
+      "danger_zone": "live_connector_write",
+      "display_name": "Open GitHub pull request with approval",
+      "family": "connector",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "approval_id",
+        "base_branch",
+        "head_branch",
+        "repository",
+        "review_packet_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "compensation_only",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L8",
+      "unlock_level_number": 8,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_chat_message_sent",
+        "credential_scope_exceeded",
+        "recipient_unapproved",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "messaging.chat.draft",
+      "danger_zone": "none",
+      "display_name": "Draft chat message",
+      "family": "messaging",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "recipient_hashes",
+        "draft_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "review_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "chat_message_sent_without_approval",
+        "credential_scope_exceeded",
+        "recipient_unapproved",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "messaging.chat.send.with_approval",
+      "danger_zone": "none",
+      "display_name": "Send chat message with approval",
+      "family": "messaging",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "recipient_hashes",
+        "approval_id",
+        "provider_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "review_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_sms_sent",
+        "credential_scope_exceeded",
+        "recipient_unapproved",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "messaging.sms.draft",
+      "danger_zone": "none",
+      "display_name": "Draft SMS message",
+      "family": "messaging",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "recipient_hashes",
+        "draft_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "review_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "sms_sent_without_approval",
+        "credential_scope_exceeded",
+        "recipient_unapproved",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "messaging.sms.send.with_approval",
+      "danger_zone": "none",
+      "display_name": "Send SMS with approval",
+      "family": "messaging",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "recipient_hashes",
+        "approval_id",
+        "provider_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "review_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_chat_message_sent",
+        "thread_modified",
+        "credential_scope_exceeded",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "messaging.thread.read",
+      "danger_zone": "none",
+      "display_name": "Read chat thread",
+      "family": "messaging",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "query_hash",
+        "response_digest",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "approval_granted",
+        "approval_forged",
+        "action_executed",
+        "external_message_sent",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.approval.classify",
+      "danger_zone": "none",
+      "display_name": "Classify personal-assistant approval requirement",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "plan_id",
+        "risk_level",
+        "approval_matrix_ref",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "connector_called",
+        "external_message_sent",
+        "workspace_file_written",
+        "memory_written",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.clarification.request",
+      "danger_zone": "none",
+      "display_name": "Prepare personal-assistant clarification requests",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "request_id",
+        "missing_bindings",
+        "clarification_request_ids",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "github_called",
+        "repository_read",
+        "repository_mutated",
+        "pull_request_opened",
+        "pull_request_merged",
+        "branch_pushed",
+        "issue_created",
+        "review_submitted",
+        "deployment_started",
+        "raw_diff_stored",
+        "raw_connector_payload_stored",
+        "secret_value_serialized",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.github_codex.review",
+      "danger_zone": "none",
+      "display_name": "Review GitHub/Codex change evidence",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "request_id",
+        "github_connector_proof_ref",
+        "operator_supplied_change_summary",
+        "receipt_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "connector_called",
+        "external_message_sent",
+        "workspace_file_written",
+        "memory_written",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.intent.interpret",
+      "danger_zone": "none",
+      "display_name": "Interpret personal-assistant intent",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "request_id",
+        "governance_refs",
+        "risk_level",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "money_moved",
+        "paid_subscription_changed",
+        "system_of_record_mutated",
+        "connector_state_mutated",
+        "external_submission_sent",
+        "public_post_created",
+        "deployment_started",
+        "raw_private_payload_stored",
+        "raw_connector_payload_stored",
+        "secret_value_serialized",
+        "memory_written",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.math.reasoning_plan",
+      "danger_zone": "none",
+      "display_name": "Project planning-only math reasoning",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "request_id",
+        "operator_supplied_known_value",
+        "unit_check",
+        "receipt_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "memory_written",
+        "raw_chat_log_stored",
+        "live_nested_mind_activation",
+        "unverified_preference_generalized",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.memory_observation.prepare",
+      "danger_zone": "none",
+      "display_name": "Prepare personal-assistant memory observation",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "receipt_id",
+        "source_ref",
+        "confidence",
+        "scope",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "memory_written",
+        "memory_candidate_admitted",
+        "raw_chat_log_stored",
+        "raw_connector_payload_stored",
+        "live_nested_mind_activation",
+        "system_of_record_mutated",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.memory_observation.review",
+      "danger_zone": "none",
+      "display_name": "Review personal-assistant memory observation",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "review_id",
+        "memory_observation_id",
+        "reviewer_ref",
+        "reason_codes",
+        "receipt_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "calendar_event_created",
+        "calendar_event_moved",
+        "calendar_event_cancelled",
+        "invite_sent",
+        "task_written",
+        "task_system_mutated",
+        "person_messaged",
+        "system_of_record_mutated",
+        "connector_state_mutated",
+        "external_submission_sent",
+        "public_post_created",
+        "money_moved",
+        "paid_subscription_changed",
+        "deployment_started",
+        "raw_private_payload_stored",
+        "raw_connector_payload_stored",
+        "secret_value_serialized",
+        "memory_written",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.planning.schedule_preview",
+      "danger_zone": "none",
+      "display_name": "Project schedule planning preview",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "request_id",
+        "operator_supplied_time_window",
+        "operator_supplied_work_item",
+        "capacity_summary",
+        "receipt_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "raw_private_payload_serialized",
+        "secret_value_serialized",
+        "provider_mutated",
+        "external_message_sent",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.receipt.project",
+      "danger_zone": "none",
+      "display_name": "Project personal-assistant receipt",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "plan_id",
+        "actions_taken",
+        "actions_not_taken",
+        "redaction_policy",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "web_search_performed",
+        "source_contacted",
+        "external_submission_performed",
+        "public_post_created",
+        "paid_subscription_started",
+        "raw_source_body_stored",
+        "raw_connector_payload_stored",
+        "secret_value_serialized",
+        "memory_written",
+        "system_of_record_mutated",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.research.source_compare",
+      "danger_zone": "none",
+      "display_name": "Compare public research source evidence",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "request_id",
+        "operator_supplied_source_summary",
+        "citation_ref",
+        "receipt_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "action_executed",
+        "connector_mutated",
+        "external_message_sent",
+        "deployment_started",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.skill_plan.build",
+      "danger_zone": "none",
+      "display_name": "Build personal-assistant skill plan",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "skill_registry_ref",
+        "approval_matrix_ref",
+        "plan_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "gmail_called",
+        "shared_inbox_read",
+        "email_drafted",
+        "email_sent",
+        "mailbox_mutated",
+        "provider_configuration_mutated",
+        "raw_connector_payload_stored",
+        "secret_value_serialized",
+        "live_probe_executed",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "personal_assistant.teamops_shared_inbox.plan",
+      "danger_zone": "none",
+      "display_name": "Plan TeamOps shared-inbox handoff",
+      "family": "personal_assistant",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add certified mock or local evaluation evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "request_id",
+        "gmail_connector_proof_ref",
+        "operator_handoff_projection",
+        "receipt_id",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "phone_call_placed_without_approval",
+        "credential_scope_exceeded",
+        "callee_unapproved",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "phone.call.place.with_approval",
+      "danger_zone": "none",
+      "display_name": "Place outbound phone call with approval",
+      "family": "phone",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "callee_hashes",
+        "approval_id",
+        "provider_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "ready",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_phone_call_placed",
+        "credential_scope_exceeded",
+        "transcript_modified",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "phone.call.receive",
+      "danger_zone": "none",
+      "display_name": "Record inbound phone call",
+      "family": "phone",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "caller_hashes",
+        "provider_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "phone_call_terminated_without_approval",
+        "external_phone_call_placed",
+        "credential_scope_exceeded",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "phone.call.terminate",
+      "danger_zone": "none",
+      "display_name": "Terminate active phone call",
+      "family": "phone",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "call_id",
+        "approval_id",
+        "provider_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "review_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "audio_stored",
+        "external_phone_call_placed",
+        "transcript_modified",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "phone.call.transcript_record",
+      "danger_zone": "none",
+      "display_name": "Record phone call transcript",
+      "family": "phone",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "call_id",
+        "transcript_hash",
+        "redaction_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "phone_call_transferred_without_approval",
+        "credential_scope_exceeded",
+        "transferee_unapproved",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "phone.call.transfer.with_approval",
+      "danger_zone": "none",
+      "display_name": "Transfer phone call with approval",
+      "family": "phone",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "connector_id",
+        "call_id",
+        "transferee_hashes",
+        "approval_id",
+        "provider_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "ready",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "physical_effect_applied",
+        "hardware_command_sent",
+        "actuator_state_changed",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "physical.sandbox_replay",
+      "danger_zone": "none",
+      "display_name": "Physical sandbox replay",
+      "family": "physical",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "physical_action_receipt",
+        "physical_worker_canary_artifact",
+        "no_physical_effect_applied",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "unlock_without_operator_approval",
+        "unlock_without_simulation",
+        "unlock_without_sensor_confirmation",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "physical.unlock_door",
+      "danger_zone": "none",
+      "display_name": "Unlock physical door",
+      "family": "physical",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add live write receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "physical_action_receipt",
+        "simulation_ref",
+        "operator_approval_ref",
+        "sensor_confirmation_ref",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "ready",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "workspace_patch_applied",
+        "pull_request_opened",
+        "production_deployment_started",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.app_task_graph.plan",
+      "danger_zone": "none",
+      "display_name": "Plan app builder task graph",
+      "family": "software_dev",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "product_spec_hash",
+        "task_graph_hash",
+        "software_request_count",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L2",
+      "unlock_level_number": 2,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "test_process_started",
+        "test_receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "path_outside_workspace_written",
+        "network_enabled_by_default",
+        "production_deployment_started",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.change.run",
+      "danger_zone": "none",
+      "display_name": "Run governed software change",
+      "family": "software_dev",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add live read receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "required_receipts": [
+        "software_change_receipt_id",
+        "quality_gate_summary",
+        "rollback_snapshot_ref",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "ready",
+      "safe_zone": "local_lab",
+      "status": "blocked",
+      "unlock_level": "L4",
+      "unlock_level_number": 4,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "raw_repository_dumped",
+        "workspace_file_written",
+        "command_executed",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.context_bundle.build",
+      "danger_zone": "none",
+      "display_name": "Build bounded code context",
+      "family": "software_dev",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "context_bundle_hash",
+        "affected_file_count",
+        "token_estimate",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L2",
+      "unlock_level_number": 2,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "quality_gate_executed",
+        "workspace_file_written",
+        "network_egress_used",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.gate_plan.select",
+      "danger_zone": "none",
+      "display_name": "Select software quality gates",
+      "family": "software_dev",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "gate_plan_hash",
+        "affected_file_count",
+        "risk_level",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L2",
+      "unlock_level_number": 2,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "workflow_rerun_triggered",
+        "workflow_cancelled",
+        "workflow_dispatched",
+        "github_comment_posted",
+        "repository_mutated",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.github_actions_failure.diagnose_read_only",
+      "danger_zone": "none",
+      "display_name": "Diagnose GitHub Actions failure read-only",
+      "family": "software_dev",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "workflow_run_hash",
+        "workflow_jobs_hash",
+        "failed_job_log_digest",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L2",
+      "unlock_level_number": 2,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "github_issue_created",
+        "github_label_applied",
+        "github_issue_assigned",
+        "github_comment_posted",
+        "repository_mutated",
+        "issue_created_claimed",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.github_issue.draft",
+      "danger_zone": "none",
+      "display_name": "Draft GitHub issue",
+      "family": "software_dev",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "problem_summary",
+        "evidence_refs",
+        "acceptance_criteria",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "workspace_file_written",
+        "branch_created",
+        "pull_request_created",
+        "issue_created",
+        "github_comment_posted",
+        "repository_mutated",
+        "fix_complete_claimed",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.github_patch_plan.draft",
+      "danger_zone": "none",
+      "display_name": "Draft GitHub patch plan",
+      "family": "software_dev",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "diagnosis_or_problem_summary",
+        "affected_file_or_component_refs",
+        "verification_expectations",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "pull_request_merged",
+        "branch_deleted",
+        "deployment_started",
+        "github_comment_posted",
+        "repository_mutated",
+        "merge_authority_granted",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.github_pr_merge_approval.request",
+      "danger_zone": "none",
+      "display_name": "Prepare GitHub PR merge approval request",
+      "family": "software_dev",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "pr_safety_receipt_ref",
+        "ci_status_ref",
+        "review_approval_ref",
+        "rollback_ref",
+        "explicit_approver_ref",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "git_tag_created",
+        "github_release_created",
+        "deployment_started",
+        "package_published",
+        "workflow_triggered",
+        "repository_mutated",
+        "release_ready_claimed_without_evidence",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.github_release.readiness",
+      "danger_zone": "none",
+      "display_name": "Assess GitHub release readiness",
+      "family": "software_dev",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "release_objective",
+        "candidate_ref",
+        "ci_status_ref",
+        "change_summary_ref",
+        "risk_or_rollback_ref",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "issue_created",
+        "github_comment_posted",
+        "repository_mutated",
+        "workflow_dispatched",
+        "release_readiness_claimed",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.github_repo_status.summarize_read_only",
+      "danger_zone": "none",
+      "display_name": "Summarize GitHub repository status read-only",
+      "family": "software_dev",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "repository_metadata_hash",
+        "recent_commits_hash",
+        "open_pull_requests_hash",
+        "workflow_runs_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L2",
+      "unlock_level_number": 2,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "review_packet_emitted",
+        "pr_intent_prepared"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "git_push_executed",
+        "pull_request_opened_without_approval",
+        "production_deployment_started",
+        "execute_without_approval",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.pr_candidate.prepare",
+      "danger_zone": "source_control_publication",
+      "display_name": "Prepare PR candidate review packet",
+      "family": "software_dev",
+      "fast_mode_lab_ready": false,
+      "next_evidence_needed": "add live read receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "operator_review_gate"
+      ],
+      "required_receipts": [
+        "review_packet_hash",
+        "software_change_receipt_ids",
+        "approval_status",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": true,
+      "requires_rollback": true,
+      "rollback_status": "ready",
+      "safe_zone": "approval_bound",
+      "status": "blocked",
+      "unlock_level": "L5",
+      "unlock_level_number": 5,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "inspect",
+        "explain",
+        "summarize"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "workspace_file_written",
+        "command_executed",
+        "network_egress_used",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "software_dev.repo_map.read",
+      "danger_zone": "none",
+      "display_name": "Read repository map",
+      "family": "software_dev",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate"
+      ],
+      "required_receipts": [
+        "repository_ref",
+        "commit_sha",
+        "repo_map_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L0",
+      "unlock_level_number": 0,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "document_sent_external",
+        "spreadsheet_modified",
+        "source_document_modified",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "spreadsheet.analyze",
+      "danger_zone": "none",
+      "display_name": "Analyze spreadsheet",
+      "family": "document",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "row_count",
+        "column_count",
+        "analysis_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L2",
+      "unlock_level_number": 2,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "document_sent_external",
+        "document_signed",
+        "source_document_modified",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "spreadsheet.generate",
+      "danger_zone": "none",
+      "display_name": "Generate spreadsheet artifact",
+      "family": "document",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "required_receipts": [
+        "artifact_ref",
+        "artifact_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "compensation_only",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L2",
+      "unlock_level_number": 2,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_action_executed",
+        "claim_beyond_verified_state",
+        "false_success_claim_emitted",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "universal_domain_ops.claim.bound",
+      "danger_zone": "none",
+      "display_name": "Bound domain output claims to verified state",
+      "family": "universal_domain_ops",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "verified_workflow_state",
+        "allowed_claim_boundary",
+        "blocked_claim_receipt",
+        "evidence_refs",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_action_executed",
+        "simulation_result_treated_as_live_execution",
+        "missing_evidence_ignored",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "universal_domain_ops.episode.simulate",
+      "danger_zone": "none",
+      "display_name": "Simulate domain-pack episode gate",
+      "family": "universal_domain_ops",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "domain_pack_source",
+        "candidate_action_set",
+        "evidence_sufficiency_report",
+        "simulation_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_action_executed",
+        "linter_warning_suppressed",
+        "over_permissive_pack_certified",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "universal_domain_ops.pack.lint",
+      "danger_zone": "none",
+      "display_name": "Lint executable domain pack gates",
+      "family": "universal_domain_ops",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "domain_pack_source",
+        "lint_rule_set",
+        "linter_report",
+        "blocked_action_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "external_action_executed",
+        "domain_pack_activated_without_validation",
+        "core_authority_ceiling_bypassed",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "universal_domain_ops.registry.validate",
+      "danger_zone": "none",
+      "display_name": "Validate domain pack registry entry",
+      "family": "universal_domain_ops",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "domain_pack_source",
+        "schema_validation_report",
+        "linter_report",
+        "pack_use_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "tool_executed",
+        "external_message_sent",
+        "task_created",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "voice.action_items_extract",
+      "danger_zone": "none",
+      "display_name": "Extract action items from meeting transcript",
+      "family": "voice",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "transcript_hash",
+        "action_items_hash",
+        "redaction_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "tool_executed",
+        "payment_created",
+        "external_message_sent",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "voice.intent_classification",
+      "danger_zone": "none",
+      "display_name": "Classify voice transcript intent",
+      "family": "voice",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "transcript_hash",
+        "intent_summary_hash",
+        "confirmation_requirement",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "tool_executed",
+        "payment_created",
+        "external_message_sent",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "voice.intent_confirm",
+      "danger_zone": "none",
+      "display_name": "Confirm classified voice intent",
+      "family": "voice",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "transcript_hash",
+        "intent_summary_hash",
+        "confirmation_status",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "tool_executed",
+        "external_message_sent",
+        "calendar_invite_sent",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "voice.meeting_summarize",
+      "danger_zone": "none",
+      "display_name": "Summarize meeting transcript",
+      "family": "voice",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "transcript_hash",
+        "meeting_summary_hash",
+        "redaction_hash",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "audio_stored",
+        "tool_executed",
+        "external_message_sent",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "voice.speech_to_text",
+      "danger_zone": "none",
+      "display_name": "Create transcript from voice input",
+      "family": "voice",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "transcript_hash",
+        "redaction_hash",
+        "transcript_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    },
+    {
+      "allowed": [
+        "local_execution",
+        "dry_run"
+      ],
+      "blocked": true,
+      "blocked_actions": [
+        "audio_stored",
+        "tool_executed",
+        "external_message_sent",
+        "connector_call_without_lease",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "capability_id": "voice.text_to_speech",
+      "danger_zone": "none",
+      "display_name": "Create voice synthesis reference",
+      "family": "voice",
+      "fast_mode_lab_ready": true,
+      "next_evidence_needed": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "required_before_unlock": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "required_receipts": [
+        "text_hash",
+        "audio_ref",
+        "synthesis_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_rollback": false,
+      "rollback_status": "not_required",
+      "safe_zone": "prepare_only",
+      "status": "blocked",
+      "unlock_level": "L1",
+      "unlock_level_number": 1,
+      "unlocked": true
+    }
+  ],
+  "safe_automatic_zones": [
+    "docs",
+    "tests",
+    "examples",
+    "readme",
+    "schemas",
+    "validators",
+    "local_demo_files"
+  ],
+  "schema_version": 1,
+  "source_refs": {
+    "capability_packs": [
+      "capabilities/agentic_control/capability_pack.json",
+      "capabilities/browser/capability_pack.json",
+      "capabilities/communication/capability_pack.json",
+      "capabilities/computer/capability_pack.json",
+      "capabilities/connector/capability_pack.json",
+      "capabilities/creative/capability_pack.json",
+      "capabilities/deployment/capability_pack.json",
+      "capabilities/document/capability_pack.json",
+      "capabilities/enterprise/capability_pack.json",
+      "capabilities/financial/capability_pack.json",
+      "capabilities/messaging/capability_pack.json",
+      "capabilities/personal_assistant/capability_pack.json",
+      "capabilities/phone/capability_pack.json",
+      "capabilities/physical/capability_pack.json",
+      "capabilities/software_dev/capability_pack.json",
+      "capabilities/universal_domain_ops/capability_pack.json",
+      "capabilities/voice/capability_pack.json"
+    ],
+    "dashboard_id": "capability_passport_dashboard.foundation.v1",
+    "passport_set_id": "capability_passports.foundation.v1",
+    "unlock_ladder_id": "mullu.capability_unlock_ladder.v1"
+  },
+  "summary": {
+    "approval_required_count": 27,
+    "blocked_count": 111,
+    "capability_count": 111,
+    "external_effects_allowed": false,
+    "fast_mode_lab_ready_count": 87,
+    "live_witness_required_count": 23,
+    "rollback_required_count": 15,
+    "unlocked_count": 111
+  },
+  "unlock_levels": [
+    {
+      "allowed_effects": [
+        "inspect",
+        "explain",
+        "summarize"
+      ],
+      "forbidden_effects": [
+        "workspace_file_written",
+        "external_write",
+        "credentialed_mutation"
+      ],
+      "level": 0,
+      "level_id": "L0",
+      "name": "Read-only",
+      "required_gates": [
+        "evidence_intake_gate"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_receipt": false,
+      "requires_rollback": false,
+      "summary": "Inspect, explain, and summarize without durable or external effects."
+    },
+    {
+      "allowed_effects": [
+        "local_execution",
+        "dry_run"
+      ],
+      "forbidden_effects": [
+        "external_write",
+        "credentialed_mutation",
+        "production_deployment"
+      ],
+      "level": 1,
+      "level_id": "L1",
+      "name": "Local demo",
+      "required_gates": [
+        "evidence_intake_gate",
+        "verifier_gate"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_receipt": true,
+      "requires_rollback": false,
+      "summary": "Run safe local workflows without external effects."
+    },
+    {
+      "allowed_effects": [
+        "diff_generated",
+        "artifact_prepared",
+        "receipt_emitted"
+      ],
+      "forbidden_effects": [
+        "workspace_file_written",
+        "external_write",
+        "production_deployment"
+      ],
+      "level": 2,
+      "level_id": "L2",
+      "name": "File preparation",
+      "required_gates": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": false,
+      "requires_receipt": true,
+      "requires_rollback": false,
+      "summary": "Generate diffs, documents, schemas, tests, and review packets."
+    },
+    {
+      "allowed_effects": [
+        "workspace_file_written",
+        "local_branch_changed"
+      ],
+      "forbidden_effects": [
+        "path_outside_workspace_written",
+        "external_write",
+        "production_deployment"
+      ],
+      "level": 3,
+      "level_id": "L3",
+      "name": "File writing",
+      "required_gates": [
+        "evidence_intake_gate",
+        "workspace_write_gate",
+        "execution_receipt_gate",
+        "rollback_gate",
+        "operator_review_gate"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": true,
+      "requires_receipt": true,
+      "requires_rollback": true,
+      "summary": "Write inside a controlled workspace or branch only."
+    },
+    {
+      "allowed_effects": [
+        "test_process_started",
+        "test_receipt_emitted"
+      ],
+      "forbidden_effects": [
+        "network_enabled_by_default",
+        "external_write",
+        "production_deployment"
+      ],
+      "level": 4,
+      "level_id": "L4",
+      "name": "Test execution",
+      "required_gates": [
+        "evidence_intake_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": true,
+      "requires_receipt": true,
+      "requires_rollback": true,
+      "summary": "Run bounded tests and capture receipts."
+    },
+    {
+      "allowed_effects": [
+        "review_packet_emitted",
+        "pr_intent_prepared"
+      ],
+      "forbidden_effects": [
+        "git_push_without_approval",
+        "pull_request_opened_without_approval"
+      ],
+      "level": 5,
+      "level_id": "L5",
+      "name": "PR creation",
+      "required_gates": [
+        "evidence_intake_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "operator_review_gate"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": true,
+      "requires_receipt": true,
+      "requires_rollback": true,
+      "summary": "Prepare pull request evidence; opening requires explicit approval."
+    },
+    {
+      "allowed_effects": [
+        "approval_decision_recorded",
+        "rejection_recorded"
+      ],
+      "forbidden_effects": [
+        "implicit_approval",
+        "approval_timeout_continues"
+      ],
+      "level": 6,
+      "level_id": "L6",
+      "name": "Human approval",
+      "required_gates": [
+        "approval_gate",
+        "operator_review_gate",
+        "execution_receipt_gate"
+      ],
+      "requires_live_witness": false,
+      "requires_operator_approval": true,
+      "requires_receipt": true,
+      "requires_rollback": false,
+      "summary": "Operator approves or rejects the next effect boundary."
+    },
+    {
+      "allowed_effects": [
+        "credentialed_read",
+        "live_read_receipt_emitted"
+      ],
+      "forbidden_effects": [
+        "credentialed_write",
+        "external_message_send",
+        "payment_started"
+      ],
+      "level": 7,
+      "level_id": "L7",
+      "name": "Live connector probe",
+      "required_gates": [
+        "connector_lease_gate",
+        "verifier_gate",
+        "execution_receipt_gate"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_receipt": true,
+      "requires_rollback": false,
+      "summary": "Run limited read-only credentialed connector probes."
+    },
+    {
+      "allowed_effects": [
+        "credentialed_write",
+        "approved_external_mutation"
+      ],
+      "forbidden_effects": [
+        "unapproved_external_write",
+        "receiptless_mutation"
+      ],
+      "level": 8,
+      "level_id": "L8",
+      "name": "Approved live action",
+      "required_gates": [
+        "connector_lease_gate",
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_receipt": true,
+      "requires_rollback": true,
+      "summary": "Execute approved live writes only with receipts and recovery."
+    },
+    {
+      "allowed_effects": [
+        "customer_workflow",
+        "production_operation"
+      ],
+      "forbidden_effects": [
+        "unmonitored_runtime",
+        "unsupported_customer_exposure"
+      ],
+      "level": 9,
+      "level_id": "L9",
+      "name": "Customer-ready product",
+      "required_gates": [
+        "approval_gate",
+        "verifier_gate",
+        "execution_receipt_gate",
+        "rollback_gate",
+        "operator_review_gate"
+      ],
+      "requires_live_witness": true,
+      "requires_operator_approval": true,
+      "requires_receipt": true,
+      "requires_rollback": true,
+      "summary": "Operate with onboarding, support, billing, monitoring, and production witnesses."
+    }
+  ],
+  "validators": [
+    {
+      "command": "python scripts/validate_capability_control_system.py",
+      "required_for_closure": true,
+      "validator_id": "capability_control_system_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_validate_capability_control_system.py -q",
+      "required_for_closure": true,
+      "validator_id": "capability_control_system_tests"
+    }
+  ]
+}

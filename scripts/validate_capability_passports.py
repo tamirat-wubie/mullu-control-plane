@@ -112,6 +112,17 @@ def write_capability_passport_validation(
     return output_path
 
 
+def write_capability_passports_example(output_path: Path = DEFAULT_PASSPORTS) -> Path:
+    """Write the current runtime projection as the checked passport example."""
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(build_capability_passports(), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return output_path
+
+
 def _validate_passport_set(
     passports: dict[str, Any],
     runtime_passports: dict[str, Any],
@@ -270,6 +281,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--schema", default=str(DEFAULT_SCHEMA))
     parser.add_argument("--passports", default=str(DEFAULT_PASSPORTS))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    parser.add_argument("--write-example", action="store_true")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
 
@@ -278,6 +290,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     """CLI entry point for capability passport validation."""
 
     args = parse_args(argv)
+    if args.write_example:
+        write_capability_passports_example(Path(args.passports))
     validation = validate_capability_passports(
         schema_path=Path(args.schema),
         passport_path=Path(args.passports),

@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:capability-control-system:1",
+  "title": "Mullu Capability Control System",
+  "description": "Read-only master control projection for capability registry rows, unlock levels, friction modes, operating boundaries, and dashboard tasks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "control_system_id",
+    "mode",
+    "control_system_is_not_execution_authority",
+    "live_execution_enabled",
+    "source_refs",
+    "summary",
+    "unlock_levels",
+    "friction_modes",
+    "operating_boundaries",
+    "safe_automatic_zones",
+    "dangerous_zones",
+    "registry",
+    "dashboard_tasks",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "control_system_id": { "$ref": "#/$defs/identifier" },
+    "mode": { "type": "string", "const": "foundation" },
+    "control_system_is_not_execution_authority": { "type": "boolean", "const": true },
+    "live_execution_enabled": { "type": "boolean", "const": false },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability_packs", "passport_set_id", "dashboard_id", "unlock_ladder_id"],
+      "properties": {
+        "capability_packs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 240 }
+        },
+        "passport_set_id": { "$ref": "#/$defs/identifier" },
+        "dashboard_id": { "$ref": "#/$defs/identifier" },
+        "unlock_ladder_id": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "summary": { "$ref": "#/$defs/summary" },
+    "unlock_levels": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": { "$ref": "#/$defs/unlock_level" }
+    },
+    "friction_modes": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/friction_mode" }
+    },
+    "operating_boundaries": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/operating_boundary" }
+    },
+    "safe_automatic_zones": { "$ref": "#/$defs/zone_list" },
+    "dangerous_zones": { "$ref": "#/$defs/zone_list" },
+    "registry": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/registry_row" }
+    },
+    "dashboard_tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/dashboard_task" }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1, "maxLength": 520 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "zone": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "zone_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/zone" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_count",
+        "unlocked_count",
+        "blocked_count",
+        "approval_required_count",
+        "rollback_required_count",
+        "live_witness_required_count",
+        "fast_mode_lab_ready_count",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "capability_count": { "type": "integer", "minimum": 1 },
+        "unlocked_count": { "type": "integer", "minimum": 0 },
+        "blocked_count": { "type": "integer", "minimum": 0 },
+        "approval_required_count": { "type": "integer", "minimum": 0 },
+        "rollback_required_count": { "type": "integer", "minimum": 0 },
+        "live_witness_required_count": { "type": "integer", "minimum": 0 },
+        "fast_mode_lab_ready_count": { "type": "integer", "minimum": 0 },
+        "external_effects_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "unlock_level": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level_id",
+        "level",
+        "name",
+        "summary",
+        "allowed_effects",
+        "forbidden_effects",
+        "required_gates",
+        "requires_operator_approval",
+        "requires_receipt",
+        "requires_rollback",
+        "requires_live_witness"
+      ],
+      "properties": {
+        "level_id": { "type": "string", "pattern": "^L[0-9]$" },
+        "level": { "type": "integer", "minimum": 0, "maximum": 9 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 360 },
+        "allowed_effects": { "$ref": "#/$defs/zone_list" },
+        "forbidden_effects": { "$ref": "#/$defs/zone_list" },
+        "required_gates": { "$ref": "#/$defs/zone_list" },
+        "requires_operator_approval": { "type": "boolean" },
+        "requires_receipt": { "type": "boolean" },
+        "requires_rollback": { "type": "boolean" },
+        "requires_live_witness": { "type": "boolean" }
+      }
+    },
+    "friction_mode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode_id", "label", "default_boundary", "approval_policy", "automatic_zones", "blocked_zones"],
+      "properties": {
+        "mode_id": { "type": "string", "enum": ["strict", "balanced", "fast"] },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "default_boundary": { "type": "string", "enum": ["lab", "real_world"] },
+        "approval_policy": { "$ref": "#/$defs/zone" },
+        "automatic_zones": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/zone" } },
+        "blocked_zones": { "$ref": "#/$defs/zone_list" }
+      }
+    },
+    "operating_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["boundary_id", "label", "allowed", "blocked"],
+      "properties": {
+        "boundary_id": { "type": "string", "enum": ["lab", "real_world"] },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "allowed": { "$ref": "#/$defs/zone_list" },
+        "blocked": { "$ref": "#/$defs/zone_list" }
+      }
+    },
+    "registry_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "family",
+        "display_name",
+        "status",
+        "operator_status",
+        "unlock_level",
+        "unlock_level_number",
+        "unlocked",
+        "blocked",
+        "allowed",
+        "blocked_actions",
+        "required_before_unlock",
+        "required_receipts",
+        "next_evidence_needed",
+        "requires_operator_approval",
+        "requires_rollback",
+        "requires_live_witness",
+        "safe_zone",
+        "danger_zone",
+        "fast_mode_lab_ready",
+        "rollback_status"
+      ],
+      "properties": {
+        "capability_id": { "$ref": "#/$defs/identifier" },
+        "family": { "$ref": "#/$defs/zone" },
+        "display_name": { "type": "string", "minLength": 1, "maxLength": 180 },
+        "status": {
+          "type": "string",
+          "enum": ["ready", "preflight_ready", "approval_ready", "blocked", "awaiting_evidence"]
+        },
+        "operator_status": {
+          "type": "string",
+          "enum": ["Ready", "Prepare-only", "Needs approval", "Blocked", "Evidence missing", "Live action disabled"]
+        },
+        "unlock_level": { "type": "string", "pattern": "^L[0-9]$" },
+        "unlock_level_number": { "type": "integer", "minimum": 0, "maximum": 9 },
+        "unlocked": { "type": "boolean" },
+        "blocked": { "type": "boolean" },
+        "allowed": { "$ref": "#/$defs/zone_list" },
+        "blocked_actions": { "type": "array", "items": { "$ref": "#/$defs/zone" } },
+        "required_before_unlock": { "$ref": "#/$defs/zone_list" },
+        "required_receipts": { "$ref": "#/$defs/zone_list" },
+        "next_evidence_needed": { "type": "string", "minLength": 1, "maxLength": 360 },
+        "requires_operator_approval": { "type": "boolean" },
+        "requires_rollback": { "type": "boolean" },
+        "requires_live_witness": { "type": "boolean" },
+        "safe_zone": { "$ref": "#/$defs/zone" },
+        "danger_zone": { "$ref": "#/$defs/zone" },
+        "fast_mode_lab_ready": { "type": "boolean" },
+        "rollback_status": {
+          "type": "string",
+          "enum": ["not_required", "ready", "compensation_only", "review_only", "missing"]
+        }
+      }
+    },
+    "dashboard_task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task", "capability_id", "status", "reason", "next_unlock", "risk", "action_needed"],
+      "properties": {
+        "task": { "type": "string", "minLength": 1, "maxLength": 180 },
+        "capability_id": { "$ref": "#/$defs/identifier" },
+        "status": { "type": "string", "enum": ["ready", "preflight_ready", "approval_ready", "blocked", "awaiting_evidence"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 360 },
+        "next_unlock": { "type": "string", "minLength": 1, "maxLength": 360 },
+        "risk": { "type": "string", "enum": ["low", "medium", "high"] },
+        "action_needed": { "type": "string", "minLength": 1, "maxLength": 360 }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

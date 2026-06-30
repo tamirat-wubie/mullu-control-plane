@@ -15,9 +15,11 @@ Invariants:
 
 from __future__ import annotations
 
+import sys
 from dataclasses import asdict, dataclass, field, replace
 from enum import StrEnum
 from html import escape
+from pathlib import Path
 from typing import Any, Mapping
 
 from gateway.command_spine import canonical_hash
@@ -81,6 +83,24 @@ _LOCAL_ROLLBACK_EXECUTION_RECEIPT_PATH = (
     ".change_assurance/developer_workflow_local_rollback_execution_receipt.generated.json"
 )
 _LOCAL_ROLLBACK_RECEIPT_HREF_BASE = "/operator/control-tower/local-rollback-receipt"
+
+
+def _build_operator_capability_control_system_projection() -> tuple[dict[str, Any], str]:
+    """Return the capability control-system projection for the operator UI."""
+
+    repo_root = Path(__file__).resolve().parent.parent
+    mcoi_root = repo_root / "mcoi"
+    if str(mcoi_root) not in sys.path:
+        sys.path.insert(0, str(mcoi_root))
+    try:
+        from mcoi_runtime.app.capability_control_system import (  # noqa: PLC0415
+            build_capability_control_system,
+        )
+
+        projection = build_capability_control_system()
+    except Exception as exc:  # pragma: no cover - exercised through UI fallback.
+        return {}, f"{type(exc).__name__}: {exc}"
+    return projection, ""
 
 
 def operator_dashboard_control_summary(
@@ -4252,6 +4272,77 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
     control_system_control_level = control_system_control.current_level
     control_system_control_next_level = control_system_control.next_level
     control_system_control_next_unlock = control_system_control.next_unlock
+    control_projection, control_projection_error = _build_operator_capability_control_system_projection()
+    control_projection_tasks = control_projection.get("dashboard_tasks", ())
+    if not isinstance(control_projection_tasks, list):
+        control_projection_tasks = []
+    control_projection_registry = control_projection.get("registry", ())
+    if not isinstance(control_projection_registry, list):
+        control_projection_registry = []
+    control_task_card_rows = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(item.get('task', '')))}</td>"
+        f"<td>{escape(str(item.get('capability_id', '')))}</td>"
+        f"<td>{escape(str(item.get('status', '')))}</td>"
+        f"<td>{escape(str(item.get('reason', '')))}</td>"
+        f"<td>{escape(str(item.get('next_unlock', '')))}</td>"
+        f"<td>{escape(str(item.get('risk', '')))}</td>"
+        f"<td>{escape(str(item.get('action_needed', '')))}</td>"
+        "</tr>"
+        for item in control_projection_tasks[:5]
+        if isinstance(item, Mapping)
+    )
+    if not control_task_card_rows:
+        control_task_card_rows = (
+            "<tr><td colspan=\"7\">"
+            f"Capability control task cards unavailable: {escape(control_projection_error or 'no tasks emitted')}"
+            "</td></tr>"
+        )
+    control_registry_priority_ids = (
+        "software_dev.change.run",
+        "software_dev.pr_candidate.prepare",
+        "document.create",
+        "financial.send_payment",
+        "messaging.chat.send.with_approval",
+    )
+    control_registry_by_id = {
+        str(item.get("capability_id")): item
+        for item in control_projection_registry
+        if isinstance(item, Mapping)
+    }
+    control_registry_rows_for_page: list[Mapping[str, Any]] = []
+    for capability_id in control_registry_priority_ids:
+        row = control_registry_by_id.get(capability_id)
+        if row is not None:
+            control_registry_rows_for_page.append(row)
+    for row in control_projection_registry:
+        if not isinstance(row, Mapping):
+            continue
+        if row in control_registry_rows_for_page:
+            continue
+        if row.get("fast_mode_lab_ready") is True or row.get("blocked") is True:
+            control_registry_rows_for_page.append(row)
+        if len(control_registry_rows_for_page) >= 10:
+            break
+    control_registry_table_rows = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(item.get('capability_id', '')))}</td>"
+        f"<td>{escape(str(item.get('display_name', '')))}</td>"
+        f"<td>{escape(str(item.get('status', '')))}</td>"
+        f"<td>{escape(str(item.get('unlock_level', '')))}</td>"
+        f"<td>{escape(str(item.get('next_evidence_needed', '')))}</td>"
+        f"<td>{escape(str(item.get('safe_zone', '')))}</td>"
+        f"<td>{escape(str(item.get('danger_zone', '')))}</td>"
+        f"<td>{escape(str(item.get('fast_mode_lab_ready', False)).lower())}</td>"
+        "</tr>"
+        for item in control_registry_rows_for_page
+    )
+    if not control_registry_table_rows:
+        control_registry_table_rows = (
+            "<tr><td colspan=\"8\">"
+            f"Capability control registry unavailable: {escape(control_projection_error or 'no registry rows emitted')}"
+            "</td></tr>"
+        )
     checklist_rows = "\n".join(
         "<tr>"
         f"<td>{escape(str(item.get('label', '')))}</td>"
@@ -5889,6 +5980,20 @@ def render_operator_control_tower(snapshot: OperatorControlTowerSnapshot) -> str
       <span class="field"><strong>Boundary</strong>{escape(control_system_boundary)}</span>
       <span class="field"><strong>External effects allowed</strong>{escape(str(control_system_external_effects).lower())}</span>
     </div>
+  </section>
+  <section>
+    <h2>Control System Task Cards</h2>
+    <table>
+      <thead><tr><th>Task</th><th>Capability</th><th>Status</th><th>Reason</th><th>Next unlock</th><th>Risk</th><th>Action needed</th></tr></thead>
+      <tbody>{control_task_card_rows}</tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Capability Control Registry</h2>
+    <table>
+      <thead><tr><th>Capability</th><th>Name</th><th>Status</th><th>Unlock</th><th>Next evidence</th><th>Safe zone</th><th>Danger zone</th><th>Fast mode lab ready</th></tr></thead>
+      <tbody>{control_registry_table_rows}</tbody>
+    </table>
   </section>
   <section>
     <h2>Safe Local Action Queue</h2>
