@@ -507,12 +507,39 @@ def test_console_operator_console_first_panel_read_model(client: TestClient) -> 
     assert "missing_state_snapshot" not in data["attention"]
 
 
+def test_console_operator_console_first_html_view_renders_read_only_panel(client: TestClient) -> None:
+    resp = client.get("/api/v1/console/operator-console-first/view")
+
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers["content-type"]
+    assert "Mullu Operator" in resp.text
+    assert "Console First" in resp.text
+    assert "json read model" in resp.text
+    assert "approval_required" in resp.text
+    assert "approval_lease_missing" in resp.text
+    assert "Dispatch Allowed" in resp.text
+    assert "False" in resp.text
+    assert "ocf-foundation-plan-review" in resp.text
+    assert "<script" not in resp.text
+
+
 @pytest.mark.parametrize("method", ["post", "put", "delete"])
 def test_console_operator_console_first_route_rejects_mutation_methods(
     client: TestClient,
     method: str,
 ) -> None:
     resp = client.request(method.upper(), "/api/v1/console/operator-console-first", json={})
+
+    assert resp.status_code == 405
+    assert resp.json()["detail"] == "Method Not Allowed"
+
+
+@pytest.mark.parametrize("method", ["post", "put", "delete"])
+def test_console_operator_console_first_view_rejects_mutation_methods(
+    client: TestClient,
+    method: str,
+) -> None:
+    resp = client.request(method.upper(), "/api/v1/console/operator-console-first/view", json={})
 
     assert resp.status_code == 405
     assert resp.json()["detail"] == "Method Not Allowed"

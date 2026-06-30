@@ -1524,9 +1524,9 @@
     "by_coverage_state": {
       "proven": 293,
       "unproven": 0,
-      "witnessed": 164
+      "witnessed": 165
     },
-    "route_count": 457,
+    "route_count": 458,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2046,6 +2046,11 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/console/operator-console-first",
+        "surface_id": "operator_console_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/console/operator-console-first/view",
         "surface_id": "operator_console_read_models"
       },
       {
@@ -7203,6 +7208,7 @@
         "/api/v1/console/personal-assistant",
         "/api/v1/console/personal-assistant/view",
         "/api/v1/console/operator-console-first",
+        "/api/v1/console/operator-console-first/view",
         "/api/v1/console/spatial-map",
         "/api/v1/console/spatial-map/view"
       ],
@@ -7227,12 +7233,18 @@
         "console_note_memory_returns_read_only_lifecycle_summary": [
           "console_note_memory_enabled_read_model"
         ],
+        "console_operator_console_first_html_view_renders_read_only_panel": [
+          "console_operator_console_first_html_view_renders_read_only_panel"
+        ],
         "console_operator_console_first_panel_read_model": [
           "console_operator_console_first_panel_read_model",
           "read_model_projects_minimum_console_panels_for_waiting_approval"
         ],
         "console_operator_console_first_route_rejects_mutation_methods": [
           "console_operator_console_first_route_rejects_mutation_methods"
+        ],
+        "console_operator_console_first_view_rejects_mutation_methods": [
+          "console_operator_console_first_view_rejects_mutation_methods"
         ],
         "console_personal_assistant_html_view_renders_read_only_panel": [
           "console_personal_assistant_html_view_renders_read_only_panel"
@@ -7288,7 +7300,9 @@
         "console_personal_assistant_html_view_renders_read_only_panel",
         "console_personal_assistant_lane_status_public_safe",
         "console_operator_console_first_panel_read_model",
+        "console_operator_console_first_html_view_renders_read_only_panel",
         "console_operator_console_first_route_rejects_mutation_methods",
+        "console_operator_console_first_view_rejects_mutation_methods",
         "full_console_includes_spatial_map_read_model",
         "console_spatial_map_returns_panel_read_model",
         "console_spatial_map_html_renders_blockers",
@@ -15852,8 +15866,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 2010,
-    "runtime_witness_count": 2010,
+    "exact_test_anchor_count": 2012,
+    "runtime_witness_count": 2012,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19701,9 +19715,21 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_operator_console_first_html_view_renders_read_only_panel"
+            ],
+            "witness": "console_operator_console_first_html_view_renders_read_only_panel"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_operator_console.py::test_console_operator_console_first_route_rejects_mutation_methods"
             ],
             "witness": "console_operator_console_first_route_rejects_mutation_methods"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_operator_console_first_view_rejects_mutation_methods"
+            ],
+            "witness": "console_operator_console_first_view_rejects_mutation_methods"
           },
           {
             "anchors": [
@@ -19743,8 +19769,8 @@
             "witness": "console_personal_assistant_html_view_renders_read_only_panel"
           }
         ],
-        "exact_test_anchor_count": 21,
-        "runtime_witness_count": 21,
+        "exact_test_anchor_count": 23,
+        "runtime_witness_count": 23,
         "surface_id": "operator_console_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

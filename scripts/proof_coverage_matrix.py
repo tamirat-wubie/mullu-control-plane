@@ -3350,6 +3350,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/console/personal-assistant",
                 "/api/v1/console/personal-assistant/view",
                 "/api/v1/console/operator-console-first",
+                "/api/v1/console/operator-console-first/view",
                 "/api/v1/console/spatial-map",
                 "/api/v1/console/spatial-map/view",
             ],
@@ -3389,7 +3390,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_personal_assistant_html_view_renders_read_only_panel",
                 "console_personal_assistant_lane_status_public_safe",
                 "console_operator_console_first_panel_read_model",
+                "console_operator_console_first_html_view_renders_read_only_panel",
                 "console_operator_console_first_route_rejects_mutation_methods",
+                "console_operator_console_first_view_rejects_mutation_methods",
                 "full_console_includes_spatial_map_read_model",
                 "console_spatial_map_returns_panel_read_model",
                 "console_spatial_map_html_renders_blockers",
@@ -3438,8 +3441,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "console_operator_console_first_panel_read_model",
                     "read_model_projects_minimum_console_panels_for_waiting_approval",
                 ],
+                "console_operator_console_first_html_view_renders_read_only_panel": [
+                    "console_operator_console_first_html_view_renders_read_only_panel",
+                ],
                 "console_operator_console_first_route_rejects_mutation_methods": [
                     "console_operator_console_first_route_rejects_mutation_methods",
+                ],
+                "console_operator_console_first_view_rejects_mutation_methods": [
+                    "console_operator_console_first_view_rejects_mutation_methods",
                 ],
                 "full_console_includes_spatial_map_read_model": [
                     "full_console",

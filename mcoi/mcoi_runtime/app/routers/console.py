@@ -573,6 +573,23 @@ def console_operator_console_first():
         ) from exc
 
 
+@router.get("/api/v1/console/operator-console-first/view", response_class=HTMLResponse)
+def console_operator_console_first_view():
+    """Browser-facing read-only Operator Console First panel."""
+
+    deps.metrics.inc("requests_governed")
+    try:
+        return HTMLResponse(_render_operator_console_first_html(_operator_console_first_console_payload()))
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "operator_console_first_projection_invalid",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 def _personal_assistant_console_payload() -> dict[str, object]:
     """Build the foundation personal-assistant console payload."""
 
@@ -635,6 +652,178 @@ def _operator_console_first_console_payload() -> dict[str, object]:
         }
     )
     return payload
+
+
+def _render_operator_console_first_html(payload: dict[str, object]) -> str:
+    """Render the OCF read model as escaped operator HTML."""
+
+    panels = _mapping_value(payload, "panels")
+    proposed_plan = _mapping_value(panels, "proposed_plan")
+    risk = _mapping_value(panels, "risk_and_side_effects")
+    route_boundary = _mapping_value(payload, "route_boundary")
+    controls = _mapping_value(panels, "controls")
+    approval = _mapping_value(panels, "approval_lease")
+    status = escape(str(payload.get("status", "")))
+    read_model_id = escape(str(payload.get("read_model_id", "")))
+    attention_items = "\n".join(
+        f"<li><code>{escape(str(item))}</code></li>"
+        for item in _string_sequence(payload.get("attention", ()))
+    )
+    if not attention_items:
+        attention_items = "<li>No attention items</li>"
+    metrics = [
+        ("Status", payload.get("status", "")),
+        ("Panels", len(_string_sequence(payload.get("panel_keys", ())))),
+        ("Max Risk", risk.get("max_risk_score", 0)),
+        ("Approval Needed", proposed_plan.get("approval_needed", False)),
+        ("Dispatch Allowed", route_boundary.get("dispatch_allowed", False)),
+        ("Control Authority", controls.get("control_execution_authority", False)),
+    ]
+    metric_items = "\n".join(
+        "<li>"
+        f"<span>{escape(label)}</span>"
+        f"<strong>{escape(str(value))}</strong>"
+        "</li>"
+        for label, value in metrics
+    )
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullu Operator Console First</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 24px; color: #17202a; background: #fafbfc; overflow-x: hidden; }}
+    header {{ margin-bottom: 20px; overflow-wrap: anywhere; }}
+    nav {{ display: flex; flex-wrap: wrap; gap: 14px; margin: 12px 0 18px; }}
+    a {{ color: #0f766e; }}
+    code {{ overflow-wrap: anywhere; }}
+    .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding: 0; }}
+    .metrics li {{ list-style: none; border: 1px solid #d8dee4; border-radius: 6px; padding: 10px; background: #ffffff; }}
+    .metrics span {{ display: block; color: #57606a; font-size: 12px; }}
+    .metrics strong {{ display: block; margin-top: 4px; font-size: 18px; }}
+    table {{ border-collapse: collapse; width: 100%; margin: 12px 0 28px; background: #ffffff; }}
+    .table-scroll {{ width: 100%; overflow-x: auto; }}
+    .table-scroll table {{ min-width: 780px; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; font-size: 14px; vertical-align: top; }}
+    th {{ background: #f6f8fa; }}
+    @media (max-width: 480px) {{
+      body {{ margin: 16px; }}
+      h1 {{ font-size: 28px; line-height: 1.18; max-width: 320px; }}
+    }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu Operator<br>Console First</h1>
+    <nav>
+      <a href="/api/v1/console/operator-console-first">json read model</a>
+      <a href="/api/v1/console">full console json</a>
+    </nav>
+    <p>Status: <strong>{status}</strong></p>
+    <p>Read model: <code>{read_model_id}</code></p>
+    <ul class="metrics">
+      {metric_items}
+    </ul>
+  </header>
+  <section>
+    <h2>Attention</h2>
+    <ul>
+      {attention_items}
+    </ul>
+  </section>
+  {_operator_console_first_panel_table(panels)}
+  {_operator_console_first_action_table(proposed_plan)}
+  <section>
+    <h2>Boundary</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Route Flag</th><th>Value</th></tr></thead>
+        <tbody>
+          {_operator_console_first_mapping_rows(route_boundary)}
+          {_operator_console_first_mapping_rows(approval, prefix="approval.")}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</body>
+</html>"""
+
+
+def _operator_console_first_panel_table(panels: dict[str, object]) -> str:
+    rows = [
+        ("Current Task", _mapping_value(panels, "current_task"), ("status", "intent_class", "operator_id")),
+        ("State Snapshot", _mapping_value(panels, "state_snapshot"), ("present", "source", "state_hash")),
+        ("Proposed Plan", _mapping_value(panels, "proposed_plan"), ("present", "action_count", "approval_needed")),
+        ("Risk and Side Effects", _mapping_value(panels, "risk_and_side_effects"), ("max_risk_score", "effect_bearing_action_count", "missing_recovery_action_ids")),
+        ("Approval Lease", _mapping_value(panels, "approval_lease"), ("present", "plan_hash_matches_current_plan", "target_state_matches_snapshot")),
+        ("Execution Log", _mapping_value(panels, "controlled_execution_log"), ("event_count", "dispatch_started", "dispatch_completed")),
+        ("Verification Result", _mapping_value(panels, "verification_result"), ("present", "verified_count", "unverified_count")),
+        ("Receipt Bundle", _mapping_value(panels, "receipt_bundle"), ("present", "final_status", "receipt_id")),
+        ("Controls", _mapping_value(panels, "controls"), ("can_approve", "can_retry", "control_execution_authority")),
+    ]
+    body = "\n".join(
+        "<tr>"
+        f"<td>{escape(label)}</td>"
+        f"<td>{_operator_console_first_detail_list(panel, keys)}</td>"
+        "</tr>"
+        for label, panel, keys in rows
+    )
+    return f"""
+  <section>
+    <h2>Panels</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Panel</th><th>Details</th></tr></thead>
+        <tbody>{body}</tbody>
+      </table>
+    </div>
+  </section>"""
+
+
+def _operator_console_first_action_table(proposed_plan: dict[str, object]) -> str:
+    actions = _sequence_of_mappings(proposed_plan.get("actions"))
+    body = "\n".join(
+        "<tr>"
+        f"<td><code>{escape(str(action.get('action_id', '')))}</code></td>"
+        f"<td>{escape(str(action.get('capability_id', '')))}</td>"
+        f"<td>{escape(str(action.get('approval_mode', '')))}</td>"
+        f"<td>{escape(str(action.get('risk_score', '')))}</td>"
+        f"<td>{escape(str(action.get('effect_bearing', '')))}</td>"
+        "</tr>"
+        for action in actions
+    )
+    if not body:
+        body = "<tr><td colspan=\"5\">No proposed actions</td></tr>"
+    return f"""
+  <section>
+    <h2>Proposed Actions</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Action</th><th>Capability</th><th>Approval</th><th>Risk</th><th>Effect Bearing</th></tr></thead>
+        <tbody>{body}</tbody>
+      </table>
+    </div>
+  </section>"""
+
+
+def _operator_console_first_detail_list(panel: dict[str, object], keys: tuple[str, ...]) -> str:
+    items = "\n".join(
+        f"<li><span>{escape(key)}</span>: <code>{escape(str(panel.get(key, '')))}</code></li>"
+        for key in keys
+    )
+    return f"<ul>{items}</ul>"
+
+
+def _operator_console_first_mapping_rows(value: dict[str, object], *, prefix: str = "") -> str:
+    if not value:
+        return ""
+    return "\n".join(
+        "<tr>"
+        f"<td><code>{escape(prefix + str(key))}</code></td>"
+        f"<td>{escape(str(raw_value))}</td>"
+        "</tr>"
+        for key, raw_value in sorted(value.items())
+    )
 
 
 def _utc_timestamp() -> str:

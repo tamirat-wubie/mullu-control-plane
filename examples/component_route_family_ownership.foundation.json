@@ -2687,7 +2687,7 @@
           "route_binding_is_bound": true
         }
       ],
-      "declared_route_count": 17,
+      "declared_route_count": 18,
       "notes": "Route family already has selected component ownership, but ownership does not grant execution authority.",
       "ownership_is_not_execution_authority": true,
       "promotion_blockers": [],
@@ -2699,9 +2699,9 @@
       "sample_routes": [
         "/api/v1/console",
         "/api/v1/console/audit",
-        "/api/v1/console/checkpoints",
         "/api/v1/console/note-memory",
-        "/api/v1/console/operator-console-first"
+        "/api/v1/console/operator-console-first",
+        "/api/v1/console/operator-console-first/view"
       ],
       "selected_bound_component_ids": [
         "inceptadive_shadow",
@@ -4166,7 +4166,7 @@
     "router_inventory": "examples/component_router_inventory.foundation.json"
   },
   "summary": {
-    "declared_route_count": 457,
+    "declared_route_count": 458,
     "generic_connector_boundary_count": 1,
     "live_action_enabled_count": 0,
     "platform_family_classified_count": 68,
