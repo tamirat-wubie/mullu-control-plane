@@ -11969,6 +11969,454 @@
         "required_approval_receipts": []
       },
       "blocked": {
+        "blocked_action_count": 7,
+        "blocked_actions": [
+          "external_action_executed",
+          "claim_beyond_verified_state",
+          "false_success_claim_emitted",
+          "claim_success_without_terminal_certificate",
+          "claim_production_ready",
+          "live_action_enablement",
+          "claim_autonomous_live_action"
+        ],
+        "blocked_by_gate_ids": [
+          "gate.production.evidence"
+        ]
+      },
+      "capability_id": "universal_domain_ops.claim.bound",
+      "capability_name": "Bound domain output claims to verified state",
+      "continuation": {
+        "continuation_mode": "live_action_disabled",
+        "live_action_disabled": true,
+        "safe_for_live_action": false,
+        "safe_to_continue": true
+      },
+      "current_unlock_level": "C3",
+      "evidence_exists": {
+        "present_evidence_count": 2,
+        "present_evidence_refs": [
+          "capability_registry:universal_domain_ops.claim.bound",
+          "capability_certification:certified"
+        ]
+      },
+      "evidence_passport_id": "evidence_passport.universal_domain_ops.claim.bound.foundation.v1",
+      "evidence_passport_is_not_execution_authority": true,
+      "family": "universal_domain_ops",
+      "missing_evidence": [
+        "verified_workflow_state",
+        "allowed_claim_boundary",
+        "blocked_claim_receipt",
+        "evidence_refs",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "external_send_receipt",
+        "provider_receipt",
+        "production_evidence_receipt"
+      ],
+      "next_evidence_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "outcome": "AwaitingEvidence",
+      "proof_state": "Unknown",
+      "replay": {
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "verified_workflow_state",
+          "allowed_claim_boundary",
+          "blocked_claim_receipt",
+          "evidence_refs",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, verified_workflow_state, allowed_claim_boundary, blocked_claim_receipt, evidence_refs, terminal_closure_certificate, effect_reconciliation_receipt",
+        "replay_refs": [],
+        "replay_required": true,
+        "replayable": false
+      },
+      "required_evidence": [
+        "verified_workflow_state",
+        "allowed_claim_boundary",
+        "blocked_claim_receipt",
+        "evidence_refs",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "external_send_receipt",
+        "provider_receipt",
+        "production_evidence_receipt"
+      ],
+      "rollback": {
+        "can_compensate": false,
+        "can_rollback": true,
+        "compensation_capability": "",
+        "missing_rollback_refs": [],
+        "next_rollback_action": "no rollback evidence required",
+        "rollback_capability": "",
+        "rollback_evidence_missing": false,
+        "rollback_or_compensation_available": true,
+        "rollback_status": "not_required"
+      }
+    },
+    {
+      "approval": {
+        "approval_blocked_actions": [],
+        "approval_refs": [],
+        "approval_required": false,
+        "approval_state": "not_required",
+        "approved": false,
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
+      },
+      "blocked": {
+        "blocked_action_count": 7,
+        "blocked_actions": [
+          "external_action_executed",
+          "simulation_result_treated_as_live_execution",
+          "missing_evidence_ignored",
+          "claim_success_without_terminal_certificate",
+          "claim_production_ready",
+          "live_action_enablement",
+          "claim_autonomous_live_action"
+        ],
+        "blocked_by_gate_ids": [
+          "gate.production.evidence"
+        ]
+      },
+      "capability_id": "universal_domain_ops.episode.simulate",
+      "capability_name": "Simulate domain-pack episode gate",
+      "continuation": {
+        "continuation_mode": "live_action_disabled",
+        "live_action_disabled": true,
+        "safe_for_live_action": false,
+        "safe_to_continue": true
+      },
+      "current_unlock_level": "C3",
+      "evidence_exists": {
+        "present_evidence_count": 2,
+        "present_evidence_refs": [
+          "capability_registry:universal_domain_ops.episode.simulate",
+          "capability_certification:certified"
+        ]
+      },
+      "evidence_passport_id": "evidence_passport.universal_domain_ops.episode.simulate.foundation.v1",
+      "evidence_passport_is_not_execution_authority": true,
+      "family": "universal_domain_ops",
+      "missing_evidence": [
+        "domain_pack_source",
+        "candidate_action_set",
+        "evidence_sufficiency_report",
+        "simulation_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "external_send_receipt",
+        "provider_receipt",
+        "production_evidence_receipt"
+      ],
+      "next_evidence_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "outcome": "AwaitingEvidence",
+      "proof_state": "Unknown",
+      "replay": {
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "domain_pack_source",
+          "candidate_action_set",
+          "evidence_sufficiency_report",
+          "simulation_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, domain_pack_source, candidate_action_set, evidence_sufficiency_report, simulation_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
+        "replay_refs": [],
+        "replay_required": true,
+        "replayable": false
+      },
+      "required_evidence": [
+        "domain_pack_source",
+        "candidate_action_set",
+        "evidence_sufficiency_report",
+        "simulation_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "external_send_receipt",
+        "provider_receipt",
+        "production_evidence_receipt"
+      ],
+      "rollback": {
+        "can_compensate": false,
+        "can_rollback": true,
+        "compensation_capability": "",
+        "missing_rollback_refs": [],
+        "next_rollback_action": "no rollback evidence required",
+        "rollback_capability": "",
+        "rollback_evidence_missing": false,
+        "rollback_or_compensation_available": true,
+        "rollback_status": "not_required"
+      }
+    },
+    {
+      "approval": {
+        "approval_blocked_actions": [],
+        "approval_refs": [],
+        "approval_required": false,
+        "approval_state": "not_required",
+        "approved": false,
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
+      },
+      "blocked": {
+        "blocked_action_count": 7,
+        "blocked_actions": [
+          "external_action_executed",
+          "linter_warning_suppressed",
+          "over_permissive_pack_certified",
+          "claim_success_without_terminal_certificate",
+          "claim_production_ready",
+          "live_action_enablement",
+          "claim_autonomous_live_action"
+        ],
+        "blocked_by_gate_ids": [
+          "gate.production.evidence"
+        ]
+      },
+      "capability_id": "universal_domain_ops.pack.lint",
+      "capability_name": "Lint executable domain pack gates",
+      "continuation": {
+        "continuation_mode": "live_action_disabled",
+        "live_action_disabled": true,
+        "safe_for_live_action": false,
+        "safe_to_continue": true
+      },
+      "current_unlock_level": "C3",
+      "evidence_exists": {
+        "present_evidence_count": 2,
+        "present_evidence_refs": [
+          "capability_registry:universal_domain_ops.pack.lint",
+          "capability_certification:certified"
+        ]
+      },
+      "evidence_passport_id": "evidence_passport.universal_domain_ops.pack.lint.foundation.v1",
+      "evidence_passport_is_not_execution_authority": true,
+      "family": "universal_domain_ops",
+      "missing_evidence": [
+        "domain_pack_source",
+        "lint_rule_set",
+        "linter_report",
+        "blocked_action_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "external_send_receipt",
+        "provider_receipt",
+        "production_evidence_receipt"
+      ],
+      "next_evidence_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "outcome": "AwaitingEvidence",
+      "proof_state": "Unknown",
+      "replay": {
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "domain_pack_source",
+          "lint_rule_set",
+          "linter_report",
+          "blocked_action_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, domain_pack_source, lint_rule_set, linter_report, blocked_action_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
+        "replay_refs": [],
+        "replay_required": true,
+        "replayable": false
+      },
+      "required_evidence": [
+        "domain_pack_source",
+        "lint_rule_set",
+        "linter_report",
+        "blocked_action_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "external_send_receipt",
+        "provider_receipt",
+        "production_evidence_receipt"
+      ],
+      "rollback": {
+        "can_compensate": false,
+        "can_rollback": true,
+        "compensation_capability": "",
+        "missing_rollback_refs": [],
+        "next_rollback_action": "no rollback evidence required",
+        "rollback_capability": "",
+        "rollback_evidence_missing": false,
+        "rollback_or_compensation_available": true,
+        "rollback_status": "not_required"
+      }
+    },
+    {
+      "approval": {
+        "approval_blocked_actions": [],
+        "approval_refs": [],
+        "approval_required": false,
+        "approval_state": "not_required",
+        "approved": false,
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
+      },
+      "blocked": {
+        "blocked_action_count": 7,
+        "blocked_actions": [
+          "external_action_executed",
+          "domain_pack_activated_without_validation",
+          "core_authority_ceiling_bypassed",
+          "claim_success_without_terminal_certificate",
+          "claim_production_ready",
+          "live_action_enablement",
+          "claim_autonomous_live_action"
+        ],
+        "blocked_by_gate_ids": [
+          "gate.production.evidence"
+        ]
+      },
+      "capability_id": "universal_domain_ops.registry.validate",
+      "capability_name": "Validate domain pack registry entry",
+      "continuation": {
+        "continuation_mode": "live_action_disabled",
+        "live_action_disabled": true,
+        "safe_for_live_action": false,
+        "safe_to_continue": true
+      },
+      "current_unlock_level": "C3",
+      "evidence_exists": {
+        "present_evidence_count": 2,
+        "present_evidence_refs": [
+          "capability_registry:universal_domain_ops.registry.validate",
+          "capability_certification:certified"
+        ]
+      },
+      "evidence_passport_id": "evidence_passport.universal_domain_ops.registry.validate.foundation.v1",
+      "evidence_passport_is_not_execution_authority": true,
+      "family": "universal_domain_ops",
+      "missing_evidence": [
+        "domain_pack_source",
+        "schema_validation_report",
+        "linter_report",
+        "pack_use_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "external_send_receipt",
+        "provider_receipt",
+        "production_evidence_receipt"
+      ],
+      "next_evidence_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "outcome": "AwaitingEvidence",
+      "proof_state": "Unknown",
+      "replay": {
+        "missing_replay_evidence": true,
+        "missing_replay_refs": [
+          "replay_record",
+          "replay_input_digest",
+          "replay_output_digest",
+          "domain_pack_source",
+          "schema_validation_report",
+          "linter_report",
+          "pack_use_receipt",
+          "terminal_closure_certificate",
+          "effect_reconciliation_receipt"
+        ],
+        "next_replay_action": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, domain_pack_source, schema_validation_report, linter_report, pack_use_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
+        "replay_refs": [],
+        "replay_required": true,
+        "replayable": false
+      },
+      "required_evidence": [
+        "domain_pack_source",
+        "schema_validation_report",
+        "linter_report",
+        "pack_use_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt",
+        "universal_action_orchestration_validation_receipt",
+        "capability_registry_entry",
+        "evidence_intake_receipt",
+        "evidence_verification_receipt",
+        "external_send_receipt",
+        "provider_receipt",
+        "production_evidence_receipt"
+      ],
+      "rollback": {
+        "can_compensate": false,
+        "can_rollback": true,
+        "compensation_capability": "",
+        "missing_rollback_refs": [],
+        "next_rollback_action": "no rollback evidence required",
+        "rollback_capability": "",
+        "rollback_evidence_missing": false,
+        "rollback_or_compensation_available": true,
+        "rollback_status": "not_required"
+      }
+    },
+    {
+      "approval": {
+        "approval_blocked_actions": [],
+        "approval_refs": [],
+        "approval_required": false,
+        "approval_state": "not_required",
+        "approved": false,
+        "missing_approval": false,
+        "missing_approval_refs": [],
+        "next_approval_action": "no approval evidence required",
+        "required_approval_gate_ids": [],
+        "required_approval_inputs": [],
+        "required_approval_receipts": []
+      },
+      "blocked": {
         "blocked_action_count": 8,
         "blocked_actions": [
           "tool_executed",
@@ -12655,9 +13103,9 @@
   },
   "summary": {
     "approval_required_count": 24,
-    "blocked_action_count": 903,
-    "capability_count": 107,
-    "evidence_passport_count": 107,
+    "blocked_action_count": 931,
+    "capability_count": 111,
+    "evidence_passport_count": 111,
     "family_counts": {
       "agentic_control": 17,
       "browser": 6,
@@ -12674,11 +13122,12 @@
       "phone": 5,
       "physical": 2,
       "software_dev": 12,
+      "universal_domain_ops": 4,
       "voice": 6
     },
-    "missing_evidence_count": 105,
+    "missing_evidence_count": 109,
     "outcome_counts": {
-      "AwaitingEvidence": 106,
+      "AwaitingEvidence": 110,
       "BudgetExhausted": 0,
       "GovernanceBlocked": 0,
       "ImpossibleProved": 0,
@@ -12690,12 +13139,12 @@
       "BudgetUnknown": 0,
       "Fail": 0,
       "Pass": 1,
-      "Unknown": 106
+      "Unknown": 110
     },
     "replayable_count": 0,
-    "rollback_ready_count": 95,
+    "rollback_ready_count": 99,
     "safe_for_live_action_count": 1,
-    "safe_to_continue_count": 107
+    "safe_to_continue_count": 111
   },
   "validators": [
     {

@@ -1,0 +1,284 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "universal_domain_ops.registry.validate",
+      "domain": "universal_domain_ops",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/universal_domain_ops/domain_operation.input.schema.json",
+      "output_schema_ref": "schemas/universal_domain_ops/domain_operation.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["domain_pack_validation_decision_emitted"],
+        "forbidden_effects": [
+          "external_action_executed",
+          "domain_pack_activated_without_validation",
+          "core_authority_ceiling_bypassed"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "domain_pack_source",
+          "schema_validation_report",
+          "linter_report",
+          "pack_use_receipt"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["developer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "local_validation",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Validate domain pack registry entry",
+        "risk_tier": "low",
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 1,
+          "level_id": "L1",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate"]
+        }
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_tools": ["domain_pack_registry.validate"],
+          "receipt_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "universal_domain_ops.pack.lint",
+      "domain": "universal_domain_ops",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/universal_domain_ops/domain_operation.input.schema.json",
+      "output_schema_ref": "schemas/universal_domain_ops/domain_operation.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["domain_pack_lint_decision_emitted"],
+        "forbidden_effects": [
+          "external_action_executed",
+          "linter_warning_suppressed",
+          "over_permissive_pack_certified"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "domain_pack_source",
+          "lint_rule_set",
+          "linter_report",
+          "blocked_action_receipt"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["developer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "local_validation",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Lint executable domain pack gates",
+        "risk_tier": "low",
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 1,
+          "level_id": "L1",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate"]
+        }
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_tools": ["domain_pack_linter.evaluate"],
+          "receipt_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "universal_domain_ops.episode.simulate",
+      "domain": "universal_domain_ops",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/universal_domain_ops/domain_operation.input.schema.json",
+      "output_schema_ref": "schemas/universal_domain_ops/domain_operation.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["domain_episode_simulation_receipt_emitted"],
+        "forbidden_effects": [
+          "external_action_executed",
+          "simulation_result_treated_as_live_execution",
+          "missing_evidence_ignored"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "domain_pack_source",
+          "candidate_action_set",
+          "evidence_sufficiency_report",
+          "simulation_receipt"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["developer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "local_validation",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Simulate domain-pack episode gate",
+        "risk_tier": "low",
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 1,
+          "level_id": "L1",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate"]
+        }
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_tools": ["domain_episode_simulator.dry_run"],
+          "receipt_required": true
+        }
+      }
+    },
+    {
+      "capability_id": "universal_domain_ops.claim.bound",
+      "domain": "universal_domain_ops",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/universal_domain_ops/domain_operation.input.schema.json",
+      "output_schema_ref": "schemas/universal_domain_ops/domain_operation.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["output_claim_boundary_decision_emitted"],
+        "forbidden_effects": [
+          "external_action_executed",
+          "claim_beyond_verified_state",
+          "false_success_claim_emitted"
+        ],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": [
+          "verified_workflow_state",
+          "allowed_claim_boundary",
+          "blocked_claim_receipt",
+          "evidence_refs"
+        ],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["developer"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "local_validation",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 1800,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Bound domain output claims to verified state",
+        "risk_tier": "low",
+        "unlock_ladder": {
+          "ladder_id": "mullu.capability_unlock_ladder.v1",
+          "level": 1,
+          "level_id": "L1",
+          "gate_template_ids": ["evidence_intake_gate", "verifier_gate"]
+        }
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_tools": ["claim_boundary_engine.evaluate"],
+          "receipt_required": true
+        }
+      }
+    }
+  ]
+}

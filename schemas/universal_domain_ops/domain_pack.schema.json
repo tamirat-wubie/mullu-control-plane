@@ -1,0 +1,436 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-domain-ops:domain-pack:1",
+  "title": "Universal Domain Operating Pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pack",
+    "identity",
+    "boundary",
+    "activation",
+    "ontology",
+    "constraints",
+    "evidence",
+    "actions",
+    "risk",
+    "workflow",
+    "output_claims",
+    "tests",
+    "receipts",
+    "versioning",
+    "governance"
+  ],
+  "properties": {
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "version",
+        "maturity_level",
+        "status",
+        "owner",
+        "created_at",
+        "last_validated_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z0-9][a-z0-9._-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "maturity_level": {
+          "type": "string",
+          "enum": ["L0", "L1", "L2", "L3", "L4", "L5"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "validated", "registered", "active", "suspended", "retired"]
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "last_validated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["immutable"],
+      "properties": {
+        "immutable": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["governs", "does_not_govern"],
+      "properties": {
+        "governs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "does_not_govern": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "activation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "include_triggers",
+        "exclude_triggers",
+        "secondary_packs",
+        "blocking_packs"
+      ],
+      "properties": {
+        "include_triggers": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "exclude_triggers": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "secondary_packs": {
+          "$ref": "#/$defs/string_array"
+        },
+        "blocking_packs": {
+          "$ref": "#/$defs/string_array"
+        }
+      }
+    },
+    "ontology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["symbols"],
+      "properties": {
+        "symbols": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["required", "states", "relations", "risk_flags"],
+            "properties": {
+              "required": {
+                "$ref": "#/$defs/string_array"
+              },
+              "states": {
+                "$ref": "#/$defs/string_array"
+              },
+              "relations": {
+                "$ref": "#/$defs/string_array"
+              },
+              "risk_flags": {
+                "$ref": "#/$defs/string_array"
+              }
+            }
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hard", "privacy", "freshness"],
+      "properties": {
+        "hard": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "privacy": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "freshness": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["levels", "required_by_action", "vector_dimensions"],
+      "properties": {
+        "levels": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["E0", "E1", "E2", "E3", "E4", "E5"],
+          "properties": {
+            "E0": {
+              "type": "string",
+              "minLength": 1
+            },
+            "E1": {
+              "type": "string",
+              "minLength": 1
+            },
+            "E2": {
+              "type": "string",
+              "minLength": 1
+            },
+            "E3": {
+              "type": "string",
+              "minLength": 1
+            },
+            "E4": {
+              "type": "string",
+              "minLength": 1
+            },
+            "E5": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required_by_action": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["E0", "E1", "E2", "E3", "E4", "E5"]
+          }
+        },
+        "vector_dimensions": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "actions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed", "conditional", "forbidden"],
+      "properties": {
+        "allowed": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "conditional": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["requires"],
+            "properties": {
+              "requires": {
+                "$ref": "#/$defs/non_empty_string_array"
+              }
+            }
+          }
+        },
+        "forbidden": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classes", "action_risk"],
+      "properties": {
+        "classes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["R0", "R1", "R2", "R3", "R4", "R5"],
+          "properties": {
+            "R0": {
+              "type": "string",
+              "minLength": 1
+            },
+            "R1": {
+              "type": "string",
+              "minLength": 1
+            },
+            "R2": {
+              "type": "string",
+              "minLength": 1
+            },
+            "R3": {
+              "type": "string",
+              "minLength": 1
+            },
+            "R4": {
+              "type": "string",
+              "minLength": 1
+            },
+            "R5": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "action_risk": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["R0", "R1", "R2", "R3", "R4", "R5"]
+          }
+        }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["states", "initial_state", "terminal_states", "transitions"],
+      "properties": {
+        "states": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "initial_state": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terminal_states": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "transitions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from_state", "to_state", "requires"],
+            "properties": {
+              "from_state": {
+                "type": "string",
+                "minLength": 1
+              },
+              "to_state": {
+                "type": "string",
+                "minLength": 1
+              },
+              "requires": {
+                "$ref": "#/$defs/non_empty_string_array"
+              }
+            }
+          }
+        }
+      }
+    },
+    "output_claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed", "forbidden"],
+      "properties": {
+        "allowed": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/non_empty_string_array"
+          }
+        },
+        "forbidden": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "receipts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_for"],
+      "properties": {
+        "required_for": {
+          "$ref": "#/$defs/non_empty_string_array"
+        }
+      }
+    },
+    "versioning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["semver", "stale_after_days", "stale_behavior", "rollback_required"],
+      "properties": {
+        "semver": {
+          "type": "boolean"
+        },
+        "stale_after_days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "stale_behavior": {
+          "type": "string",
+          "enum": ["read_only", "block", "require_current_source"]
+        },
+        "rollback_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "core_authority_ceiling",
+        "strictest_constraint_wins",
+        "no_claim_beyond_verified_state",
+        "refinement_requires_validation"
+      ],
+      "properties": {
+        "core_authority_ceiling": {
+          "type": "boolean"
+        },
+        "strictest_constraint_wins": {
+          "type": "boolean"
+        },
+        "no_claim_beyond_verified_state": {
+          "type": "boolean"
+        },
+        "refinement_requires_validation": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "string_array": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    }
+  }
+}

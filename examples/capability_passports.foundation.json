@@ -7006,6 +7006,274 @@
         "emit_receipt"
       ],
       "allowed_tools": [
+        "claim_boundary_engine.evaluate"
+      ],
+      "autonomy_ready": false,
+      "blocked_actions": [
+        "external_action_executed",
+        "claim_beyond_verified_state",
+        "false_success_claim_emitted",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "blockers": [
+        "sandbox_receipt_missing",
+        "live_read_receipt_missing",
+        "worker_deployment_evidence_missing",
+        "recovery_evidence_missing",
+        "autonomy_controls_missing"
+      ],
+      "capability_id": "universal_domain_ops.claim.bound",
+      "capability_name": "Bound domain output claims to verified state",
+      "certification_status": "certified",
+      "current_unlock_level": "C3",
+      "evidence_refs": [
+        "capability_registry:universal_domain_ops.claim.bound",
+        "capability_certification:certified"
+      ],
+      "family": "universal_domain_ops",
+      "next_unlock_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "passport_id": "capability_passport.universal_domain_ops.claim.bound.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "production_ready": false,
+      "required_gates": [
+        "gate.uao.admission",
+        "gate.capability.registry",
+        "gate.evidence.intake",
+        "gate.evidence.verification",
+        "gate.receipt.append",
+        "gate.external.send",
+        "gate.production.evidence"
+      ],
+      "required_receipts": [
+        "verified_workflow_state",
+        "allowed_claim_boundary",
+        "blocked_claim_receipt",
+        "evidence_refs",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "rollback_status": {
+        "compensation_capability": "",
+        "review_required_on_failure": true,
+        "rollback_capability": "",
+        "status": "not_required"
+      },
+      "source_ref": "capabilities/universal_domain_ops/capability_pack.json",
+      "unlock_label": "Implemented",
+      "version": "0.1.0"
+    },
+    {
+      "allowed_actions": [
+        "read",
+        "verify_evidence",
+        "emit_receipt"
+      ],
+      "allowed_tools": [
+        "domain_episode_simulator.dry_run"
+      ],
+      "autonomy_ready": false,
+      "blocked_actions": [
+        "external_action_executed",
+        "simulation_result_treated_as_live_execution",
+        "missing_evidence_ignored",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "blockers": [
+        "sandbox_receipt_missing",
+        "live_read_receipt_missing",
+        "worker_deployment_evidence_missing",
+        "recovery_evidence_missing",
+        "autonomy_controls_missing"
+      ],
+      "capability_id": "universal_domain_ops.episode.simulate",
+      "capability_name": "Simulate domain-pack episode gate",
+      "certification_status": "certified",
+      "current_unlock_level": "C3",
+      "evidence_refs": [
+        "capability_registry:universal_domain_ops.episode.simulate",
+        "capability_certification:certified"
+      ],
+      "family": "universal_domain_ops",
+      "next_unlock_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "passport_id": "capability_passport.universal_domain_ops.episode.simulate.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "production_ready": false,
+      "required_gates": [
+        "gate.uao.admission",
+        "gate.capability.registry",
+        "gate.evidence.intake",
+        "gate.evidence.verification",
+        "gate.receipt.append",
+        "gate.external.send",
+        "gate.production.evidence"
+      ],
+      "required_receipts": [
+        "domain_pack_source",
+        "candidate_action_set",
+        "evidence_sufficiency_report",
+        "simulation_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "rollback_status": {
+        "compensation_capability": "",
+        "review_required_on_failure": true,
+        "rollback_capability": "",
+        "status": "not_required"
+      },
+      "source_ref": "capabilities/universal_domain_ops/capability_pack.json",
+      "unlock_label": "Implemented",
+      "version": "0.1.0"
+    },
+    {
+      "allowed_actions": [
+        "read",
+        "verify_evidence",
+        "emit_receipt"
+      ],
+      "allowed_tools": [
+        "domain_pack_linter.evaluate"
+      ],
+      "autonomy_ready": false,
+      "blocked_actions": [
+        "external_action_executed",
+        "linter_warning_suppressed",
+        "over_permissive_pack_certified",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "blockers": [
+        "sandbox_receipt_missing",
+        "live_read_receipt_missing",
+        "worker_deployment_evidence_missing",
+        "recovery_evidence_missing",
+        "autonomy_controls_missing"
+      ],
+      "capability_id": "universal_domain_ops.pack.lint",
+      "capability_name": "Lint executable domain pack gates",
+      "certification_status": "certified",
+      "current_unlock_level": "C3",
+      "evidence_refs": [
+        "capability_registry:universal_domain_ops.pack.lint",
+        "capability_certification:certified"
+      ],
+      "family": "universal_domain_ops",
+      "next_unlock_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "passport_id": "capability_passport.universal_domain_ops.pack.lint.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "production_ready": false,
+      "required_gates": [
+        "gate.uao.admission",
+        "gate.capability.registry",
+        "gate.evidence.intake",
+        "gate.evidence.verification",
+        "gate.receipt.append",
+        "gate.external.send",
+        "gate.production.evidence"
+      ],
+      "required_receipts": [
+        "domain_pack_source",
+        "lint_rule_set",
+        "linter_report",
+        "blocked_action_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "rollback_status": {
+        "compensation_capability": "",
+        "review_required_on_failure": true,
+        "rollback_capability": "",
+        "status": "not_required"
+      },
+      "source_ref": "capabilities/universal_domain_ops/capability_pack.json",
+      "unlock_label": "Implemented",
+      "version": "0.1.0"
+    },
+    {
+      "allowed_actions": [
+        "read",
+        "verify_evidence",
+        "emit_receipt"
+      ],
+      "allowed_tools": [
+        "domain_pack_registry.validate"
+      ],
+      "autonomy_ready": false,
+      "blocked_actions": [
+        "external_action_executed",
+        "domain_pack_activated_without_validation",
+        "core_authority_ceiling_bypassed",
+        "claim_success_without_terminal_certificate",
+        "claim_production_ready",
+        "live_action_enablement",
+        "claim_autonomous_live_action"
+      ],
+      "blockers": [
+        "sandbox_receipt_missing",
+        "live_read_receipt_missing",
+        "worker_deployment_evidence_missing",
+        "recovery_evidence_missing",
+        "autonomy_controls_missing"
+      ],
+      "capability_id": "universal_domain_ops.registry.validate",
+      "capability_name": "Validate domain pack registry entry",
+      "certification_status": "certified",
+      "current_unlock_level": "C3",
+      "evidence_refs": [
+        "capability_registry:universal_domain_ops.registry.validate",
+        "capability_certification:certified"
+      ],
+      "family": "universal_domain_ops",
+      "next_unlock_step": "add sandbox receipt evidence",
+      "operator_status": "Live action disabled",
+      "passport_id": "capability_passport.universal_domain_ops.registry.validate.foundation.v1",
+      "passport_is_not_execution_authority": true,
+      "production_ready": false,
+      "required_gates": [
+        "gate.uao.admission",
+        "gate.capability.registry",
+        "gate.evidence.intake",
+        "gate.evidence.verification",
+        "gate.receipt.append",
+        "gate.external.send",
+        "gate.production.evidence"
+      ],
+      "required_receipts": [
+        "domain_pack_source",
+        "schema_validation_report",
+        "linter_report",
+        "pack_use_receipt",
+        "terminal_closure_certificate",
+        "effect_reconciliation_receipt"
+      ],
+      "rollback_status": {
+        "compensation_capability": "",
+        "review_required_on_failure": true,
+        "rollback_capability": "",
+        "status": "not_required"
+      },
+      "source_ref": "capabilities/universal_domain_ops/capability_pack.json",
+      "unlock_label": "Implemented",
+      "version": "0.1.0"
+    },
+    {
+      "allowed_actions": [
+        "read",
+        "verify_evidence",
+        "emit_receipt"
+      ],
+      "allowed_tools": [
         "voice_worker.action_items_extract"
       ],
       "autonomy_ready": false,
@@ -7431,13 +7699,14 @@
       "capabilities/phone/capability_pack.json",
       "capabilities/physical/capability_pack.json",
       "capabilities/software_dev/capability_pack.json",
+      "capabilities/universal_domain_ops/capability_pack.json",
       "capabilities/voice/capability_pack.json"
     ]
   },
   "summary": {
     "approval_required_count": 24,
     "blocked_count": 0,
-    "capability_count": 107,
+    "capability_count": 111,
     "family_counts": {
       "agentic_control": 17,
       "browser": 6,
@@ -7454,24 +7723,25 @@
       "phone": 5,
       "physical": 2,
       "software_dev": 12,
+      "universal_domain_ops": 4,
       "voice": 6
     },
     "operator_status_counts": {
       "Blocked": 0,
       "Evidence missing": 0,
-      "Live action disabled": 105,
+      "Live action disabled": 109,
       "Needs approval": 1,
       "Prepare-only": 0,
       "Ready": 1
     },
-    "passport_count": 107,
-    "receipt_required_count": 107,
-    "rollback_ready_count": 95,
+    "passport_count": 111,
+    "receipt_required_count": 111,
+    "rollback_ready_count": 99,
     "unlock_level_counts": {
       "C0": 0,
       "C1": 0,
       "C2": 12,
-      "C3": 90,
+      "C3": 94,
       "C4": 3,
       "C5": 0,
       "C6": 2,

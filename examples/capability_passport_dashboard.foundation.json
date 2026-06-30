@@ -5,7 +5,7 @@
     "gate_registry_template_count": 12,
     "operator_view_hides_internal_gate_ids": true,
     "operator_view_hides_schema_refs": true,
-    "passport_count": 107,
+    "passport_count": 111,
     "required_gate_template_count": 12,
     "resolved_gate_template_count": 12,
     "unresolved_gate_count": 0,
@@ -236,6 +236,21 @@
           "Blocked": 0,
           "Evidence missing": 0,
           "Live action disabled": 12,
+          "Needs approval": 0,
+          "Prepare-only": 0,
+          "Ready": 0
+        }
+      },
+      {
+        "capability_count": 4,
+        "dominant_status": "Live action disabled",
+        "family": "universal_domain_ops",
+        "highest_unlock_level": "C3",
+        "next_action": "add sandbox receipt evidence",
+        "status_counts": {
+          "Blocked": 0,
+          "Evidence missing": 0,
+          "Live action disabled": 4,
           "Needs approval": 0,
           "Prepare-only": 0,
           "Ready": 0
@@ -1909,6 +1924,70 @@
               "verify_evidence",
               "emit_receipt"
             ],
+            "blocked_action_count": 7,
+            "capability_id": "universal_domain_ops.claim.bound",
+            "capability_name": "Bound domain output claims to verified state",
+            "current_unlock_level": "C3",
+            "family": "universal_domain_ops",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "universal_domain_ops.episode.simulate",
+            "capability_name": "Simulate domain-pack episode gate",
+            "current_unlock_level": "C3",
+            "family": "universal_domain_ops",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "universal_domain_ops.pack.lint",
+            "capability_name": "Lint executable domain pack gates",
+            "current_unlock_level": "C3",
+            "family": "universal_domain_ops",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
+            "blocked_action_count": 7,
+            "capability_id": "universal_domain_ops.registry.validate",
+            "capability_name": "Validate domain pack registry entry",
+            "current_unlock_level": "C3",
+            "family": "universal_domain_ops",
+            "next_unlock_step": "add sandbox receipt evidence",
+            "required_receipt_count": 6,
+            "rollback_status": "not_required",
+            "status": "Live action disabled"
+          },
+          {
+            "allowed_actions": [
+              "read",
+              "verify_evidence",
+              "emit_receipt"
+            ],
             "blocked_action_count": 8,
             "capability_id": "voice.action_items_extract",
             "capability_name": "Extract action items from meeting transcript",
@@ -1999,7 +2078,7 @@
             "status": "Live action disabled"
           }
         ],
-        "count": 105,
+        "count": 109,
         "label": "Live action disabled"
       }
     ],
@@ -2035,7 +2114,7 @@
         "severity_rank": 4
       },
       {
-        "count": 105,
+        "count": 109,
         "label": "Live action disabled",
         "meaning": "Capability can be inspected or prepared, but live action remains disabled.",
         "severity_rank": 5
@@ -2048,15 +2127,15 @@
     "passport_set_id": "capability_passports.foundation.v1"
   },
   "summary": {
-    "attention_required_count": 106,
-    "capability_count": 107,
-    "family_count": 16,
+    "attention_required_count": 110,
+    "capability_count": 111,
+    "family_count": 17,
     "live_action_disabled": true,
     "ready_count": 1,
     "status_counts": {
       "Blocked": 0,
       "Evidence missing": 0,
-      "Live action disabled": 105,
+      "Live action disabled": 109,
       "Needs approval": 1,
       "Prepare-only": 0,
       "Ready": 1
