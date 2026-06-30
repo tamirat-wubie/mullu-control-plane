@@ -586,6 +586,9 @@ REQUIRED_GITHUB_PR_UAO_ACTUAL_DIFF_BRANCH_WRITE_BINDING_TERMS = (
 REQUIRED_GITHUB_PR_ROLLBACK_ACTUAL_DIFF_UAO_BINDING_TERMS = (
     "GitHub PR repository-effect rollback command-preview UAO binding PR",
     "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+    "command-preview UAO admission evidence",
+    "source UAO witness id/ref",
+    "source branch-write binding id/ref",
     "command-preview UAO admission witness",
     "command-preview branch-write binding",
     "command-preview operator response binding",
@@ -1454,7 +1457,7 @@ def _validate_github_pr_rollback_actual_diff_uao_binding_ready(
     errors: list[str],
 ) -> None:
     closure_row = re.search(
-        r"^\| GitHub PR repository-effect rollback command-preview UAO binding PR \| READY \| .+command-preview UAO admission witness.+actual-diff UAO admission witness.+terminal closure fail closed\. \|$",
+        r"^\| GitHub PR repository-effect rollback command-preview UAO binding PR \| READY \| .+command-preview UAO admission evidence.+source UAO witness id/ref.+source branch-write binding id/ref.+command-preview UAO admission witness.+actual-diff UAO admission witness.+terminal closure fail closed\. \|$",
         map_text,
         re.MULTILINE,
     )
@@ -1659,7 +1662,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind repository-effect rollback to command-preview UAO admission evidence",
+        "harness(pr): bind CI gate before ready-for-review to command-preview rollback evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:

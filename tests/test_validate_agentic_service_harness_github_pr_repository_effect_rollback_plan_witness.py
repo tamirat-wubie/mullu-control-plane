@@ -163,6 +163,44 @@ def test_github_pr_repository_effect_rollback_plan_witness_rejects_command_previ
     assert "rollback_plan.placeholder_refs" in serialized_errors
 
 
+def test_github_pr_repository_effect_rollback_plan_witness_rejects_uao_evidence_capsule_drift() -> None:
+    payload = validator.build_mutated_repository_effect_rollback_plan_witness(
+        command_preview_uao_admission_evidence__source_binding_id="agentic_service_harness_github_pr_drifted",
+        command_preview_uao_admission_evidence__source_branch_write_binding_id="drifted_branch_write_binding",
+        command_preview_uao_admission_evidence__source_branch_write_binding_ref="examples/drifted-branch-write.json",
+        command_preview_uao_admission_evidence__source_uao_pr_admission_collected=True,
+        command_preview_uao_admission_evidence__source_pr_creation_authorized_after_binding=True,
+        command_preview_uao_admission_evidence__rollback_planning_consumes_command_preview_uao_admission_evidence=False,
+        command_preview_uao_admission_evidence__repository_effect_rollback_remains_non_authorizing=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_repository_effect_rollback_plan_witness_semantics(
+        payload,
+        _source_uao_admission_witness(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_uao_admission_evidence.source_binding_id" in serialized_errors
+    assert "command_preview_uao_admission_evidence.source_branch_write_binding_id" in serialized_errors
+    assert "command_preview_uao_admission_evidence.source_branch_write_binding_ref" in serialized_errors
+    assert "command_preview_uao_admission_evidence.source_uao_pr_admission_collected must be false" in serialized_errors
+    assert (
+        "command_preview_uao_admission_evidence.source_pr_creation_authorized_after_binding must be false"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_uao_admission_evidence.rollback_planning_consumes_command_preview_uao_admission_evidence must be true"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_uao_admission_evidence.repository_effect_rollback_remains_non_authorizing must be true"
+        in serialized_errors
+    )
+
+
 def test_github_pr_repository_effect_rollback_plan_witness_rejects_mutation_route_and_secret_like_payload() -> None:
     payload = validator.build_mutated_repository_effect_rollback_plan_witness(
         requested_evidence_ref="POST /api/github/repository-effect rollback plan-authority",
