@@ -8,8 +8,8 @@
     "terminal_closure": false
   },
   "dispatch_allowed": false,
-  "evidence_hash": "6c49c3d5cdd5114f17e59a9b86a7f964721a7bbba38419294010a4bcfb5e8055",
-  "evidence_id": "governed-planning-profile-operator-shadow-pilot-evidence-6c49c3d5cdd5114f",
+  "evidence_hash": "a2fe4835ac2a64264df4fda620b0c27c8106faa4f4df50b749b4a697eab78b1f",
+  "evidence_id": "governed-planning-profile-operator-shadow-pilot-evidence-a2fe4835ac2a6426",
   "evidence_refs": [
     "scripts/report_governed_planning_profile_shadow_dossier.py",
     "scripts/validate_governed_planning_profile_operator_shadow_pilot_evidence.py",
@@ -63,7 +63,7 @@
   "runtime_replanning_enabled": false,
   "scenario_observations": [
     {
-      "admission_report_id": "governed-planning-profile-admission-0a673585a51ddacf",
+      "admission_report_id": "governed-planning-profile-admission-ac3dbf571f50160b",
       "observed_behavior_matches_projection": false,
       "operator_observation_ref": "unknown://governed-planning-profile/operator-shadow-pilot/uncompiled_conversation",
       "operator_observation_status": "AwaitingEvidence",
@@ -74,7 +74,7 @@
       "source_plan_id": "plan-blocked-de0e63771c6e4f48"
     },
     {
-      "admission_report_id": "governed-planning-profile-admission-a8fec2d2a03ba3b1",
+      "admission_report_id": "governed-planning-profile-admission-15fa78ad4fa542db",
       "observed_behavior_matches_projection": false,
       "operator_observation_ref": "unknown://governed-planning-profile/operator-shadow-pilot/read_only_search",
       "operator_observation_status": "AwaitingEvidence",
@@ -85,7 +85,7 @@
       "source_plan_id": "plan-0cf90f4c59f58dde"
     },
     {
-      "admission_report_id": "governed-planning-profile-admission-f46fcabf6303e8d2",
+      "admission_report_id": "governed-planning-profile-admission-3b75c3e279f31f57",
       "observed_behavior_matches_projection": false,
       "operator_observation_ref": "unknown://governed-planning-profile/operator-shadow-pilot/compound_search_notification",
       "operator_observation_status": "AwaitingEvidence",
@@ -96,7 +96,7 @@
       "source_plan_id": "plan-0cacccba21de5359"
     },
     {
-      "admission_report_id": "governed-planning-profile-admission-20e67043dfda01cd",
+      "admission_report_id": "governed-planning-profile-admission-99e8fe74925da24d",
       "observed_behavior_matches_projection": false,
       "operator_observation_ref": "unknown://governed-planning-profile/operator-shadow-pilot/high_risk_payment",
       "operator_observation_status": "AwaitingEvidence",
@@ -107,7 +107,7 @@
       "source_plan_id": "plan-c9cdd311124cb63b"
     },
     {
-      "admission_report_id": "governed-planning-profile-admission-26920541cf0ec091",
+      "admission_report_id": "governed-planning-profile-admission-634e223e6518e89c",
       "observed_behavior_matches_projection": false,
       "operator_observation_ref": "unknown://governed-planning-profile/operator-shadow-pilot/world_contradiction_search",
       "operator_observation_status": "AwaitingEvidence",
@@ -121,8 +121,8 @@
   "schema_version": "governed_planning_profile_operator_shadow_pilot_evidence.v1",
   "solver_outcome": "AwaitingEvidence",
   "source_dossier": {
-    "dossier_hash": "0ed56d34df4eb629dc52200e00dd5d5879a604f208a24e4fc3b28614cbb0cc73",
-    "dossier_id": "governed-planning-profile-shadow-dossier-0ed56d34df4eb629",
+    "dossier_hash": "60003b79d1982c5ae8d83abdbdabeb4427f3858bcd22c2d03531b9a7c29db56f",
+    "dossier_id": "governed-planning-profile-shadow-dossier-60003b79d1982c5a",
     "promotion_blocker_count": 17,
     "report_count": 5,
     "scenario_count": 5,
