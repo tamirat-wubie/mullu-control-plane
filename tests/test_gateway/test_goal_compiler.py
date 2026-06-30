@@ -122,6 +122,36 @@ def test_goal_compiler_treats_external_control_text_as_data_not_authority() -> N
     assert "external_text_treated_as_data_not_authority" in compiled.compile_receipt.assumptions
 
 
+def test_goal_compiler_requires_observable_success_metrics_for_subjective_metric() -> None:
+    compiler = GoalCompiler()
+
+    compiled = compiler.compile(
+        message='/run enterprise.knowledge_search {"query": "Success means I feel it worked."}',
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        world_state=_world_state(),
+    )
+    graph_nodes = {node.node_id: node for node in compiled.causal_chain_graph.nodes}
+    graph_edges = {edge.relation for edge in compiled.causal_chain_graph.edges}
+
+    assert compiled.steps[0].capability_id == "enterprise.knowledge_search"
+    assert "subjective_metric_requires_observable_evidence" in compiled.goal_normal_form.boundaries
+    assert "observable_test_passed" in compiled.goal_normal_form.success_metrics
+    assert "observable_receipt_created" in compiled.goal_normal_form.success_metrics
+    assert "observable_output_reviewed" in compiled.goal_normal_form.success_metrics
+    assert "observable_user_accepted" in compiled.goal_normal_form.success_metrics
+    assert "subjective_success_metric_only" in compiled.gap_theorem.conflicts
+    assert "conflict_pending:subjective_success_metric_only" in compiled.verification_bundle.unresolved
+    assert compiled.judgment == "needs_more_evidence"
+    assert graph_nodes["assumption:subjective_success_metric_only"].ref == "observable_success_metric_required"
+    assert graph_nodes["assumption:subjective_success_metric_only"].proof_state == "Fail"
+    assert "BLOCKS" in graph_edges
+    assert (
+        "subjective_success_metric_requires_observable_evidence"
+        in compiled.compile_receipt.assumptions
+    )
+
+
 def test_goal_compiler_blocks_message_without_capability_plan() -> None:
     compiler = GoalCompiler()
 

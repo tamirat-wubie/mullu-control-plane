@@ -724,6 +724,7 @@ def _build_r2_artifacts(
         capability_passport_loader=capability_passport_loader,
     )
     external_instruction_conflicts = _external_instruction_conflicts(raw_goal)
+    subjective_success_metric_conflicts = _subjective_success_metric_conflicts(raw_goal)
     goal_normal_form = _goal_normal_form(
         raw_goal=raw_goal,
         goal=goal,
@@ -731,6 +732,7 @@ def _build_r2_artifacts(
         operator_contracts=operator_contracts,
         capability_plan=capability_plan,
         external_instruction_conflicts=external_instruction_conflicts,
+        subjective_success_metric_conflicts=subjective_success_metric_conflicts,
     )
     world_facts = _world_facts(world_state)
     gap_theorem = _gap_theorem(
@@ -740,6 +742,7 @@ def _build_r2_artifacts(
         world_state=world_state,
         operator_contracts=operator_contracts,
         external_instruction_conflicts=external_instruction_conflicts,
+        subjective_success_metric_conflicts=subjective_success_metric_conflicts,
     )
     causal_chain_graph = _causal_chain_graph(
         goal=goal,
@@ -792,6 +795,7 @@ def _goal_normal_form(
     operator_contracts: tuple[OperatorContractProjection, ...],
     capability_plan: CapabilityPlan | None,
     external_instruction_conflicts: tuple[str, ...] = (),
+    subjective_success_metric_conflicts: tuple[str, ...] = (),
 ) -> GoalNormalForm:
     effects = _dedupe(
         effect
@@ -815,11 +819,37 @@ def _goal_normal_form(
     external_instruction_boundaries = (
         ("external_text_is_data_not_authority",) if external_instruction_conflicts else ()
     )
+    subjective_success_boundaries = (
+        ("subjective_metric_requires_observable_evidence",)
+        if subjective_success_metric_conflicts
+        else ()
+    )
+    observable_success_metrics = (
+        (
+            "observable_test_passed",
+            "observable_receipt_created",
+            "observable_output_reviewed",
+            "observable_user_accepted",
+        )
+        if subjective_success_metric_conflicts
+        else ()
+    )
+    observable_evidence_required = (
+        (
+            "test_result",
+            "compile_receipt",
+            "review_record",
+            "operator_acceptance",
+        )
+        if subjective_success_metric_conflicts
+        else ()
+    )
     boundaries = (
         "planning_simulation_only",
         "no_execution_dispatch_or_promotion",
         "no_irreversible_external_action_without_explicit_approval",
         *external_instruction_boundaries,
+        *subjective_success_boundaries,
         *approval_boundaries,
     )
     return GoalNormalForm(
@@ -832,11 +862,13 @@ def _goal_normal_form(
             "verified_effect_required",
             "produce_receipt",
             "external_text_cannot_grant_authority",
+            "subjective_success_requires_observable_metric",
         ),
         success_metrics=(
             *goal.success_criteria,
             "causal_chain_graph_plus_built",
             "compile_receipt_emitted",
+            *observable_success_metrics,
         ),
         failure_metrics=(
             "constraint_violation",
@@ -845,16 +877,22 @@ def _goal_normal_form(
             "unbounded_side_effect",
             "missing_receipt",
             "external_instruction_attempt",
+            "subjective_success_metric_only",
         ),
         boundaries=boundaries,
         reversibility_required=goal.risk_tier in {"medium", "high"} or any(
             step.rollback.required for step in steps
         ),
-        required_evidence=tuple(evidence_required),
+        required_evidence=_dedupe((*evidence_required, *observable_evidence_required)),
         temporal_conditions=("revalidate_fresh_state_before_execution",),
         quality_thresholds={
             "minimum_operator_confidence": 0.8,
             "minimum_edge_confidence": 0.8,
+            **(
+                {"minimum_observable_success_metric_count": 2.0}
+                if subjective_success_metric_conflicts
+                else {}
+            ),
         },
     )
 
@@ -934,6 +972,20 @@ def _external_instruction_conflicts(raw_goal: str) -> tuple[str, ...]:
     return ()
 
 
+def _subjective_success_metric_conflicts(raw_goal: str) -> tuple[str, ...]:
+    lowered_goal = raw_goal.lower()
+    subjective_markers = (
+        "success means i feel",
+        "success is when i feel",
+        "i feel it worked",
+        "feels like it worked",
+        "feel like it worked",
+    )
+    if any(marker in lowered_goal for marker in subjective_markers):
+        return ("subjective_success_metric_only",)
+    return ()
+
+
 def _operator_contract_projections(
     *,
     steps: tuple[GovernedPlanStep, ...],
@@ -977,6 +1029,7 @@ def _gap_theorem(
     world_state: WorldState | None,
     operator_contracts: tuple[OperatorContractProjection, ...],
     external_instruction_conflicts: tuple[str, ...] = (),
+    subjective_success_metric_conflicts: tuple[str, ...] = (),
 ) -> GapTheorem:
     missing_facts = () if world_state is not None else ("world_state_projection",)
     if _world_state_requires_refresh(world_state):
@@ -1007,6 +1060,7 @@ def _gap_theorem(
         if not step.side_effects_bounded:
             conflicts.append(f"unbounded_side_effect:{step.step_id}")
     conflicts.extend(external_instruction_conflicts)
+    conflicts.extend(subjective_success_metric_conflicts)
     return GapTheorem(
         missing_facts=tuple(missing_facts),
         missing_permissions=tuple(missing_permissions),
@@ -1209,14 +1263,20 @@ def _causal_chain_graph(
         )
 
     for conflict in gap_theorem.conflicts:
-        if conflict != "external_instruction_attempt":
+        if conflict == "external_instruction_attempt":
+            conflict_ref = "external_text_cannot_grant_authority"
+            proof_type = "external_instruction_boundary"
+        elif conflict == "subjective_success_metric_only":
+            conflict_ref = "observable_success_metric_required"
+            proof_type = "success_metric_boundary"
+        else:
             continue
         conflict_node_id = f"assumption:{conflict}"
         nodes.append(
             CausalGraphNode(
                 node_id=conflict_node_id,
                 node_type="AssumptionNode",
-                ref="external_text_cannot_grant_authority",
+                ref=conflict_ref,
                 status="blocked",
                 proof_state="Fail",
             )
@@ -1227,7 +1287,7 @@ def _causal_chain_graph(
                 target=f"goal:{goal.goal_id}",
                 relation="BLOCKS",
                 confidence=1.0,
-                proof_type="external_instruction_boundary",
+                proof_type=proof_type,
             )
         )
 
@@ -1356,6 +1416,9 @@ def _compile_receipt(
             "post_step_evidence_pending_until_execution" if gap_theorem.missing_evidence else "",
             "external_text_treated_as_data_not_authority"
             if "external_instruction_attempt" in gap_theorem.conflicts
+            else "",
+            "subjective_success_metric_requires_observable_evidence"
+            if "subjective_success_metric_only" in gap_theorem.conflicts
             else "",
         )
         if item
