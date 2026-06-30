@@ -26,8 +26,36 @@ from scripts.validate_personal_assistant_send_preparation_receipt import (
 
 ROOT = Path(__file__).resolve().parent.parent
 SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_send_preparation_receipt.schema.json"
+REHEARSAL_PACKET_PATH = ROOT / "examples" / "personal_assistant_email_send_with_approval_rehearsal_packet.json"
 HEX_A = "a" * 64
 HEX_B = "b" * 64
+
+
+def test_personal_assistant_email_send_rehearsal_packet_validates_ready_without_effects() -> None:
+    validation = validate_personal_assistant_send_preparation_receipt(
+        receipt_path=REHEARSAL_PACKET_PATH,
+        schema_path=SCHEMA_PATH,
+        require_ready=True,
+    )
+    payload = json.loads(REHEARSAL_PACKET_PATH.read_text(encoding="utf-8"))
+
+    assert validation.valid is True
+    assert validation.ready is True
+    assert validation.status == "passed"
+    assert validation.solver_outcome == "SolvedVerified"
+    assert payload["workflow_id"] == "personal_assistant.email_send_with_approval"
+    assert payload["send_preparation_authorized_by_decision"] is True
+    assert payload["external_send_authorized_by_decision"] is False
+    assert payload["send_execution_performed_by_producer"] is False
+    assert payload["draft_created_by_producer"] is False
+    assert payload["external_mailbox_write_performed"] is False
+    assert payload["external_message_sent"] is False
+    assert payload["connector_mutation_performed"] is False
+    assert payload["system_of_record_write_performed"] is False
+    assert payload["memory_write_performed"] is False
+    assert payload["raw_message_content_serialized"] is False
+    assert payload["raw_recipient_serialized"] is False
+    assert payload["no_secret_values_serialized"] is True
 
 
 def test_personal_assistant_send_preparation_validation_accepts_blocked_receipt(tmp_path: Path) -> None:
