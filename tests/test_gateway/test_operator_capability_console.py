@@ -35,6 +35,7 @@ from gateway.operator_control_tower import (  # noqa: E402
     developer_workflow_capability_summary,
     developer_workflow_control_summary,
     developer_workflow_operator_action_banner,
+    operator_dashboard_control_display,
     operator_dashboard_control_summary,
 )
 from gateway.operator_sandbox_patch_readiness import (  # noqa: E402
@@ -4069,6 +4070,44 @@ def test_operator_dashboard_control_summary_contract_cases() -> None:
     assert summary["external_effects_allowed"] is False
     assert summary["rollback_required"] is True
     assert summary["capability_summary"]["capability_id"] == "example.capability"
+
+
+def test_operator_dashboard_control_display_fallback_cases() -> None:
+    missing = operator_dashboard_control_display(
+        {"control_summary": "not-a-mapping"},
+        default_summary_id="missing.control_summary.v1",
+        default_status="evidence_required",
+        default_current_level="L1",
+        default_next_level="L2",
+        default_next_unlock="receipt",
+    )
+    partial = operator_dashboard_control_display(
+        {
+            "control_summary": {
+                "summary_id": "partial.control_summary.v1",
+                "status": "approval_required",
+                "current_level": "L3",
+            }
+        },
+        default_summary_id="fallback.control_summary.v1",
+        default_status="blocked",
+        default_current_level="L0",
+        default_next_level="L5",
+        default_next_unlock="approval",
+    )
+
+    assert missing.contract_id == "operator_dashboard_control_summary.v1"
+    assert missing.summary_id == "missing.control_summary.v1"
+    assert missing.status == "evidence_required"
+    assert missing.current_level == "L1"
+    assert missing.next_level == "L2"
+    assert missing.next_unlock == "receipt"
+    assert partial.contract_id == "operator_dashboard_control_summary.v1"
+    assert partial.summary_id == "partial.control_summary.v1"
+    assert partial.status == "approval_required"
+    assert partial.current_level == "L3"
+    assert partial.next_level == "L5"
+    assert partial.next_unlock == "approval"
 
 
 def test_developer_workflow_control_summary_cases() -> None:
