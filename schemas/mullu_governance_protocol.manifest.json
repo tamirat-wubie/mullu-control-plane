@@ -527,6 +527,12 @@
       "urn": "urn:mullusi:schema:browser-observation-receipt:1"
     },
     {
+      "path": "schemas/browser_submit_approval_rehearsal_packet.schema.json",
+      "schema_id": "browser-submit-approval-rehearsal-packet",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:browser-submit-approval-rehearsal-packet:1"
+    },
+    {
       "path": "schemas/capability_adapter_closure_plan.schema.json",
       "schema_id": "capability-adapter-closure-plan",
       "surface": "promotion",

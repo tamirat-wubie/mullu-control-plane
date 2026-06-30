@@ -175,6 +175,42 @@ Validation command:
 python scripts/validate_personal_assistant_send_preparation_receipt.py --receipt examples/personal_assistant_email_send_with_approval_rehearsal_packet.json --require-ready
 ```
 
+### Browser Submit Rehearsal Packet
+
+The next bounded closure artifact is:
+
+```text
+examples/browser_submit_approval_rehearsal_packet.foundation.json
+```
+
+This packet binds `browser.submit` to digest-only browser observation evidence
+and an approval-ready decision ref without performing the submit. It carries no
+raw URL, selector, form payload, field names, field values, cookies, session
+data, or secret values. These effect fields stay false:
+
+```text
+form_submit_performed
+navigation_performed
+click_performed
+keystroke_injection_performed
+external_write_performed
+connector_mutation_performed
+system_of_record_write_performed
+raw_url_serialized
+raw_selector_serialized
+raw_form_payload_serialized
+raw_field_name_serialized
+raw_field_value_serialized
+cookie_or_session_read
+secret_value_serialized
+```
+
+Validation command:
+
+```powershell
+python scripts/validate_browser_submit_approval_rehearsal_packet.py --require-ready
+```
+
 Do not enable live execution from this ranking. The ranking chooses the next
 evidence work only.
 
