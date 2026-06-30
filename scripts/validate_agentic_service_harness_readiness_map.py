@@ -707,6 +707,14 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "redacted diff bundle ref",
     "GitHub PR terminal closure certificate candidate command-preview certificate binding PR",
     "agentic_service_harness_github_pr_terminal_closure_certificate_candidate",
+    "command-preview terminal closure certificate evidence",
+    "source terminal closure certificate witness id/ref",
+    "source command-preview effect reconciliation evidence ref",
+    "source effect reconciliation witness id/ref",
+    "source CI gate witness id/ref",
+    "source rollback witness id/ref",
+    "source UAO witness id/ref",
+    "source branch-write binding id/ref",
     "command-preview terminal closure certificate witness",
     "actual-diff terminal closure certificate witness",
     "actual-diff approval request binding",
@@ -1538,7 +1546,7 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     candidate_row = re.search(
-        r"^\| GitHub PR terminal closure certificate candidate command-preview certificate binding PR \| READY \| .+command-preview terminal closure certificate witness.+redacted command preview.+actual-diff terminal closure certificate witness.+actual-diff approval request binding.+Candidate status remains AwaitingEvidence/operator-approval-bound.+terminal closure remain blocked\. \|$",
+        r"^\| GitHub PR terminal closure certificate candidate command-preview certificate binding PR \| READY \| .+command-preview terminal closure certificate evidence.+source terminal closure certificate witness id/ref.+source command-preview effect reconciliation evidence ref.+source effect reconciliation witness id/ref.+source CI gate witness id/ref.+source rollback witness id/ref.+source UAO witness id/ref.+source branch-write binding id/ref.+command-preview terminal closure certificate witness.+redacted command preview.+actual-diff terminal closure certificate witness.+actual-diff approval request binding.+Candidate status remains AwaitingEvidence/operator-approval-bound.+terminal closure remain blocked\. \|$",
         map_text,
         re.MULTILINE,
     )
@@ -1678,7 +1686,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure certificate candidate to command-preview terminal closure certificate evidence",
+        "harness(pr): bind terminal closure operator approval gate to command-preview candidate evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:

@@ -173,6 +173,90 @@ def test_github_pr_terminal_closure_certificate_candidate_rejects_command_previe
     assert "certificate_candidate.command_preview_bound must be true" in serialized_errors
 
 
+def test_github_pr_terminal_closure_certificate_candidate_rejects_command_preview_certificate_evidence_capsule_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_candidate(
+        command_preview_terminal_closure_certificate_evidence__source_binding_id=(
+            "agentic_service_harness_github_pr_drift"
+        ),
+        command_preview_terminal_closure_certificate_evidence__source_effect_reconciliation_binding_id=(
+            "agentic_service_harness_github_pr_drift"
+        ),
+        command_preview_terminal_closure_certificate_evidence__source_ci_gate_binding_id=(
+            "agentic_service_harness_github_pr_drift"
+        ),
+        command_preview_terminal_closure_certificate_evidence__source_repository_effect_rollback_plan_witness_id=(
+            "agentic_service_harness_github_pr_drift"
+        ),
+        command_preview_terminal_closure_certificate_evidence__source_uao_admission_witness_id=(
+            "agentic_service_harness_github_pr_drift"
+        ),
+        command_preview_terminal_closure_certificate_evidence__source_branch_write_binding_id=(
+            "agentic_service_harness_github_pr_drift"
+        ),
+        command_preview_terminal_closure_certificate_evidence__source_terminal_closure_certificate_collected=True,
+        command_preview_terminal_closure_certificate_evidence__source_terminal_closure_authorized=True,
+        command_preview_terminal_closure_certificate_evidence__source_effect_reconciliation_collected=True,
+        command_preview_terminal_closure_certificate_evidence__source_authority_granted=True,
+        command_preview_terminal_closure_certificate_evidence__candidate_consumes_command_preview_terminal_closure_certificate_evidence=False,
+        command_preview_terminal_closure_certificate_evidence__candidate_consumes_command_preview_effect_reconciliation_evidence=False,
+        command_preview_terminal_closure_certificate_evidence__operator_approval_required=False,
+        command_preview_terminal_closure_certificate_evidence__certificate_minting_remains_blocked=False,
+        command_preview_terminal_closure_certificate_evidence__terminal_closure_remains_blocked=False,
+        command_preview_terminal_closure_certificate_evidence__repository_write_remains_blocked=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_candidate_semantics(
+        payload,
+        _source_live_evidence(),
+        _source_terminal_witness(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_terminal_closure_certificate_evidence.source_binding_id" in serialized_errors
+    assert (
+        "command_preview_terminal_closure_certificate_evidence.source_effect_reconciliation_binding_id"
+        in serialized_errors
+    )
+    assert "command_preview_terminal_closure_certificate_evidence.source_ci_gate_binding_id" in serialized_errors
+    assert (
+        "command_preview_terminal_closure_certificate_evidence.source_repository_effect_rollback_plan_witness_id"
+        in serialized_errors
+    )
+    assert "command_preview_terminal_closure_certificate_evidence.source_uao_admission_witness_id" in serialized_errors
+    assert "command_preview_terminal_closure_certificate_evidence.source_branch_write_binding_id" in serialized_errors
+    assert (
+        "command_preview_terminal_closure_certificate_evidence.source_terminal_closure_certificate_collected"
+        " must be false"
+    ) in serialized_errors
+    assert (
+        "command_preview_terminal_closure_certificate_evidence.source_terminal_closure_authorized must be false"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_terminal_closure_certificate_evidence.source_effect_reconciliation_collected must be false"
+        in serialized_errors
+    )
+    assert "command_preview_terminal_closure_certificate_evidence.source_authority_granted must be false" in serialized_errors
+    assert (
+        "command_preview_terminal_closure_certificate_evidence."
+        "candidate_consumes_command_preview_terminal_closure_certificate_evidence must be true"
+    ) in serialized_errors
+    assert (
+        "command_preview_terminal_closure_certificate_evidence."
+        "candidate_consumes_command_preview_effect_reconciliation_evidence must be true"
+    ) in serialized_errors
+    assert "command_preview_terminal_closure_certificate_evidence.operator_approval_required must be true" in serialized_errors
+    assert (
+        "command_preview_terminal_closure_certificate_evidence.certificate_minting_remains_blocked must be true"
+        in serialized_errors
+    )
+    assert "command_preview_terminal_closure_certificate_evidence.terminal_closure_remains_blocked must be true" in serialized_errors
+    assert "command_preview_terminal_closure_certificate_evidence.repository_write_remains_blocked must be true" in serialized_errors
+
+
 def test_github_pr_terminal_closure_certificate_candidate_rejects_mutation_authority() -> None:
     payload = validator.build_mutated_terminal_closure_certificate_candidate(
         authority_granted=True,
