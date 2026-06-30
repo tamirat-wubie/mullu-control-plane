@@ -211,6 +211,11 @@ def build_capability_friction_control_read_model(
                 "required_for_closure": True,
             },
             {
+                "validator_id": "operator_developer_workflow_status_read_model_builder",
+                "command": "python scripts/build_operator_developer_workflow_status_read_model.py --json",
+                "required_for_closure": True,
+            },
+            {
                 "validator_id": "operator_control_tower_status_receipt_validator",
                 "command": "python scripts/validate_operator_control_tower_status_receipt.py",
                 "required_for_closure": True,
@@ -303,6 +308,11 @@ def build_capability_friction_control_read_model(
             {
                 "validator_id": "developer_workflow_operator_receipt_tests",
                 "command": "python -m pytest tests/test_build_developer_workflow_operator_receipt.py -q",
+                "required_for_closure": True,
+            },
+            {
+                "validator_id": "operator_developer_workflow_status_read_model_tests",
+                "command": "python -m pytest tests/test_build_operator_developer_workflow_status_read_model.py -q",
                 "required_for_closure": True,
             },
             {
