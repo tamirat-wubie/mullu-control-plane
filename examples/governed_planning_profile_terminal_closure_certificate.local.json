@@ -1,5 +1,5 @@
 {
-  "certificate_id": "governed-planning-profile-terminal-closure-certificate-fc9099fde7ef466c",
+  "certificate_id": "governed-planning-profile-terminal-closure-certificate-e93007c1e9ab27b7",
   "schema_version": "governed_planning_profile_terminal_closure_certificate.v1",
   "profile_id": "governed-planning-profile-foundation-v1",
   "certified_at": "2026-06-19T00:00:00Z",
@@ -18,8 +18,8 @@
   "success_claim_allowed": false,
   "terminal_closure": false,
   "source_replay_recovery_witness": {
-    "witness_id": "governed-planning-profile-replay-recovery-witness-8f350803bae2b651",
-    "witness_hash": "8f350803bae2b651d4f309d56e993f692a1351baf5bf20b447b464624def6c33",
+    "witness_id": "governed-planning-profile-replay-recovery-witness-f55bf8010f4b2b3d",
+    "witness_hash": "f55bf8010f4b2b3dc7c459143892857353d308d91e74a64eabaf10afab169ec1",
     "replay_recovery_witness_status": "CollectedNoEffect",
     "replay_recovery_gate_satisfied": true,
     "scenario_witness_count": 5,
@@ -36,7 +36,7 @@
     {
       "control_id": "source_replay_recovery_witness_valid",
       "status": "Pass",
-      "evidence_ref": "governed-planning-profile-replay-recovery-witness-8f350803bae2b651",
+      "evidence_ref": "governed-planning-profile-replay-recovery-witness-f55bf8010f4b2b3d",
       "blocks_runtime_promotion_evidence": false
     },
     {
@@ -194,5 +194,5 @@
     }
   ],
   "next_action": "submit separate runtime promotion authorization request before activation",
-  "certificate_hash": "fc9099fde7ef466cd0867e81d538675bf960b833a88e51e44987b9f4bc491295"
+  "certificate_hash": "e93007c1e9ab27b723b6dcb8bc3bef5af9577df2089ec2d9e02ffb6c97aea834"
 }

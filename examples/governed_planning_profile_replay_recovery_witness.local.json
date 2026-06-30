@@ -62,7 +62,7 @@
     {
       "blocks_runtime_promotion": false,
       "control_id": "source_approval_packet_valid",
-      "evidence_ref": "governed-planning-profile-runtime-promotion-approval-packet-c2bf975e8279ecea",
+      "evidence_ref": "governed-planning-profile-runtime-promotion-approval-packet-0f20f173e2a9dc55",
       "status": "Pass"
     },
     {
@@ -188,8 +188,8 @@
   "schema_version": "governed_planning_profile_replay_recovery_witness.v1",
   "solver_outcome": "AwaitingEvidence",
   "source_runtime_promotion_approval_packet": {
-    "packet_hash": "c2bf975e8279ecea8ab7fffb6159d51f0431d15660b44d22fb8547b456ff0aae",
-    "packet_id": "governed-planning-profile-runtime-promotion-approval-packet-c2bf975e8279ecea",
+    "packet_hash": "0f20f173e2a9dc55ed4afc2fb75fa51fe47e808b56c2cb1c00878fe881187111",
+    "packet_id": "governed-planning-profile-runtime-promotion-approval-packet-0f20f173e2a9dc55",
     "remaining_promotion_gate_count": 2,
     "runtime_promotion_approval_collected": true,
     "runtime_promotion_approval_status": "ConditionallyApprovedNoEffect",
@@ -204,7 +204,7 @@
       "validator_id": "governed-planning-profile-replay-recovery-witness"
     }
   ],
-  "witness_hash": "8f350803bae2b651d4f309d56e993f692a1351baf5bf20b447b464624def6c33",
-  "witness_id": "governed-planning-profile-replay-recovery-witness-8f350803bae2b651",
+  "witness_hash": "f55bf8010f4b2b3dc7c459143892857353d308d91e74a64eabaf10afab169ec1",
+  "witness_id": "governed-planning-profile-replay-recovery-witness-f55bf8010f4b2b3d",
   "witnessed_at": "2026-06-19T00:00:00Z"
 }
