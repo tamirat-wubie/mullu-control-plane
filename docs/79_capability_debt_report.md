@@ -141,6 +141,40 @@ capability before widening the pattern. The first practical target is
 assistant examples already contain related approval queue, review packet, and
 decision evidence records.
 
+### Email Send Rehearsal Packet
+
+The first bounded closure artifact is:
+
+```text
+examples/personal_assistant_email_send_with_approval_rehearsal_packet.json
+```
+
+This packet binds the existing approval decision evidence to a redacted
+send-preparation rehearsal for `email.send.with_approval`. It is intentionally
+not a send receipt. It carries only refs and SHA-256 digests, and keeps these
+effect fields false:
+
+```text
+external_send_authorized_by_decision
+send_execution_performed_by_producer
+draft_created_by_producer
+external_mailbox_write_performed
+external_message_sent
+connector_mutation_performed
+system_of_record_write_performed
+memory_write_performed
+raw_message_content_serialized
+raw_recipient_serialized
+raw_subject_serialized
+raw_body_serialized
+```
+
+Validation command:
+
+```powershell
+python scripts/validate_personal_assistant_send_preparation_receipt.py --receipt examples/personal_assistant_email_send_with_approval_rehearsal_packet.json --require-ready
+```
+
 Do not enable live execution from this ranking. The ranking chooses the next
 evidence work only.
 
