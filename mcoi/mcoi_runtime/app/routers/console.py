@@ -27,7 +27,16 @@ from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
 from mcoi_runtime.app.view_models import WHQRBindingClarificationStatusView
 from mcoi_runtime.contracts.conversation import ConversationThread
+from mcoi_runtime.contracts.operator_console_first import (
+    ConsoleIntentClass,
+    ConsolePlannedAction,
+    RecoveryClass,
+    SideEffectManifest,
+    StateSnapshot,
+)
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.operator_console_first import OperatorConsoleFirstRuntime
+from mcoi_runtime.core.operator_console_first_read_model import build_operator_console_read_model
 from mcoi_runtime.core.spatial_governance import build_gateway_spatial_map
 from mcoi_runtime.personal_assistant.console import (
     build_personal_assistant_console_read_model,
@@ -547,10 +556,85 @@ def console_personal_assistant_view():
     return HTMLResponse(render_personal_assistant_console_html(_personal_assistant_console_payload()))
 
 
+@router.get("/api/v1/console/operator-console-first")
+def console_operator_console_first():
+    """Operator Console First foundation panel read model."""
+
+    deps.metrics.inc("requests_governed")
+    try:
+        return _operator_console_first_console_payload()
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "operator_console_first_projection_invalid",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 def _personal_assistant_console_payload() -> dict[str, object]:
     """Build the foundation personal-assistant console payload."""
 
     return build_personal_assistant_console_read_model(generated_at=_utc_timestamp())
+
+
+def _operator_console_first_console_payload() -> dict[str, object]:
+    """Build the bounded OCF foundation projection without dispatch authority."""
+
+    generated_at = _utc_timestamp()
+    runtime = OperatorConsoleFirstRuntime(clock=lambda: generated_at)
+    snapshot = StateSnapshot(
+        source="console.foundation.operator_console_first",
+        captured_at=generated_at,
+        expires_at="2999-01-01T00:00:00Z",
+        state_hash="foundation-operator-console-first-state",
+        trust_level=1.0,
+    )
+    episode = runtime.capture_episode(
+        operator_id="foundation-operator",
+        raw_request="Review the proposed Operator Console First execution plan.",
+        intent_class=ConsoleIntentClass.EXTERNAL_IRREVERSIBLE,
+        governed_goal={
+            "objective": "surface_operator_console_first_panels",
+            "closure": "read_model_only",
+        },
+        scope={
+            "surface": "operator_console",
+            "mode": "foundation_read_only",
+        },
+        snapshot=snapshot,
+    )
+    action = ConsolePlannedAction(
+        action_id="ocf-foundation-plan-review",
+        capability_id="capability.operator_console_first.review",
+        intent_class=ConsoleIntentClass.EXTERNAL_IRREVERSIBLE,
+        risk_score=60,
+        expected_effects=("operator_plan_reviewed",),
+        side_effects_declared=True,
+        side_effects=SideEffectManifest(reads_data=True),
+        recovery_class=RecoveryClass.R0_NONE,
+        evidence_required=(
+            "operator_approval_receipt",
+            "independent_verification_record",
+        ),
+    )
+    planned_episode = runtime.plan_episode(episode, (action,))
+    payload = build_operator_console_read_model(planned_episode, generated_at=generated_at)
+    payload.update(
+        {
+            "governed": True,
+            "read_only": True,
+            "route_boundary": {
+                "projection_only": True,
+                "execution_allowed": False,
+                "dispatch_allowed": False,
+                "approval_write_allowed": False,
+                "gateway_dispatch_allowed": False,
+            },
+        }
+    )
+    return payload
 
 
 def _utc_timestamp() -> str:
@@ -984,5 +1068,6 @@ def full_console():
         "whqr_clarifications": console_whqr_binding_clarifications(),
         "spatial_map": build_gateway_spatial_map(production_readiness_checks()).to_dict(),
         "personal_assistant": _personal_assistant_console_payload(),
+        "operator_console_first": _operator_console_first_console_payload(),
         "governed": True,
     }

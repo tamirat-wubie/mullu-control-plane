@@ -1724,14 +1724,14 @@
         "personal_assistant"
       ],
       "component_lane": "assistant_product_core",
-      "declared_route_count": 16,
+      "declared_route_count": 17,
       "notes": "Route family classification records proof-surface ownership posture only; it does not grant route execution authority.",
       "sample_routes": [
         "/api/v1/console",
         "/api/v1/console/audit",
         "/api/v1/console/checkpoints",
-        "/api/v1/console/home",
-        "/api/v1/console/note-memory"
+        "/api/v1/console/note-memory",
+        "/api/v1/console/operator-console-first"
       ],
       "surface_id": "operator_console_read_models"
     },
