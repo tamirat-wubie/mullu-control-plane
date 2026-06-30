@@ -95,7 +95,7 @@ def test_browser_sandbox_evidence_default_workspace_is_probe_scoped(
 ) -> None:
     captured: dict[str, object] = {}
     output_path = tmp_path / "browser-sandbox-evidence.json"
-    default_workspace = tmp_path / "mullusi_browser_sandbox_workspace"
+    default_workspace = tmp_path / ".tmp" / "browser_sandbox_workspace"
     monkeypatch.setattr(
         "scripts.produce_browser_sandbox_evidence.DEFAULT_WORKSPACE_ROOT",
         default_workspace,
@@ -118,8 +118,11 @@ def test_browser_sandbox_evidence_default_workspace_is_probe_scoped(
     assert (default_workspace / "README.txt").read_text(encoding="utf-8") == (
         "browser sandbox probe workspace\n"
     )
-    assert str(default_workspace.resolve()) in " ".join(docker_argv)
-    assert str(_ROOT.resolve()) not in payload["sandbox_profile"]["workspace_mount"]
+    docker_argv_text = " ".join(str(item) for item in docker_argv)
+    assert str(default_workspace.resolve()) in docker_argv_text
+    assert f"src={_ROOT.resolve()},dst=/workspace" not in docker_argv_text
+    assert default_workspace.resolve() != _ROOT.resolve()
+    assert len(payload["workspace_root_hash"]) == 64
     assert payload["receipt"]["changed_file_count"] == 0
 
 
