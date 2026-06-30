@@ -123,6 +123,7 @@
         "operator_decision_ref",
         "command_preview_approval_gate_evidence",
         "actual_diff_approval_gate_evidence",
+        "command_preview_certificate_candidate_evidence",
         "explicit_decision_value_required",
         "allowed_decision_values",
         "generic_continuation_rejected",
@@ -151,6 +152,9 @@
         },
         "command_preview_approval_gate_evidence": { "$ref": "#/$defs/command_preview_approval_gate_evidence" },
         "actual_diff_approval_gate_evidence": { "$ref": "#/$defs/actual_diff_approval_gate_evidence" },
+        "command_preview_certificate_candidate_evidence": {
+          "$ref": "#/$defs/command_preview_certificate_candidate_evidence"
+        },
         "explicit_decision_value_required": { "type": "boolean", "const": true },
         "allowed_decision_values": {
           "type": "array",
@@ -357,6 +361,104 @@
         "binds_check_state": { "type": "boolean", "const": true },
         "binds_merge_state": { "type": "boolean", "const": true },
         "binds_branch_deletion_state": { "type": "boolean", "const": true }
+      }
+    },
+    "command_preview_certificate_candidate_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_terminal_closure_certificate_witness_ref",
+        "source_binding_id",
+        "source_requested_evidence_ref",
+        "source_terminal_closure_certificate_request_id",
+        "source_command_preview_effect_reconciliation_evidence_ref",
+        "source_effect_reconciliation_witness_ref",
+        "source_effect_reconciliation_binding_id",
+        "source_ci_gate_before_ready_for_review_witness_ref",
+        "source_ci_gate_binding_id",
+        "source_repository_effect_rollback_plan_witness_id",
+        "source_repository_effect_rollback_plan_witness_ref",
+        "source_uao_admission_witness_id",
+        "source_uao_admission_witness_ref",
+        "source_branch_write_binding_id",
+        "source_branch_write_binding_ref",
+        "source_command_preview_ref",
+        "source_redacted_command_preview",
+        "source_argument_vector_template",
+        "source_placeholder_refs",
+        "source_actual_non_empty_diff_receipt_ref",
+        "source_changed_file_refs",
+        "source_diff_refs",
+        "source_redacted_diff_bundle_ref",
+        "source_redacted_output_ref",
+        "source_terminal_closure_certificate_collected",
+        "source_terminal_closure_authorized",
+        "source_effect_reconciliation_collected",
+        "source_authority_granted",
+        "candidate_consumes_command_preview_terminal_closure_certificate_evidence",
+        "candidate_consumes_command_preview_effect_reconciliation_evidence",
+        "operator_approval_required",
+        "certificate_minting_remains_blocked",
+        "terminal_closure_remains_blocked",
+        "repository_write_remains_blocked"
+      ],
+      "properties": {
+        "source_terminal_closure_certificate_witness_ref": { "type": "string", "minLength": 1 },
+        "source_binding_id": { "type": "string", "minLength": 1 },
+        "source_requested_evidence_ref": { "type": "string", "minLength": 1 },
+        "source_terminal_closure_certificate_request_id": { "type": "string", "minLength": 1 },
+        "source_command_preview_effect_reconciliation_evidence_ref": { "type": "string", "minLength": 1 },
+        "source_effect_reconciliation_witness_ref": { "type": "string", "minLength": 1 },
+        "source_effect_reconciliation_binding_id": { "type": "string", "minLength": 1 },
+        "source_ci_gate_before_ready_for_review_witness_ref": { "type": "string", "minLength": 1 },
+        "source_ci_gate_binding_id": { "type": "string", "minLength": 1 },
+        "source_repository_effect_rollback_plan_witness_id": { "type": "string", "minLength": 1 },
+        "source_repository_effect_rollback_plan_witness_ref": { "type": "string", "minLength": 1 },
+        "source_uao_admission_witness_id": { "type": "string", "minLength": 1 },
+        "source_uao_admission_witness_ref": { "type": "string", "minLength": 1 },
+        "source_branch_write_binding_id": { "type": "string", "minLength": 1 },
+        "source_branch_write_binding_ref": { "type": "string", "minLength": 1 },
+        "source_command_preview_ref": { "type": "string", "minLength": 1 },
+        "source_redacted_command_preview": { "type": "string", "minLength": 1 },
+        "source_argument_vector_template": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "source_placeholder_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^placeholder://" }
+        },
+        "source_actual_non_empty_diff_receipt_ref": { "type": "string", "minLength": 1 },
+        "source_changed_file_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^evidence://redacted-file-change-candidate/" }
+        },
+        "source_diff_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^evidence://redacted-diff-candidate/" }
+        },
+        "source_redacted_diff_bundle_ref": { "type": "string", "minLength": 1 },
+        "source_redacted_output_ref": { "type": "string", "minLength": 1 },
+        "source_terminal_closure_certificate_collected": { "type": "boolean", "const": false },
+        "source_terminal_closure_authorized": { "type": "boolean", "const": false },
+        "source_effect_reconciliation_collected": { "type": "boolean", "const": false },
+        "source_authority_granted": { "type": "boolean", "const": false },
+        "candidate_consumes_command_preview_terminal_closure_certificate_evidence": {
+          "type": "boolean",
+          "const": true
+        },
+        "candidate_consumes_command_preview_effect_reconciliation_evidence": {
+          "type": "boolean",
+          "const": true
+        },
+        "operator_approval_required": { "type": "boolean", "const": true },
+        "certificate_minting_remains_blocked": { "type": "boolean", "const": true },
+        "terminal_closure_remains_blocked": { "type": "boolean", "const": true },
+        "repository_write_remains_blocked": { "type": "boolean", "const": true }
       }
     },
     "remaining_witness": {

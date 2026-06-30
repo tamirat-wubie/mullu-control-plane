@@ -152,6 +152,38 @@ def test_github_pr_terminal_closure_operator_decision_contract_rejects_actual_di
     assert "decision_contract.actual_diff_approval_gate_evidence.redacted_output_ref expected" in serialized_errors
 
 
+def test_github_pr_terminal_closure_operator_decision_contract_rejects_command_preview_certificate_candidate_capsule_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_operator_decision_contract(
+        decision_contract__command_preview_certificate_candidate_evidence__source_binding_id="other_terminal_witness",
+        decision_contract__command_preview_certificate_candidate_evidence__source_command_preview_ref=(
+            "examples/other-command-preview.json"
+        ),
+        decision_contract__command_preview_certificate_candidate_evidence__source_argument_vector_template=[
+            "gh",
+            "pr",
+            "create",
+            "--body",
+            "leaked",
+        ],
+        decision_contract__command_preview_certificate_candidate_evidence__source_terminal_closure_certificate_collected=True,
+        decision_contract__command_preview_certificate_candidate_evidence__source_authority_granted=True,
+        decision_contract__command_preview_certificate_candidate_evidence__candidate_consumes_command_preview_terminal_closure_certificate_evidence=False,
+        decision_contract__command_preview_certificate_candidate_evidence__terminal_closure_remains_blocked=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_operator_decision_contract_semantics(payload, _source_gate(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "decision_contract.command_preview_certificate_candidate_evidence.source_binding_id expected" in serialized_errors
+    assert "decision_contract.command_preview_certificate_candidate_evidence.source_command_preview_ref expected" in serialized_errors
+    assert "decision_contract.command_preview_certificate_candidate_evidence.source_argument_vector_template expected" in serialized_errors
+    assert "decision_contract.command_preview_certificate_candidate_evidence.source_terminal_closure_certificate_collected must be false" in serialized_errors
+    assert "decision_contract.command_preview_certificate_candidate_evidence.source_authority_granted must be false" in serialized_errors
+    assert "decision_contract.command_preview_certificate_candidate_evidence.candidate_consumes_command_preview_terminal_closure_certificate_evidence must be true" in serialized_errors
+    assert "decision_contract.command_preview_certificate_candidate_evidence.terminal_closure_remains_blocked must be true" in serialized_errors
+
+
 def test_github_pr_terminal_closure_operator_decision_contract_rejects_bad_decision_shape() -> None:
     payload = validator.build_mutated_terminal_closure_operator_decision_contract(
         decision_contract__allowed_decision_values=["continue"],
