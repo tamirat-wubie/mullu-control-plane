@@ -179,6 +179,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_live_producer_operator_decision_value_record",
         "foundation_mode",
         "foundation_local_proof_thread",
+        "evidence_ledger_foundation_source",
         *(
             script_path.stem.removeprefix("validate_")
             for script_path in _foundation_boundary_validator_scripts()

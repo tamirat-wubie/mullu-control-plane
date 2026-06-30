@@ -994,6 +994,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_evidence_ledger_boundary.py"),
         ),
         CheckCommand(
+            "evidence_ledger_foundation_source",
+            (python_executable, "scripts/validate_evidence_ledger_foundation_source.py"),
+        ),
+        CheckCommand(
             "foundation_decision_journal_boundary",
             (python_executable, "scripts/validate_foundation_decision_journal_boundary.py"),
         ),

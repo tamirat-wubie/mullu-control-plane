@@ -141,6 +141,7 @@ def build_foundation_evidence_ledger_read_model(
             "test_evidence_ledger_kernel",
             "test_evidence_ledger_read_model_route",
             "test_evidence_ledger_repository_source",
+            "validate_evidence_ledger_foundation_source",
             "validate_sdlc_artifact",
             "validate_agents_governance",
         ],
@@ -155,7 +156,7 @@ def build_foundation_evidence_ledger_read_model(
             "repository_source_is_not_write_path": bool(source_payload.get("source_is_not_write_path") is True),
             "append_only_hash_chain_verified": chain.verified,
         },
-        "next_action": "Add an append-only repository-local source validator before any live evidence write path.",
+        "next_action": "Run the repository-local source validator before any live evidence write path is admitted.",
     }
 
 
