@@ -197,6 +197,52 @@ def test_github_pr_ci_gate_before_ready_for_review_witness_rejects_command_previ
     assert "ci_gate.placeholder_refs" in serialized_errors
 
 
+def test_github_pr_ci_gate_before_ready_for_review_witness_rejects_rollback_evidence_capsule_drift() -> None:
+    payload = validator.build_mutated_ci_gate_before_ready_for_review_witness(
+        command_preview_repository_effect_rollback_evidence__source_binding_id="agentic_service_harness_github_pr_drifted",
+        command_preview_repository_effect_rollback_evidence__source_uao_admission_witness_id="drifted_uao_witness",
+        command_preview_repository_effect_rollback_evidence__source_branch_write_binding_id="drifted_branch_write_binding",
+        command_preview_repository_effect_rollback_evidence__source_repository_effect_rollback_plan_collected=True,
+        command_preview_repository_effect_rollback_evidence__source_pr_creation_authorized_after_rollback_plan=True,
+        command_preview_repository_effect_rollback_evidence__ci_gate_consumes_command_preview_repository_effect_rollback_evidence=False,
+        command_preview_repository_effect_rollback_evidence__ci_gate_remains_non_authorizing=False,
+        command_preview_repository_effect_rollback_evidence__ready_for_review_remains_blocked=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_ci_gate_before_ready_for_review_witness_semantics(
+        payload,
+        _source_rollback_plan_witness(),
+        errors,
+        "mutated",
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_repository_effect_rollback_evidence.source_binding_id" in serialized_errors
+    assert "command_preview_repository_effect_rollback_evidence.source_uao_admission_witness_id" in serialized_errors
+    assert "command_preview_repository_effect_rollback_evidence.source_branch_write_binding_id" in serialized_errors
+    assert (
+        "command_preview_repository_effect_rollback_evidence.source_repository_effect_rollback_plan_collected must be false"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_repository_effect_rollback_evidence.source_pr_creation_authorized_after_rollback_plan must be false"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_repository_effect_rollback_evidence.ci_gate_consumes_command_preview_repository_effect_rollback_evidence must be true"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_repository_effect_rollback_evidence.ci_gate_remains_non_authorizing must be true"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_repository_effect_rollback_evidence.ready_for_review_remains_blocked must be true"
+        in serialized_errors
+    )
+
+
 def test_github_pr_ci_gate_before_ready_for_review_witness_rejects_mutation_route_and_secret_like_payload() -> None:
     payload = validator.build_mutated_ci_gate_before_ready_for_review_witness(
         requested_evidence_ref="POST /api/github/ready-for-review authority",
