@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:policy-transition-proof-report:1",
+  "title": "Policy Transition Proof Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "transition_id",
+    "verdict",
+    "reason",
+    "delta_paths",
+    "activated_symbols",
+    "selected_policy_ids",
+    "missing_policy_symbols",
+    "violated_policy_ids",
+    "missing_evidence",
+    "obligations",
+    "obligation_gaps",
+    "proof_trace",
+    "counterexamples",
+    "lease",
+    "receipt_id",
+    "report_hash",
+    "metadata"
+  ],
+  "properties": {
+    "report_id": {"type": "string", "minLength": 1},
+    "transition_id": {"type": "string", "minLength": 1},
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "ALLOW",
+        "ALLOW_WITH_ENFORCED_OBLIGATIONS",
+        "DENY_HARD",
+        "DENY_AUTHORITY",
+        "DENY_INVARIANT",
+        "DENY_EVIDENCE",
+        "UNKNOWN_BLOCKED",
+        "CONFLICT_BLOCKED",
+        "STALE_CONTEXT_BLOCKED",
+        "LEASE_EXPIRED_REPROVE",
+        "ESCALATE_HUMAN",
+        "SIMULATE_FIRST"
+      ]
+    },
+    "reason": {"type": "string", "minLength": 1},
+    "delta_paths": {"$ref": "#/$defs/text_array"},
+    "activated_symbols": {"$ref": "#/$defs/text_array"},
+    "selected_policy_ids": {"$ref": "#/$defs/text_array"},
+    "missing_policy_symbols": {"$ref": "#/$defs/text_array"},
+    "violated_policy_ids": {"$ref": "#/$defs/text_array"},
+    "missing_evidence": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/missing_evidence"}
+    },
+    "obligations": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/obligation"}
+    },
+    "obligation_gaps": {"$ref": "#/$defs/text_array"},
+    "proof_trace": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/proof_step"}
+    },
+    "counterexamples": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/counterexample"}
+    },
+    "lease": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/lease"}
+      ]
+    },
+    "receipt_id": {"type": "string", "minLength": 1},
+    "report_hash": {"type": "string", "minLength": 1},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "prover_version",
+        "transition_proof",
+        "default_deny",
+        "proof_is_bounded",
+        "policy_weakening_allowed",
+        "policy_coverage_complete",
+        "lease_bound",
+        "policy_universe_hash",
+        "selected_policy_hash",
+        "evidence_hash"
+      ],
+      "properties": {
+        "prover_version": {"type": "string", "const": "vcpp-kernel-v2"},
+        "transition_proof": {"type": "boolean", "const": true},
+        "default_deny": {"type": "boolean", "const": true},
+        "proof_is_bounded": {"type": "boolean", "const": true},
+        "policy_weakening_allowed": {"type": "boolean", "const": false},
+        "policy_coverage_complete": {"type": "boolean"},
+        "lease_bound": {"type": "boolean"},
+        "policy_universe_hash": {"type": "string", "minLength": 1},
+        "selected_policy_hash": {"type": "string", "minLength": 1},
+        "evidence_hash": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "$defs": {
+    "text_array": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "missing_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirement_id", "policy_id", "evidence_type", "reason"],
+      "properties": {
+        "requirement_id": {"type": "string", "minLength": 1},
+        "policy_id": {"type": "string", "minLength": 1},
+        "evidence_type": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "obligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "obligation_id",
+        "phase",
+        "description",
+        "satisfied",
+        "enforceable",
+        "compensation_ref"
+      ],
+      "properties": {
+        "obligation_id": {"type": "string", "minLength": 1},
+        "phase": {
+          "type": "string",
+          "enum": ["pre", "in_flight", "post", "continuing"]
+        },
+        "description": {"type": "string", "minLength": 1},
+        "satisfied": {"type": "boolean"},
+        "enforceable": {"type": "boolean"},
+        "compensation_ref": {"type": "string"}
+      }
+    },
+    "proof_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "claim", "result", "reason", "policy_id", "evidence_refs"],
+      "properties": {
+        "stage": {"type": "string", "minLength": 1},
+        "claim": {"type": "string", "minLength": 1},
+        "result": {"type": "string", "enum": ["pass", "fail", "unknown"]},
+        "reason": {"type": "string", "minLength": 1},
+        "policy_id": {"type": "string"},
+        "evidence_refs": {"$ref": "#/$defs/text_array"}
+      }
+    },
+    "counterexample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["counterexample_id", "reason", "policy_id", "delta_path", "evidence_refs"],
+      "properties": {
+        "counterexample_id": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "policy_id": {"type": "string"},
+        "delta_path": {"type": "string"},
+        "evidence_refs": {"$ref": "#/$defs/text_array"}
+      }
+    },
+    "lease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lease_id",
+        "event_hash",
+        "pre_state_hash",
+        "policy_set_hash",
+        "evidence_hash",
+        "obligation_plan_hash",
+        "issued_at",
+        "expires_at",
+        "lock_scope"
+      ],
+      "properties": {
+        "lease_id": {"type": "string", "minLength": 1},
+        "event_hash": {"type": "string", "minLength": 1},
+        "pre_state_hash": {"type": "string", "minLength": 1},
+        "policy_set_hash": {"type": "string", "minLength": 1},
+        "evidence_hash": {"type": "string", "minLength": 1},
+        "obligation_plan_hash": {"type": "string", "minLength": 1},
+        "issued_at": {"type": "string", "format": "date-time"},
+        "expires_at": {"type": "string", "format": "date-time"},
+        "lock_scope": {"$ref": "#/$defs/text_array"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "enum": ["ALLOW", "ALLOW_WITH_ENFORCED_OBLIGATIONS"]
+          }
+        },
+        "required": ["verdict"]
+      },
+      "then": {
+        "properties": {
+          "lease": {"$ref": "#/$defs/lease"},
+          "counterexamples": {"maxItems": 0}
+        }
+      }
+    }
+  ]
+}
