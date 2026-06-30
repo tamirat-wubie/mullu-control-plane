@@ -61,6 +61,45 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "resource_versions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "access_mode": {
+          "type": "string",
+          "enum": [
+            "OBSERVE",
+            "READ",
+            "APPEND",
+            "WRITE",
+            "DELETE",
+            "PUBLISH",
+            "EXTERNAL_SEND",
+            "FINANCIAL_MOVE",
+            "LEGAL_COMMIT",
+            "READ_SHARED",
+            "WRITE_EXCLUSIVE",
+            "APPEND_ONLY",
+            "OBSERVE_ONLY",
+            "SIMULATE_ONLY",
+            "HUMAN_APPROVAL_REQUIRED"
+          ]
+        },
+        "conflict_class": {
+          "type": "string",
+          "enum": [
+            "NO_CONFLICT",
+            "READ_SHARED",
+            "WRITE_EXCLUSIVE",
+            "APPEND_ORDERED",
+            "VERSIONED_MERGE",
+            "HUMAN_APPROVAL_REQUIRED",
+            "IRREVERSIBLE"
+          ]
         }
       }
     },
@@ -163,6 +202,19 @@
         "physical_action_boundary_required": {
           "type": "boolean"
         },
+        "minimum_evidence_stage": {
+          "type": "string",
+          "enum": [
+            "PRECHECK",
+            "STARTED",
+            "CHECKPOINT",
+            "DELTA_PROPOSED",
+            "VALIDATED",
+            "COMMITTED",
+            "POSTCHECK",
+            "CLOSED"
+          ]
+        },
         "lease_hash": {
           "type": "string",
           "minLength": 1
@@ -223,6 +275,46 @@
         "requested_at": {
           "type": "string",
           "format": "date-time"
+        },
+        "resource_versions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "idempotency_key": {
+          "type": "string"
+        },
+        "idempotency_class": {
+          "type": "string",
+          "enum": [
+            "SAFE_REPEAT",
+            "SAFE_WITH_KEY",
+            "RETRY_AFTER_REBASE",
+            "MANUAL_RETRY_ONLY",
+            "NEVER_RETRY_AUTOMATICALLY"
+          ]
+        },
+        "side_effect_class": {
+          "type": "string",
+          "enum": [
+            "REVERSIBLE",
+            "COMPENSATABLE",
+            "IRREVERSIBLE",
+            "EXTERNAL_IRREVERSIBLE",
+            "LEGAL_OR_FINANCIAL"
+          ]
+        },
+        "approval_ref": {
+          "type": "string"
+        },
+        "causal_parent_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -319,6 +411,76 @@
         "receipt_hash": {
           "type": "string",
           "minLength": 1
+        },
+        "evidence_stage": {
+          "type": "string",
+          "enum": [
+            "PRECHECK",
+            "STARTED",
+            "CHECKPOINT",
+            "DELTA_PROPOSED",
+            "VALIDATED",
+            "COMMITTED",
+            "POSTCHECK",
+            "CLOSED"
+          ]
+        },
+        "resource_versions_before": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "resource_versions_after": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "idempotency_key": {
+          "type": "string"
+        },
+        "idempotency_class": {
+          "type": "string",
+          "enum": [
+            "SAFE_REPEAT",
+            "SAFE_WITH_KEY",
+            "RETRY_AFTER_REBASE",
+            "MANUAL_RETRY_ONLY",
+            "NEVER_RETRY_AUTOMATICALLY"
+          ]
+        },
+        "side_effect_class": {
+          "type": "string",
+          "enum": [
+            "REVERSIBLE",
+            "COMPENSATABLE",
+            "IRREVERSIBLE",
+            "EXTERNAL_IRREVERSIBLE",
+            "LEGAL_OR_FINANCIAL"
+          ]
+        },
+        "candidate_delta_hash": {
+          "type": "string"
+        },
+        "validation_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "conflict_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "progressive_evidence_complete": {
+          "type": "boolean"
         },
         "metadata": {
           "type": "object",

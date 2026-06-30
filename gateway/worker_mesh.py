@@ -28,6 +28,66 @@ VALID_WORKER_STATUSES = frozenset({"succeeded", "failed", "rejected"})
 PHYSICAL_ACTION_RECEIPT_PAYLOAD_KEY = "physical_action_receipt"
 PHYSICAL_ACTION_RECEIPT_SCHEMA_REF = "urn:mullusi:schema:physical-action-receipt:1"
 WORKER_MESH_SCHEMA_REF = "urn:mullusi:schema:worker-mesh:1"
+VALID_EVIDENCE_STAGES = (
+    "PRECHECK",
+    "STARTED",
+    "CHECKPOINT",
+    "DELTA_PROPOSED",
+    "VALIDATED",
+    "COMMITTED",
+    "POSTCHECK",
+    "CLOSED",
+)
+VALID_RESOURCE_ACCESS_MODES = (
+    "OBSERVE",
+    "READ",
+    "APPEND",
+    "WRITE",
+    "DELETE",
+    "PUBLISH",
+    "EXTERNAL_SEND",
+    "FINANCIAL_MOVE",
+    "LEGAL_COMMIT",
+    "READ_SHARED",
+    "WRITE_EXCLUSIVE",
+    "APPEND_ONLY",
+    "OBSERVE_ONLY",
+    "SIMULATE_ONLY",
+    "HUMAN_APPROVAL_REQUIRED",
+)
+VALID_RESOURCE_CONFLICT_CLASSES = (
+    "NO_CONFLICT",
+    "READ_SHARED",
+    "WRITE_EXCLUSIVE",
+    "APPEND_ORDERED",
+    "VERSIONED_MERGE",
+    "HUMAN_APPROVAL_REQUIRED",
+    "IRREVERSIBLE",
+)
+VALID_IDEMPOTENCY_CLASSES = (
+    "SAFE_REPEAT",
+    "SAFE_WITH_KEY",
+    "RETRY_AFTER_REBASE",
+    "MANUAL_RETRY_ONLY",
+    "NEVER_RETRY_AUTOMATICALLY",
+)
+VALID_SIDE_EFFECT_CLASSES = (
+    "REVERSIBLE",
+    "COMPENSATABLE",
+    "IRREVERSIBLE",
+    "EXTERNAL_IRREVERSIBLE",
+    "LEGAL_OR_FINANCIAL",
+)
+IRREVERSIBLE_SIDE_EFFECT_CLASSES = frozenset(
+    {"IRREVERSIBLE", "EXTERNAL_IRREVERSIBLE", "LEGAL_OR_FINANCIAL"}
+)
+VALID_CONFLICT_SCOPES = (
+    "LOCAL_TASK",
+    "RESOURCE_BRANCH",
+    "GOAL_BRANCH",
+    "GLOBAL_MESH",
+    "SAFETY_CRITICAL",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,11 +115,25 @@ class WorkerLeaseScope:
     resource_refs: list[str] = field(default_factory=list)
     data_classes: list[str] = field(default_factory=list)
     network_allowlist: list[str] = field(default_factory=list)
+    resource_versions: dict[str, str] = field(default_factory=dict)
+    access_mode: str = "READ_SHARED"
+    conflict_class: str = "READ_SHARED"
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "resource_refs", _normalized_text_list(self.resource_refs, "resource_refs"))
         object.__setattr__(self, "data_classes", _normalized_text_list(self.data_classes, "data_classes"))
         object.__setattr__(self, "network_allowlist", _normalized_text_list(self.network_allowlist, "network_allowlist"))
+        object.__setattr__(self, "resource_versions", _normalized_text_map(self.resource_versions, "resource_versions"))
+        object.__setattr__(
+            self,
+            "access_mode",
+            _normalized_choice(self.access_mode, VALID_RESOURCE_ACCESS_MODES, "access_mode"),
+        )
+        object.__setattr__(
+            self,
+            "conflict_class",
+            _normalized_choice(self.conflict_class, VALID_RESOURCE_CONFLICT_CLASSES, "conflict_class"),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,6 +157,7 @@ class WorkerLease:
     expires_at: str
     issued_at: str
     physical_action_boundary_required: bool = False
+    minimum_evidence_stage: str = "CLOSED"
     lease_hash: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -90,6 +165,11 @@ class WorkerLease:
         object.__setattr__(self, "allowed_operations", _normalized_text_list(self.allowed_operations, "allowed_operations"))
         object.__setattr__(self, "forbidden_operations", _normalized_text_list(self.forbidden_operations, "forbidden_operations"))
         object.__setattr__(self, "policy_refs", _normalized_text_list(self.policy_refs, "policy_refs"))
+        object.__setattr__(
+            self,
+            "minimum_evidence_stage",
+            _normalized_choice(self.minimum_evidence_stage, VALID_EVIDENCE_STAGES, "minimum_evidence_stage"),
+        )
         object.__setattr__(self, "metadata", dict(self.metadata))
 
 
@@ -106,6 +186,12 @@ class WorkerDispatchRequest:
     estimated_cost: float = 0.0
     payload: dict[str, Any] = field(default_factory=dict)
     requested_at: str = ""
+    resource_versions: dict[str, str] = field(default_factory=dict)
+    idempotency_key: str = ""
+    idempotency_class: str = "SAFE_REPEAT"
+    side_effect_class: str = "REVERSIBLE"
+    approval_ref: str = ""
+    causal_parent_refs: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not isinstance(self.estimated_cost, int | float) or isinstance(self.estimated_cost, bool):
@@ -113,6 +199,20 @@ class WorkerDispatchRequest:
         if self.estimated_cost < 0:
             raise ValueError("nonnegative_estimated_cost_required")
         object.__setattr__(self, "payload", dict(self.payload))
+        object.__setattr__(self, "resource_versions", _normalized_text_map(self.resource_versions, "resource_versions"))
+        object.__setattr__(self, "idempotency_key", str(self.idempotency_key).strip())
+        object.__setattr__(
+            self,
+            "idempotency_class",
+            _normalized_choice(self.idempotency_class, VALID_IDEMPOTENCY_CLASSES, "idempotency_class"),
+        )
+        object.__setattr__(
+            self,
+            "side_effect_class",
+            _normalized_choice(self.side_effect_class, VALID_SIDE_EFFECT_CLASSES, "side_effect_class"),
+        )
+        object.__setattr__(self, "approval_ref", str(self.approval_ref).strip())
+        object.__setattr__(self, "causal_parent_refs", _normalized_text_list(self.causal_parent_refs, "causal_parent_refs"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,6 +224,10 @@ class WorkerHandlerResult:
     evidence_refs: list[str] = field(default_factory=list)
     error: str = ""
     cost: float = 0.0
+    evidence_stage: str = "CLOSED"
+    resource_versions_after: dict[str, str] = field(default_factory=dict)
+    candidate_delta_hash: str = ""
+    validation_refs: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not isinstance(self.cost, int | float) or isinstance(self.cost, bool):
@@ -132,6 +236,14 @@ class WorkerHandlerResult:
             raise ValueError("nonnegative_worker_cost_required")
         object.__setattr__(self, "output", dict(self.output))
         object.__setattr__(self, "evidence_refs", list(self.evidence_refs))
+        object.__setattr__(
+            self,
+            "evidence_stage",
+            _normalized_choice(self.evidence_stage, VALID_EVIDENCE_STAGES, "evidence_stage"),
+        )
+        object.__setattr__(self, "resource_versions_after", _normalized_text_map(self.resource_versions_after, "resource_versions_after"))
+        object.__setattr__(self, "candidate_delta_hash", str(self.candidate_delta_hash).strip())
+        object.__setattr__(self, "validation_refs", _normalized_text_list(self.validation_refs, "validation_refs"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,10 +268,41 @@ class WorkerDispatchReceipt:
     terminal_closure_required: bool
     dispatched_at: str
     receipt_hash: str = ""
+    evidence_stage: str = "PRECHECK"
+    resource_versions_before: dict[str, str] = field(default_factory=dict)
+    resource_versions_after: dict[str, str] = field(default_factory=dict)
+    idempotency_key: str = ""
+    idempotency_class: str = "SAFE_REPEAT"
+    side_effect_class: str = "REVERSIBLE"
+    candidate_delta_hash: str = ""
+    validation_refs: list[str] = field(default_factory=list)
+    conflict_refs: list[str] = field(default_factory=list)
+    progressive_evidence_complete: bool = False
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "evidence_refs", list(self.evidence_refs))
+        object.__setattr__(
+            self,
+            "evidence_stage",
+            _normalized_choice(self.evidence_stage, VALID_EVIDENCE_STAGES, "evidence_stage"),
+        )
+        object.__setattr__(self, "resource_versions_before", _normalized_text_map(self.resource_versions_before, "resource_versions_before"))
+        object.__setattr__(self, "resource_versions_after", _normalized_text_map(self.resource_versions_after, "resource_versions_after"))
+        object.__setattr__(self, "idempotency_key", str(self.idempotency_key).strip())
+        object.__setattr__(
+            self,
+            "idempotency_class",
+            _normalized_choice(self.idempotency_class, VALID_IDEMPOTENCY_CLASSES, "idempotency_class"),
+        )
+        object.__setattr__(
+            self,
+            "side_effect_class",
+            _normalized_choice(self.side_effect_class, VALID_SIDE_EFFECT_CLASSES, "side_effect_class"),
+        )
+        object.__setattr__(self, "candidate_delta_hash", str(self.candidate_delta_hash).strip())
+        object.__setattr__(self, "validation_refs", _normalized_text_list(self.validation_refs, "validation_refs"))
+        object.__setattr__(self, "conflict_refs", _normalized_text_list(self.conflict_refs, "conflict_refs"))
         object.__setattr__(self, "metadata", dict(self.metadata))
 
 
@@ -170,6 +313,12 @@ class _WorkerBinding:
     operation_count: int = 0
     cost_used: float = 0.0
     reserved_cost: float = 0.0
+    idempotency_keys: set[str] = field(default_factory=set)
+    conflict_refs: list[str] = field(default_factory=list)
+    conflict_scope: str = ""
+    repair_refs: list[str] = field(default_factory=list)
+    cancelled_at: str = ""
+    cancellation_reason: str = ""
 
 
 class NetworkedWorkerMesh:
@@ -208,6 +357,8 @@ class NetworkedWorkerMesh:
                     dispatched_at=dispatched_at,
                 )
             denial = _admission_denial(binding, request, now=dispatched_at)
+            if not denial and request.idempotency_key in binding.idempotency_keys:
+                denial = "duplicate_idempotency_key"
             if denial:
                 return _receipt(
                     request=request,
@@ -218,9 +369,12 @@ class NetworkedWorkerMesh:
                     output={},
                     evidence_refs=[],
                     dispatched_at=dispatched_at,
+                    conflict_refs=list(binding.conflict_refs),
                 )
             binding.operation_count += 1
             binding.reserved_cost += request.estimated_cost
+            if request.idempotency_key:
+                binding.idempotency_keys.add(request.idempotency_key)
         try:
             result = binding.handler(request)
         except Exception as exc:  # pragma: no cover - worker exceptions are intentionally bounded.
@@ -233,6 +387,10 @@ class NetworkedWorkerMesh:
             binding.cost_used += result.cost
         if result.status == "succeeded" and not result.evidence_refs:
             result = replace(result, status="failed", error="worker_evidence_required")
+        if result.status == "succeeded":
+            completion_denial = _completion_denial(binding.lease, result)
+            if completion_denial:
+                result = replace(result, status="failed", error=completion_denial)
         return _receipt(
             request=request,
             lease=binding.lease,
@@ -242,14 +400,22 @@ class NetworkedWorkerMesh:
             output=result.output,
             evidence_refs=result.evidence_refs,
             dispatched_at=dispatched_at,
+            evidence_stage=result.evidence_stage,
+            resource_versions_after=result.resource_versions_after,
+            candidate_delta_hash=result.candidate_delta_hash,
+            validation_refs=result.validation_refs,
+            conflict_refs=list(binding.conflict_refs),
         )
 
     def read_model(self) -> dict[str, Any]:
         """Return a bounded operator read model for worker leases."""
         with self._lock:
-            return {
-                "worker_count": len(self._bindings),
-                "workers": [
+            workers = []
+            for binding in self._bindings.values():
+                worker_status = "cancelled" if binding.cancelled_at else "active"
+                if binding.conflict_refs:
+                    worker_status = "conflict_frozen"
+                workers.append(
                     {
                         "worker_id": binding.lease.worker_id,
                         "capability": binding.lease.capability,
@@ -261,10 +427,119 @@ class NetworkedWorkerMesh:
                         "cost_used": round(binding.cost_used, 6),
                         "reserved_cost": round(binding.reserved_cost, 6),
                         "expires_at": binding.lease.expires_at,
+                        "minimum_evidence_stage": binding.lease.minimum_evidence_stage,
+                        "resource_version_count": len(binding.lease.scope.resource_versions),
+                        "idempotency_key_count": len(binding.idempotency_keys),
+                        "conflict_refs": list(binding.conflict_refs),
+                        "repair_refs": list(binding.repair_refs),
+                        "status": worker_status,
+                        "cancelled_at": binding.cancelled_at,
+                        "cancellation_reason": binding.cancellation_reason,
                     }
-                    for binding in self._bindings.values()
-                ],
+                )
+            return {
+                "worker_count": len(self._bindings),
+                "workers": workers,
+                "backpressure": _mesh_backpressure(workers),
             }
+
+    def record_conflict(
+        self,
+        lease_id: str,
+        *,
+        conflict_ref: str,
+        scope: str = "LOCAL_TASK",
+        recorded_at: str | None = None,
+    ) -> dict[str, Any]:
+        """Freeze one lease branch until an explicit repair receipt is recorded."""
+        normalized_ref = _required_text(conflict_ref, "conflict_ref")
+        normalized_scope = _normalized_choice(scope, VALID_CONFLICT_SCOPES, "conflict_scope")
+        observed_at = recorded_at or self._clock()
+        with self._lock:
+            binding = self._bindings.get(lease_id)
+            if binding is None:
+                return _control_receipt(
+                    "worker-mesh-conflict",
+                    lease_id=lease_id,
+                    status="rejected",
+                    reason="lease_not_found",
+                    observed_at=observed_at,
+                )
+            if normalized_ref not in binding.conflict_refs:
+                binding.conflict_refs.append(normalized_ref)
+            binding.conflict_scope = normalized_scope
+        return _control_receipt(
+            "worker-mesh-conflict",
+            lease_id=lease_id,
+            status="recorded",
+            reason="conflict_recorded",
+            observed_at=observed_at,
+            metadata={"conflict_ref": normalized_ref, "conflict_scope": normalized_scope},
+        )
+
+    def resolve_conflict(
+        self,
+        lease_id: str,
+        *,
+        repair_ref: str,
+        resolved_at: str | None = None,
+    ) -> dict[str, Any]:
+        """Release a conflict freeze after a repair receipt has been preserved."""
+        normalized_ref = _required_text(repair_ref, "repair_ref")
+        observed_at = resolved_at or self._clock()
+        with self._lock:
+            binding = self._bindings.get(lease_id)
+            if binding is None:
+                return _control_receipt(
+                    "worker-mesh-repair",
+                    lease_id=lease_id,
+                    status="rejected",
+                    reason="lease_not_found",
+                    observed_at=observed_at,
+                )
+            previous_conflicts = list(binding.conflict_refs)
+            binding.conflict_refs.clear()
+            binding.conflict_scope = ""
+            binding.repair_refs.append(normalized_ref)
+        return _control_receipt(
+            "worker-mesh-repair",
+            lease_id=lease_id,
+            status="recorded",
+            reason="conflict_resolved",
+            observed_at=observed_at,
+            metadata={"repair_ref": normalized_ref, "resolved_conflict_refs": previous_conflicts},
+        )
+
+    def cancel_lease(
+        self,
+        lease_id: str,
+        *,
+        reason: str,
+        cancelled_at: str | None = None,
+    ) -> dict[str, Any]:
+        """Cancel one lease and block later worker actions under it."""
+        normalized_reason = _required_text(reason, "cancellation_reason")
+        observed_at = cancelled_at or self._clock()
+        with self._lock:
+            binding = self._bindings.get(lease_id)
+            if binding is None:
+                return _control_receipt(
+                    "worker-mesh-cancellation",
+                    lease_id=lease_id,
+                    status="rejected",
+                    reason="lease_not_found",
+                    observed_at=observed_at,
+                )
+            binding.cancelled_at = observed_at
+            binding.cancellation_reason = normalized_reason
+        return _control_receipt(
+            "worker-mesh-cancellation",
+            lease_id=lease_id,
+            status="recorded",
+            reason="lease_cancelled",
+            observed_at=observed_at,
+            metadata={"cancellation_reason": normalized_reason},
+        )
 
 
 def _validate_lease(lease: WorkerLease) -> str:
@@ -310,6 +585,10 @@ def _admission_denial(binding: _WorkerBinding, request: WorkerDispatchRequest, *
     lease = binding.lease
     if _is_expired(lease.expires_at, now):
         return "lease_expired"
+    if binding.cancelled_at:
+        return "lease_cancelled"
+    if binding.conflict_refs:
+        return "unresolved_conflict"
     if request.tenant_id != lease.tenant_id:
         return "tenant_mismatch"
     if request.capability != lease.capability:
@@ -327,6 +606,12 @@ def _admission_denial(binding: _WorkerBinding, request: WorkerDispatchRequest, *
             return physical_denial
     if not request.request_id:
         return "request_id_required"
+    version_denial = _resource_version_denial(lease, request)
+    if version_denial:
+        return version_denial
+    side_effect_denial = _side_effect_denial(request)
+    if side_effect_denial:
+        return side_effect_denial
     if binding.operation_count >= lease.budget.max_operations:
         return "operation_budget_exhausted"
     if not request.command_id:
@@ -357,12 +642,77 @@ def _normalized_text_list(values: list[str], field_name: str) -> list[str]:
     return normalized
 
 
+def _normalized_text_map(values: dict[str, str], field_name: str) -> dict[str, str]:
+    if not isinstance(values, dict):
+        raise ValueError(f"{field_name}_map_required")
+    normalized: dict[str, str] = {}
+    for key, value in values.items():
+        if not isinstance(key, str) or not key.strip():
+            raise ValueError(f"{field_name}_key_required")
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{field_name}_{key}_value_required")
+        normalized[key.strip()] = value.strip()
+    return normalized
+
+
+def _required_text(value: str, field_name: str) -> str:
+    text = str(value).strip()
+    if not text:
+        raise ValueError(f"{field_name}_required")
+    return text
+
+
+def _normalized_choice(value: str, valid_values: tuple[str, ...], field_name: str) -> str:
+    normalized = str(value).strip().upper()
+    if normalized not in valid_values:
+        raise ValueError(f"{field_name}_invalid")
+    return normalized
+
+
 def _normalize_handler_result(result: WorkerHandlerResult) -> WorkerHandlerResult:
     if not isinstance(result, WorkerHandlerResult):
         return WorkerHandlerResult(status="failed", error="worker_result_contract_invalid")
     if result.status not in VALID_WORKER_STATUSES:
         return replace(result, status="failed", error="worker_status_invalid")
     return result
+
+
+def _resource_version_denial(lease: WorkerLease, request: WorkerDispatchRequest) -> str:
+    for resource_ref, expected_version in lease.scope.resource_versions.items():
+        observed_version = request.resource_versions.get(resource_ref)
+        if not observed_version:
+            return "resource_version_required"
+        if observed_version != expected_version:
+            return "resource_version_mismatch"
+    return ""
+
+
+def _side_effect_denial(request: WorkerDispatchRequest) -> str:
+    if request.idempotency_class == "SAFE_WITH_KEY" and not request.idempotency_key:
+        return "idempotency_key_required"
+    if request.side_effect_class not in IRREVERSIBLE_SIDE_EFFECT_CLASSES:
+        return ""
+    if not request.approval_ref:
+        return "approval_ref_required_for_irreversible_side_effect"
+    if request.idempotency_class not in {
+        "SAFE_WITH_KEY",
+        "MANUAL_RETRY_ONLY",
+        "NEVER_RETRY_AUTOMATICALLY",
+    }:
+        return "irreversible_retry_policy_invalid"
+    return ""
+
+
+def _completion_denial(lease: WorkerLease, result: WorkerHandlerResult) -> str:
+    if not _evidence_stage_satisfies(result.evidence_stage, lease.minimum_evidence_stage):
+        return "worker_progressive_evidence_incomplete"
+    if lease.scope.resource_versions and not result.resource_versions_after:
+        return "worker_resource_versions_after_required"
+    return ""
+
+
+def _evidence_stage_satisfies(actual: str, minimum: str) -> bool:
+    return VALID_EVIDENCE_STAGES.index(actual) >= VALID_EVIDENCE_STAGES.index(minimum)
 
 
 def _receipt(
@@ -375,8 +725,22 @@ def _receipt(
     output: dict[str, Any],
     evidence_refs: list[str],
     dispatched_at: str,
+    evidence_stage: str = "PRECHECK",
+    resource_versions_after: dict[str, str] | None = None,
+    candidate_delta_hash: str = "",
+    validation_refs: list[str] | None = None,
+    conflict_refs: list[str] | None = None,
 ) -> WorkerDispatchReceipt:
     output_hash = canonical_hash(output) if output else ""
+    normalized_evidence_stage = _normalized_choice(evidence_stage, VALID_EVIDENCE_STAGES, "evidence_stage")
+    resource_versions_after = resource_versions_after or {}
+    validation_refs = validation_refs or []
+    conflict_refs = conflict_refs or []
+    minimum_evidence_stage = lease.minimum_evidence_stage if lease else "PRECHECK"
+    progressive_evidence_complete = (
+        _evidence_stage_satisfies(normalized_evidence_stage, minimum_evidence_stage)
+        if lease else False
+    )
     receipt = WorkerDispatchReceipt(
         receipt_id="pending",
         request_id=request.request_id,
@@ -396,12 +760,33 @@ def _receipt(
         terminal_closure_required=True,
         dispatched_at=dispatched_at,
         receipt_hash="",
+        evidence_stage=normalized_evidence_stage,
+        resource_versions_before=request.resource_versions,
+        resource_versions_after=resource_versions_after,
+        idempotency_key=request.idempotency_key,
+        idempotency_class=request.idempotency_class,
+        side_effect_class=request.side_effect_class,
+        candidate_delta_hash=candidate_delta_hash,
+        validation_refs=validation_refs,
+        conflict_refs=conflict_refs,
+        progressive_evidence_complete=progressive_evidence_complete,
         metadata={
             "receipt_is_not_terminal_closure": True,
             "receipt_schema_ref": lease.receipt_schema_ref if lease else "",
             "estimated_cost": request.estimated_cost,
             "lease_hash": lease.lease_hash if lease else "",
             "worker_receipt_status": status,
+            "minimum_evidence_stage": minimum_evidence_stage,
+            "evidence_stage": normalized_evidence_stage,
+            "progressive_evidence_complete": progressive_evidence_complete,
+            "resource_version_check_required": bool(lease and lease.scope.resource_versions),
+            "resource_versions_before_bound": bool(request.resource_versions),
+            "resource_versions_after_bound": bool(resource_versions_after),
+            "idempotency_key_bound": bool(request.idempotency_key),
+            "idempotency_class": request.idempotency_class,
+            "side_effect_class": request.side_effect_class,
+            "conflict_free": not conflict_refs,
+            "conflict_refs": conflict_refs,
             "physical_action_boundary_required": lease.physical_action_boundary_required if lease else False,
             "physical_action_receipt_validated": (
                 lease.physical_action_boundary_required
@@ -423,6 +808,51 @@ def _stamp_request(request: WorkerDispatchRequest, *, requested_at: str) -> Work
 def _stamp_lease(lease: WorkerLease) -> WorkerLease:
     payload = asdict(replace(lease, lease_hash=""))
     return replace(lease, lease_hash=canonical_hash(payload))
+
+
+def _mesh_backpressure(workers: list[dict[str, Any]]) -> dict[str, Any]:
+    exhausted = [
+        worker["lease_id"]
+        for worker in workers
+        if worker["operation_count"] >= worker["max_operations"]
+    ]
+    conflicted = [worker["lease_id"] for worker in workers if worker["conflict_refs"]]
+    cancelled = [worker["lease_id"] for worker in workers if worker["status"] == "cancelled"]
+    status = "backpressure" if exhausted or conflicted or cancelled else "normal"
+    return {
+        "status": status,
+        "operation_budget_exhausted_leases": exhausted,
+        "conflict_frozen_leases": conflicted,
+        "cancelled_leases": cancelled,
+    }
+
+
+def _control_receipt(
+    receipt_kind: str,
+    *,
+    lease_id: str,
+    status: str,
+    reason: str,
+    observed_at: str,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    payload = {
+        "receipt_kind": receipt_kind,
+        "lease_id": lease_id,
+        "status": status,
+        "reason": reason,
+        "observed_at": observed_at,
+        "terminal_closure_required": True,
+        "receipt_is_not_terminal_closure": True,
+        "metadata": metadata or {},
+        "receipt_hash": "",
+    }
+    receipt_hash = canonical_hash(payload)
+    return {
+        **payload,
+        "receipt_id": f"{receipt_kind}-{receipt_hash[:16]}",
+        "receipt_hash": receipt_hash,
+    }
 
 
 def _physical_action_receipt_denial(receipt: Any, *, request: WorkerDispatchRequest) -> str:

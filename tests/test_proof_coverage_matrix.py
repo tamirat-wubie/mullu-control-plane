@@ -191,7 +191,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 30
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
-    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 19
+    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 21
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["model_experiment_control"]["exact_test_anchor_count"] == 7
     assert surfaces["model_experiment_control"]["unanchored_witness_count"] == 0
@@ -472,7 +472,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["temporal_kernel"]["unanchored_witness_count"] == 0
     assert surfaces["temporal_kernel"]["exact_test_anchor_count"] == 16
     assert surfaces["networked_worker_mesh"]["unanchored_witness_count"] == 0
-    assert surfaces["networked_worker_mesh"]["exact_test_anchor_count"] == 13
+    assert surfaces["networked_worker_mesh"]["exact_test_anchor_count"] == 19
     assert surfaces["read_only_first_worker_path"]["unanchored_witness_count"] == 0
     assert surfaces["read_only_first_worker_path"]["exact_test_anchor_count"] == 11
     assert surfaces["read_only_document_worker_path"]["unanchored_witness_count"] == 0
@@ -3704,6 +3704,12 @@ def test_networked_worker_mesh_surface_requires_non_terminal_receipts() -> None:
     assert "active_lease_required" in witnesses
     assert "tenant_capability_operation_budget_checked" in witnesses
     assert "forbidden_operations_override_allowed" in witnesses
+    assert "worker_resource_versions_reject_stale_state" in witnesses
+    assert "worker_idempotency_key_blocks_duplicate_execution" in witnesses
+    assert "worker_progressive_evidence_stage_required" in witnesses
+    assert "worker_conflict_freeze_requires_repair_receipt" in witnesses
+    assert "worker_cancellation_blocks_late_action" in witnesses
+    assert "irreversible_side_effect_requires_approval_and_safe_retry" in witnesses
     assert "code_worker_exact_lease_command_required" in witnesses
     assert "code_worker_blocks_network_shell_and_risky_git" in witnesses
     assert "code_worker_receipt_binds_sandbox_evidence" in witnesses

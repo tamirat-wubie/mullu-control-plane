@@ -283,6 +283,210 @@ def test_worker_mesh_schema_rejects_terminal_closure_claim() -> None:
     assert envelope["receipt"]["receipt_id"].startswith("worker-receipt-")
 
 
+def test_worker_mesh_rejects_stale_resource_versions_before_handler() -> None:
+    calls: list[str] = []
+    mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
+    versioned_scope = WorkerLeaseScope(
+        resource_refs=["doc:1"],
+        data_classes=["workspace_doc"],
+        network_allowlist=[],
+        resource_versions={"doc:1": "version:1"},
+        access_mode="WRITE",
+        conflict_class="WRITE_EXCLUSIVE",
+    )
+    lease = mesh.register_worker(
+        replace(_lease(), scope=versioned_scope, minimum_evidence_stage="VALIDATED"),
+        lambda request: calls.append(request.request_id)
+        or WorkerHandlerResult(
+            status="succeeded",
+            output={"accepted": True},
+            evidence_refs=["worker:evidence:versioned"],
+            evidence_stage="VALIDATED",
+            resource_versions_after={"doc:1": "version:2"},
+            candidate_delta_hash="sha256:" + "a" * 64,
+            validation_refs=["validator:resource-version"],
+        ),
+    )
+
+    missing_receipt = mesh.dispatch(
+        lease.lease_id,
+        replace(_request(), request_id="worker-request-missing-version"),
+    )
+    stale_receipt = mesh.dispatch(
+        lease.lease_id,
+        replace(
+            _request(),
+            request_id="worker-request-stale-version",
+            resource_versions={"doc:1": "version:0"},
+        ),
+    )
+    accepted_receipt = mesh.dispatch(
+        lease.lease_id,
+        replace(
+            _request(),
+            request_id="worker-request-current-version",
+            resource_versions={"doc:1": "version:1"},
+        ),
+    )
+
+    assert calls == ["worker-request-current-version"]
+    assert missing_receipt.reason == "resource_version_required"
+    assert stale_receipt.reason == "resource_version_mismatch"
+    assert accepted_receipt.status == "succeeded"
+    assert accepted_receipt.resource_versions_before == {"doc:1": "version:1"}
+    assert accepted_receipt.resource_versions_after == {"doc:1": "version:2"}
+
+
+def test_worker_mesh_blocks_duplicate_idempotency_key_before_handler() -> None:
+    calls: list[str] = []
+    mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
+    lease = mesh.register_worker(
+        _lease(),
+        lambda request: calls.append(request.request_id) or _successful_handler(request),
+    )
+    first_request = replace(
+        _request(),
+        idempotency_key="draft-doc-1",
+        idempotency_class="SAFE_WITH_KEY",
+    )
+    duplicate_request = replace(first_request, request_id="worker-request-duplicate")
+
+    first_receipt = mesh.dispatch(lease.lease_id, first_request)
+    duplicate_receipt = mesh.dispatch(lease.lease_id, duplicate_request)
+    read_model = mesh.read_model()
+
+    assert first_receipt.status == "succeeded"
+    assert duplicate_receipt.status == "rejected"
+    assert duplicate_receipt.reason == "duplicate_idempotency_key"
+    assert calls == ["worker-request-1"]
+    assert read_model["workers"][0]["operation_count"] == 1
+    assert read_model["workers"][0]["idempotency_key_count"] == 1
+
+
+def test_worker_mesh_requires_commit_ready_progressive_evidence() -> None:
+    mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
+    lease = mesh.register_worker(
+        replace(_lease(), minimum_evidence_stage="VALIDATED"),
+        lambda _request: WorkerHandlerResult(
+            status="succeeded",
+            output={"accepted": True},
+            evidence_refs=["worker:evidence:checkpoint"],
+            evidence_stage="CHECKPOINT",
+        ),
+    )
+
+    receipt = mesh.dispatch(lease.lease_id, _request())
+
+    assert receipt.status == "failed"
+    assert receipt.reason == "worker_progressive_evidence_incomplete"
+    assert receipt.evidence_stage == "CHECKPOINT"
+    assert receipt.progressive_evidence_complete is False
+    assert receipt.metadata["minimum_evidence_stage"] == "VALIDATED"
+    assert receipt.metadata["progressive_evidence_complete"] is False
+
+
+def test_worker_mesh_conflict_freezes_until_repair_receipt() -> None:
+    calls: list[str] = []
+    mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
+    lease = mesh.register_worker(
+        _lease(),
+        lambda request: calls.append(request.request_id) or _successful_handler(request),
+    )
+
+    conflict = mesh.record_conflict(
+        lease.lease_id,
+        conflict_ref="conflict://doc/1/version-fork",
+        scope="RESOURCE_BRANCH",
+    )
+    frozen = mesh.dispatch(lease.lease_id, replace(_request(), request_id="worker-request-frozen"))
+    repair = mesh.resolve_conflict(
+        lease.lease_id,
+        repair_ref="repair://doc/1/rebased",
+    )
+    resumed = mesh.dispatch(lease.lease_id, replace(_request(), request_id="worker-request-resumed"))
+    read_model = mesh.read_model()
+
+    assert conflict["status"] == "recorded"
+    assert frozen.status == "rejected"
+    assert frozen.reason == "unresolved_conflict"
+    assert repair["metadata"]["resolved_conflict_refs"] == ["conflict://doc/1/version-fork"]
+    assert resumed.status == "succeeded"
+    assert calls == ["worker-request-resumed"]
+    assert read_model["workers"][0]["repair_refs"] == ["repair://doc/1/rebased"]
+
+
+def test_worker_mesh_cancellation_blocks_late_worker_action() -> None:
+    calls: list[str] = []
+    mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
+    lease = mesh.register_worker(
+        _lease(),
+        lambda request: calls.append(request.request_id) or _successful_handler(request),
+    )
+
+    cancellation = mesh.cancel_lease(
+        lease.lease_id,
+        reason="operator_superseded_goal",
+        cancelled_at="2026-05-04T12:02:00+00:00",
+    )
+    receipt = mesh.dispatch(lease.lease_id, _request())
+    read_model = mesh.read_model()
+
+    assert cancellation["status"] == "recorded"
+    assert cancellation["reason"] == "lease_cancelled"
+    assert receipt.status == "rejected"
+    assert receipt.reason == "lease_cancelled"
+    assert calls == []
+    assert read_model["workers"][0]["status"] == "cancelled"
+    assert read_model["backpressure"]["cancelled_leases"] == [lease.lease_id]
+
+
+def test_worker_mesh_requires_approval_and_safe_retry_for_irreversible_effects() -> None:
+    calls: list[str] = []
+    mesh = NetworkedWorkerMesh(clock=lambda: "2026-05-04T12:01:00+00:00")
+    lease = mesh.register_worker(
+        _lease(),
+        lambda request: calls.append(request.request_id) or _successful_handler(request),
+    )
+
+    missing_approval = mesh.dispatch(
+        lease.lease_id,
+        replace(
+            _request(),
+            request_id="worker-request-irreversible-missing-approval",
+            side_effect_class="EXTERNAL_IRREVERSIBLE",
+            idempotency_class="MANUAL_RETRY_ONLY",
+        ),
+    )
+    unsafe_retry = mesh.dispatch(
+        lease.lease_id,
+        replace(
+            _request(),
+            request_id="worker-request-irreversible-unsafe-retry",
+            side_effect_class="EXTERNAL_IRREVERSIBLE",
+            approval_ref="approval://operator/1",
+            idempotency_class="SAFE_REPEAT",
+        ),
+    )
+    approved = mesh.dispatch(
+        lease.lease_id,
+        replace(
+            _request(),
+            request_id="worker-request-irreversible-approved",
+            side_effect_class="EXTERNAL_IRREVERSIBLE",
+            approval_ref="approval://operator/1",
+            idempotency_class="MANUAL_RETRY_ONLY",
+        ),
+    )
+
+    assert missing_approval.status == "rejected"
+    assert missing_approval.reason == "approval_ref_required_for_irreversible_side_effect"
+    assert unsafe_retry.status == "rejected"
+    assert unsafe_retry.reason == "irreversible_retry_policy_invalid"
+    assert approved.status == "succeeded"
+    assert approved.side_effect_class == "EXTERNAL_IRREVERSIBLE"
+    assert calls == ["worker-request-irreversible-approved"]
+
+
 def _lease() -> WorkerLease:
     return WorkerLease(
         worker_id="worker-1",

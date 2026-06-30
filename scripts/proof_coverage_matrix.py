@@ -6400,11 +6400,17 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_worker_mesh.py",
                 "tests/test_produce_physical_worker_canary.py",
             ],
-            "Networked worker mesh dispatches only through active leases, rejects tenant/capability/operation/budget violations before handler execution, requires admitted physical action receipts for physical workers, and emits schema-backed receipts that explicitly require terminal closure; the sandboxed code worker adds exact-command leases, no-network sandbox dispatch, denied shell/network/git controls, and command/output hash receipts.",
+            "Networked worker mesh dispatches only through active leases, rejects tenant/capability/operation/budget violations before handler execution, binds optional resource-version tokens and idempotency keys, blocks unresolved conflict and cancelled lease branches, requires admitted physical action receipts for physical workers, gates irreversible side effects behind approval and safe retry class, and emits schema-backed non-terminal receipts with progressive evidence stage metadata; the sandboxed code worker adds exact-command leases, no-network sandbox dispatch, denied shell/network/git controls, and command/output hash receipts.",
             [
                 "active_lease_required",
                 "tenant_capability_operation_budget_checked",
                 "forbidden_operations_override_allowed",
+                "worker_resource_versions_reject_stale_state",
+                "worker_idempotency_key_blocks_duplicate_execution",
+                "worker_progressive_evidence_stage_required",
+                "worker_conflict_freeze_requires_repair_receipt",
+                "worker_cancellation_blocks_late_action",
+                "irreversible_side_effect_requires_approval_and_safe_retry",
                 "code_worker_exact_lease_command_required",
                 "code_worker_blocks_network_shell_and_risky_git",
                 "code_worker_receipt_binds_sandbox_evidence",
@@ -6424,6 +6430,24 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "forbidden_operations_override_allowed": [
                     "worker_mesh_rejects_forbidden_operation_before_handler"
+                ],
+                "worker_resource_versions_reject_stale_state": [
+                    "worker_mesh_rejects_stale_resource_versions_before_handler"
+                ],
+                "worker_idempotency_key_blocks_duplicate_execution": [
+                    "worker_mesh_blocks_duplicate_idempotency_key_before_handler"
+                ],
+                "worker_progressive_evidence_stage_required": [
+                    "worker_mesh_requires_commit_ready_progressive_evidence"
+                ],
+                "worker_conflict_freeze_requires_repair_receipt": [
+                    "worker_mesh_conflict_freezes_until_repair_receipt"
+                ],
+                "worker_cancellation_blocks_late_action": [
+                    "worker_mesh_cancellation_blocks_late_worker_action"
+                ],
+                "irreversible_side_effect_requires_approval_and_safe_retry": [
+                    "worker_mesh_requires_approval_and_safe_retry_for_irreversible_effects"
                 ],
                 "code_worker_exact_lease_command_required": [
                     "sandboxed_code_worker_executes_exact_lease_command_with_receipt"
