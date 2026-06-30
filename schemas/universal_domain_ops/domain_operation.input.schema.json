@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-domain-ops:domain-operation-input:1",
+  "title": "Universal Domain Operation Input",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "capability_id",
+    "request_id",
+    "episode_id",
+    "domain_pack_refs",
+    "request_summary",
+    "candidate_actions",
+    "evidence_refs",
+    "risk_class",
+    "external_effect_requested",
+    "metadata"
+  ],
+  "properties": {
+    "capability_id": {
+      "type": "string",
+      "enum": [
+        "universal_domain_ops.registry.validate",
+        "universal_domain_ops.pack.lint",
+        "universal_domain_ops.episode.simulate",
+        "universal_domain_ops.claim.bound"
+      ]
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "episode_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "domain_pack_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "request_summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "workflow_state": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "candidate_actions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "claim_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    },
+    "risk_class": {
+      "type": "string",
+      "enum": ["R0", "R1", "R2", "R3", "R4", "R5"]
+    },
+    "external_effect_requested": {
+      "type": "boolean",
+      "const": false
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "maxProperties": 32
+    }
+  }
+}

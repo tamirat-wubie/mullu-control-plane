@@ -1,0 +1,299 @@
+{
+  "pack": {
+    "id": "domain.invoice.v2",
+    "name": "Governed Invoice Domain Operating Pack",
+    "version": "2.0.0",
+    "maturity_level": "L4",
+    "status": "active",
+    "owner": "platform-ops",
+    "created_at": "2026-06-28T00:00:00+00:00",
+    "last_validated_at": "2026-06-30T00:00:00+00:00"
+  },
+  "identity": {
+    "immutable": [
+      "pack_id",
+      "domain_boundary",
+      "core_invariant_compatibility",
+      "version_lineage_required"
+    ]
+  },
+  "boundary": {
+    "governs": [
+      "invoice extraction",
+      "invoice validation",
+      "vendor identification",
+      "duplicate detection",
+      "approval preparation"
+    ],
+    "does_not_govern": [
+      "actual payment execution",
+      "tax filing",
+      "legal interpretation",
+      "vendor contract negotiation"
+    ]
+  },
+  "activation": {
+    "include_triggers": [
+      "invoice",
+      "bill",
+      "amount due",
+      "vendor payment request"
+    ],
+    "exclude_triggers": [
+      "fictional example",
+      "mock invoice unless explicitly testing"
+    ],
+    "secondary_packs": [
+      "document_processing",
+      "finance_read_only",
+      "approval_workflow"
+    ],
+    "blocking_packs": [
+      "healthcare_privacy",
+      "legal_review",
+      "high_risk_finance"
+    ]
+  },
+  "ontology": {
+    "symbols": {
+      "invoice": {
+        "required": ["invoice_id", "vendor", "amount", "currency", "due_date"],
+        "states": ["received", "extracted", "validated", "duplicate_checked"],
+        "relations": ["vendor", "approval", "payment"],
+        "risk_flags": ["missing_invoice_id", "duplicate_invoice"]
+      },
+      "vendor": {
+        "required": ["name"],
+        "states": ["unknown", "known", "verified"],
+        "relations": ["invoice", "payment"],
+        "risk_flags": ["unknown_vendor", "changed_bank_details", "duplicate_vendor_name"]
+      },
+      "approval": {
+        "required": ["approval_status"],
+        "states": ["not_requested", "requested", "approved", "rejected", "expired"],
+        "relations": ["invoice", "approver"],
+        "risk_flags": ["missing_approval_evidence"]
+      },
+      "payment": {
+        "required": ["payment_status"],
+        "states": ["not_scheduled", "scheduled", "sent", "settled", "reconciled"],
+        "relations": ["invoice", "vendor"],
+        "risk_flags": ["payment_without_receipt", "changed_bank_details"]
+      }
+    }
+  },
+  "constraints": {
+    "hard": [
+      "no_payment_claim_without_payment_receipt",
+      "no_approval_claim_without_approval_evidence",
+      "no_external_action_without_user_authorization",
+      "no_vendor_trust_without_verification"
+    ],
+    "privacy": [
+      "redact_bank_details_unless_required",
+      "never_expose_sensitive_invoice_data_to_unapproved_recipient"
+    ],
+    "freshness": [
+      "stale_pack_cannot_authorize_high_risk_action"
+    ]
+  },
+  "evidence": {
+    "levels": {
+      "E0": "unsupported",
+      "E1": "user_statement",
+      "E2": "document_content",
+      "E3": "verified_internal_record",
+      "E4": "cross_checked_record",
+      "E5": "signed_or_authoritative_receipt"
+    },
+    "required_by_action": {
+      "read_invoice": "E2",
+      "extract_invoice_fields": "E2",
+      "summarize_invoice": "E2",
+      "detect_missing_fields": "E2",
+      "check_duplicate_risk": "E3",
+      "prepare_approval_draft": "E2",
+      "record_receipt": "E3",
+      "send_approval_request": "E3",
+      "mark_approved": "E4",
+      "mark_paid": "E5"
+    },
+    "vector_dimensions": [
+      "authority",
+      "freshness",
+      "specificity",
+      "chain_of_custody",
+      "domain_relevance",
+      "cross_source_agreement",
+      "tamper_resistance"
+    ]
+  },
+  "actions": {
+    "allowed": [
+      "read_invoice",
+      "extract_invoice_fields",
+      "summarize_invoice",
+      "detect_missing_fields",
+      "check_duplicate_risk",
+      "prepare_approval_draft",
+      "record_receipt"
+    ],
+    "conditional": {
+      "send_approval_request": {
+        "requires": ["explicit_user_authorization", "recipient_verification"]
+      },
+      "mark_approved": {
+        "requires": ["approval_evidence"]
+      },
+      "mark_paid": {
+        "requires": ["payment_receipt"]
+      }
+    },
+    "forbidden": [
+      "execute_payment",
+      "modify_vendor_bank_details",
+      "delete_invoice_record",
+      "claim_tax_status",
+      "claim_legal_compliance"
+    ]
+  },
+  "risk": {
+    "classes": {
+      "R0": "read_only",
+      "R1": "reversible_local_edit",
+      "R2": "external_message",
+      "R3": "external_state_change",
+      "R4": "financial_or_legal_impact",
+      "R5": "irreversible_high_harm"
+    },
+    "action_risk": {
+      "read_invoice": "R0",
+      "extract_invoice_fields": "R0",
+      "summarize_invoice": "R0",
+      "detect_missing_fields": "R0",
+      "check_duplicate_risk": "R0",
+      "prepare_approval_draft": "R1",
+      "record_receipt": "R1",
+      "send_approval_request": "R2",
+      "mark_approved": "R2",
+      "mark_paid": "R4"
+    }
+  },
+  "workflow": {
+    "states": [
+      "received",
+      "extracted",
+      "validated",
+      "duplicate_checked",
+      "approval_drafted",
+      "approval_requested",
+      "approved",
+      "payment_scheduled",
+      "paid",
+      "reconciled"
+    ],
+    "initial_state": "received",
+    "terminal_states": ["reconciled"],
+    "transitions": {
+      "received_to_extracted": {
+        "from_state": "received",
+        "to_state": "extracted",
+        "requires": ["readable_document"]
+      },
+      "extracted_to_validated": {
+        "from_state": "extracted",
+        "to_state": "validated",
+        "requires": ["invoice_id", "vendor", "amount", "due_date"]
+      },
+      "validated_to_duplicate_checked": {
+        "from_state": "validated",
+        "to_state": "duplicate_checked",
+        "requires": ["duplicate_check_receipt"]
+      },
+      "duplicate_checked_to_approval_drafted": {
+        "from_state": "duplicate_checked",
+        "to_state": "approval_drafted",
+        "requires": ["approval_policy"]
+      },
+      "approval_drafted_to_approval_requested": {
+        "from_state": "approval_drafted",
+        "to_state": "approval_requested",
+        "requires": ["explicit_user_authorization"]
+      },
+      "approval_requested_to_approved": {
+        "from_state": "approval_requested",
+        "to_state": "approved",
+        "requires": ["approval_evidence"]
+      },
+      "approved_to_payment_scheduled": {
+        "from_state": "approved",
+        "to_state": "payment_scheduled",
+        "requires": ["payment_authority", "payment_idempotency_key"]
+      },
+      "payment_scheduled_to_paid": {
+        "from_state": "payment_scheduled",
+        "to_state": "paid",
+        "requires": ["payment_receipt"]
+      },
+      "paid_to_reconciled": {
+        "from_state": "paid",
+        "to_state": "reconciled",
+        "requires": ["reconciliation_receipt"]
+      }
+    }
+  },
+  "output_claims": {
+    "allowed": {
+      "extracted": ["Invoice fields were extracted."],
+      "approval_drafted": ["An approval draft was prepared."],
+      "approval_requested": ["Approval was requested."],
+      "approved": ["Approval evidence was found."],
+      "paid": ["Payment receipt was found."]
+    },
+    "forbidden": [
+      "Invoice approved unless state is approved or later",
+      "Invoice paid unless state is paid or later",
+      "Vendor verified unless vendor evidence exists",
+      "Payment completed without payment receipt"
+    ]
+  },
+  "tests": {
+    "required": [
+      "activation_test",
+      "boundary_test",
+      "ontology_test",
+      "evidence_test",
+      "action_gate_test",
+      "false_success_test",
+      "stale_pack_test",
+      "malicious_input_test",
+      "conflict_composition_test",
+      "tool_failure_test",
+      "output_claim_test",
+      "receipt_generation_test"
+    ]
+  },
+  "receipts": {
+    "required_for": [
+      "pack_activation",
+      "evidence_decision",
+      "action_gate",
+      "external_action",
+      "blocked_action",
+      "output_claim",
+      "refinement_delta"
+    ]
+  },
+  "versioning": {
+    "semver": true,
+    "stale_after_days": 90,
+    "stale_behavior": "read_only",
+    "rollback_required": true
+  },
+  "governance": {
+    "core_authority_ceiling": true,
+    "strictest_constraint_wins": true,
+    "no_claim_beyond_verified_state": true,
+    "refinement_requires_validation": true
+  }
+}

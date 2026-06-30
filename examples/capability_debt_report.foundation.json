@@ -9109,6 +9109,350 @@
       "operator_status": "Live action disabled"
     },
     {
+      "capability_id": "universal_domain_ops.claim.bound",
+      "capability_name": "Bound domain output claims to verified state",
+      "current_stage": "local_demo",
+      "current_unlock_level": "C3",
+      "debt_item_count": 4,
+      "debt_items": [
+        {
+          "category": "evidence",
+          "debt_id": "universal_domain_ops.claim.bound.evidence.missing_required_evidence",
+          "description": "missing required evidence",
+          "fix": "collect evidence: verified_workflow_state, allowed_claim_boundary, blocked_claim_receipt, evidence_refs, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, external_send_receipt, provider_receipt, production_evidence_receipt",
+          "missing_refs": [
+            "verified_workflow_state",
+            "allowed_claim_boundary",
+            "blocked_claim_receipt",
+            "evidence_refs",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt",
+            "universal_action_orchestration_validation_receipt",
+            "capability_registry_entry",
+            "evidence_intake_receipt",
+            "evidence_verification_receipt",
+            "external_send_receipt",
+            "provider_receipt",
+            "production_evidence_receipt"
+          ],
+          "severity": "high"
+        },
+        {
+          "category": "promotion",
+          "debt_id": "universal_domain_ops.claim.bound.promotion.blocked_promotion_stages",
+          "description": "blocked promotion stages",
+          "fix": "close promotion controls: sandbox_receipt_evidence, required_evidence, production_readiness_evidence, safe_live_action_evidence, operator_pilot_authorization, bounded_live_receipts, active_monitoring_receipt, approved_live_action_receipt, terminal_closure_certificate, production_witness, release_handoff_receipt",
+          "missing_refs": [
+            "sandbox_receipt_evidence",
+            "required_evidence",
+            "production_readiness_evidence",
+            "safe_live_action_evidence",
+            "operator_pilot_authorization",
+            "bounded_live_receipts",
+            "active_monitoring_receipt",
+            "approved_live_action_receipt",
+            "terminal_closure_certificate",
+            "production_witness",
+            "release_handoff_receipt"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "replay",
+          "debt_id": "universal_domain_ops.claim.bound.replay.missing_deterministic_replay_proof",
+          "description": "missing deterministic replay proof",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, verified_workflow_state, allowed_claim_boundary, blocked_claim_receipt, evidence_refs, terminal_closure_certificate, effect_reconciliation_receipt",
+          "missing_refs": [
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "verified_workflow_state",
+            "allowed_claim_boundary",
+            "blocked_claim_receipt",
+            "evidence_refs",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "live_action",
+          "debt_id": "universal_domain_ops.claim.bound.live_action.live_action_disabled",
+          "description": "live action disabled",
+          "fix": "keep live action disabled until promotion evidence is complete",
+          "missing_refs": [
+            "live_action_authority"
+          ],
+          "severity": "low"
+        }
+      ],
+      "debt_row_id": "capability_debt.universal_domain_ops.claim.bound.foundation.v1",
+      "debt_row_is_not_execution_authority": true,
+      "debt_severity": "high",
+      "family": "universal_domain_ops",
+      "live_action_enabled": false,
+      "next_action": "collect evidence: verified_workflow_state, allowed_claim_boundary, blocked_claim_receipt, evidence_refs, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, external_send_receipt, provider_receipt, production_evidence_receipt",
+      "operator_status": "Live action disabled"
+    },
+    {
+      "capability_id": "universal_domain_ops.episode.simulate",
+      "capability_name": "Simulate domain-pack episode gate",
+      "current_stage": "local_demo",
+      "current_unlock_level": "C3",
+      "debt_item_count": 4,
+      "debt_items": [
+        {
+          "category": "evidence",
+          "debt_id": "universal_domain_ops.episode.simulate.evidence.missing_required_evidence",
+          "description": "missing required evidence",
+          "fix": "collect evidence: domain_pack_source, candidate_action_set, evidence_sufficiency_report, simulation_receipt, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, external_send_receipt, provider_receipt, production_evidence_receipt",
+          "missing_refs": [
+            "domain_pack_source",
+            "candidate_action_set",
+            "evidence_sufficiency_report",
+            "simulation_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt",
+            "universal_action_orchestration_validation_receipt",
+            "capability_registry_entry",
+            "evidence_intake_receipt",
+            "evidence_verification_receipt",
+            "external_send_receipt",
+            "provider_receipt",
+            "production_evidence_receipt"
+          ],
+          "severity": "high"
+        },
+        {
+          "category": "promotion",
+          "debt_id": "universal_domain_ops.episode.simulate.promotion.blocked_promotion_stages",
+          "description": "blocked promotion stages",
+          "fix": "close promotion controls: sandbox_receipt_evidence, required_evidence, production_readiness_evidence, safe_live_action_evidence, operator_pilot_authorization, bounded_live_receipts, active_monitoring_receipt, approved_live_action_receipt, terminal_closure_certificate, production_witness, release_handoff_receipt",
+          "missing_refs": [
+            "sandbox_receipt_evidence",
+            "required_evidence",
+            "production_readiness_evidence",
+            "safe_live_action_evidence",
+            "operator_pilot_authorization",
+            "bounded_live_receipts",
+            "active_monitoring_receipt",
+            "approved_live_action_receipt",
+            "terminal_closure_certificate",
+            "production_witness",
+            "release_handoff_receipt"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "replay",
+          "debt_id": "universal_domain_ops.episode.simulate.replay.missing_deterministic_replay_proof",
+          "description": "missing deterministic replay proof",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, domain_pack_source, candidate_action_set, evidence_sufficiency_report, simulation_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
+          "missing_refs": [
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "domain_pack_source",
+            "candidate_action_set",
+            "evidence_sufficiency_report",
+            "simulation_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "live_action",
+          "debt_id": "universal_domain_ops.episode.simulate.live_action.live_action_disabled",
+          "description": "live action disabled",
+          "fix": "keep live action disabled until promotion evidence is complete",
+          "missing_refs": [
+            "live_action_authority"
+          ],
+          "severity": "low"
+        }
+      ],
+      "debt_row_id": "capability_debt.universal_domain_ops.episode.simulate.foundation.v1",
+      "debt_row_is_not_execution_authority": true,
+      "debt_severity": "high",
+      "family": "universal_domain_ops",
+      "live_action_enabled": false,
+      "next_action": "collect evidence: domain_pack_source, candidate_action_set, evidence_sufficiency_report, simulation_receipt, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, external_send_receipt, provider_receipt, production_evidence_receipt",
+      "operator_status": "Live action disabled"
+    },
+    {
+      "capability_id": "universal_domain_ops.pack.lint",
+      "capability_name": "Lint executable domain pack gates",
+      "current_stage": "local_demo",
+      "current_unlock_level": "C3",
+      "debt_item_count": 4,
+      "debt_items": [
+        {
+          "category": "evidence",
+          "debt_id": "universal_domain_ops.pack.lint.evidence.missing_required_evidence",
+          "description": "missing required evidence",
+          "fix": "collect evidence: domain_pack_source, lint_rule_set, linter_report, blocked_action_receipt, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, external_send_receipt, provider_receipt, production_evidence_receipt",
+          "missing_refs": [
+            "domain_pack_source",
+            "lint_rule_set",
+            "linter_report",
+            "blocked_action_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt",
+            "universal_action_orchestration_validation_receipt",
+            "capability_registry_entry",
+            "evidence_intake_receipt",
+            "evidence_verification_receipt",
+            "external_send_receipt",
+            "provider_receipt",
+            "production_evidence_receipt"
+          ],
+          "severity": "high"
+        },
+        {
+          "category": "promotion",
+          "debt_id": "universal_domain_ops.pack.lint.promotion.blocked_promotion_stages",
+          "description": "blocked promotion stages",
+          "fix": "close promotion controls: sandbox_receipt_evidence, required_evidence, production_readiness_evidence, safe_live_action_evidence, operator_pilot_authorization, bounded_live_receipts, active_monitoring_receipt, approved_live_action_receipt, terminal_closure_certificate, production_witness, release_handoff_receipt",
+          "missing_refs": [
+            "sandbox_receipt_evidence",
+            "required_evidence",
+            "production_readiness_evidence",
+            "safe_live_action_evidence",
+            "operator_pilot_authorization",
+            "bounded_live_receipts",
+            "active_monitoring_receipt",
+            "approved_live_action_receipt",
+            "terminal_closure_certificate",
+            "production_witness",
+            "release_handoff_receipt"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "replay",
+          "debt_id": "universal_domain_ops.pack.lint.replay.missing_deterministic_replay_proof",
+          "description": "missing deterministic replay proof",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, domain_pack_source, lint_rule_set, linter_report, blocked_action_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
+          "missing_refs": [
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "domain_pack_source",
+            "lint_rule_set",
+            "linter_report",
+            "blocked_action_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "live_action",
+          "debt_id": "universal_domain_ops.pack.lint.live_action.live_action_disabled",
+          "description": "live action disabled",
+          "fix": "keep live action disabled until promotion evidence is complete",
+          "missing_refs": [
+            "live_action_authority"
+          ],
+          "severity": "low"
+        }
+      ],
+      "debt_row_id": "capability_debt.universal_domain_ops.pack.lint.foundation.v1",
+      "debt_row_is_not_execution_authority": true,
+      "debt_severity": "high",
+      "family": "universal_domain_ops",
+      "live_action_enabled": false,
+      "next_action": "collect evidence: domain_pack_source, lint_rule_set, linter_report, blocked_action_receipt, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, external_send_receipt, provider_receipt, production_evidence_receipt",
+      "operator_status": "Live action disabled"
+    },
+    {
+      "capability_id": "universal_domain_ops.registry.validate",
+      "capability_name": "Validate domain pack registry entry",
+      "current_stage": "local_demo",
+      "current_unlock_level": "C3",
+      "debt_item_count": 4,
+      "debt_items": [
+        {
+          "category": "evidence",
+          "debt_id": "universal_domain_ops.registry.validate.evidence.missing_required_evidence",
+          "description": "missing required evidence",
+          "fix": "collect evidence: domain_pack_source, schema_validation_report, linter_report, pack_use_receipt, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, external_send_receipt, provider_receipt, production_evidence_receipt",
+          "missing_refs": [
+            "domain_pack_source",
+            "schema_validation_report",
+            "linter_report",
+            "pack_use_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt",
+            "universal_action_orchestration_validation_receipt",
+            "capability_registry_entry",
+            "evidence_intake_receipt",
+            "evidence_verification_receipt",
+            "external_send_receipt",
+            "provider_receipt",
+            "production_evidence_receipt"
+          ],
+          "severity": "high"
+        },
+        {
+          "category": "promotion",
+          "debt_id": "universal_domain_ops.registry.validate.promotion.blocked_promotion_stages",
+          "description": "blocked promotion stages",
+          "fix": "close promotion controls: sandbox_receipt_evidence, required_evidence, production_readiness_evidence, safe_live_action_evidence, operator_pilot_authorization, bounded_live_receipts, active_monitoring_receipt, approved_live_action_receipt, terminal_closure_certificate, production_witness, release_handoff_receipt",
+          "missing_refs": [
+            "sandbox_receipt_evidence",
+            "required_evidence",
+            "production_readiness_evidence",
+            "safe_live_action_evidence",
+            "operator_pilot_authorization",
+            "bounded_live_receipts",
+            "active_monitoring_receipt",
+            "approved_live_action_receipt",
+            "terminal_closure_certificate",
+            "production_witness",
+            "release_handoff_receipt"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "replay",
+          "debt_id": "universal_domain_ops.registry.validate.replay.missing_deterministic_replay_proof",
+          "description": "missing deterministic replay proof",
+          "fix": "collect deterministic replay evidence: replay_record, replay_input_digest, replay_output_digest, domain_pack_source, schema_validation_report, linter_report, pack_use_receipt, terminal_closure_certificate, effect_reconciliation_receipt",
+          "missing_refs": [
+            "replay_record",
+            "replay_input_digest",
+            "replay_output_digest",
+            "domain_pack_source",
+            "schema_validation_report",
+            "linter_report",
+            "pack_use_receipt",
+            "terminal_closure_certificate",
+            "effect_reconciliation_receipt"
+          ],
+          "severity": "medium"
+        },
+        {
+          "category": "live_action",
+          "debt_id": "universal_domain_ops.registry.validate.live_action.live_action_disabled",
+          "description": "live action disabled",
+          "fix": "keep live action disabled until promotion evidence is complete",
+          "missing_refs": [
+            "live_action_authority"
+          ],
+          "severity": "low"
+        }
+      ],
+      "debt_row_id": "capability_debt.universal_domain_ops.registry.validate.foundation.v1",
+      "debt_row_is_not_execution_authority": true,
+      "debt_severity": "high",
+      "family": "universal_domain_ops",
+      "live_action_enabled": false,
+      "next_action": "collect evidence: domain_pack_source, schema_validation_report, linter_report, pack_use_receipt, terminal_closure_certificate, effect_reconciliation_receipt, universal_action_orchestration_validation_receipt, capability_registry_entry, evidence_intake_receipt, evidence_verification_receipt, external_send_receipt, provider_receipt, production_evidence_receipt",
+      "operator_status": "Live action disabled"
+    },
+    {
       "capability_id": "voice.action_items_extract",
       "capability_name": "Extract action items from meeting transcript",
       "current_stage": "local_demo",
@@ -9636,17 +9980,17 @@
     "promotion_path_set_id": "sandbox_to_live_promotion_paths.foundation.v1"
   },
   "summary": {
-    "capabilities_with_debt_count": 107,
-    "capability_count": 107,
+    "capabilities_with_debt_count": 111,
+    "capability_count": 111,
     "category_counts": {
       "approval": 24,
-      "evidence": 105,
-      "live_action": 107,
-      "promotion": 107,
-      "replay": 106,
+      "evidence": 109,
+      "live_action": 111,
+      "promotion": 111,
+      "replay": 110,
       "rollback": 12
     },
-    "debt_row_count": 107,
+    "debt_row_count": 111,
     "family_counts": {
       "agentic_control": 17,
       "browser": 6,
@@ -9663,16 +10007,17 @@
       "phone": 5,
       "physical": 2,
       "software_dev": 12,
+      "universal_domain_ops": 4,
       "voice": 6
     },
     "live_action_enabled_count": 0,
     "severity_counts": {
       "critical": 0,
-      "high": 106,
+      "high": 110,
       "low": 0,
       "medium": 1
     },
-    "total_debt_item_count": 461
+    "total_debt_item_count": 477
   },
   "top_debt_items": [
     {
