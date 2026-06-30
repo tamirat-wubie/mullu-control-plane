@@ -129,6 +129,10 @@ REQUIRED_FALSE_FLAGS = (
     "ci_gate_collected",
     "authority_granted",
     "terminal_closure",
+    "source_repository_effect_rollback_plan_collected",
+    "source_pr_creation_authorized_after_rollback_plan",
+    "source_authority_granted",
+    "source_pull_request_creation_enabled",
     "repository_effect_rollback_plan_satisfied",
     "ci_gate_before_ready_for_review_collected",
     "ready_for_review_authorized_after_ci_gate",
@@ -163,6 +167,13 @@ REQUIRED_TRUE_FLAGS = (
     "operator_response_bound",
     "repository_effect_rollback_plan_required",
     "ci_gate_before_ready_for_review_required",
+    "ci_gate_consumes_command_preview_repository_effect_rollback_evidence",
+    "ci_gate_consumes_actual_diff_repository_effect_rollback_evidence",
+    "ci_gate_remains_uncollected",
+    "ci_gate_remains_non_authorizing",
+    "ready_for_review_remains_blocked",
+    "pull_request_creation_remains_blocked",
+    "terminal_closure_remains_blocked",
     "blocks_terminal_closure",
 )
 ALLOWED_SECRET_KEYS = {
@@ -468,9 +479,82 @@ def _validate_ci_gate_before_ready_for_review_witness_semantics(
     )
     _require_equal(payload, ("ci_gate", "command_preview_bound"), True, errors, label)
     _require_equal(payload, ("ci_gate", "operator_response_bound"), True, errors, label)
+    _require_equal(
+        payload,
+        ("command_preview_repository_effect_rollback_evidence", "source_repository_effect_rollback_plan_witness_ref"),
+        EXPECTED_SOURCE_ROLLBACK_PLAN_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_repository_effect_rollback_evidence", "source_binding_id"),
+        "agentic_service_harness_github_pr_repository_effect_rollback_plan_witness",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_repository_effect_rollback_evidence", "source_requested_evidence_ref"),
+        EXPECTED_SOURCE_ROLLBACK_PLAN_EVIDENCE_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_repository_effect_rollback_evidence", "source_rollback_plan_request_id"),
+        EXPECTED_SOURCE_ROLLBACK_PLAN_REQUEST_ID,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_repository_effect_rollback_evidence", "source_command_preview_uao_admission_evidence_ref"),
+        "command_preview_uao_admission_evidence",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_repository_effect_rollback_evidence", "source_uao_admission_witness_id"),
+        "agentic_service_harness_github_pr_uao_admission_witness",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_repository_effect_rollback_evidence", "source_uao_admission_witness_ref"),
+        EXPECTED_SOURCE_UAO_ADMISSION_WITNESS_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_repository_effect_rollback_evidence", "source_branch_write_binding_id"),
+        "agentic_service_harness_github_pr_branch_write_authority_binding",
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_repository_effect_rollback_evidence", "source_branch_write_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
+    _require_equal(
+        payload,
+        ("command_preview_repository_effect_rollback_evidence", "source_repository_effect_rollback_plan_effect"),
+        "permits_pull_request_creation_request_only_after_ci_gate_and_effect_reconciliation",
+        errors,
+        label,
+    )
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
     if source_rollback_plan_witness:
         source_rollback_plan = _mapping(_get_nested(source_rollback_plan_witness, ("rollback_plan",)))
+        source_rollback_evidence = _mapping(
+            _get_nested(source_rollback_plan_witness, ("command_preview_uao_admission_evidence",))
+        )
         _require_equal(
             payload,
             ("ci_gate", "command_preview_uao_admission_witness_ref"),
@@ -594,6 +678,153 @@ def _validate_ci_gate_before_ready_for_review_witness_semantics(
             payload,
             ("ci_gate", "redacted_output_ref"),
             source_rollback_plan.get("redacted_output_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_binding_id"),
+            source_rollback_plan_witness.get("binding_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_requested_evidence_ref"),
+            source_rollback_plan_witness.get("requested_evidence_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_rollback_plan_request_id"),
+            source_rollback_plan.get("rollback_plan_request_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_uao_admission_witness_id"),
+            source_rollback_evidence.get("source_binding_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_uao_admission_witness_ref"),
+            source_rollback_evidence.get("source_uao_admission_witness_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_branch_write_binding_id"),
+            source_rollback_evidence.get("source_branch_write_binding_id"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_branch_write_binding_ref"),
+            source_rollback_evidence.get("source_branch_write_binding_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_command_preview_ref"),
+            source_rollback_plan.get("command_preview_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_redacted_command_preview"),
+            source_rollback_plan.get("redacted_command_preview"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_argument_vector_template"),
+            source_rollback_plan.get("argument_vector_template"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_placeholder_refs"),
+            source_rollback_plan.get("placeholder_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_actual_non_empty_diff_receipt_ref"),
+            source_rollback_plan.get("actual_non_empty_diff_receipt_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_changed_file_refs"),
+            source_rollback_plan.get("changed_file_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_diff_refs"),
+            source_rollback_plan.get("diff_refs"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_redacted_diff_bundle_ref"),
+            source_rollback_plan.get("redacted_diff_bundle_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_redacted_output_ref"),
+            source_rollback_plan.get("redacted_output_ref"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_repository_effect_rollback_plan_effect"),
+            source_rollback_plan.get("repository_effect_rollback_plan_effect"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_repository_effect_rollback_plan_collected"),
+            source_rollback_plan.get("repository_effect_rollback_plan_collected"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_pr_creation_authorized_after_rollback_plan"),
+            source_rollback_plan.get("pr_creation_authorized_after_rollback_plan"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_authority_granted"),
+            source_rollback_plan_witness.get("authority_granted"),
+            errors,
+            label,
+        )
+        _require_equal(
+            payload,
+            ("command_preview_repository_effect_rollback_evidence", "source_pull_request_creation_enabled"),
+            _get_nested(source_rollback_plan_witness, ("authority_denials", "pull_request_creation_enabled")),
             errors,
             label,
         )
