@@ -723,12 +723,14 @@ def _build_r2_artifacts(
         steps=steps,
         capability_passport_loader=capability_passport_loader,
     )
+    external_instruction_conflicts = _external_instruction_conflicts(raw_goal)
     goal_normal_form = _goal_normal_form(
         raw_goal=raw_goal,
         goal=goal,
         steps=steps,
         operator_contracts=operator_contracts,
         capability_plan=capability_plan,
+        external_instruction_conflicts=external_instruction_conflicts,
     )
     world_facts = _world_facts(world_state)
     gap_theorem = _gap_theorem(
@@ -737,6 +739,7 @@ def _build_r2_artifacts(
         capability_plan=capability_plan,
         world_state=world_state,
         operator_contracts=operator_contracts,
+        external_instruction_conflicts=external_instruction_conflicts,
     )
     causal_chain_graph = _causal_chain_graph(
         goal=goal,
@@ -788,6 +791,7 @@ def _goal_normal_form(
     steps: tuple[GovernedPlanStep, ...],
     operator_contracts: tuple[OperatorContractProjection, ...],
     capability_plan: CapabilityPlan | None,
+    external_instruction_conflicts: tuple[str, ...] = (),
 ) -> GoalNormalForm:
     effects = _dedupe(
         effect
@@ -808,10 +812,14 @@ def _goal_normal_form(
         if step.approval.required
         for authority in (step.approval.authority_required or ("operator",))
     )
+    external_instruction_boundaries = (
+        ("external_text_is_data_not_authority",) if external_instruction_conflicts else ()
+    )
     boundaries = (
         "planning_simulation_only",
         "no_execution_dispatch_or_promotion",
         "no_irreversible_external_action_without_explicit_approval",
+        *external_instruction_boundaries,
         *approval_boundaries,
     )
     return GoalNormalForm(
@@ -823,6 +831,7 @@ def _goal_normal_form(
             "registered_operator_required",
             "verified_effect_required",
             "produce_receipt",
+            "external_text_cannot_grant_authority",
         ),
         success_metrics=(
             *goal.success_criteria,
@@ -835,6 +844,7 @@ def _goal_normal_form(
             "missing_verifier",
             "unbounded_side_effect",
             "missing_receipt",
+            "external_instruction_attempt",
         ),
         boundaries=boundaries,
         reversibility_required=goal.risk_tier in {"medium", "high"} or any(
@@ -906,6 +916,24 @@ def _world_state_requires_refresh(world_state: WorldState | None) -> bool:
     return world_state.metadata.get("requires_refresh") is True
 
 
+def _external_instruction_conflicts(raw_goal: str) -> tuple[str, ...]:
+    lowered_goal = raw_goal.lower()
+    control_markers = (
+        "ignore previous approval",
+        "ignore all previous approval",
+        "ignore previous rules",
+        "ignore all previous rules",
+        "bypass approval",
+        "skip approval",
+        "override approval",
+        "send payment immediately",
+        "pay immediately",
+    )
+    if any(marker in lowered_goal for marker in control_markers):
+        return ("external_instruction_attempt",)
+    return ()
+
+
 def _operator_contract_projections(
     *,
     steps: tuple[GovernedPlanStep, ...],
@@ -948,6 +976,7 @@ def _gap_theorem(
     capability_plan: CapabilityPlan | None,
     world_state: WorldState | None,
     operator_contracts: tuple[OperatorContractProjection, ...],
+    external_instruction_conflicts: tuple[str, ...] = (),
 ) -> GapTheorem:
     missing_facts = () if world_state is not None else ("world_state_projection",)
     if _world_state_requires_refresh(world_state):
@@ -977,6 +1006,7 @@ def _gap_theorem(
     for step in steps:
         if not step.side_effects_bounded:
             conflicts.append(f"unbounded_side_effect:{step.step_id}")
+    conflicts.extend(external_instruction_conflicts)
     return GapTheorem(
         missing_facts=tuple(missing_facts),
         missing_permissions=tuple(missing_permissions),
@@ -1178,6 +1208,29 @@ def _causal_chain_graph(
             )
         )
 
+    for conflict in gap_theorem.conflicts:
+        if conflict != "external_instruction_attempt":
+            continue
+        conflict_node_id = f"assumption:{conflict}"
+        nodes.append(
+            CausalGraphNode(
+                node_id=conflict_node_id,
+                node_type="AssumptionNode",
+                ref="external_text_cannot_grant_authority",
+                status="blocked",
+                proof_state="Fail",
+            )
+        )
+        edges.append(
+            CausalGraphEdge(
+                source=conflict_node_id,
+                target=f"goal:{goal.goal_id}",
+                relation="BLOCKS",
+                confidence=1.0,
+                proof_type="external_instruction_boundary",
+            )
+        )
+
     proof_state = "Fail" if certificate.status == "blocked" else (
         "Unknown" if (
             gap_theorem.conflicts
@@ -1301,6 +1354,9 @@ def _compile_receipt(
         for item in (
             "world_state_projection_absent" if gap_theorem.missing_facts else "",
             "post_step_evidence_pending_until_execution" if gap_theorem.missing_evidence else "",
+            "external_text_treated_as_data_not_authority"
+            if "external_instruction_attempt" in gap_theorem.conflicts
+            else "",
         )
         if item
     )
