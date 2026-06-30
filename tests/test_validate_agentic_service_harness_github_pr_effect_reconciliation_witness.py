@@ -152,6 +152,51 @@ def test_github_pr_effect_reconciliation_witness_rejects_command_preview_ci_gate
     assert "effect_reconciliation.placeholder_refs" in serialized_errors
 
 
+def test_github_pr_effect_reconciliation_witness_rejects_ci_gate_evidence_capsule_drift() -> None:
+    payload = validator.build_mutated_effect_reconciliation_witness(
+        command_preview_ci_gate_evidence__source_binding_id="agentic_service_harness_github_pr_drifted",
+        command_preview_ci_gate_evidence__source_repository_effect_rollback_plan_witness_id="drifted_rollback",
+        command_preview_ci_gate_evidence__source_uao_admission_witness_id="drifted_uao",
+        command_preview_ci_gate_evidence__source_branch_write_binding_id="drifted_branch_write",
+        command_preview_ci_gate_evidence__source_ci_gate_before_ready_for_review_collected=True,
+        command_preview_ci_gate_evidence__source_ready_for_review_authorized_after_ci_gate=True,
+        command_preview_ci_gate_evidence__source_pull_request_creation_authorized_after_ci_gate=True,
+        command_preview_ci_gate_evidence__effect_reconciliation_consumes_command_preview_ci_gate_evidence=False,
+        command_preview_ci_gate_evidence__effect_reconciliation_remains_non_authorizing=False,
+        command_preview_ci_gate_evidence__terminal_closure_remains_blocked=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_effect_reconciliation_witness_semantics(payload, _source_ci_gate_witness(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_ci_gate_evidence.source_binding_id" in serialized_errors
+    assert "command_preview_ci_gate_evidence.source_repository_effect_rollback_plan_witness_id" in serialized_errors
+    assert "command_preview_ci_gate_evidence.source_uao_admission_witness_id" in serialized_errors
+    assert "command_preview_ci_gate_evidence.source_branch_write_binding_id" in serialized_errors
+    assert (
+        "command_preview_ci_gate_evidence.source_ci_gate_before_ready_for_review_collected must be false"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_ci_gate_evidence.source_ready_for_review_authorized_after_ci_gate must be false"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_ci_gate_evidence.source_pull_request_creation_authorized_after_ci_gate must be false"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_ci_gate_evidence.effect_reconciliation_consumes_command_preview_ci_gate_evidence must be true"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_ci_gate_evidence.effect_reconciliation_remains_non_authorizing must be true"
+        in serialized_errors
+    )
+    assert "command_preview_ci_gate_evidence.terminal_closure_remains_blocked must be true" in serialized_errors
+
+
 def test_github_pr_effect_reconciliation_witness_rejects_remaining_witness_drift() -> None:
     payload = validator.build_mutated_effect_reconciliation_witness(
         remaining_witnesses=[
