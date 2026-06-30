@@ -64,6 +64,7 @@ class ConsoleVerificationProvider(Protocol):
 
 
 StateHashProvider = Callable[[OperatorConsoleEpisode, ConsolePlannedAction], str]
+AbortPredicate = Callable[[OperatorConsoleEpisode, ConsolePlannedAction], bool]
 
 
 class OperatorConsoleFirstRuntime:
@@ -228,6 +229,8 @@ class OperatorConsoleFirstRuntime:
             return _decision(False, "cost_limit_exceeded", approval_mode, now)
         if not action.side_effects_declared:
             return _decision(False, "undeclared_side_effects", approval_mode, now)
+        if action.hostile_input_boundary.blocks_dispatch:
+            return _decision(False, "hostile_input_authority_violation", approval_mode, now)
         if action.side_effects.effect_bearing and not action.recovery_declared:
             return _decision(False, "missing_recovery_plan", approval_mode, now)
         if observed_state_hash != episode.snapshot.state_hash:
@@ -257,6 +260,7 @@ class OperatorConsoleFirstRuntime:
         gateway: ConsoleExternalEffectGateway,
         verifier: ConsoleVerificationProvider | None = None,
         state_hash_provider: StateHashProvider | None = None,
+        abort_requested: AbortPredicate | None = None,
     ) -> tuple[OperatorConsoleEpisode, OperatorConsoleReceipt]:
         """Execute actions only through the gateway and emit a terminal receipt."""
         if not episode.plan:
@@ -301,6 +305,29 @@ class OperatorConsoleFirstRuntime:
         unverified_claims: list[str] = []
 
         for action in running.plan:
+            if abort_requested is not None and abort_requested(running, action):
+                final_episode = replace(
+                    running,
+                    status=ConsoleEpisodeStatus.ABORTED,
+                    events=running.events
+                    + (
+                        ConsoleEvent(
+                            event_type="episode_aborted",
+                            occurred_at=self._clock(),
+                            details={"action_id": action.action_id},
+                        ),
+                    ),
+                )
+                return final_episode, self._build_receipt(
+                    episode=final_episode,
+                    final_status=ConsoleFinalStatus.ABORTED,
+                    attempted=tuple(attempted),
+                    blocked=(action.action_id,),
+                    verifications=tuple(verifications),
+                    evidence_refs=tuple(evidence_refs),
+                    unverified_claims=("operator_abort_requested",),
+                )
+
             current_state_hash = (
                 state_hash_provider(running, action)
                 if state_hash_provider is not None
@@ -343,6 +370,34 @@ class OperatorConsoleFirstRuntime:
             attempted.append(action.action_id)
             dispatch_result = _dispatch_through_gateway(gateway, running, action, self._clock())
             evidence_refs.extend(dispatch_result.evidence_refs)
+            if _risk_escalated_beyond_lane(action, dispatch_result, running.approval_lease):
+                unverified_claims.append("risk_escalated")
+                final_episode = replace(
+                    running,
+                    status=ConsoleEpisodeStatus.PAUSED,
+                    events=running.events
+                    + (
+                        ConsoleEvent(
+                            event_type="risk_escalation_paused",
+                            occurred_at=self._clock(),
+                            details={
+                                "action_id": action.action_id,
+                                "original_risk_score": action.risk_score,
+                                "escalated_risk_score": dispatch_result.escalated_risk_score,
+                            },
+                        ),
+                    ),
+                )
+                return final_episode, self._build_receipt(
+                    episode=final_episode,
+                    final_status=ConsoleFinalStatus.BLOCKED,
+                    attempted=tuple(attempted),
+                    blocked=(action.action_id,),
+                    verifications=tuple(verifications),
+                    evidence_refs=tuple(evidence_refs),
+                    unverified_claims=tuple(unverified_claims),
+                )
+
             hidden_side_effects = _hidden_side_effect_names(
                 declared=action.side_effects,
                 actual=dispatch_result.actual_side_effects,
@@ -680,6 +735,21 @@ def _hidden_side_effect_names(
     return tuple(hidden)
 
 
+def _risk_escalated_beyond_lane(
+    action: ConsolePlannedAction,
+    dispatch_result: GatewayDispatchResult,
+    approval_lease: ApprovalLease | None,
+) -> bool:
+    escalated_score = dispatch_result.escalated_risk_score
+    if escalated_score is None or escalated_score <= action.risk_score:
+        return False
+    if approval_lease is not None:
+        return escalated_score > approval_lease.risk_ceiling
+    return approval_mode_for_action(
+        replace(action, risk_score=escalated_score),
+    ) != approval_mode_for_action(action)
+
+
 def _episode_status_for_block_reason(reason: str) -> ConsoleEpisodeStatus:
     if reason in {"approval_expired", "approval_plan_mismatch", "approval_state_mismatch"}:
         return ConsoleEpisodeStatus.APPROVAL_EXPIRED
@@ -688,6 +758,7 @@ def _episode_status_for_block_reason(reason: str) -> ConsoleEpisodeStatus:
     if reason in {
         "undeclared_side_effects",
         "missing_recovery_plan",
+        "hostile_input_authority_violation",
         "risk_exceeds_approval",
         "action_not_approved",
         "cost_limit_exceeded",
