@@ -917,6 +917,25 @@ def test_operator_control_tower_projects_friction_control_capability_panel() -> 
     assert "fast mode recommended for local lab" in friction_mode["operator_message"]
     assert friction_mode["execution_boundary"] == "local_lab_only"
     assert friction_mode["external_effects_allowed"] is False
+    assert friction_mode["control_summary"] == {
+        "contract_id": "operator_dashboard_control_summary.v1",
+        "summary_id": "friction_mode.control_summary.v1",
+        "operator_message": friction_mode["operator_message"],
+        "action_banner": friction_mode["operator_message"],
+        "capability_id": "friction_mode.foundation",
+        "mode": "fast",
+        "current_level": "L3",
+        "next_level": "L5",
+        "status": "preflight_ready",
+        "blocked_reason": "approval_required",
+        "next_unlock": "approval",
+        "next_evidence_count": (
+            friction_mode["balanced_approval_required_count"]
+            + friction_mode["strict_approval_required_count"]
+        ),
+        "external_effects_allowed": False,
+        "rollback_required": True,
+    }
     mode_change = next(item for item in mode_selector["capabilities"] if item["capability_id"] == "software_dev.change.run")
     assert mode_change["strict"] == "approval_required"
     assert mode_change["balanced"] == "approval_required"
@@ -1847,6 +1866,7 @@ def test_operator_control_tower_html_shows_simple_developer_dashboard() -> None:
     assert "capabilities preflight-ready" in response.text
     assert "Next blocked capability" in response.text
     assert "Friction Mode Summary" in response.text
+    assert "friction_mode.control_summary.v1" in response.text
     assert "Recommended mode" in response.text
     assert "fast mode recommended for local lab" in response.text
     assert "Safe vs Dangerous Summary" in response.text

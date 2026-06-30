@@ -2619,6 +2619,27 @@ def _friction_mode_summary(mode_selector: Mapping[str, Any]) -> dict[str, Any]:
         if isinstance(mode_selector, Mapping)
         else "fast"
     )
+    operator_message = (
+        f"{recommended_mode} mode recommended for local lab; "
+        f"fast allows {fast_allowed} capabilities; "
+        f"balanced holds {balanced_approval} approvals"
+    )
+    control_summary = operator_dashboard_control_summary(
+        summary_id="friction_mode.control_summary.v1",
+        operator_message=operator_message,
+        next_unlock="approval" if balanced_approval or strict_approval else "none",
+        capability_summary={
+            "capability_id": "friction_mode.foundation",
+            "mode": recommended_mode,
+            "current_level": "L3" if recommended_mode == "fast" else "L2",
+            "next_level": "L5",
+            "status": "preflight_ready" if fast_allowed else "evidence_required",
+            "blocked_reason": "approval_required" if balanced_approval or strict_approval else "none",
+            "next_evidence_count": balanced_approval + strict_approval,
+            "external_effects_allowed": False,
+            "rollback_required": bool(balanced_approval or strict_approval),
+        },
+    )
     return {
         "summary_id": "friction_mode.foundation",
         "default_mode": default_mode,
@@ -2632,13 +2653,14 @@ def _friction_mode_summary(mode_selector: Mapping[str, Any]) -> dict[str, Any]:
         "fast_allowed_count": fast_allowed,
         "fast_approval_required_count": fast_approval,
         "fast_blocked_count": fast_blocked,
-        "operator_message": (
-            f"{recommended_mode} mode recommended for local lab; "
-            f"fast allows {fast_allowed} capabilities; "
-            f"balanced holds {balanced_approval} approvals"
-        ),
+        "operator_message": operator_message,
         "execution_boundary": "local_lab_only",
         "external_effects_allowed": False,
+        "control_summary": {
+            key: value
+            for key, value in control_summary.items()
+            if key != "capability_summary"
+        },
     }
 
 
