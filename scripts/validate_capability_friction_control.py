@@ -105,6 +105,15 @@ REQUIRED_VALIDATOR_COMMANDS = {
     "developer_workflow_operator_receipt_validator": (
         "python scripts/build_developer_workflow_operator_receipt.py --json"
     ),
+    "operator_developer_workflow_status_read_model_builder": (
+        "python scripts/build_operator_developer_workflow_status_read_model.py --json"
+    ),
+    "operator_safe_local_action_read_model_builder": (
+        "python scripts/build_operator_safe_local_action_read_model.py --json"
+    ),
+    "operator_local_developer_workflow_receipt_read_model_builder": (
+        "python scripts/build_operator_local_developer_workflow_receipt_read_model.py --json"
+    ),
     "operator_control_tower_status_receipt_validator": (
         "python scripts/validate_operator_control_tower_status_receipt.py"
     ),
@@ -157,6 +166,15 @@ REQUIRED_VALIDATOR_COMMANDS = {
     ),
     "developer_workflow_operator_receipt_tests": (
         "python -m pytest tests/test_build_developer_workflow_operator_receipt.py -q"
+    ),
+    "operator_developer_workflow_status_read_model_tests": (
+        "python -m pytest tests/test_build_operator_developer_workflow_status_read_model.py -q"
+    ),
+    "operator_safe_local_action_read_model_tests": (
+        "python -m pytest tests/test_build_operator_safe_local_action_read_model.py -q"
+    ),
+    "operator_local_developer_workflow_receipt_read_model_tests": (
+        "python -m pytest tests/test_build_operator_local_developer_workflow_receipt_read_model.py -q"
     ),
     "operator_control_tower_status_receipt_tests": (
         "python -m pytest tests/test_validate_operator_control_tower_status_receipt.py -q"
