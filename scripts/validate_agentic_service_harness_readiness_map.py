@@ -678,6 +678,13 @@ REQUIRED_GITHUB_PR_EFFECT_RECONCILIATION_TERMS = (
 REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "GitHub PR terminal closure certificate command-preview effect reconciliation binding PR",
     "agentic_service_harness_github_pr_terminal_closure_certificate_witness",
+    "command-preview effect reconciliation evidence",
+    "source effect reconciliation witness id/ref",
+    "source command-preview CI gate evidence ref",
+    "source CI gate witness id/ref",
+    "source rollback witness id/ref",
+    "source UAO witness id/ref",
+    "source branch-write binding id/ref",
     "command-preview effect reconciliation witness",
     "command-preview CI gate before ready-for-review witness",
     "command-preview repository-effect rollback witness",
@@ -1521,7 +1528,7 @@ def _validate_github_pr_terminal_closure_ready(
     errors: list[str],
 ) -> None:
     witness_row = re.search(
-        r"^\| GitHub PR terminal closure certificate command-preview effect reconciliation binding PR \| READY \| .+command-preview effect reconciliation witness.+actual-diff effect reconciliation witness.+terminal closure status remains AwaitingEvidence.+terminal authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure certificate command-preview effect reconciliation binding PR \| READY \| .+command-preview effect reconciliation evidence.+source effect reconciliation witness id/ref.+source command-preview CI gate evidence ref.+source CI gate witness id/ref.+source rollback witness id/ref.+source UAO witness id/ref.+source branch-write binding id/ref.+command-preview effect reconciliation witness.+actual-diff effect reconciliation witness.+terminal closure status remains AwaitingEvidence.+terminal authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )
@@ -1671,7 +1678,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(pr): bind terminal closure certificate to command-preview effect reconciliation evidence",
+        "harness(pr): bind terminal closure certificate candidate to command-preview terminal closure certificate evidence",
     )
     positions: list[int] = []
     for marker in sequence_markers:

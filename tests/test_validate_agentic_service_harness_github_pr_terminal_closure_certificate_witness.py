@@ -160,6 +160,78 @@ def test_github_pr_terminal_closure_certificate_witness_rejects_command_preview_
     assert "terminal_closure_certificate.placeholder_refs" in serialized_errors
 
 
+def test_github_pr_terminal_closure_certificate_witness_rejects_effect_reconciliation_evidence_capsule_drift() -> None:
+    payload = validator.build_mutated_terminal_closure_certificate_witness(
+        command_preview_effect_reconciliation_evidence__source_binding_id="agentic_service_harness_github_pr_drift",
+        command_preview_effect_reconciliation_evidence__source_ci_gate_binding_id="agentic_service_harness_github_pr_drift",
+        command_preview_effect_reconciliation_evidence__source_repository_effect_rollback_plan_witness_id=(
+            "agentic_service_harness_github_pr_drift"
+        ),
+        command_preview_effect_reconciliation_evidence__source_uao_admission_witness_id=(
+            "agentic_service_harness_github_pr_drift"
+        ),
+        command_preview_effect_reconciliation_evidence__source_branch_write_binding_id=(
+            "agentic_service_harness_github_pr_drift"
+        ),
+        command_preview_effect_reconciliation_evidence__source_effect_reconciliation_collected=True,
+        command_preview_effect_reconciliation_evidence__source_terminal_closure_authorized_after_reconciliation=True,
+        command_preview_effect_reconciliation_evidence__source_ci_gate_before_ready_for_review_collected=True,
+        command_preview_effect_reconciliation_evidence__source_authority_granted=True,
+        command_preview_effect_reconciliation_evidence__terminal_closure_consumes_command_preview_effect_reconciliation_evidence=False,
+        command_preview_effect_reconciliation_evidence__terminal_closure_consumes_command_preview_ci_gate_evidence=False,
+        command_preview_effect_reconciliation_evidence__terminal_closure_certificate_remains_uncollected=False,
+        command_preview_effect_reconciliation_evidence__terminal_closure_certificate_remains_non_authorizing=False,
+        command_preview_effect_reconciliation_evidence__pull_request_merge_remains_blocked=False,
+        command_preview_effect_reconciliation_evidence__repository_write_remains_blocked=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_certificate_witness_semantics(
+        payload, _source_effect_reconciliation_witness(), errors, "mutated"
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_effect_reconciliation_evidence.source_binding_id" in serialized_errors
+    assert "command_preview_effect_reconciliation_evidence.source_ci_gate_binding_id" in serialized_errors
+    assert (
+        "command_preview_effect_reconciliation_evidence.source_repository_effect_rollback_plan_witness_id"
+        in serialized_errors
+    )
+    assert "command_preview_effect_reconciliation_evidence.source_uao_admission_witness_id" in serialized_errors
+    assert "command_preview_effect_reconciliation_evidence.source_branch_write_binding_id" in serialized_errors
+    assert (
+        "command_preview_effect_reconciliation_evidence.source_effect_reconciliation_collected must be false"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_effect_reconciliation_evidence.source_terminal_closure_authorized_after_reconciliation"
+        " must be false"
+    ) in serialized_errors
+    assert (
+        "command_preview_effect_reconciliation_evidence.source_ci_gate_before_ready_for_review_collected"
+        " must be false"
+    ) in serialized_errors
+    assert "command_preview_effect_reconciliation_evidence.source_authority_granted must be false" in serialized_errors
+    assert (
+        "command_preview_effect_reconciliation_evidence."
+        "terminal_closure_consumes_command_preview_effect_reconciliation_evidence must be true"
+    ) in serialized_errors
+    assert (
+        "command_preview_effect_reconciliation_evidence."
+        "terminal_closure_consumes_command_preview_ci_gate_evidence must be true"
+    ) in serialized_errors
+    assert (
+        "command_preview_effect_reconciliation_evidence.terminal_closure_certificate_remains_uncollected must be true"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_effect_reconciliation_evidence.terminal_closure_certificate_remains_non_authorizing must be true"
+        in serialized_errors
+    )
+    assert "command_preview_effect_reconciliation_evidence.pull_request_merge_remains_blocked must be true" in serialized_errors
+    assert "command_preview_effect_reconciliation_evidence.repository_write_remains_blocked must be true" in serialized_errors
+
+
 def test_github_pr_terminal_closure_certificate_witness_rejects_actual_diff_effect_reconciliation_drift() -> None:
     payload = validator.build_mutated_terminal_closure_certificate_witness(
         terminal_closure_certificate__actual_diff_effect_reconciliation_witness_ref="examples/drift.json",
