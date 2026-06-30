@@ -133,6 +133,45 @@ def test_github_pr_uao_admission_witness_rejects_command_preview_branch_write_dr
     assert "uao_admission.placeholder_refs" in serialized_errors
 
 
+def test_github_pr_uao_admission_witness_rejects_branch_write_evidence_drift() -> None:
+    payload = validator.build_mutated_uao_admission_witness(
+        command_preview_branch_write_authority_evidence__source_binding_id="drifted-binding",
+        command_preview_branch_write_authority_evidence__source_redacted_command_preview="gh pr create --body leaked",
+        command_preview_branch_write_authority_evidence__source_required_before_execution_refs=[
+            "evidence://drifted"
+        ],
+        command_preview_branch_write_authority_evidence__source_blocked_reason_refs=["blocked://drifted"],
+        command_preview_branch_write_authority_evidence__source_branch_write_authority_consumes_operator_response_evidence=False,
+        command_preview_branch_write_authority_evidence__source_authority_granted=True,
+        command_preview_branch_write_authority_evidence__source_branch_write_enabled=True,
+        command_preview_branch_write_authority_evidence__uao_pr_admission_consumes_branch_write_authority_evidence=False,
+        command_preview_branch_write_authority_evidence__uao_pr_execution_remains_not_admitted=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_uao_admission_witness_semantics(payload, _source_branch_write_binding(), errors, "mutated")
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_branch_write_authority_evidence.source_binding_id" in serialized_errors
+    assert "command_preview_branch_write_authority_evidence.source_redacted_command_preview" in serialized_errors
+    assert "command_preview_branch_write_authority_evidence.source_required_before_execution_refs" in serialized_errors
+    assert "command_preview_branch_write_authority_evidence.source_blocked_reason_refs" in serialized_errors
+    assert (
+        "command_preview_branch_write_authority_evidence.source_branch_write_authority_consumes_operator_response_evidence"
+        in serialized_errors
+    )
+    assert "command_preview_branch_write_authority_evidence.source_authority_granted must be false" in serialized_errors
+    assert "command_preview_branch_write_authority_evidence.source_branch_write_enabled must be false" in serialized_errors
+    assert (
+        "command_preview_branch_write_authority_evidence.uao_pr_admission_consumes_branch_write_authority_evidence must be true"
+        in serialized_errors
+    )
+    assert (
+        "command_preview_branch_write_authority_evidence.uao_pr_execution_remains_not_admitted must be true"
+        in serialized_errors
+    )
+
+
 def test_github_pr_uao_admission_witness_rejects_witness_drift() -> None:
     payload = validator.build_mutated_uao_admission_witness(
         remaining_witnesses=[

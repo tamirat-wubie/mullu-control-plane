@@ -143,6 +143,19 @@ REQUIRED_FALSE_FLAGS = (
     "mutation_route_admitted",
     "receipt_store_appended",
     "secret_values_serialized",
+    "source_operator_response_collected",
+    "source_operator_approval_granted",
+    "source_command_execution_admitted",
+    "source_adapter_execution_enabled",
+    "source_authority_granted",
+    "source_branch_write_enabled",
+    "source_pull_request_creation_enabled",
+    "source_repository_write_enabled",
+    "source_connector_calls_enabled",
+    "source_mutation_route_enabled",
+    "source_receipt_store_append_enabled",
+    "source_terminal_closure",
+    "source_secret_values_serialized",
 )
 REQUIRED_TRUE_FLAGS = (
     "planning_only",
@@ -155,11 +168,24 @@ REQUIRED_TRUE_FLAGS = (
     "response_witness_required",
     "uao_pr_admission_required",
     "blocks_pr_admission",
+    "source_operator_response_bound",
+    "source_command_preview_bound",
+    "source_preview_rendered",
+    "source_branch_write_authority_consumes_operator_response_evidence",
+    "source_branch_write_authority_remains_uncollected",
+    "source_branch_write_authority_remains_non_authorizing",
+    "uao_pr_admission_consumes_branch_write_authority_evidence",
+    "uao_pr_admission_remains_blocked",
+    "uao_pr_execution_remains_not_admitted",
+    "pull_request_creation_remains_blocked",
+    "repository_write_remains_blocked",
+    "terminal_closure_remains_blocked",
 )
 ALLOWED_SECRET_KEYS = {
     "dns_mutation_enabled",
     "secret_mutation_enabled",
     "secret_values_serialized",
+    "source_secret_values_serialized",
 }
 FORBIDDEN_SECRET_KEY_TOKENS = (
     "access_token",
@@ -420,6 +446,7 @@ def _validate_uao_admission_witness_semantics(
     _require_equal(payload, ("uao_admission", "command_preview_bound"), True, errors, label)
     _require_equal(payload, ("uao_admission", "operator_response_bound"), True, errors, label)
     _require_equal(payload, ("effect_boundary", "network_policy"), "none", errors, label)
+    _validate_command_preview_branch_write_authority_evidence(payload, source_branch_write_binding, errors, label)
     if source_branch_write_binding:
         source_branch_write = _mapping(_get_nested(source_branch_write_binding, ("branch_write_binding",)))
         _require_equal(
@@ -559,6 +586,104 @@ def _validate_uao_admission_witness_semantics(
             errors.append(f"{label}: {dotted_path} uses forbidden secret-bearing key")
         if isinstance(value, str) and any(pattern.search(value) for pattern in FORBIDDEN_CREDENTIAL_VALUE_PATTERNS):
             errors.append(f"{label}: {dotted_path} contains credential-like value")
+
+
+def _validate_command_preview_branch_write_authority_evidence(
+    payload: Mapping[str, Any],
+    source_branch_write_binding: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    evidence = _get_nested(payload, ("command_preview_branch_write_authority_evidence",))
+    if not isinstance(evidence, Mapping):
+        errors.append(f"{label}: command_preview_branch_write_authority_evidence must be an object")
+        return
+    source_branch_write = _mapping(_get_nested(source_branch_write_binding, ("branch_write_binding",)))
+    source_operator_response_evidence = _mapping(
+        _get_nested(source_branch_write_binding, ("command_preview_operator_response_evidence",))
+    )
+    _require_equal(
+        payload,
+        ("command_preview_branch_write_authority_evidence", "source_branch_write_authority_binding_ref"),
+        EXPECTED_SOURCE_BRANCH_WRITE_BINDING_REF,
+        errors,
+        label,
+    )
+    if source_branch_write_binding:
+        for evidence_key, source_path in (
+            ("source_binding_id", ("binding_id",)),
+            ("source_response_command_preview_binding_ref", ("source_response_command_preview_binding_ref",)),
+            ("source_approval_request_id", ("branch_write_binding", "source_approval_request_id")),
+            ("source_required_before_execution_refs", ("branch_write_binding", "required_before_execution_refs")),
+            ("source_authority_granted", ("authority_granted",)),
+            ("source_terminal_closure", ("terminal_closure",)),
+            ("source_branch_write_enabled", ("authority_denials", "branch_write_enabled")),
+            ("source_pull_request_creation_enabled", ("authority_denials", "pull_request_creation_enabled")),
+            ("source_repository_write_enabled", ("authority_denials", "repository_write_enabled")),
+            ("source_connector_calls_enabled", ("authority_denials", "connector_calls_enabled")),
+            ("source_mutation_route_enabled", ("authority_denials", "mutation_route_enabled")),
+            ("source_receipt_store_append_enabled", ("authority_denials", "receipt_store_append_enabled")),
+            ("source_secret_values_serialized", ("effect_boundary", "secret_values_serialized")),
+        ):
+            _require_equal(
+                payload,
+                ("command_preview_branch_write_authority_evidence", evidence_key),
+                _get_nested(source_branch_write_binding, source_path),
+                errors,
+                label,
+            )
+    for evidence_key, source_key in (
+        ("source_operator_response_witness_ref", "operator_response_witness_ref"),
+        (
+            "source_operator_approval_request_command_preview_binding_ref",
+            "operator_approval_request_command_preview_binding_ref",
+        ),
+        ("source_command_preview_ref", "command_preview_ref"),
+        ("source_redacted_command_preview", "redacted_command_preview"),
+        ("source_argument_vector_template", "argument_vector_template"),
+        ("source_placeholder_refs", "placeholder_refs"),
+    ):
+        _require_equal(
+            payload,
+            ("command_preview_branch_write_authority_evidence", evidence_key),
+            source_branch_write.get(source_key),
+            errors,
+            label,
+        )
+    for evidence_key, source_key in (
+        ("source_operator_response_evidence_ref", "source_operator_response_evidence_ref"),
+        ("source_blocked_reason_refs", "source_blocked_reason_refs"),
+        ("source_operator_response_bound", "source_operator_response_bound"),
+        ("source_command_preview_bound", "source_command_preview_bound"),
+        ("source_preview_rendered", "source_preview_rendered"),
+        ("source_operator_response_collected", "source_operator_response_collected"),
+        ("source_operator_approval_granted", "source_operator_approval_granted"),
+        ("source_command_execution_admitted", "source_command_execution_admitted"),
+        ("source_adapter_execution_enabled", "source_adapter_execution_enabled"),
+        (
+            "source_branch_write_authority_consumes_operator_response_evidence",
+            "branch_write_authority_consumes_operator_response_evidence",
+        ),
+        ("source_branch_write_authority_remains_uncollected", "branch_write_authority_remains_uncollected"),
+        ("source_branch_write_authority_remains_non_authorizing", "branch_write_authority_remains_non_authorizing"),
+    ):
+        _require_equal(
+            payload,
+            ("command_preview_branch_write_authority_evidence", evidence_key),
+            source_operator_response_evidence.get(source_key),
+            errors,
+            label,
+        )
+    _require_equal(
+        payload,
+        (
+            "command_preview_branch_write_authority_evidence",
+            "source_command_preview_operator_response_evidence_ref",
+        ),
+        "command_preview_operator_response_evidence",
+        errors,
+        label,
+    )
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
