@@ -2555,6 +2555,12 @@
       "urn": "urn:mullusi:schema:policy-proof-report:1"
     },
     {
+      "path": "schemas/policy_transition_proof_report.schema.json",
+      "schema_id": "policy-transition-proof-report",
+      "surface": "policy",
+      "urn": "urn:mullusi:schema:policy-transition-proof-report:1"
+    },
+    {
       "path": "schemas/policy_rule.schema.json",
       "schema_id": "policy-rule",
       "surface": "policy",

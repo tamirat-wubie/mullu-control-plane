@@ -208,6 +208,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `workflow_run.schema.json` | Canonical causal workflow-run envelope with intent, boundary, risk, approval, rollback, validation, receipts, and monitoring |
 | `plan.schema.json` | Shared plan definition |
 | `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |
+| `policy_transition_proof_report.schema.json` | Canonical VCPP v2 transition proof report with evidence trust, obligations, leases, and receipts |
 | `policy_studio_session.schema.json` | Canonical read-only policy studio session with simulations and bounded probe report |
 | `public_naming_readiness.schema.json` | Public naming launch-gate witness |
 | `mullu_name_clearance_draft.schema.json` | Draft name-clearance evidence packet |
