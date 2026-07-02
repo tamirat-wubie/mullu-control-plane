@@ -17,6 +17,7 @@
     "live_producer_implemented",
     "authority_granted",
     "terminal_closure",
+    "operator_response_collection_binding",
     "source_preflights",
     "witness_packet_requirements",
     "missing_evidence",
@@ -40,6 +41,9 @@
     "live_producer_implemented": { "type": "boolean", "const": false },
     "authority_granted": { "type": "boolean", "const": false },
     "terminal_closure": { "type": "boolean", "const": false },
+    "operator_response_collection_binding": {
+      "$ref": "#/$defs/operator_response_collection_binding"
+    },
     "source_preflights": {
       "type": "array",
       "minItems": 4,
@@ -142,6 +146,89 @@
           ]
         },
         "status": { "type": "string", "const": "AwaitingEvidence" },
+        "blocks_live_producer": { "type": "boolean", "const": true }
+      }
+    },
+    "operator_response_collection_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_id",
+        "source_response_witness_id",
+        "source_response_witness_ref",
+        "source_response_validator_id",
+        "source_response_validator_command",
+        "source_approval_request_collection_binding_id",
+        "source_approval_request_collection_status",
+        "source_response_status",
+        "source_response_record_collected",
+        "source_approval_satisfied",
+        "source_authority_granted",
+        "source_live_execution_authorized",
+        "intake_packet_id",
+        "intake_packet_ref",
+        "intake_validator_id",
+        "intake_validator_command",
+        "binding_status",
+        "witness_packets_collected",
+        "authority_granted",
+        "live_execution_authorized",
+        "blocks_live_producer"
+      ],
+      "properties": {
+        "binding_id": {
+          "type": "string",
+          "const": "binding.evidence_packet_intake.operator_response_collection"
+        },
+        "source_response_witness_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-operator-response-witness"
+        },
+        "source_response_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_live_producer_operator_response_witness.local.json"
+        },
+        "source_response_validator_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-operator-response-witness"
+        },
+        "source_response_validator_command": {
+          "type": "string",
+          "const": "python scripts/validate_agentic_service_harness_live_producer_operator_response_witness.py"
+        },
+        "source_approval_request_collection_binding_id": {
+          "type": "string",
+          "const": "binding.operator_response.approval_request_collection"
+        },
+        "source_approval_request_collection_status": {
+          "type": "string",
+          "const": "AwaitingEvidence"
+        },
+        "source_response_status": { "type": "string", "const": "AwaitingEvidence" },
+        "source_response_record_collected": { "type": "boolean", "const": false },
+        "source_approval_satisfied": { "type": "boolean", "const": false },
+        "source_authority_granted": { "type": "boolean", "const": false },
+        "source_live_execution_authorized": { "type": "boolean", "const": false },
+        "intake_packet_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-evidence-packet-intake"
+        },
+        "intake_packet_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_live_producer_evidence_packet_intake.local.json"
+        },
+        "intake_validator_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-evidence-packet-intake"
+        },
+        "intake_validator_command": {
+          "type": "string",
+          "const": "python scripts/validate_agentic_service_harness_live_producer_evidence_packet_intake.py"
+        },
+        "binding_status": { "type": "string", "const": "AwaitingEvidence" },
+        "witness_packets_collected": { "type": "boolean", "const": false },
+        "authority_granted": { "type": "boolean", "const": false },
+        "live_execution_authorized": { "type": "boolean", "const": false },
         "blocks_live_producer": { "type": "boolean", "const": true }
       }
     },
