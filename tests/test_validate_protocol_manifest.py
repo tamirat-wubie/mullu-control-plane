@@ -1190,6 +1190,9 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     operator_workflow_dashboard_entry = entries[
         "operator-workflow-dashboard-read-model"
     ]
+    operator_workflow_next_action_packet_entry = entries[
+        "operator-workflow-next-action-packet"
+    ]
     sandbox_to_pr_entry = entries["sandbox-to-pr-preparation-packet"]
     safe_local_action_rehearsal_entry = entries["safe-local-action-rehearsal-receipt"]
     sandbox_attachment_entry = entries["developer-workflow-sandbox-receipt-attachment-packet"]
@@ -1244,6 +1247,14 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
         "urn:mullusi:schema:operator-workflow-dashboard-read-model:1"
     )
     assert operator_workflow_dashboard_entry["surface"] == "operator"
+    assert (
+        operator_workflow_next_action_packet_entry["path"]
+        == "schemas/operator_workflow_next_action_packet.schema.json"
+    )
+    assert operator_workflow_next_action_packet_entry["urn"] == (
+        "urn:mullusi:schema:operator-workflow-next-action-packet:1"
+    )
+    assert operator_workflow_next_action_packet_entry["surface"] == "operator"
     assert sandbox_to_pr_entry["path"] == "schemas/sandbox_to_pr_preparation_packet.schema.json"
     assert sandbox_to_pr_entry["urn"] == "urn:mullusi:schema:sandbox-to-pr-preparation-packet:1"
     assert sandbox_to_pr_entry["surface"] == "operator"

@@ -1997,6 +1997,12 @@
       "urn": "urn:mullusi:schema:operator-workflow-dashboard-read-model:1"
     },
     {
+      "path": "schemas/operator_workflow_next_action_packet.schema.json",
+      "schema_id": "operator-workflow-next-action-packet",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:operator-workflow-next-action-packet:1"
+    },
+    {
       "path": "schemas/sandbox_to_pr_preparation_packet.schema.json",
       "schema_id": "sandbox-to-pr-preparation-packet",
       "surface": "operator",
