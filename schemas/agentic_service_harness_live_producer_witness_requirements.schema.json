@@ -19,6 +19,7 @@
     "terminal_closure",
     "scope",
     "witnesses",
+    "governed_witness_collection",
     "authority_denials",
     "effect_boundary",
     "validators",
@@ -77,6 +78,15 @@
       "maxItems": 5,
       "items": {
         "$ref": "#/$defs/witness_requirement"
+      },
+      "uniqueItems": true
+    },
+    "governed_witness_collection": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "$ref": "#/$defs/governed_witness_collection_entry"
       },
       "uniqueItems": true
     },
@@ -160,6 +170,47 @@
         "admission_effect": { "type": "string", "const": "blocks_live_producer" },
         "authority_granted": { "type": "boolean", "const": false },
         "next_action": { "type": "string", "minLength": 1 }
+      }
+    },
+    "governed_witness_collection_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection_id",
+        "witness_kind",
+        "requirements_evidence_ref",
+        "governed_artifact_ref",
+        "validator_id",
+        "validator_command",
+        "status",
+        "authority_granted",
+        "blocks_live_producer"
+      ],
+      "properties": {
+        "collection_id": { "$ref": "#/$defs/identifier" },
+        "witness_kind": {
+          "type": "string",
+          "enum": [
+            "operator_approval",
+            "effect_receipt",
+            "external_adapter_evidence",
+            "secret_handoff",
+            "rollback_proof"
+          ]
+        },
+        "requirements_evidence_ref": { "$ref": "#/$defs/evidence_ref" },
+        "governed_artifact_ref": {
+          "type": "string",
+          "pattern": "^examples/agentic_service_harness_live_producer_.*\\.local\\.json$"
+        },
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "validator_command": {
+          "type": "string",
+          "pattern": "^python scripts/validate_agentic_service_harness_live_producer_.*\\.py$"
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "authority_granted": { "type": "boolean", "const": false },
+        "blocks_live_producer": { "type": "boolean", "const": true }
       }
     },
     "authority_denials": {

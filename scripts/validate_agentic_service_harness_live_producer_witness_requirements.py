@@ -32,6 +32,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from gateway.agentic_service_harness_live_producer_witness_requirements import (  # noqa: E402
     FALSE_AUTHORITY_FLAGS,
+    GOVERNED_WITNESS_COLLECTION,
     REQUIRED_WITNESS_KINDS,
     WITNESS_REQUIREMENTS_ID,
     project_admission_gate_to_witness_requirements,
@@ -81,6 +82,7 @@ class LiveProducerWitnessRequirementsValidation:
     fixture_path: str
     requirements_id: str
     witness_count: int
+    governed_collection_count: int
     authority_denial_count: int
 
     def as_dict(self) -> dict[str, Any]:
@@ -126,6 +128,11 @@ def validate_live_producer_witness_requirements(
         fixture_path=_path_label(fixture_path),
         requirements_id=str(observed.get("requirements_id", "")),
         witness_count=len(witnesses) if isinstance(witnesses, list) else 0,
+        governed_collection_count=(
+            len(observed.get("governed_witness_collection"))
+            if isinstance(observed.get("governed_witness_collection"), list)
+            else 0
+        ),
         authority_denial_count=len(FALSE_AUTHORITY_FLAGS) + 1,
     )
     return validation, produced_requirements
@@ -153,6 +160,7 @@ def _validate_requirements_semantics(
             errors.append(f"{label}: {field_name} must be {str(expected_value).lower()}")
     _validate_scope(requirements, errors, label)
     _validate_witnesses(requirements, errors, label)
+    _validate_governed_witness_collection(requirements, errors, label)
     _validate_denials(requirements, errors, label)
     _validate_secret_surface(requirements, errors, label)
     _validate_no_mutation_routes(requirements, errors, label)
@@ -196,6 +204,55 @@ def _validate_witnesses(requirements: Mapping[str, Any], errors: list[str], labe
             errors.append(f"{label}: {witness_kind} evidence_ref required")
 
 
+def _validate_governed_witness_collection(
+    requirements: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    collection = requirements.get("governed_witness_collection")
+    witnesses = requirements.get("witnesses")
+    if not isinstance(collection, list):
+        errors.append(f"{label}: governed_witness_collection must be a list")
+        return
+    if not isinstance(witnesses, list):
+        errors.append(f"{label}: governed_witness_collection requires witness list")
+        return
+    witness_evidence_by_kind = {
+        str(witness.get("witness_kind")): str(witness.get("evidence_ref"))
+        for witness in witnesses
+        if isinstance(witness, Mapping)
+    }
+    observed_kinds = [entry.get("witness_kind") for entry in collection if isinstance(entry, Mapping)]
+    if tuple(observed_kinds) != REQUIRED_WITNESS_KINDS:
+        errors.append(f"{label}: governed witness collection must match required witness order")
+    expected_by_kind = {entry["witness_kind"]: entry for entry in GOVERNED_WITNESS_COLLECTION}
+    for entry in collection:
+        if not isinstance(entry, Mapping):
+            errors.append(f"{label}: governed witness collection entries must be objects")
+            continue
+        witness_kind = str(entry.get("witness_kind", ""))
+        expected = expected_by_kind.get(witness_kind)
+        if expected is None:
+            errors.append(f"{label}: governed witness collection has unknown witness kind {witness_kind!r}")
+            continue
+        if entry.get("collection_id") != f"collection.{witness_kind}":
+            errors.append(f"{label}: {witness_kind} collection_id mismatch")
+        if entry.get("requirements_evidence_ref") != witness_evidence_by_kind.get(witness_kind):
+            errors.append(f"{label}: {witness_kind} requirements_evidence_ref must match witness evidence_ref")
+        for field_name in ("governed_artifact_ref", "validator_id", "validator_command"):
+            if entry.get(field_name) != expected[field_name]:
+                errors.append(f"{label}: {witness_kind} {field_name} mismatch")
+        if entry.get("status") != "AwaitingEvidence":
+            errors.append(f"{label}: {witness_kind} collection status must be AwaitingEvidence")
+        if entry.get("authority_granted") is not False:
+            errors.append(f"{label}: {witness_kind} collection authority_granted must be false")
+        if entry.get("blocks_live_producer") is not True:
+            errors.append(f"{label}: {witness_kind} collection must block live producer")
+        artifact_ref = str(entry.get("governed_artifact_ref", ""))
+        if artifact_ref and not (REPO_ROOT / artifact_ref).is_file():
+            errors.append(f"{label}: {witness_kind} governed artifact missing: {artifact_ref}")
+
+
 def _validate_denials(requirements: Mapping[str, Any], errors: list[str], label: str) -> None:
     authority_denials = _mapping(requirements.get("authority_denials"))
     effect_boundary = _mapping(requirements.get("effect_boundary"))
@@ -226,6 +283,7 @@ def _validate_fixture_matches_produced(
         "admission_decision",
         "scope",
         "witnesses",
+        "governed_witness_collection",
         "authority_denials",
         "effect_boundary",
         "validators",

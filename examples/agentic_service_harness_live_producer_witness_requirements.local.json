@@ -69,6 +69,63 @@
       "next_action": "Produce rollback proof before live producer admission."
     }
   ],
+  "governed_witness_collection": [
+    {
+      "collection_id": "collection.operator_approval",
+      "witness_kind": "operator_approval",
+      "requirements_evidence_ref": "approval://operator-live-producer-approval-required",
+      "governed_artifact_ref": "examples/agentic_service_harness_live_producer_operator_approval_request.local.json",
+      "validator_id": "agentic-service-harness-live-producer-operator-approval-request",
+      "validator_command": "python scripts/validate_agentic_service_harness_live_producer_operator_approval_request.py",
+      "status": "AwaitingEvidence",
+      "authority_granted": false,
+      "blocks_live_producer": true
+    },
+    {
+      "collection_id": "collection.effect_receipt",
+      "witness_kind": "effect_receipt",
+      "requirements_evidence_ref": "receipt://agentic-service-harness/live-producer-effect-receipt-required",
+      "governed_artifact_ref": "examples/agentic_service_harness_live_producer_effect_receipt_preflight.local.json",
+      "validator_id": "agentic-service-harness-live-producer-effect-receipt-preflight",
+      "validator_command": "python scripts/validate_agentic_service_harness_live_producer_effect_receipt_preflight.py",
+      "status": "AwaitingEvidence",
+      "authority_granted": false,
+      "blocks_live_producer": true
+    },
+    {
+      "collection_id": "collection.external_adapter_evidence",
+      "witness_kind": "external_adapter_evidence",
+      "requirements_evidence_ref": "evidence://agentic-service-harness/external-adapter-live-evidence-required",
+      "governed_artifact_ref": "examples/agentic_service_harness_live_producer_external_adapter_evidence_preflight.local.json",
+      "validator_id": "agentic-service-harness-live-producer-external-adapter-evidence-preflight",
+      "validator_command": "python scripts/validate_agentic_service_harness_live_producer_external_adapter_evidence_preflight.py",
+      "status": "AwaitingEvidence",
+      "authority_granted": false,
+      "blocks_live_producer": true
+    },
+    {
+      "collection_id": "collection.secret_handoff",
+      "witness_kind": "secret_handoff",
+      "requirements_evidence_ref": "secret-handoff://agentic-service-harness/live-producer-required",
+      "governed_artifact_ref": "examples/agentic_service_harness_live_producer_secret_handoff_preflight.local.json",
+      "validator_id": "agentic-service-harness-live-producer-secret-handoff-preflight",
+      "validator_command": "python scripts/validate_agentic_service_harness_live_producer_secret_handoff_preflight.py",
+      "status": "AwaitingEvidence",
+      "authority_granted": false,
+      "blocks_live_producer": true
+    },
+    {
+      "collection_id": "collection.rollback_proof",
+      "witness_kind": "rollback_proof",
+      "requirements_evidence_ref": "rollback://agentic-service-harness/live-producer-required",
+      "governed_artifact_ref": "examples/agentic_service_harness_live_producer_rollback_proof_preflight.local.json",
+      "validator_id": "agentic-service-harness-live-producer-rollback-proof-preflight",
+      "validator_command": "python scripts/validate_agentic_service_harness_live_producer_rollback_proof_preflight.py",
+      "status": "AwaitingEvidence",
+      "authority_granted": false,
+      "blocks_live_producer": true
+    }
+  ],
   "authority_denials": {
     "ui_created": false,
     "mutation_endpoints_admitted": false,
