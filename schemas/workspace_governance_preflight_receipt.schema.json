@@ -205,6 +205,7 @@
             "agentic_service_harness_live_producer_secret_handoff_preflight",
             "agentic_service_harness_live_producer_rollback_proof_preflight",
             "agentic_service_harness_live_producer_evidence_packet_intake",
+            "agentic_service_harness_live_producer_effect_receipt_packet",
             "foundation_operator_readiness_boundary",
             "foundation_solo_daily_loop_boundary",
             "foundation_learning_path_boundary",

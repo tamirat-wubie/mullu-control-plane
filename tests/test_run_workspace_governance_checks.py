@@ -182,6 +182,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_live_producer_secret_handoff_preflight",
         "agentic_service_harness_live_producer_rollback_proof_preflight",
         "agentic_service_harness_live_producer_evidence_packet_intake",
+        "agentic_service_harness_live_producer_effect_receipt_packet",
         "foundation_mode",
         "foundation_local_proof_thread",
         "evidence_ledger_foundation_source",
@@ -768,6 +769,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_live_producer_evidence_packet_intake",
+        "agentic_service_harness_live_producer_effect_receipt_packet",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_effect_receipt_packet",
         "foundation_operator_readiness_boundary",
     )
     assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")
