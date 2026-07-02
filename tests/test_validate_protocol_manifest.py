@@ -3421,6 +3421,13 @@ def test_protocol_manifest_indexes_patch_proposal_contract() -> None:
     assert entries["software-dev-patch-proposal"]["path"] == "schemas/software_dev_patch_proposal.schema.json"
     assert entries["software-dev-patch-proposal"]["urn"] == "urn:mullusi:schema:software-dev-patch-proposal:1"
     assert entries["software-dev-patch-proposal"]["surface"] == "software_dev"
+    assert entries["local-developer-workflow-pr-command-preview-packet"]["path"] == (
+        "schemas/local_developer_workflow_pr_command_preview_packet.schema.json"
+    )
+    assert entries["local-developer-workflow-pr-command-preview-packet"]["urn"] == (
+        "urn:mullusi:schema:local-developer-workflow-pr-command-preview-packet:1"
+    )
+    assert entries["local-developer-workflow-pr-command-preview-packet"]["surface"] == "software_dev"
 
 
 def test_protocol_manifest_indexes_causal_repair_service_receipt() -> None:

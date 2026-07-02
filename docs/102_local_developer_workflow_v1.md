@@ -6,6 +6,7 @@ and PR command preview without source or external mutation.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: `mcoi/software_dev/local_developer_workflow_v1/runner.py`,
 `mcoi/software_dev/local_developer_workflow_v1/composition.py`,
+`mcoi/software_dev/local_developer_workflow_v1/command_preview_packet.py`,
 `scripts/run_local_developer_workflow_v1.py`, and
 `scripts/validate_local_developer_workflow_v1.py`.
 Invariants: no file write, branch push, PR creation, merge, deployment,
@@ -68,12 +69,41 @@ or production writes.
 | `local_developer_workflow_v1_receipt.json` | Causal trace for the whole local bundle. |
 | `local_developer_workflow_v1_approval_request.json` | Operator review packet; no execution authority. |
 | `local_developer_workflow_v1_pr_command_preview.json` | Push and PR command text with execution blocked. |
+| `local_developer_workflow_v1_pr_command_preview_packet.json` | Schema-backed local command review packet; every command remains non-executable. |
+
+## Command Preview Packet
+
+The command preview packet promotes the existing PR command preview into a
+reusable operator artifact:
+
+```text
+local_developer_workflow_v1_pr_command_preview_packet.json
+```
+
+It is for local review only. It records the push and PR command text from the
+workflow preview, but each command remains:
+
+```text
+review_only = true
+execution_allowed = false
+```
+
+The packet is blocked by separate proof obligations before execution:
+
+```text
+operator external PR execution approval witness
+branch-write authority witness
+pull-request creation admission witness
+rollback effect witness
+UAO execution admission receipt
+```
 
 ## Commands
 
 ```powershell
 python scripts/run_local_developer_workflow_v1.py --json --strict
-python scripts/validate_local_developer_workflow_v1.py --json --strict
+python scripts/validate_local_developer_workflow_v1.py --json --strict --require-closure-packet --require-command-preview-packet
+python scripts/validate_local_developer_workflow_pr_command_preview_packet.py --json --strict --require-closure-packet
 python -m pytest tests/test_local_developer_workflow_v1.py -q
 ```
 
