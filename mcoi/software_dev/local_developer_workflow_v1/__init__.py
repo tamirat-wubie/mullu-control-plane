@@ -48,6 +48,14 @@ from .pr_admission_packet import (
     validate_local_developer_workflow_pr_admission_packet,
     write_local_developer_workflow_pr_admission_packet,
 )
+from .approval_evidence_closure_packet import (
+    APPROVAL_EVIDENCE_CLOSURE_PACKET_FILENAME,
+    APPROVAL_EVIDENCE_CLOSURE_PACKET_ID,
+    LocalDeveloperWorkflowApprovalEvidenceClosurePacketError,
+    build_local_developer_workflow_approval_evidence_closure_packet,
+    validate_local_developer_workflow_approval_evidence_closure_packet,
+    write_local_developer_workflow_approval_evidence_closure_packet,
+)
 
 __all__ = [
     "ARTIFACT_FILENAMES",
@@ -75,6 +83,12 @@ __all__ = [
     "build_local_developer_workflow_pr_admission_packet",
     "validate_local_developer_workflow_pr_admission_packet",
     "write_local_developer_workflow_pr_admission_packet",
+    "APPROVAL_EVIDENCE_CLOSURE_PACKET_FILENAME",
+    "APPROVAL_EVIDENCE_CLOSURE_PACKET_ID",
+    "LocalDeveloperWorkflowApprovalEvidenceClosurePacketError",
+    "build_local_developer_workflow_approval_evidence_closure_packet",
+    "validate_local_developer_workflow_approval_evidence_closure_packet",
+    "write_local_developer_workflow_approval_evidence_closure_packet",
 ]
 __all__ += [
     "BLOCKED_EXTERNAL_EFFECTS",

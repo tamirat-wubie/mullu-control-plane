@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:local-developer-workflow-approval-evidence-closure-packet:1",
+  "title": "Local Developer Workflow Approval Evidence Closure Packet",
+  "description": "Projection-only closure packet that lists missing approval and evidence refs before Local Developer Workflow v1 branch-write or PR-creation authority can be admitted.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "packet_id",
+    "workflow_id",
+    "workflow_run_id",
+    "status",
+    "solver_outcome",
+    "projection_only",
+    "packet_is_not_execution_authority",
+    "execution_performed",
+    "approval_performed",
+    "external_effects_allowed",
+    "branch_write_allowed",
+    "pr_creation_allowed",
+    "merge_allowed",
+    "live_execution_enabled",
+    "source_admission",
+    "required_evidence_refs",
+    "missing_evidence_refs",
+    "next_required_proof_step",
+    "closure_receipt",
+    "blocked_effects",
+    "effect_boundary",
+    "source_refs",
+    "validators",
+    "causal_trace",
+    "packet_hash"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "packet_id": {
+      "type": "string",
+      "const": "local_developer_workflow_v1.approval_evidence_closure_packet.foundation.v1"
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "mullu.local_developer_workflow.v1"
+    },
+    "workflow_run_id": { "$ref": "#/$defs/text" },
+    "status": { "type": "string", "const": "AwaitingEvidence" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "projection_only": { "type": "boolean", "const": true },
+    "packet_is_not_execution_authority": { "type": "boolean", "const": true },
+    "execution_performed": { "type": "boolean", "const": false },
+    "approval_performed": { "type": "boolean", "const": false },
+    "external_effects_allowed": { "type": "boolean", "const": false },
+    "branch_write_allowed": { "type": "boolean", "const": false },
+    "pr_creation_allowed": { "type": "boolean", "const": false },
+    "merge_allowed": { "type": "boolean", "const": false },
+    "live_execution_enabled": { "type": "boolean", "const": false },
+    "source_admission": { "$ref": "#/$defs/source_admission" },
+    "required_evidence_refs": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": { "$ref": "#/$defs/evidence_ref" }
+    },
+    "missing_evidence_refs": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "string",
+        "enum": [
+          "external_pr_execution_approval_witness",
+          "branch_write_authority_witness",
+          "pull_request_creation_admission_witness",
+          "rollback_effect_witness",
+          "uao_execution_admission_receipt",
+          "post_execution_effect_reconciliation_witness"
+        ]
+      }
+    },
+    "next_required_proof_step": { "$ref": "#/$defs/text" },
+    "closure_receipt": { "$ref": "#/$defs/closure_receipt" },
+    "blocked_effects": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "enum": [
+          "branch_write",
+          "branch_push",
+          "pull_request_create",
+          "merge",
+          "deploy",
+          "connector_call",
+          "external_write",
+          "live_execution"
+        ]
+      }
+    },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "causal_trace": {
+      "type": "array",
+      "minItems": 5,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "packet_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "source_admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packet_id",
+        "packet_path",
+        "admission_decision",
+        "admission_remains_blocked"
+      ],
+      "properties": {
+        "packet_id": {
+          "type": "string",
+          "const": "local_developer_workflow_v1.pr_admission_packet.foundation.v1"
+        },
+        "packet_path": { "$ref": "#/$defs/text" },
+        "admission_decision": {
+          "type": "string",
+          "const": "blocked_waiting_external_execution_approval"
+        },
+        "admission_remains_blocked": { "type": "boolean", "const": true }
+      }
+    },
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_ref_id",
+        "witness_type",
+        "required",
+        "present",
+        "blocks_execution"
+      ],
+      "properties": {
+        "evidence_ref_id": { "$ref": "#/$defs/text" },
+        "witness_type": { "$ref": "#/$defs/text" },
+        "required": { "type": "boolean", "const": true },
+        "present": { "type": "boolean", "const": false },
+        "blocks_execution": { "type": "boolean", "const": true }
+      }
+    },
+    "closure_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "closure_status",
+        "missing_evidence_count",
+        "approval_evidence_complete",
+        "execution_ready"
+      ],
+      "properties": {
+        "closure_status": {
+          "type": "string",
+          "const": "blocked_waiting_evidence"
+        },
+        "missing_evidence_count": { "type": "integer", "const": 6 },
+        "approval_evidence_complete": { "type": "boolean", "const": false },
+        "execution_ready": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file_write_performed",
+        "source_mutation_performed",
+        "test_process_executed",
+        "branch_created",
+        "branch_push_performed",
+        "pull_request_created",
+        "merge_performed",
+        "deployment_performed",
+        "connector_call_performed",
+        "external_write_performed",
+        "live_execution_enabled"
+      ],
+      "properties": {
+        "file_write_performed": { "type": "boolean", "const": false },
+        "source_mutation_performed": { "type": "boolean", "const": false },
+        "test_process_executed": { "type": "boolean", "const": false },
+        "branch_created": { "type": "boolean", "const": false },
+        "branch_push_performed": { "type": "boolean", "const": false },
+        "pull_request_created": { "type": "boolean", "const": false },
+        "merge_performed": { "type": "boolean", "const": false },
+        "deployment_performed": { "type": "boolean", "const": false },
+        "connector_call_performed": { "type": "boolean", "const": false },
+        "external_write_performed": { "type": "boolean", "const": false },
+        "live_execution_enabled": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}

@@ -44,6 +44,10 @@ from software_dev.local_developer_workflow_v1.pr_admission_packet import (  # no
     PR_ADMISSION_PACKET_FILENAME,
     validate_local_developer_workflow_pr_admission_packet,
 )
+from software_dev.local_developer_workflow_v1.approval_evidence_closure_packet import (  # noqa: E402
+    APPROVAL_EVIDENCE_CLOSURE_PACKET_FILENAME,
+    validate_local_developer_workflow_approval_evidence_closure_packet,
+)
 
 
 DEFAULT_ARTIFACTS = {
@@ -54,6 +58,9 @@ DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "local_developer_workflow_v1_
 DEFAULT_CLOSURE_PACKET = REPO_ROOT / ".change_assurance" / CLOSURE_PACKET_FILENAME
 DEFAULT_COMMAND_PREVIEW_PACKET = REPO_ROOT / ".change_assurance" / COMMAND_PREVIEW_PACKET_FILENAME
 DEFAULT_PR_ADMISSION_PACKET = REPO_ROOT / ".change_assurance" / PR_ADMISSION_PACKET_FILENAME
+DEFAULT_APPROVAL_EVIDENCE_CLOSURE_PACKET = (
+    REPO_ROOT / ".change_assurance" / APPROVAL_EVIDENCE_CLOSURE_PACKET_FILENAME
+)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -70,9 +77,14 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--closure-packet", default=str(DEFAULT_CLOSURE_PACKET))
     parser.add_argument("--command-preview-packet", default=str(DEFAULT_COMMAND_PREVIEW_PACKET))
     parser.add_argument("--pr-admission-packet", default=str(DEFAULT_PR_ADMISSION_PACKET))
+    parser.add_argument(
+        "--approval-evidence-closure-packet",
+        default=str(DEFAULT_APPROVAL_EVIDENCE_CLOSURE_PACKET),
+    )
     parser.add_argument("--require-closure-packet", action="store_true")
     parser.add_argument("--require-command-preview-packet", action="store_true")
     parser.add_argument("--require-pr-admission-packet", action="store_true")
+    parser.add_argument("--require-approval-evidence-closure-packet", action="store_true")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--build-if-missing", action="store_true")
     parser.add_argument("--strict", action="store_true")
@@ -131,6 +143,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         errors.append(f"command_preview_packet_missing:{command_preview_packet_path}")
     pr_admission_packet_path = Path(args.pr_admission_packet)
     pr_admission_packet_decision = "not_present"
+    pr_admission_packet = None
     if pr_admission_packet_path.exists():
         if command_preview_packet is None:
             errors.append(f"command_preview_packet_missing:{command_preview_packet_path}")
@@ -150,6 +163,38 @@ def main(argv: Sequence[str] | None = None) -> int:
             errors.extend(f"pr_admission_packet:{error}" for error in pr_admission_validation.errors)
     elif args.require_pr_admission_packet:
         errors.append(f"pr_admission_packet_missing:{pr_admission_packet_path}")
+    approval_evidence_closure_packet_path = Path(args.approval_evidence_closure_packet)
+    approval_evidence_closure_status = "not_present"
+    approval_evidence_missing_count = 0
+    if approval_evidence_closure_packet_path.exists():
+        if command_preview_packet is None:
+            errors.append(f"command_preview_packet_missing:{command_preview_packet_path}")
+        if pr_admission_packet is None:
+            errors.append(f"pr_admission_packet_missing:{pr_admission_packet_path}")
+        if command_preview_packet is not None and pr_admission_packet is not None:
+            approval_evidence_closure_packet = _load_json_object(approval_evidence_closure_packet_path)
+            approval_evidence_closure_validation = (
+                validate_local_developer_workflow_approval_evidence_closure_packet(
+                    packet=approval_evidence_closure_packet,
+                    artifacts=artifacts,
+                    command_preview_packet=command_preview_packet,
+                    pr_admission_packet=pr_admission_packet,
+                    closure_packet=closure_packet,
+                    artifact_paths=artifact_paths,
+                    packet_path=approval_evidence_closure_packet_path,
+                    command_preview_packet_path=command_preview_packet_path,
+                    pr_admission_packet_path=pr_admission_packet_path,
+                    closure_packet_path=closure_packet_path,
+                )
+            )
+            approval_evidence_closure_status = approval_evidence_closure_validation.closure_status
+            approval_evidence_missing_count = approval_evidence_closure_validation.missing_evidence_count
+            errors.extend(
+                f"approval_evidence_closure_packet:{error}"
+                for error in approval_evidence_closure_validation.errors
+            )
+    elif args.require_approval_evidence_closure_packet:
+        errors.append(f"approval_evidence_closure_packet_missing:{approval_evidence_closure_packet_path}")
     ok = validation.ok and not errors
     output_payload = validation.as_dict()
     output_payload["ok"] = ok
@@ -160,6 +205,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     output_payload["command_preview_packet_status"] = command_preview_packet_status
     output_payload["pr_admission_packet_path"] = str(pr_admission_packet_path)
     output_payload["pr_admission_packet_decision"] = pr_admission_packet_decision
+    output_payload["approval_evidence_closure_packet_path"] = str(approval_evidence_closure_packet_path)
+    output_payload["approval_evidence_closure_status"] = approval_evidence_closure_status
+    output_payload["approval_evidence_missing_count"] = approval_evidence_missing_count
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(
         json.dumps(output_payload, indent=2, sort_keys=True) + "\n",

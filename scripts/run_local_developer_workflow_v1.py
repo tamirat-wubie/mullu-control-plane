@@ -58,6 +58,12 @@ from software_dev.local_developer_workflow_v1.pr_admission_packet import (  # no
     validate_local_developer_workflow_pr_admission_packet,
     write_local_developer_workflow_pr_admission_packet,
 )
+from software_dev.local_developer_workflow_v1.approval_evidence_closure_packet import (  # noqa: E402
+    APPROVAL_EVIDENCE_CLOSURE_PACKET_FILENAME,
+    build_local_developer_workflow_approval_evidence_closure_packet,
+    validate_local_developer_workflow_approval_evidence_closure_packet,
+    write_local_developer_workflow_approval_evidence_closure_packet,
+)
 
 
 DEFAULT_OUTPUT_DIR = REPO_ROOT / ".change_assurance"
@@ -79,6 +85,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--skip-closure-packet", action="store_true")
     parser.add_argument("--skip-command-preview-packet", action="store_true")
     parser.add_argument("--skip-pr-admission-packet", action="store_true")
+    parser.add_argument("--skip-approval-evidence-closure-packet", action="store_true")
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -115,6 +122,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     command_preview_packet = None
     pr_admission_packet_path = None
     pr_admission_validation = None
+    pr_admission_packet = None
+    approval_evidence_closure_packet_path = None
+    approval_evidence_closure_validation = None
     closure_packet = None
     if not args.skip_closure_packet:
         closure_packet = build_local_developer_workflow_closure_packet(
@@ -180,11 +190,59 @@ def main(argv: Sequence[str] | None = None) -> int:
             command_preview_packet_path=command_preview_packet_path or Path("<generated>"),
             closure_packet_path=closure_packet_path or Path("<generated>"),
         )
+    if not args.skip_approval_evidence_closure_packet:
+        if command_preview_packet is None:
+            command_preview_packet = build_local_developer_workflow_pr_command_preview_packet(
+                artifacts=artifacts,
+                closure_packet=closure_packet,
+                artifact_paths=written_paths,
+                closure_packet_path=closure_packet_path or Path("<generated>"),
+            )
+        if pr_admission_packet is None:
+            pr_admission_packet = build_local_developer_workflow_pr_admission_packet(
+                artifacts=artifacts,
+                command_preview_packet=command_preview_packet,
+                closure_packet=closure_packet,
+                artifact_paths=written_paths,
+                command_preview_packet_path=command_preview_packet_path or Path("<generated>"),
+                closure_packet_path=closure_packet_path or Path("<generated>"),
+            )
+        approval_evidence_closure_packet = build_local_developer_workflow_approval_evidence_closure_packet(
+            artifacts=artifacts,
+            command_preview_packet=command_preview_packet,
+            pr_admission_packet=pr_admission_packet,
+            closure_packet=closure_packet,
+            artifact_paths=written_paths,
+            command_preview_packet_path=command_preview_packet_path or Path("<generated>"),
+            pr_admission_packet_path=pr_admission_packet_path or Path("<generated>"),
+            closure_packet_path=closure_packet_path or Path("<generated>"),
+        )
+        approval_evidence_closure_packet_path = write_local_developer_workflow_approval_evidence_closure_packet(
+            approval_evidence_closure_packet,
+            Path(args.output_dir) / APPROVAL_EVIDENCE_CLOSURE_PACKET_FILENAME,
+        )
+        approval_evidence_closure_validation = validate_local_developer_workflow_approval_evidence_closure_packet(
+            packet=approval_evidence_closure_packet,
+            artifacts=artifacts,
+            command_preview_packet=command_preview_packet,
+            pr_admission_packet=pr_admission_packet,
+            closure_packet=closure_packet,
+            artifact_paths=written_paths,
+            packet_path=approval_evidence_closure_packet_path,
+            command_preview_packet_path=command_preview_packet_path or Path("<generated>"),
+            pr_admission_packet_path=pr_admission_packet_path or Path("<generated>"),
+            closure_packet_path=closure_packet_path or Path("<generated>"),
+        )
     ok = (
         validation.ok
         and (closure_validation.ok if closure_validation is not None else True)
         and (command_preview_validation.ok if command_preview_validation is not None else True)
         and (pr_admission_validation.ok if pr_admission_validation is not None else True)
+        and (
+            approval_evidence_closure_validation.ok
+            if approval_evidence_closure_validation is not None
+            else True
+        )
     )
     errors = list(validation.errors)
     if closure_validation is not None:
@@ -193,6 +251,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         errors.extend(f"command_preview_packet:{error}" for error in command_preview_validation.errors)
     if pr_admission_validation is not None:
         errors.extend(f"pr_admission_packet:{error}" for error in pr_admission_validation.errors)
+    if approval_evidence_closure_validation is not None:
+        errors.extend(
+            f"approval_evidence_closure_packet:{error}"
+            for error in approval_evidence_closure_validation.errors
+        )
     output = {
         "ok": ok,
         "errors": errors,
@@ -211,6 +274,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         "pr_admission_packet_path": str(pr_admission_packet_path) if pr_admission_packet_path is not None else "",
         "pr_admission_packet_decision": (
             pr_admission_validation.admission_decision if pr_admission_validation is not None else "skipped"
+        ),
+        "approval_evidence_closure_packet_path": (
+            str(approval_evidence_closure_packet_path)
+            if approval_evidence_closure_packet_path is not None
+            else ""
+        ),
+        "approval_evidence_closure_status": (
+            approval_evidence_closure_validation.closure_status
+            if approval_evidence_closure_validation is not None
+            else "skipped"
+        ),
+        "approval_evidence_missing_count": (
+            approval_evidence_closure_validation.missing_evidence_count
+            if approval_evidence_closure_validation is not None
+            else 0
         ),
         "status": validation.status,
     }

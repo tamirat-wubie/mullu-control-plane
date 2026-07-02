@@ -8,6 +8,7 @@ Dependencies: `mcoi/software_dev/local_developer_workflow_v1/runner.py`,
 `mcoi/software_dev/local_developer_workflow_v1/composition.py`,
 `mcoi/software_dev/local_developer_workflow_v1/command_preview_packet.py`,
 `mcoi/software_dev/local_developer_workflow_v1/pr_admission_packet.py`,
+`mcoi/software_dev/local_developer_workflow_v1/approval_evidence_closure_packet.py`,
 `scripts/run_local_developer_workflow_v1.py`, and
 `scripts/validate_local_developer_workflow_v1.py`.
 Invariants: no file write, branch push, PR creation, merge, deployment,
@@ -72,6 +73,7 @@ or production writes.
 | `local_developer_workflow_v1_pr_command_preview.json` | Push and PR command text with execution blocked. |
 | `local_developer_workflow_v1_pr_command_preview_packet.json` | Schema-backed local command review packet; every command remains non-executable. |
 | `local_developer_workflow_v1_pr_admission_packet.json` | Branch-write and PR-creation admission proof; remains blocked awaiting external authority. |
+| `local_developer_workflow_v1_approval_evidence_closure_packet.json` | Missing approval/evidence ref closure packet; selects the next proof step while keeping execution blocked. |
 
 ## Command Preview Packet
 
@@ -119,13 +121,40 @@ Canonical decision:
 admission_decision = blocked_waiting_external_execution_approval
 ```
 
+## Approval Evidence Closure Packet
+
+The approval evidence closure packet consumes the PR admission packet and turns
+the blocked authority boundary into an explicit missing-evidence checklist:
+
+```text
+local_developer_workflow_v1_approval_evidence_closure_packet.json
+```
+
+Canonical closure state:
+
+```text
+closure_status = blocked_waiting_evidence
+missing_evidence_refs =
+  external_pr_execution_approval_witness
+  branch_write_authority_witness
+  pull_request_creation_admission_witness
+  rollback_effect_witness
+  uao_execution_admission_receipt
+  post_execution_effect_reconciliation_witness
+```
+
+The packet is not approval evidence. It is a closure plan for the next required
+proof step and must keep approval, execution, branch-write, PR creation, merge,
+and live execution disabled.
+
 ## Commands
 
 ```powershell
 python scripts/run_local_developer_workflow_v1.py --json --strict
-python scripts/validate_local_developer_workflow_v1.py --json --strict --require-closure-packet --require-command-preview-packet --require-pr-admission-packet
+python scripts/validate_local_developer_workflow_v1.py --json --strict --require-closure-packet --require-command-preview-packet --require-pr-admission-packet --require-approval-evidence-closure-packet
 python scripts/validate_local_developer_workflow_pr_command_preview_packet.py --json --strict --require-closure-packet
 python scripts/validate_local_developer_workflow_pr_admission_packet.py --json --strict --require-closure-packet
+python scripts/validate_local_developer_workflow_approval_evidence_closure_packet.py --json --strict --require-closure-packet
 python -m pytest tests/test_local_developer_workflow_v1.py -q
 ```
 
@@ -145,6 +174,6 @@ live_execution_enabled = false
 
 STATUS:
   Completeness: 100%
-  Invariants verified: preview-only artifacts, explicit approval boundary, terminal wait before external execution, no source mutation, no external effect
+  Invariants verified: preview-only artifacts, explicit approval boundary, explicit missing evidence refs, terminal wait before external execution, no source mutation, no external effect
   Open issues: none
   Next action: review the full local developer workflow change set for PR readiness

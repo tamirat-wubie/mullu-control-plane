@@ -3438,6 +3438,16 @@ def test_protocol_manifest_indexes_patch_proposal_contract() -> None:
     assert entries["software-dev-patch-proposal"]["path"] == "schemas/software_dev_patch_proposal.schema.json"
     assert entries["software-dev-patch-proposal"]["urn"] == "urn:mullusi:schema:software-dev-patch-proposal:1"
     assert entries["software-dev-patch-proposal"]["surface"] == "software_dev"
+    assert entries["local-developer-workflow-approval-evidence-closure-packet"]["path"] == (
+        "schemas/local_developer_workflow_approval_evidence_closure_packet.schema.json"
+    )
+    assert entries["local-developer-workflow-approval-evidence-closure-packet"]["urn"] == (
+        "urn:mullusi:schema:local-developer-workflow-approval-evidence-closure-packet:1"
+    )
+    assert (
+        entries["local-developer-workflow-approval-evidence-closure-packet"]["surface"]
+        == "software_dev"
+    )
     assert entries["local-developer-workflow-pr-admission-packet"]["path"] == (
         "schemas/local_developer_workflow_pr_admission_packet.schema.json"
     )
