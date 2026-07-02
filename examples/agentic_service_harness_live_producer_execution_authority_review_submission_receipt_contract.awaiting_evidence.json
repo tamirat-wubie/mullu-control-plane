@@ -1,0 +1,243 @@
+{
+  "contract_id": "agentic-service-harness-live-producer-execution-authority-review-submission-receipt-contract",
+  "schema_version": 1,
+  "generated_at": "2026-07-02T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "contract_status": "blocked_awaiting_review_submission_receipt_contract_evidence",
+  "source_review_submission_admission_preflight_ref": "examples/agentic_service_harness_live_producer_execution_authority_review_submission_admission_preflight.awaiting_evidence.json",
+  "source_review_submission_admission_preflight_status": "blocked_awaiting_review_submission_admission_evidence",
+  "planning_only": true,
+  "read_only": true,
+  "submission_receipt_contract_ready": true,
+  "review_route_admitted": false,
+  "review_submission_admitted": false,
+  "review_submitted": false,
+  "review_submission_receipt_emitted": false,
+  "review_submission_receipt_append_admitted": false,
+  "digest_collection_started": false,
+  "digest_collection_complete": false,
+  "input_collection_started": false,
+  "input_collection_complete": false,
+  "live_producer_implemented": false,
+  "live_execution_authorized": false,
+  "authority_granted": false,
+  "terminal_closure": false,
+  "source_review_submission_admission_preflight_binding": {
+    "source_preflight_id": "agentic-service-harness-live-producer-execution-authority-review-submission-admission-preflight",
+    "source_preflight_ref": "examples/agentic_service_harness_live_producer_execution_authority_review_submission_admission_preflight.awaiting_evidence.json",
+    "source_validator_command": "python scripts/validate_agentic_service_harness_live_producer_execution_authority_review_submission_admission_preflight.py",
+    "source_status": "blocked_awaiting_review_submission_admission_evidence",
+    "source_blocks_review_submission": true,
+    "source_blocks_live_execution": true,
+    "source_review_submission_admitted": false,
+    "source_review_submitted": false
+  },
+  "submission_receipt_requirements": [
+    {
+      "input_id": "admission_gate_review_input",
+      "required_digest_ref": "future://agentic-service-harness/live-producer/review-intake/evidence-digest/admission-gate-satisfaction",
+      "required_redacted_summary_ref": "future://agentic-service-harness/live-producer/review-intake/redacted-summary/admission-gate-satisfaction",
+      "required_operator_scope_ref": "future://agentic-service-harness/live-producer/review-intake/operator-scope/admission-gate-satisfaction",
+      "review_submission_admissible": false,
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "operator_approval_review_input",
+      "required_digest_ref": "future://agentic-service-harness/live-producer/review-intake/evidence-digest/operator-approval-evidence",
+      "required_redacted_summary_ref": "future://agentic-service-harness/live-producer/review-intake/redacted-summary/operator-approval-evidence",
+      "required_operator_scope_ref": "future://agentic-service-harness/live-producer/review-intake/operator-scope/operator-approval-evidence",
+      "review_submission_admissible": false,
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "effect_receipt_review_input",
+      "required_digest_ref": "future://agentic-service-harness/live-producer/review-intake/evidence-digest/effect-receipt-packet-evidence",
+      "required_redacted_summary_ref": "future://agentic-service-harness/live-producer/review-intake/redacted-summary/effect-receipt-packet-evidence",
+      "required_operator_scope_ref": "future://agentic-service-harness/live-producer/review-intake/operator-scope/effect-receipt-packet-evidence",
+      "review_submission_admissible": false,
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "external_adapter_review_input",
+      "required_digest_ref": "future://agentic-service-harness/live-producer/review-intake/evidence-digest/external-adapter-evidence-packet-evidence",
+      "required_redacted_summary_ref": "future://agentic-service-harness/live-producer/review-intake/redacted-summary/external-adapter-evidence-packet-evidence",
+      "required_operator_scope_ref": "future://agentic-service-harness/live-producer/review-intake/operator-scope/external-adapter-evidence-packet-evidence",
+      "review_submission_admissible": false,
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "secret_handoff_review_input",
+      "required_digest_ref": "future://agentic-service-harness/live-producer/review-intake/evidence-digest/secret-handoff-packet-evidence",
+      "required_redacted_summary_ref": "future://agentic-service-harness/live-producer/review-intake/redacted-summary/secret-handoff-packet-evidence",
+      "required_operator_scope_ref": "future://agentic-service-harness/live-producer/review-intake/operator-scope/secret-handoff-packet-evidence",
+      "review_submission_admissible": false,
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "rollback_proof_review_input",
+      "required_digest_ref": "future://agentic-service-harness/live-producer/review-intake/evidence-digest/rollback-proof-packet-evidence",
+      "required_redacted_summary_ref": "future://agentic-service-harness/live-producer/review-intake/redacted-summary/rollback-proof-packet-evidence",
+      "required_operator_scope_ref": "future://agentic-service-harness/live-producer/review-intake/operator-scope/rollback-proof-packet-evidence",
+      "review_submission_admissible": false,
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "uao_admission_review_input",
+      "required_digest_ref": "future://agentic-service-harness/live-producer/review-intake/evidence-digest/uao-admission-evidence",
+      "required_redacted_summary_ref": "future://agentic-service-harness/live-producer/review-intake/redacted-summary/uao-admission-evidence",
+      "required_operator_scope_ref": "future://agentic-service-harness/live-producer/review-intake/operator-scope/uao-admission-evidence",
+      "review_submission_admissible": false,
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "life_meaning_judgment_review_input",
+      "required_digest_ref": "future://agentic-service-harness/live-producer/review-intake/evidence-digest/life-meaning-judgment-evidence",
+      "required_redacted_summary_ref": "future://agentic-service-harness/live-producer/review-intake/redacted-summary/life-meaning-judgment-evidence",
+      "required_operator_scope_ref": "future://agentic-service-harness/live-producer/review-intake/operator-scope/life-meaning-judgment-evidence",
+      "review_submission_admissible": false,
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "temporal_lease_review_input",
+      "required_digest_ref": "future://agentic-service-harness/live-producer/review-intake/evidence-digest/temporal-lease-evidence",
+      "required_redacted_summary_ref": "future://agentic-service-harness/live-producer/review-intake/redacted-summary/temporal-lease-evidence",
+      "required_operator_scope_ref": "future://agentic-service-harness/live-producer/review-intake/operator-scope/temporal-lease-evidence",
+      "review_submission_admissible": false,
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    }
+  ],
+  "missing_submission_receipt_requirements": [
+    {
+      "input_id": "admission_gate_review_input",
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "operator_approval_review_input",
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "effect_receipt_review_input",
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "external_adapter_review_input",
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "secret_handoff_review_input",
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "rollback_proof_review_input",
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "uao_admission_review_input",
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "life_meaning_judgment_review_input",
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    },
+    {
+      "input_id": "temporal_lease_review_input",
+      "status": "AwaitingEvidence",
+      "blocks_review_submission": true,
+      "blocks_live_execution": true
+    }
+  ],
+  "submission_policy": {
+    "policy_id": "agentic-service-harness-live-producer-review-submission-receipt-contract-policy",
+    "all_digest_refs_required": true,
+    "all_redacted_summary_refs_required": true,
+    "all_required_operator_scope_refs_required": true,
+    "uao_review_route_required": true,
+    "life_meaning_review_required": true,
+    "temporal_lease_required": true,
+    "rollback_link_required": true,
+    "raw_payload_allowed": false,
+    "raw_payload_retention_allowed": false,
+    "secret_values_allowed": false,
+    "credential_values_allowed": false,
+    "mutation_routes_allowed": false,
+    "submission_allowed": false,
+    "receipt_append_allowed": false,
+    "receipt_emission_allowed": false
+  },
+  "authority_denials": {
+    "review_route_admitted": false,
+    "review_submission_admitted": false,
+    "review_submitted": false,
+    "digest_collection_started": false,
+    "digest_collection_complete": false,
+    "input_collection_started": false,
+    "input_collection_complete": false,
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "connector_call_enabled": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "receipt_store_append_enabled": false,
+    "live_execution_authorized": false,
+    "review_submission_receipt_emitted": false,
+    "review_submission_receipt_append_admitted": false
+  },
+  "effect_boundary": {
+    "network_policy": "none",
+    "provider_calls_allowed": false,
+    "mutation_routes_admitted": false,
+    "external_state_writes_allowed": false,
+    "runtime_state_writes_allowed": false,
+    "receipt_store_append_allowed": false,
+    "secret_values_allowed": false,
+    "raw_payload_retention_allowed": false
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-execution-authority-review-submission-receipt-contract",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_execution_authority_review_submission_receipt_contract.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Keep review submission receipt emission and receipt-store append blocked until all redacted digest refs, summaries, operator scopes, UAO route admission, life-meaning judgment, temporal lease, rollback linkage, and no-secret-value boundaries are independently satisfied."
+}
