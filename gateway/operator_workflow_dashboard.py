@@ -2,7 +2,8 @@
 
 Purpose: unify local workflow receipt, workflow status, and safe-local action
     projections into one operator-facing read model, including the local
-    workflow closure packet when present.
+    workflow closure packet, rehearsal receipt, and causal repair receipt when
+    present.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: gateway command-spine hashing, local Developer Workflow receipt
     read-model builder, capability promotion ladder, and JSON schema
@@ -52,6 +53,8 @@ READ_MODEL_ID = "operator_workflow_dashboard.read_model"
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "operator_workflow_dashboard_read_model.schema.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "operator_workflow_dashboard.read_model.generated.json"
 DEFAULT_CLOSURE_PACKET = REPO_ROOT / ".change_assurance" / CLOSURE_PACKET_FILENAME
+DEFAULT_REHEARSAL_RECEIPT = REPO_ROOT / ".change_assurance" / "safe_local_action_rehearsal_receipt.json"
+DEFAULT_CAUSAL_REPAIR_RECEIPT = REPO_ROOT / ".change_assurance" / "causal_repair_service_receipt.json"
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +79,10 @@ def build_operator_workflow_dashboard_read_model(
     local_workflow_source_ref: str,
     closure_packet: Mapping[str, Any] | None = None,
     closure_packet_source_ref: str = "absent",
+    rehearsal_receipt: Mapping[str, Any] | None = None,
+    rehearsal_receipt_source_ref: str = "absent",
+    causal_repair_receipt: Mapping[str, Any] | None = None,
+    causal_repair_receipt_source_ref: str = "absent",
     capability_passports: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return a projection-only operator workflow dashboard read model."""
@@ -105,6 +112,14 @@ def build_operator_workflow_dashboard_read_model(
         closure_packet=closure_packet,
         source_ref=closure_packet_source_ref,
     )
+    rehearsal_summary = _rehearsal_summary(
+        rehearsal_receipt=rehearsal_receipt,
+        source_ref=rehearsal_receipt_source_ref,
+    )
+    causal_repair_summary = _causal_repair_summary(
+        causal_repair_receipt=causal_repair_receipt,
+        source_ref=causal_repair_receipt_source_ref,
+    )
     row = {
         "task": str(local_workflow_receipt.get("task") or "Mullu Developer Workflow v1"),
         "status": str(local_workflow_receipt.get("status") or "AwaitingEvidence"),
@@ -117,6 +132,8 @@ def build_operator_workflow_dashboard_read_model(
         "approval_needed": approval["needed"],
         "approval": approval,
         "closure_packet": closure_packet_summary,
+        "safe_local_action_rehearsal": rehearsal_summary,
+        "causal_repair": causal_repair_summary,
         "source_ref": local_workflow_source_ref,
     }
     dashboard = {
@@ -137,11 +154,15 @@ def build_operator_workflow_dashboard_read_model(
             "safe_local_action": "operator_safe_local_action.read_model",
             "capability_passports": "capability_passports.foundation.v1",
             "closure_packet": "local_developer_workflow_v1.closure_packet",
+            "safe_local_action_rehearsal": "safe_local_action_rehearsal.foundation.v1",
+            "causal_repair": "causal_repair_service.foundation.v1",
         },
         "source_refs": {
             "builder": "gateway/operator_workflow_dashboard.py",
             "local_workflow_receipt": local_workflow_source_ref,
             "closure_packet": closure_packet_source_ref,
+            "safe_local_action_rehearsal": rehearsal_receipt_source_ref,
+            "causal_repair": causal_repair_receipt_source_ref,
         },
         "dashboard_hash": "",
     }
@@ -184,6 +205,8 @@ def validate_operator_workflow_dashboard_read_model(
         approval = _mapping(row.get("approval"))
         current_gate = _mapping(row.get("current_gate"))
         closure_packet = _mapping(row.get("closure_packet"))
+        rehearsal = _mapping(row.get("safe_local_action_rehearsal"))
+        causal_repair = _mapping(row.get("causal_repair"))
         if receipts.get("execution_performed") is not False:
             errors.append(f"rows[{index}].receipts_execution_performed_must_be_false")
         if rollback.get("executed") is not False:
@@ -212,6 +235,28 @@ def validate_operator_workflow_dashboard_read_model(
                     errors.append(
                         f"rows[{index}].closure_packet_command_preview[{command_index}]_execution_must_be_false"
                     )
+        if rehearsal.get("execution_performed") is not False:
+            errors.append(f"rows[{index}].rehearsal_execution_performed_must_be_false")
+        if rehearsal.get("external_effects_allowed") is not False:
+            errors.append(f"rows[{index}].rehearsal_external_effects_must_be_false")
+        if rehearsal.get("live_execution_enabled") is not False:
+            errors.append(f"rows[{index}].rehearsal_live_execution_must_be_false")
+        if _mapping(rehearsal.get("approval")).get("approval_performed") is not False:
+            errors.append(f"rows[{index}].rehearsal_approval_performed_must_be_false")
+        raw_rehearsal_scenarios = rehearsal.get("scenario_refs", ())
+        if isinstance(raw_rehearsal_scenarios, list):
+            for scenario_index, scenario_ref in enumerate(raw_rehearsal_scenarios):
+                if isinstance(scenario_ref, Mapping) and scenario_ref.get("mutation_performed") is not False:
+                    errors.append(f"rows[{index}].rehearsal_scenario[{scenario_index}]_mutation_must_be_false")
+        if causal_repair.get("repair_execution_performed") is not False:
+            errors.append(f"rows[{index}].causal_repair_execution_performed_must_be_false")
+        if causal_repair.get("live_execution_enabled") is not False:
+            errors.append(f"rows[{index}].causal_repair_live_execution_must_be_false")
+        raw_repair_actions = causal_repair.get("next_actions", ())
+        if isinstance(raw_repair_actions, list):
+            for action_index, action_ref in enumerate(raw_repair_actions):
+                if isinstance(action_ref, Mapping) and action_ref.get("execution_performed") is not False:
+                    errors.append(f"rows[{index}].causal_repair_next_action[{action_index}]_execution_must_be_false")
     promotion_filters = _mapping(dashboard.get("promotion_filters"))
     if promotion_filters.get("filter_is_not_execution_authority") is not True:
         errors.append("promotion_filters_must_not_be_execution_authority")
@@ -543,6 +588,191 @@ def _validate_closure_packet_boundary(closure_packet: Mapping[str, Any]) -> None
                 raise ValueError("closure_packet_command_preview_execution_must_be_false")
 
 
+def _rehearsal_summary(
+    *,
+    rehearsal_receipt: Mapping[str, Any] | None,
+    source_ref: str,
+) -> dict[str, Any]:
+    if rehearsal_receipt is None:
+        return {
+            "linked": False,
+            "source_ref": source_ref,
+            "receipt_id": "absent",
+            "capability_id": "govern.safe_local_action.rehearsal",
+            "rehearsal_status": "absent",
+            "solver_outcome": "AwaitingEvidence",
+            "selected_action": {
+                "task": "Safe Local Action Rehearsal",
+                "next_action": "run safe local action rehearsal",
+                "current_gate": "rehearsal_receipt_absent",
+            },
+            "scenario_count": 0,
+            "scenario_refs": [],
+            "approval": {
+                "required_for_live_execution": True,
+                "approval_status": "not_requested",
+                "approval_performed": False,
+            },
+            "proof_boundary": {
+                "rehearsal_is_not_execution_proof": True,
+                "post_execution_evidence_required": True,
+            },
+            "blocked_effects": [],
+            "receipt_hash": "",
+            "live_execution_enabled": False,
+            "execution_performed": False,
+            "external_effects_allowed": False,
+        }
+
+    _validate_rehearsal_receipt_boundary(rehearsal_receipt)
+    selected_action = _mapping(rehearsal_receipt.get("selected_action"))
+    approval = _mapping(rehearsal_receipt.get("approval"))
+    raw_scenarios = rehearsal_receipt.get("scenarios", ())
+    scenarios = raw_scenarios if isinstance(raw_scenarios, list) else []
+    return {
+        "linked": True,
+        "source_ref": source_ref,
+        "receipt_id": str(rehearsal_receipt.get("receipt_id") or "unknown"),
+        "capability_id": str(rehearsal_receipt.get("capability_id") or "govern.safe_local_action.rehearsal"),
+        "rehearsal_status": str(rehearsal_receipt.get("rehearsal_status") or "AwaitingEvidence"),
+        "solver_outcome": str(rehearsal_receipt.get("solver_outcome") or "AwaitingEvidence"),
+        "selected_action": {
+            "task": str(selected_action.get("task") or "Safe Local Action Rehearsal"),
+            "next_action": str(selected_action.get("next_action") or "inspect rehearsal receipt"),
+            "current_gate": str(selected_action.get("current_gate") or "unknown"),
+        },
+        "scenario_count": len(scenarios),
+        "scenario_refs": [
+            {
+                "scenario_id": str(scenario.get("scenario_id") or "unknown"),
+                "status": str(scenario.get("status") or "unknown"),
+                "mutation_performed": False,
+            }
+            for scenario in scenarios
+            if isinstance(scenario, Mapping)
+        ][:8],
+        "approval": {
+            "required_for_live_execution": approval.get("required_for_live_execution") is True,
+            "approval_status": str(approval.get("approval_status") or "not_requested"),
+            "approval_performed": False,
+        },
+        "proof_boundary": {
+            "rehearsal_is_not_execution_proof": True,
+            "post_execution_evidence_required": True,
+        },
+        "blocked_effects": _string_list(rehearsal_receipt.get("blocked_effects"))[:12],
+        "receipt_hash": str(rehearsal_receipt.get("receipt_hash") or ""),
+        "live_execution_enabled": False,
+        "execution_performed": False,
+        "external_effects_allowed": False,
+    }
+
+
+def _validate_rehearsal_receipt_boundary(rehearsal_receipt: Mapping[str, Any]) -> None:
+    if rehearsal_receipt.get("rehearsal_is_not_execution_proof") is not True:
+        raise ValueError("rehearsal_must_not_claim_execution_proof")
+    if rehearsal_receipt.get("post_execution_evidence_required") is not True:
+        raise ValueError("rehearsal_post_execution_evidence_required")
+    if rehearsal_receipt.get("live_execution_enabled") is not False:
+        raise ValueError("rehearsal_live_execution_must_be_false")
+    effect_boundary = _mapping(rehearsal_receipt.get("effect_boundary"))
+    for key, value in effect_boundary.items():
+        if str(key).endswith("_allowed") and value is not False:
+            raise ValueError(f"rehearsal_effect_boundary_must_be_false:{key}")
+    approval = _mapping(rehearsal_receipt.get("approval"))
+    if approval.get("approval_performed") is not False:
+        raise ValueError("rehearsal_approval_performed_must_be_false")
+    raw_scenarios = rehearsal_receipt.get("scenarios", ())
+    if isinstance(raw_scenarios, list):
+        for scenario in raw_scenarios:
+            if not isinstance(scenario, Mapping):
+                continue
+            if scenario.get("proof_only") is not True:
+                raise ValueError("rehearsal_scenario_proof_only_must_be_true")
+            if scenario.get("mutation_performed") is not False:
+                raise ValueError("rehearsal_scenario_mutation_must_be_false")
+            if scenario.get("external_effects_allowed") is not False:
+                raise ValueError("rehearsal_scenario_external_effects_must_be_false")
+
+
+def _causal_repair_summary(
+    *,
+    causal_repair_receipt: Mapping[str, Any] | None,
+    source_ref: str,
+) -> dict[str, Any]:
+    if causal_repair_receipt is None:
+        return {
+            "linked": False,
+            "source_ref": source_ref,
+            "receipt_id": "absent",
+            "service_id": "mcoi.causal_repair.service",
+            "service_status": "absent",
+            "solver_outcome": "AwaitingEvidence",
+            "case_count": 0,
+            "high_severity_cases": [],
+            "next_actions": [],
+            "blocked_effects": [],
+            "receipt_hash": "",
+            "live_execution_enabled": False,
+            "repair_execution_performed": False,
+        }
+
+    _validate_causal_repair_receipt_boundary(causal_repair_receipt)
+    raw_cases = causal_repair_receipt.get("cases", ())
+    cases = raw_cases if isinstance(raw_cases, list) else []
+    high_severity_cases = [
+        str(case.get("failure_id") or "unknown")
+        for case in cases
+        if isinstance(case, Mapping) and str(case.get("severity") or "") in {"high", "critical"}
+    ]
+    next_actions = []
+    for case in cases:
+        if not isinstance(case, Mapping):
+            continue
+        proposal = _mapping(case.get("proposal"))
+        next_actions.append(
+            {
+                "failure_id": str(case.get("failure_id") or "unknown"),
+                "operator_outcome": str(proposal.get("operator_outcome") or "AwaitingEvidence"),
+                "next_action": str(proposal.get("next_action") or "inspect repair case"),
+                "execution_performed": False,
+            }
+        )
+    return {
+        "linked": True,
+        "source_ref": source_ref,
+        "receipt_id": str(causal_repair_receipt.get("receipt_id") or "unknown"),
+        "service_id": str(causal_repair_receipt.get("service_id") or "mcoi.causal_repair.service"),
+        "service_status": str(causal_repair_receipt.get("service_status") or "AwaitingEvidence"),
+        "solver_outcome": str(causal_repair_receipt.get("solver_outcome") or "AwaitingEvidence"),
+        "case_count": len(cases),
+        "high_severity_cases": high_severity_cases[:8],
+        "next_actions": next_actions[:8],
+        "blocked_effects": _string_list(causal_repair_receipt.get("blocked_effects"))[:12],
+        "receipt_hash": str(causal_repair_receipt.get("receipt_hash") or ""),
+        "live_execution_enabled": False,
+        "repair_execution_performed": False,
+    }
+
+
+def _validate_causal_repair_receipt_boundary(causal_repair_receipt: Mapping[str, Any]) -> None:
+    if causal_repair_receipt.get("live_execution_enabled") is not False:
+        raise ValueError("causal_repair_live_execution_must_be_false")
+    if causal_repair_receipt.get("repair_execution_performed") is not False:
+        raise ValueError("causal_repair_execution_must_be_false")
+    raw_cases = causal_repair_receipt.get("cases", ())
+    if isinstance(raw_cases, list):
+        for case in raw_cases:
+            if not isinstance(case, Mapping):
+                continue
+            proof = _mapping(case.get("rollback_or_compensation_proof"))
+            if proof.get("execution_performed") is not False:
+                raise ValueError("causal_repair_case_execution_must_be_false")
+            proposal = _mapping(case.get("proposal"))
+            if case.get("failure_id") == "rollback_impossible" and proposal.get("operator_outcome") != "GovernanceBlocked":
+                raise ValueError("causal_repair_rollback_impossible_must_be_blocked")
+
+
 def _load_local_workflow_receipt(path: Path | None) -> tuple[dict[str, Any], str]:
     if path is not None:
         read_model = _load_json_object(path)
@@ -571,8 +801,30 @@ def _load_closure_packet(path: Path | None) -> tuple[dict[str, Any] | None, str]
     return closure_packet, _path_label(path)
 
 
+def _load_rehearsal_receipt(path: Path | None) -> tuple[dict[str, Any] | None, str]:
+    if path is None or not path.exists():
+        return None, "absent"
+    rehearsal_receipt = _load_json_object(path)
+    _validate_rehearsal_receipt_boundary(rehearsal_receipt)
+    return rehearsal_receipt, _path_label(path)
+
+
+def _load_causal_repair_receipt(path: Path | None) -> tuple[dict[str, Any] | None, str]:
+    if path is None or not path.exists():
+        return None, "absent"
+    causal_repair_receipt = _load_json_object(path)
+    _validate_causal_repair_receipt_boundary(causal_repair_receipt)
+    return causal_repair_receipt, _path_label(path)
+
+
 def _mapping(value: Any) -> Mapping[str, Any]:
     return value if isinstance(value, Mapping) else {}
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if str(item).strip()]
 
 
 def _load_json_object(path: Path) -> dict[str, Any]:
@@ -607,6 +859,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=str(DEFAULT_CLOSURE_PACKET),
         help="Optional local developer workflow closure packet path.",
     )
+    parser.add_argument(
+        "--safe-local-action-rehearsal",
+        default=str(DEFAULT_REHEARSAL_RECEIPT),
+        help="Optional safe local action rehearsal receipt path.",
+    )
+    parser.add_argument(
+        "--causal-repair",
+        default=str(DEFAULT_CAUSAL_REPAIR_RECEIPT),
+        help="Optional causal repair service receipt path.",
+    )
     parser.add_argument("--schema", default=str(DEFAULT_SCHEMA))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--json", action="store_true")
@@ -626,11 +888,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         closure_packet, closure_packet_source_ref = _load_closure_packet(
             Path(args.closure_packet) if args.closure_packet else None
         )
+        rehearsal_receipt, rehearsal_receipt_source_ref = _load_rehearsal_receipt(
+            Path(args.safe_local_action_rehearsal) if args.safe_local_action_rehearsal else None
+        )
+        causal_repair_receipt, causal_repair_receipt_source_ref = _load_causal_repair_receipt(
+            Path(args.causal_repair) if args.causal_repair else None
+        )
         dashboard = build_operator_workflow_dashboard_read_model(
             local_workflow_receipt=local_workflow_receipt,
             local_workflow_source_ref=source_ref,
             closure_packet=closure_packet,
             closure_packet_source_ref=closure_packet_source_ref,
+            rehearsal_receipt=rehearsal_receipt,
+            rehearsal_receipt_source_ref=rehearsal_receipt_source_ref,
+            causal_repair_receipt=causal_repair_receipt,
+            causal_repair_receipt_source_ref=causal_repair_receipt_source_ref,
         )
         written_path = write_operator_workflow_dashboard_read_model(dashboard, output_path)
         validation = validate_operator_workflow_dashboard_read_model(
