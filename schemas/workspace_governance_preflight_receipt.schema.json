@@ -211,6 +211,7 @@
             "agentic_service_harness_live_producer_rollback_proof_packet",
             "agentic_service_harness_live_producer_execution_authority_admission",
             "agentic_service_harness_live_producer_execution_authority_evidence_packet",
+            "agentic_service_harness_live_producer_execution_authority_review_input_contract",
             "foundation_operator_readiness_boundary",
             "foundation_solo_daily_loop_boundary",
             "foundation_learning_path_boundary",
