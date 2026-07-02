@@ -1,5 +1,5 @@
 {
-  "check_count": 341,
+  "check_count": 342,
   "checks": [
     {
       "args": [
@@ -1885,6 +1885,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER EXECUTION AUTHORITY ADMISSION VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_live_producer_execution_authority_evidence_packet.py"
+      ],
+      "name": "agentic_service_harness_live_producer_execution_authority_evidence_packet",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER EXECUTION AUTHORITY EVIDENCE PACKET VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
