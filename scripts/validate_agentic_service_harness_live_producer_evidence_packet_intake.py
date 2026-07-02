@@ -29,11 +29,23 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
+from scripts.validate_agentic_service_harness_live_producer_operator_response_witness import (  # noqa: E402
+    validate_live_producer_operator_response_witness,
+)
 
 
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "agentic_service_harness_live_producer_evidence_packet_intake.schema.json"
 DEFAULT_FIXTURE = REPO_ROOT / "examples" / "agentic_service_harness_live_producer_evidence_packet_intake.local.json"
 PACKET_ID = "agentic-service-harness-live-producer-evidence-packet-intake"
+PACKET_FIXTURE_REF = "examples/agentic_service_harness_live_producer_evidence_packet_intake.local.json"
+PACKET_VALIDATOR_COMMAND = "python scripts/validate_agentic_service_harness_live_producer_evidence_packet_intake.py"
+OPERATOR_RESPONSE_WITNESS_REF = (
+    "examples/agentic_service_harness_live_producer_operator_response_witness.local.json"
+)
+OPERATOR_RESPONSE_VALIDATOR_ID = "agentic-service-harness-live-producer-operator-response-witness"
+OPERATOR_RESPONSE_VALIDATOR_COMMAND = (
+    "python scripts/validate_agentic_service_harness_live_producer_operator_response_witness.py"
+)
 REQUIRED_WITNESS_KINDS = (
     "effect_receipt",
     "external_adapter_evidence",
@@ -92,9 +104,11 @@ def validate_live_producer_evidence_packet_intake(
     errors: list[str] = []
     schema = _load_json_object(schema_path, "evidence packet intake schema", errors)
     fixture = _load_json_object(fixture_path, "evidence packet intake fixture", errors)
+    response_validation, response_witness = validate_live_producer_operator_response_witness()
+    errors.extend(f"source operator response witness: {error}" for error in response_validation.errors)
     if schema and fixture:
         errors.extend(f"{_path_label(fixture_path)}: {error}" for error in _validate_schema_instance(schema, fixture))
-        _validate_intake_semantics(fixture, errors, _path_label(fixture_path))
+        _validate_intake_semantics(fixture, response_witness, errors, _path_label(fixture_path))
 
     source_preflights = fixture.get("source_preflights")
     witness_packet_requirements = fixture.get("witness_packet_requirements")
@@ -114,7 +128,12 @@ def validate_live_producer_evidence_packet_intake(
     return validation, fixture
 
 
-def _validate_intake_semantics(packet: Mapping[str, Any], errors: list[str], label: str) -> None:
+def _validate_intake_semantics(
+    packet: Mapping[str, Any],
+    response_witness: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
     if packet.get("packet_id") != PACKET_ID:
         errors.append(f"{label}: packet_id mismatch")
     for field_name, expected_value in (
@@ -130,6 +149,7 @@ def _validate_intake_semantics(packet: Mapping[str, Any], errors: list[str], lab
         if packet.get(field_name) != expected_value:
             errors.append(f"{label}: {field_name} must be {expected_value!r}")
     _validate_source_preflights(packet, errors, label)
+    _validate_operator_response_collection_binding(packet, response_witness, errors, label)
     _validate_witness_packet_requirements(packet, errors, label)
     _validate_missing_evidence(packet, errors, label)
     _validate_denials(packet, errors, label)
@@ -161,6 +181,51 @@ def _validate_source_preflights(packet: Mapping[str, Any], errors: list[str], la
         preflight_ref = entry.get("preflight_ref")
         if isinstance(preflight_ref, str) and not (REPO_ROOT / preflight_ref).is_file():
             errors.append(f"{label}: {witness_kind} preflight_ref must exist")
+
+
+def _validate_operator_response_collection_binding(
+    packet: Mapping[str, Any],
+    response_witness: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    binding = _mapping(packet.get("operator_response_collection_binding"))
+    source_binding = _mapping(response_witness.get("approval_request_collection_binding"))
+    if not binding:
+        errors.append(f"{label}: operator_response_collection_binding must be an object")
+        return
+    expected_values = {
+        "binding_id": "binding.evidence_packet_intake.operator_response_collection",
+        "source_response_witness_id": response_witness.get("response_witness_id", ""),
+        "source_response_witness_ref": OPERATOR_RESPONSE_WITNESS_REF,
+        "source_response_validator_id": OPERATOR_RESPONSE_VALIDATOR_ID,
+        "source_response_validator_command": OPERATOR_RESPONSE_VALIDATOR_COMMAND,
+        "source_approval_request_collection_binding_id": source_binding.get("binding_id", ""),
+        "source_approval_request_collection_status": source_binding.get("binding_status", ""),
+        "source_response_status": response_witness.get("response_status", ""),
+        "source_response_record_collected": response_witness.get("response_record_collected"),
+        "source_approval_satisfied": response_witness.get("approval_satisfied"),
+        "source_authority_granted": response_witness.get("authority_granted"),
+        "source_live_execution_authorized": _mapping(response_witness.get("authority_denials")).get(
+            "live_execution_authorized"
+        ),
+        "intake_packet_id": PACKET_ID,
+        "intake_packet_ref": PACKET_FIXTURE_REF,
+        "intake_validator_id": PACKET_ID,
+        "intake_validator_command": PACKET_VALIDATOR_COMMAND,
+        "binding_status": "AwaitingEvidence",
+        "witness_packets_collected": False,
+        "authority_granted": False,
+        "live_execution_authorized": False,
+        "blocks_live_producer": True,
+    }
+    for field_name, expected_value in expected_values.items():
+        if binding.get(field_name) != expected_value:
+            errors.append(f"{label}: operator_response_collection_binding.{field_name} mismatch")
+    for artifact_field in ("source_response_witness_ref", "intake_packet_ref"):
+        artifact_ref = binding.get(artifact_field)
+        if isinstance(artifact_ref, str) and not (REPO_ROOT / artifact_ref).is_file():
+            errors.append(f"{label}: operator_response_collection_binding.{artifact_field} must exist")
 
 
 def _validate_witness_packet_requirements(packet: Mapping[str, Any], errors: list[str], label: str) -> None:
@@ -232,7 +297,7 @@ def _validate_validator_ref(packet: Mapping[str, Any], errors: list[str], label:
     validator = validators[0] if isinstance(validators[0], Mapping) else {}
     if validator.get("validator_id") != PACKET_ID:
         errors.append(f"{label}: validator_id mismatch")
-    if validator.get("command") != "python scripts/validate_agentic_service_harness_live_producer_evidence_packet_intake.py":
+    if validator.get("command") != PACKET_VALIDATOR_COMMAND:
         errors.append(f"{label}: validator command mismatch")
     if validator.get("required_for_closure") is not True:
         errors.append(f"{label}: validator required_for_closure must be true")
