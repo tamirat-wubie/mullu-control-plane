@@ -263,6 +263,21 @@ def test_protocol_manifest_indexes_agentic_service_harness_live_producer_rollbac
     assert packet_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_live_producer_execution_authority_admission() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    request_entry = entries["agentic-service-harness-live-producer-execution-authority-admission"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert request_entry["path"] == (
+        "schemas/agentic_service_harness_live_producer_execution_authority_admission.schema.json"
+    )
+    assert request_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-live-producer-execution-authority-admission:1"
+    )
+    assert request_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_concrete_filesystem_write_evidence_candidate() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
