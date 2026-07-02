@@ -40,6 +40,10 @@ from software_dev.local_developer_workflow_v1.command_preview_packet import (  #
     COMMAND_PREVIEW_PACKET_FILENAME,
     validate_local_developer_workflow_pr_command_preview_packet,
 )
+from software_dev.local_developer_workflow_v1.pr_admission_packet import (  # noqa: E402
+    PR_ADMISSION_PACKET_FILENAME,
+    validate_local_developer_workflow_pr_admission_packet,
+)
 
 
 DEFAULT_ARTIFACTS = {
@@ -49,6 +53,7 @@ DEFAULT_ARTIFACTS = {
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "local_developer_workflow_v1_validation.json"
 DEFAULT_CLOSURE_PACKET = REPO_ROOT / ".change_assurance" / CLOSURE_PACKET_FILENAME
 DEFAULT_COMMAND_PREVIEW_PACKET = REPO_ROOT / ".change_assurance" / COMMAND_PREVIEW_PACKET_FILENAME
+DEFAULT_PR_ADMISSION_PACKET = REPO_ROOT / ".change_assurance" / PR_ADMISSION_PACKET_FILENAME
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -64,8 +69,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--pr-command-preview", default=str(DEFAULT_ARTIFACTS["pr_command_preview"]))
     parser.add_argument("--closure-packet", default=str(DEFAULT_CLOSURE_PACKET))
     parser.add_argument("--command-preview-packet", default=str(DEFAULT_COMMAND_PREVIEW_PACKET))
+    parser.add_argument("--pr-admission-packet", default=str(DEFAULT_PR_ADMISSION_PACKET))
     parser.add_argument("--require-closure-packet", action="store_true")
     parser.add_argument("--require-command-preview-packet", action="store_true")
+    parser.add_argument("--require-pr-admission-packet", action="store_true")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--build-if-missing", action="store_true")
     parser.add_argument("--strict", action="store_true")
@@ -107,6 +114,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         errors.append(f"closure_packet_missing:{closure_packet_path}")
     command_preview_packet_path = Path(args.command_preview_packet)
     command_preview_packet_status = "not_present"
+    command_preview_packet = None
     if command_preview_packet_path.exists():
         command_preview_packet = _load_json_object(command_preview_packet_path)
         command_preview_validation = validate_local_developer_workflow_pr_command_preview_packet(
@@ -121,6 +129,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         errors.extend(f"command_preview_packet:{error}" for error in command_preview_validation.errors)
     elif args.require_command_preview_packet:
         errors.append(f"command_preview_packet_missing:{command_preview_packet_path}")
+    pr_admission_packet_path = Path(args.pr_admission_packet)
+    pr_admission_packet_decision = "not_present"
+    if pr_admission_packet_path.exists():
+        if command_preview_packet is None:
+            errors.append(f"command_preview_packet_missing:{command_preview_packet_path}")
+        else:
+            pr_admission_packet = _load_json_object(pr_admission_packet_path)
+            pr_admission_validation = validate_local_developer_workflow_pr_admission_packet(
+                packet=pr_admission_packet,
+                artifacts=artifacts,
+                command_preview_packet=command_preview_packet,
+                closure_packet=closure_packet,
+                artifact_paths=artifact_paths,
+                packet_path=pr_admission_packet_path,
+                command_preview_packet_path=command_preview_packet_path,
+                closure_packet_path=closure_packet_path,
+            )
+            pr_admission_packet_decision = pr_admission_validation.admission_decision
+            errors.extend(f"pr_admission_packet:{error}" for error in pr_admission_validation.errors)
+    elif args.require_pr_admission_packet:
+        errors.append(f"pr_admission_packet_missing:{pr_admission_packet_path}")
     ok = validation.ok and not errors
     output_payload = validation.as_dict()
     output_payload["ok"] = ok
@@ -129,6 +158,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     output_payload["closure_packet_status"] = closure_status
     output_payload["command_preview_packet_path"] = str(command_preview_packet_path)
     output_payload["command_preview_packet_status"] = command_preview_packet_status
+    output_payload["pr_admission_packet_path"] = str(pr_admission_packet_path)
+    output_payload["pr_admission_packet_decision"] = pr_admission_packet_decision
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(
         json.dumps(output_payload, indent=2, sort_keys=True) + "\n",

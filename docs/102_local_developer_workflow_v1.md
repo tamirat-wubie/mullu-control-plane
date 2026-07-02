@@ -7,6 +7,7 @@ Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: `mcoi/software_dev/local_developer_workflow_v1/runner.py`,
 `mcoi/software_dev/local_developer_workflow_v1/composition.py`,
 `mcoi/software_dev/local_developer_workflow_v1/command_preview_packet.py`,
+`mcoi/software_dev/local_developer_workflow_v1/pr_admission_packet.py`,
 `scripts/run_local_developer_workflow_v1.py`, and
 `scripts/validate_local_developer_workflow_v1.py`.
 Invariants: no file write, branch push, PR creation, merge, deployment,
@@ -70,6 +71,7 @@ or production writes.
 | `local_developer_workflow_v1_approval_request.json` | Operator review packet; no execution authority. |
 | `local_developer_workflow_v1_pr_command_preview.json` | Push and PR command text with execution blocked. |
 | `local_developer_workflow_v1_pr_command_preview_packet.json` | Schema-backed local command review packet; every command remains non-executable. |
+| `local_developer_workflow_v1_pr_admission_packet.json` | Branch-write and PR-creation admission proof; remains blocked awaiting external authority. |
 
 ## Command Preview Packet
 
@@ -98,12 +100,32 @@ rollback effect witness
 UAO execution admission receipt
 ```
 
+## PR Admission Packet
+
+The PR admission packet consumes the local command review packet and records the
+next authority boundary:
+
+```text
+local_developer_workflow_v1_pr_admission_packet.json
+```
+
+It admits only that local command review evidence exists. It does not admit
+branch writes, branch pushes, pull-request creation, merge, deployment,
+connector calls, or external writes.
+
+Canonical decision:
+
+```text
+admission_decision = blocked_waiting_external_execution_approval
+```
+
 ## Commands
 
 ```powershell
 python scripts/run_local_developer_workflow_v1.py --json --strict
-python scripts/validate_local_developer_workflow_v1.py --json --strict --require-closure-packet --require-command-preview-packet
+python scripts/validate_local_developer_workflow_v1.py --json --strict --require-closure-packet --require-command-preview-packet --require-pr-admission-packet
 python scripts/validate_local_developer_workflow_pr_command_preview_packet.py --json --strict --require-closure-packet
+python scripts/validate_local_developer_workflow_pr_admission_packet.py --json --strict --require-closure-packet
 python -m pytest tests/test_local_developer_workflow_v1.py -q
 ```
 

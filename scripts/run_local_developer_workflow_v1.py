@@ -52,6 +52,12 @@ from software_dev.local_developer_workflow_v1.command_preview_packet import (  #
     validate_local_developer_workflow_pr_command_preview_packet,
     write_local_developer_workflow_pr_command_preview_packet,
 )
+from software_dev.local_developer_workflow_v1.pr_admission_packet import (  # noqa: E402
+    PR_ADMISSION_PACKET_FILENAME,
+    build_local_developer_workflow_pr_admission_packet,
+    validate_local_developer_workflow_pr_admission_packet,
+    write_local_developer_workflow_pr_admission_packet,
+)
 
 
 DEFAULT_OUTPUT_DIR = REPO_ROOT / ".change_assurance"
@@ -72,6 +78,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--candidate-branch", default=DEFAULT_CANDIDATE_BRANCH)
     parser.add_argument("--skip-closure-packet", action="store_true")
     parser.add_argument("--skip-command-preview-packet", action="store_true")
+    parser.add_argument("--skip-pr-admission-packet", action="store_true")
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -105,6 +112,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     closure_validation = None
     command_preview_packet_path = None
     command_preview_validation = None
+    command_preview_packet = None
+    pr_admission_packet_path = None
+    pr_admission_validation = None
     closure_packet = None
     if not args.skip_closure_packet:
         closure_packet = build_local_developer_workflow_closure_packet(
@@ -140,16 +150,49 @@ def main(argv: Sequence[str] | None = None) -> int:
             packet_path=command_preview_packet_path,
             closure_packet_path=closure_packet_path or Path("<generated>"),
         )
+    if not args.skip_pr_admission_packet:
+        if command_preview_packet is None:
+            command_preview_packet = build_local_developer_workflow_pr_command_preview_packet(
+                artifacts=artifacts,
+                closure_packet=closure_packet,
+                artifact_paths=written_paths,
+                closure_packet_path=closure_packet_path or Path("<generated>"),
+            )
+        pr_admission_packet = build_local_developer_workflow_pr_admission_packet(
+            artifacts=artifacts,
+            command_preview_packet=command_preview_packet,
+            closure_packet=closure_packet,
+            artifact_paths=written_paths,
+            command_preview_packet_path=command_preview_packet_path or Path("<generated>"),
+            closure_packet_path=closure_packet_path or Path("<generated>"),
+        )
+        pr_admission_packet_path = write_local_developer_workflow_pr_admission_packet(
+            pr_admission_packet,
+            Path(args.output_dir) / PR_ADMISSION_PACKET_FILENAME,
+        )
+        pr_admission_validation = validate_local_developer_workflow_pr_admission_packet(
+            packet=pr_admission_packet,
+            artifacts=artifacts,
+            command_preview_packet=command_preview_packet,
+            closure_packet=closure_packet,
+            artifact_paths=written_paths,
+            packet_path=pr_admission_packet_path,
+            command_preview_packet_path=command_preview_packet_path or Path("<generated>"),
+            closure_packet_path=closure_packet_path or Path("<generated>"),
+        )
     ok = (
         validation.ok
         and (closure_validation.ok if closure_validation is not None else True)
         and (command_preview_validation.ok if command_preview_validation is not None else True)
+        and (pr_admission_validation.ok if pr_admission_validation is not None else True)
     )
     errors = list(validation.errors)
     if closure_validation is not None:
         errors.extend(f"closure_packet:{error}" for error in closure_validation.errors)
     if command_preview_validation is not None:
         errors.extend(f"command_preview_packet:{error}" for error in command_preview_validation.errors)
+    if pr_admission_validation is not None:
+        errors.extend(f"pr_admission_packet:{error}" for error in pr_admission_validation.errors)
     output = {
         "ok": ok,
         "errors": errors,
@@ -164,6 +207,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         ),
         "command_preview_packet_status": (
             command_preview_validation.status if command_preview_validation is not None else "skipped"
+        ),
+        "pr_admission_packet_path": str(pr_admission_packet_path) if pr_admission_packet_path is not None else "",
+        "pr_admission_packet_decision": (
+            pr_admission_validation.admission_decision if pr_admission_validation is not None else "skipped"
         ),
         "status": validation.status,
     }

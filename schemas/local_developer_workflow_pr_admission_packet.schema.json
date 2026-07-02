@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:local-developer-workflow-pr-admission-packet:1",
+  "title": "Local Developer Workflow PR Admission Packet",
+  "description": "Projection-only admission packet that binds Local Developer Workflow v1 command review evidence while blocking branch write and pull-request creation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "packet_id",
+    "workflow_id",
+    "workflow_run_id",
+    "status",
+    "solver_outcome",
+    "projection_only",
+    "packet_is_not_execution_authority",
+    "local_command_review_evidence_present",
+    "admission_decision",
+    "execution_performed",
+    "external_effects_allowed",
+    "branch_write_allowed",
+    "pr_creation_allowed",
+    "merge_allowed",
+    "live_execution_enabled",
+    "candidate",
+    "required_before_execution",
+    "blocked_effects",
+    "effect_boundary",
+    "source_refs",
+    "validators",
+    "causal_trace",
+    "packet_hash"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "packet_id": {
+      "type": "string",
+      "const": "local_developer_workflow_v1.pr_admission_packet.foundation.v1"
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "mullu.local_developer_workflow.v1"
+    },
+    "workflow_run_id": { "$ref": "#/$defs/text" },
+    "status": { "type": "string", "const": "AwaitingEvidence" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "projection_only": { "type": "boolean", "const": true },
+    "packet_is_not_execution_authority": { "type": "boolean", "const": true },
+    "local_command_review_evidence_present": { "type": "boolean", "const": true },
+    "admission_decision": {
+      "type": "string",
+      "const": "blocked_waiting_external_execution_approval"
+    },
+    "execution_performed": { "type": "boolean", "const": false },
+    "external_effects_allowed": { "type": "boolean", "const": false },
+    "branch_write_allowed": { "type": "boolean", "const": false },
+    "pr_creation_allowed": { "type": "boolean", "const": false },
+    "merge_allowed": { "type": "boolean", "const": false },
+    "live_execution_enabled": { "type": "boolean", "const": false },
+    "candidate": { "$ref": "#/$defs/candidate" },
+    "required_before_execution": {
+      "type": "array",
+      "minItems": 6,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "blocked_effects": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "enum": [
+          "branch_write",
+          "branch_push",
+          "pull_request_create",
+          "merge",
+          "deploy",
+          "connector_call",
+          "external_write",
+          "live_execution"
+        ]
+      }
+    },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "causal_trace": {
+      "type": "array",
+      "minItems": 4,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "packet_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_branch",
+        "target_branch",
+        "approval_request_id",
+        "command_preview_packet_id",
+        "command_count"
+      ],
+      "properties": {
+        "candidate_branch": { "$ref": "#/$defs/text" },
+        "target_branch": { "$ref": "#/$defs/text" },
+        "approval_request_id": { "$ref": "#/$defs/text" },
+        "command_preview_packet_id": { "$ref": "#/$defs/text" },
+        "command_count": { "type": "integer", "const": 2 }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file_write_performed",
+        "source_mutation_performed",
+        "test_process_executed",
+        "branch_created",
+        "branch_push_performed",
+        "pull_request_created",
+        "merge_performed",
+        "deployment_performed",
+        "connector_call_performed",
+        "external_write_performed",
+        "live_execution_enabled"
+      ],
+      "properties": {
+        "file_write_performed": { "type": "boolean", "const": false },
+        "source_mutation_performed": { "type": "boolean", "const": false },
+        "test_process_executed": { "type": "boolean", "const": false },
+        "branch_created": { "type": "boolean", "const": false },
+        "branch_push_performed": { "type": "boolean", "const": false },
+        "pull_request_created": { "type": "boolean", "const": false },
+        "merge_performed": { "type": "boolean", "const": false },
+        "deployment_performed": { "type": "boolean", "const": false },
+        "connector_call_performed": { "type": "boolean", "const": false },
+        "external_write_performed": { "type": "boolean", "const": false },
+        "live_execution_enabled": { "type": "boolean", "const": false }
+      }
+    }
+  }
+}
