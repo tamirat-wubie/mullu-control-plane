@@ -99,6 +99,25 @@ def test_validate_sandbox_execution_receipt_rejects_weak_isolation(tmp_path: Pat
     assert str(tmp_path) not in serialized
 
 
+def test_validate_sandbox_execution_receipt_rejects_missing_deeper_isolation(
+    tmp_path: Path,
+) -> None:
+    receipt_path = tmp_path / "weak-deeper-receipt.json"
+    result = _write_runner_receipt(receipt_path, tmp_path)
+    payload = asdict(result.receipt)
+    payload["capabilities_dropped"] = False
+    payload["seccomp_profile_applied"] = "unconfined"
+    receipt_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_sandbox_execution_receipt(receipt_path)
+
+    assert validation.valid is False
+    assert validation.receipt_path == "weak-deeper-receipt.json"
+    assert validation.blockers == ("sandbox_receipt_invalid",)
+    assert "capabilities_dropped_not_true" in validation.detail
+    assert "seccomp_profile_unconfined" in validation.detail
+
+
 def test_validate_sandbox_execution_receipt_rejects_nonzero_passed_receipt(
     tmp_path: Path,
 ) -> None:

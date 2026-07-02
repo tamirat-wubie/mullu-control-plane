@@ -151,6 +151,34 @@
         "Live action disabled": { "type": "integer", "minimum": 0 }
       }
     },
+    "promotion_count_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "L0",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5",
+        "L6",
+        "L7",
+        "L8",
+        "L9"
+      ],
+      "properties": {
+        "L0": { "type": "integer", "minimum": 0 },
+        "L1": { "type": "integer", "minimum": 0 },
+        "L2": { "type": "integer", "minimum": 0 },
+        "L3": { "type": "integer", "minimum": 0 },
+        "L4": { "type": "integer", "minimum": 0 },
+        "L5": { "type": "integer", "minimum": 0 },
+        "L6": { "type": "integer", "minimum": 0 },
+        "L7": { "type": "integer", "minimum": 0 },
+        "L8": { "type": "integer", "minimum": 0 },
+        "L9": { "type": "integer", "minimum": 0 }
+      }
+    },
     "summary": {
       "type": "object",
       "additionalProperties": false,
@@ -159,6 +187,7 @@
         "passport_count",
         "family_counts",
         "unlock_level_counts",
+        "promotion_level_counts",
         "operator_status_counts",
         "blocked_count",
         "approval_required_count",
@@ -179,6 +208,9 @@
         },
         "unlock_level_counts": {
           "$ref": "#/$defs/unlock_count_map"
+        },
+        "promotion_level_counts": {
+          "$ref": "#/$defs/promotion_count_map"
         },
         "operator_status_counts": {
           "$ref": "#/$defs/operator_status_count_map"
@@ -245,6 +277,18 @@
         "certification_status",
         "current_unlock_level",
         "unlock_label",
+        "promotion_ladder_id",
+        "current_promotion_level",
+        "promotion_level_number",
+        "promotion_level_name",
+        "promotion_level_summary",
+        "promotion_required_gates",
+        "promotion_required_evidence",
+        "promotion_requires_operator_approval",
+        "promotion_requires_receipt",
+        "promotion_requires_rollback",
+        "promotion_requires_live_witness",
+        "promotion_level_is_not_execution_authority",
         "operator_status",
         "allowed_actions",
         "allowed_tools",
@@ -313,6 +357,71 @@
             "Implemented",
             "Verified"
           ]
+        },
+        "promotion_ladder_id": {
+          "type": "string",
+          "const": "mullu.capability_promotion_ladder.v1"
+        },
+        "current_promotion_level": {
+          "type": "string",
+          "pattern": "^L[0-9]$"
+        },
+        "promotion_level_number": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "promotion_level_name": {
+          "type": "string",
+          "enum": [
+            "read-only",
+            "draft-only",
+            "proposal-only",
+            "sandbox-write",
+            "test-run",
+            "pr-preview",
+            "pr-create-with-approval",
+            "merge-request-with-approval",
+            "live-connector-read",
+            "live-connector-write"
+          ]
+        },
+        "promotion_level_summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320
+        },
+        "promotion_required_gates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "promotion_required_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "promotion_requires_operator_approval": {
+          "type": "boolean"
+        },
+        "promotion_requires_receipt": {
+          "type": "boolean"
+        },
+        "promotion_requires_rollback": {
+          "type": "boolean"
+        },
+        "promotion_requires_live_witness": {
+          "type": "boolean"
+        },
+        "promotion_level_is_not_execution_authority": {
+          "type": "boolean",
+          "const": true
         },
         "operator_status": {
           "type": "string",

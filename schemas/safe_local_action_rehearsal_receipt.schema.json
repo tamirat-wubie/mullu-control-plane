@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:safe-local-action-rehearsal-receipt:1",
+  "title": "SafeLocalActionRehearsalReceipt",
+  "description": "Proof-only receipt for safe local action rehearsal. Simulation is not execution proof and post-execution evidence remains required.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "receipt_id",
+    "capability_id",
+    "rehearsal_status",
+    "solver_outcome",
+    "rehearsal_is_not_execution_proof",
+    "post_execution_evidence_required",
+    "live_execution_enabled",
+    "selected_action",
+    "scenarios",
+    "effect_boundary",
+    "approval",
+    "blocked_effects",
+    "source_refs",
+    "receipt_hash"
+  ],
+  "properties": {
+    "schema_ref": {"type": "string", "const": "urn:mullusi:schema:safe-local-action-rehearsal-receipt:1"},
+    "receipt_id": {"type": "string", "const": "safe_local_action_rehearsal.foundation.v1"},
+    "capability_id": {"type": "string", "const": "govern.safe_local_action.rehearsal"},
+    "rehearsal_status": {"type": "string", "const": "rehearsed_no_effect"},
+    "solver_outcome": {"type": "string", "enum": ["SolvedUnverified", "AwaitingEvidence"]},
+    "rehearsal_is_not_execution_proof": {"type": "boolean", "const": true},
+    "post_execution_evidence_required": {"type": "boolean", "const": true},
+    "live_execution_enabled": {"type": "boolean", "const": false},
+    "selected_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task", "next_action", "current_gate", "risk", "source_ref"],
+      "properties": {
+        "task": {"type": "string", "minLength": 1, "maxLength": 160},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 260},
+        "current_gate": {"type": "string", "minLength": 1, "maxLength": 120},
+        "risk": {"type": "string", "minLength": 1, "maxLength": 160},
+        "source_ref": {"type": "string", "minLength": 1, "maxLength": 260}
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {"$ref": "#/$defs/scenario"}
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file_write_allowed",
+        "branch_push_allowed",
+        "pull_request_create_allowed",
+        "merge_allowed",
+        "rollback_execute_allowed",
+        "deploy_allowed",
+        "connector_call_allowed",
+        "external_write_allowed",
+        "live_execution_allowed"
+      ],
+      "properties": {
+        "file_write_allowed": {"type": "boolean", "const": false},
+        "branch_push_allowed": {"type": "boolean", "const": false},
+        "pull_request_create_allowed": {"type": "boolean", "const": false},
+        "merge_allowed": {"type": "boolean", "const": false},
+        "rollback_execute_allowed": {"type": "boolean", "const": false},
+        "deploy_allowed": {"type": "boolean", "const": false},
+        "connector_call_allowed": {"type": "boolean", "const": false},
+        "external_write_allowed": {"type": "boolean", "const": false},
+        "live_execution_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_for_live_execution",
+        "approval_status",
+        "approval_performed",
+        "approval_ref"
+      ],
+      "properties": {
+        "required_for_live_execution": {"type": "boolean", "const": true},
+        "approval_status": {"type": "string", "const": "not_requested"},
+        "approval_performed": {"type": "boolean", "const": false},
+        "approval_ref": {"type": "string", "const": "absent"}
+      }
+    },
+    "blocked_effects": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "file_write",
+          "branch_push",
+          "pull_request_create",
+          "merge",
+          "rollback_execute",
+          "deploy",
+          "connector_call",
+          "external_write",
+          "live_execution"
+        ]
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operator_workflow_dashboard", "builder"],
+      "properties": {
+        "operator_workflow_dashboard": {"type": "string", "minLength": 1, "maxLength": 260},
+        "builder": {"type": "string", "const": "mcoi/govern/safe_local_action_rehearsal/runner.py"}
+      }
+    },
+    "receipt_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "$defs": {
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "sequence",
+        "label",
+        "status",
+        "target",
+        "current_gate",
+        "expected_live_evidence",
+        "proof_limit",
+        "proof_only",
+        "mutation_performed",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "scenario_id": {
+          "type": "string",
+          "enum": [
+            "simulate_file_write",
+            "simulate_pr_creation",
+            "simulate_merge_request",
+            "simulate_rollback",
+            "simulate_connector_action"
+          ]
+        },
+        "sequence": {"type": "integer", "minimum": 1, "maximum": 5},
+        "label": {"type": "string", "minLength": 1, "maxLength": 160},
+        "status": {"type": "string", "const": "rehearsed"},
+        "target": {"type": "string", "minLength": 1, "maxLength": 160},
+        "current_gate": {"type": "string", "minLength": 1, "maxLength": 120},
+        "expected_live_evidence": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "proof_limit": {"type": "string", "const": "simulation_is_not_execution_proof"},
+        "proof_only": {"type": "boolean", "const": true},
+        "mutation_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    }
+  }
+}

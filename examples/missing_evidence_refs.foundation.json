@@ -1,0 +1,156 @@
+{
+  "approval_refs": [
+    "gate.approval.required",
+    "approval_decision_receipt",
+    "approval_chain",
+    "approval_refs",
+    "actor_id",
+    "separation_of_duty"
+  ],
+  "evidence_refs": [
+    "connector_id",
+    "recipient_hashes",
+    "approval_id",
+    "provider_receipt",
+    "terminal_closure_certificate",
+    "effect_reconciliation_receipt",
+    "universal_action_orchestration_validation_receipt",
+    "capability_registry_entry",
+    "evidence_intake_receipt",
+    "evidence_verification_receipt",
+    "approval_decision_receipt",
+    "sandbox_receipt",
+    "connector_lease_receipt",
+    "rollback_or_recovery_receipt",
+    "external_send_receipt",
+    "production_evidence_receipt"
+  ],
+  "live_action_refs": [
+    "live_action_authority"
+  ],
+  "live_execution_enabled": false,
+  "missing_refs_by_category": {
+    "approval": [
+      "gate.approval.required",
+      "approval_decision_receipt",
+      "approval_chain",
+      "approval_refs",
+      "actor_id",
+      "separation_of_duty"
+    ],
+    "evidence": [
+      "connector_id",
+      "recipient_hashes",
+      "approval_id",
+      "provider_receipt",
+      "terminal_closure_certificate",
+      "effect_reconciliation_receipt",
+      "universal_action_orchestration_validation_receipt",
+      "capability_registry_entry",
+      "evidence_intake_receipt",
+      "evidence_verification_receipt",
+      "approval_decision_receipt",
+      "sandbox_receipt",
+      "connector_lease_receipt",
+      "rollback_or_recovery_receipt",
+      "external_send_receipt",
+      "production_evidence_receipt"
+    ],
+    "live_action": [
+      "live_action_authority"
+    ],
+    "promotion": [
+      "sandbox_receipt_evidence",
+      "approval_evidence",
+      "rollback_or_recovery_evidence",
+      "required_evidence",
+      "production_readiness_evidence",
+      "safe_live_action_evidence",
+      "operator_pilot_authorization",
+      "bounded_live_receipts",
+      "active_monitoring_receipt",
+      "approved_live_action_receipt",
+      "terminal_closure_certificate",
+      "production_witness",
+      "release_handoff_receipt"
+    ],
+    "replay": [
+      "replay_record",
+      "replay_input_digest",
+      "replay_output_digest",
+      "connector_id",
+      "recipient_hashes",
+      "approval_id",
+      "provider_receipt",
+      "terminal_closure_certificate",
+      "effect_reconciliation_receipt"
+    ],
+    "rollback": [
+      "recovery_evidence_missing",
+      "rollback_capability",
+      "compensation_capability",
+      "failure_review_receipt",
+      "rollback_or_recovery_evidence"
+    ]
+  },
+  "mode": "foundation",
+  "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
+  "promotion_refs": [
+    "sandbox_receipt_evidence",
+    "approval_evidence",
+    "rollback_or_recovery_evidence",
+    "required_evidence",
+    "production_readiness_evidence",
+    "safe_live_action_evidence",
+    "operator_pilot_authorization",
+    "bounded_live_receipts",
+    "active_monitoring_receipt",
+    "approved_live_action_receipt",
+    "terminal_closure_certificate",
+    "production_witness",
+    "release_handoff_receipt"
+  ],
+  "refs_are_not_execution_authority": true,
+  "refs_id": "missing_evidence_refs.email.send.with_approval.foundation.v1",
+  "replay_refs": [
+    "replay_record",
+    "replay_input_digest",
+    "replay_output_digest",
+    "connector_id",
+    "recipient_hashes",
+    "approval_id",
+    "provider_receipt",
+    "terminal_closure_certificate",
+    "effect_reconciliation_receipt"
+  ],
+  "rollback_refs": [
+    "recovery_evidence_missing",
+    "rollback_capability",
+    "compensation_capability",
+    "failure_review_receipt",
+    "rollback_or_recovery_evidence"
+  ],
+  "schema_version": 1,
+  "selected_capability_id": "email.send.with_approval",
+  "selected_category": "approval",
+  "selected_debt_id": "email.send.with_approval.approval.missing_governed_approval",
+  "selected_missing_ref_count": 6,
+  "selected_missing_refs": [
+    "gate.approval.required",
+    "approval_decision_receipt",
+    "approval_chain",
+    "approval_refs",
+    "actor_id",
+    "separation_of_duty"
+  ],
+  "source_refs": {
+    "debt_report_id": "capability_debt_report.foundation.v1",
+    "debt_row_id": "capability_debt.email.send.with_approval.foundation.v1",
+    "evidence_passport_id": "evidence_passport.email.send.with_approval.foundation.v1",
+    "evidence_passport_set_id": "evidence_passports.foundation.v1",
+    "gate_registry_id": "gate_template_registry.foundation.v1",
+    "passport_set_id": "capability_passports.foundation.v1",
+    "promotion_path_set_id": "sandbox_to_live_promotion_paths.foundation.v1",
+    "selected_debt_id": "email.send.with_approval.approval.missing_governed_approval"
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:closure-receipt:1",
+  "title": "Capability Closure Receipt",
+  "description": "Receipt proving capability closure planning stopped at AwaitingEvidence without live execution authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "closure_receipt_id",
+    "mode",
+    "closure_receipt_is_not_execution_authority",
+    "live_execution_enabled",
+    "selected_capability_id",
+    "selected_debt_id",
+    "source_refs",
+    "status",
+    "closure_claim",
+    "proof_state",
+    "artifacts",
+    "causal_trace",
+    "effect_boundary",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "closure_receipt_id": { "$ref": "#/$defs/identifier" },
+    "mode": { "type": "string", "const": "foundation" },
+    "closure_receipt_is_not_execution_authority": { "type": "boolean", "const": true },
+    "live_execution_enabled": { "type": "boolean", "const": false },
+    "selected_capability_id": { "$ref": "#/$defs/identifier" },
+    "selected_debt_id": { "$ref": "#/$defs/identifier" },
+    "source_refs": { "$ref": "#/$defs/source_refs" },
+    "status": { "type": "string", "const": "AwaitingEvidence" },
+    "closure_claim": { "type": "string", "const": "not_closed" },
+    "proof_state": { "type": "string", "const": "Unknown" },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_closure_plan",
+        "missing_evidence_refs",
+        "next_approval_action",
+        "closure_receipt"
+      ],
+      "properties": {
+        "capability_closure_plan": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "missing_evidence_refs": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "next_approval_action": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "closure_receipt": { "type": "string", "minLength": 1, "maxLength": 160 }
+      }
+    },
+    "causal_trace": {
+      "type": "array",
+      "minItems": 4,
+      "items": { "type": "string", "minLength": 1, "maxLength": 240 }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_live_execution_performed",
+        "connector_mutation_performed",
+        "external_write_performed",
+        "target_repository_mutation_authorized",
+        "target_repository_file_write_performed",
+        "branch_push_performed",
+        "pull_request_created",
+        "merge_performed",
+        "production_claim_made"
+      ],
+      "properties": {
+        "capability_live_execution_performed": { "type": "boolean", "const": false },
+        "connector_mutation_performed": { "type": "boolean", "const": false },
+        "external_write_performed": { "type": "boolean", "const": false },
+        "target_repository_mutation_authorized": { "type": "boolean", "const": false },
+        "target_repository_file_write_performed": { "type": "boolean", "const": false },
+        "branch_push_performed": { "type": "boolean", "const": false },
+        "pull_request_created": { "type": "boolean", "const": false },
+        "merge_performed": { "type": "boolean", "const": false },
+        "production_claim_made": { "type": "boolean", "const": false }
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1, "maxLength": 640 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 260,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 320 },
+      "required": [
+        "debt_report_id",
+        "debt_row_id",
+        "selected_debt_id",
+        "evidence_passport_id"
+      ]
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": { "$ref": "#/$defs/identifier" },
+        "command": { "type": "string", "minLength": 1, "maxLength": 260 },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

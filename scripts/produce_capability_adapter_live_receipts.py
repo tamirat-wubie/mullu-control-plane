@@ -34,6 +34,10 @@ MCOI_ROOT = REPO_ROOT / "mcoi"
 if str(MCOI_ROOT) not in sys.path:
     sys.path.insert(0, str(MCOI_ROOT))
 
+from scripts.validate_sandbox_execution_receipt import (  # noqa: E402
+    validate_sandbox_execution_receipt,
+)
+
 DEFAULT_BROWSER_RECEIPT = REPO_ROOT / ".change_assurance" / "browser_live_receipt.json"
 DEFAULT_DOCUMENT_RECEIPT = REPO_ROOT / ".change_assurance" / "document_live_receipt.json"
 DEFAULT_VOICE_RECEIPT = REPO_ROOT / ".change_assurance" / "voice_live_receipt.json"
@@ -580,9 +584,30 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
         }
 
     receipt = payload.get("receipt") if isinstance(payload.get("receipt"), dict) else payload
+    if not isinstance(receipt, dict):
+        return {
+            "passed": False,
+            "status": "failed",
+            "detail": "sandbox evidence receipt must be an object",
+            "evidence_id": str(payload.get("evidence_id", "")).strip(),
+            "receipt_id": "",
+            "blockers": ("browser_sandbox_evidence_unverified",),
+        }
     evidence_id = str(payload.get("evidence_id", "")).strip()
     receipt_id = str(receipt.get("receipt_id", "")).strip()
     errors: list[str] = []
+    receipt_validation = validate_sandbox_execution_receipt(
+        evidence_path,
+        capability_prefix="browser.",
+        require_passed=True,
+        require_no_workspace_changes=True,
+    )
+    if not receipt_validation.valid:
+        errors.extend(
+            detail
+            for detail in receipt_validation.detail.split(",")
+            if detail and detail != "sandbox receipt verified"
+        )
     if not receipt_id:
         errors.append("receipt_id_missing")
     if not str(receipt.get("sandbox_id", "")).strip():
@@ -596,6 +621,13 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
         errors.append("network_disabled_not_true")
     if receipt.get("read_only_rootfs") is not True:
         errors.append("read_only_rootfs_not_true")
+    if receipt.get("capabilities_dropped") is not True:
+        errors.append("capabilities_dropped_not_true")
+    seccomp_profile = str(receipt.get("seccomp_profile_applied", "")).strip()
+    if not seccomp_profile:
+        errors.append("seccomp_profile_applied_empty")
+    elif seccomp_profile.lower() == "unconfined":
+        errors.append("seccomp_profile_unconfined")
     if receipt.get("workspace_mount") != "/workspace":
         errors.append("workspace_mount_not_workspace")
     if receipt.get("forbidden_effects_observed") is not False:
@@ -604,12 +636,42 @@ def _validate_browser_sandbox_evidence(sandbox_evidence_ref: str) -> dict[str, A
         errors.append("changed_file_count_not_zero")
     if receipt.get("changed_file_refs", ()) not in ((), []):
         errors.append("changed_file_refs_not_empty")
+    profile = payload.get("sandbox_profile")
+    if isinstance(profile, dict):
+        if profile.get("network") != "none":
+            errors.append("sandbox_profile_network_not_none")
+        if profile.get("read_only_rootfs") is not True:
+            errors.append("sandbox_profile_read_only_rootfs_not_true")
+        if profile.get("drop_all_capabilities") is not True:
+            errors.append("sandbox_profile_drop_all_capabilities_not_true")
+        if profile.get("workspace_mount") != "/workspace":
+            errors.append("sandbox_profile_workspace_mount_not_workspace")
+        if str(profile.get("seccomp_profile", "")).strip() != seccomp_profile:
+            errors.append("sandbox_profile_seccomp_mismatch")
+    else:
+        errors.append("sandbox_profile_missing")
+    isolation = payload.get("isolation")
+    if isinstance(isolation, dict):
+        for field_name in (
+            "network_disabled",
+            "read_only_rootfs",
+            "capabilities_dropped",
+            "seccomp_profile_applied",
+            "workspace_mount",
+            "forbidden_effects_observed",
+            "changed_file_count",
+            "changed_file_refs",
+        ):
+            if isolation.get(field_name) != receipt.get(field_name):
+                errors.append(f"isolation_{field_name}_mismatch")
+    else:
+        errors.append("isolation_summary_missing")
 
     if errors:
         return {
             "passed": False,
             "status": "failed",
-            "detail": ",".join(errors),
+            "detail": ",".join(dict.fromkeys(errors)),
             "evidence_id": evidence_id,
             "receipt_id": receipt_id,
             "blockers": ("browser_sandbox_evidence_invalid",),

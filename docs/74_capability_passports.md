@@ -1,9 +1,9 @@
 # Capability Passports
 
 Purpose: define the capability passport as the operator-facing identity card for every governed capability.
-Governance scope: capability identity, family, C0-C7 unlock level, allowed and blocked actions, gates, receipts, rollback status, and next unlock evidence.
+Governance scope: capability identity, family, C0-C7 evidence maturity, L0-L9 promotion level, allowed and blocked actions, gates, receipts, rollback status, and next unlock evidence.
 Dependencies: `capabilities/*/capability_pack.json`, `schemas/capability_passports.schema.json`, `mcoi/mcoi_runtime/app/capability_passports.py`, and `scripts/validate_capability_passports.py`.
-Invariants: capability passports are read models, not execution authority; unlock level is derived from evidence; every passport blocks terminal success overclaim without receipts.
+Invariants: capability passports are read models, not execution authority; evidence maturity is derived from evidence; promotion level is a boundary classification; every passport blocks terminal success overclaim without receipts.
 
 ## Architecture
 
@@ -12,11 +12,12 @@ Capability passports sit between the capability pack registry and operator read 
 | Layer | Role |
 | --- | --- |
 | Capability pack | Source of capability identity, family, policy, evidence, effects, isolation, cost, recovery, and certification state. |
-| Maturity assessor | Derives the current C0-C7 unlock level from explicit evidence. |
+| Maturity assessor | Derives the current C0-C7 evidence maturity from explicit evidence. |
+| Promotion ladder | Classifies the capability into L0-L9 product authority boundaries. |
 | Capability passport | Projects one dashboard-ready identity card per capability. |
 | Validator | Proves the checked-in passport example matches runtime projection and schema. |
 
-The unlock ladder says what maturity levels exist. The capability passport says where each capability currently stands.
+The maturity level says how much evidence exists. The promotion level says what kind of capability boundary the operator is looking at.
 
 ## Passport Fields
 
@@ -24,7 +25,10 @@ The unlock ladder says what maturity levels exist. The capability passport says 
 | --- | --- |
 | `capability_id` | Stable governed capability identity. |
 | `family` | Capability family or domain, such as communication, financial, browser, document, or software_dev. |
-| `current_unlock_level` | Derived C0-C7 maturity level. |
+| `current_unlock_level` | Derived C0-C7 evidence maturity level. |
+| `current_promotion_level` | L0-L9 promotion boundary: read-only, draft-only, proposal-only, sandbox-write, test-run, PR-preview, PR-create, merge-request, live connector read, or live connector write. |
+| `promotion_required_gates` | Gates required by the promotion boundary. |
+| `promotion_required_evidence` | Evidence required before claiming promotion closure. |
 | `operator_status` | Simple read-model status: Ready, Prepare-only, Needs approval, Blocked, Evidence missing, or Live action disabled. |
 | `allowed_actions` | Bounded actions this capability can prepare or perform under governance. |
 | `blocked_actions` | Forbidden actions and overclaim guards. |
@@ -39,9 +43,25 @@ The unlock ladder says what maturity levels exist. The capability passport says 
 2. Parse each capability through `CapabilityRegistryEntry`.
 3. Derive governed read posture through `GovernedCapabilityRecord`.
 4. Derive C0-C7 maturity through `CapabilityRegistryMaturityProjector`.
-5. Project gates, receipts, blocked actions, rollback status, and operator status.
-6. Validate the generated passport set against `schemas/capability_passports.schema.json`.
-7. Reject drift if `examples/capability_passports.foundation.json` does not match runtime projection.
+5. Derive the L0-L9 promotion level from capability effects, connector boundary, repository boundary, and approval policy.
+6. Project gates, receipts, blocked actions, rollback status, promotion obligations, and operator status.
+7. Validate the generated passport set against `schemas/capability_passports.schema.json`.
+8. Reject drift if `examples/capability_passports.foundation.json` does not match runtime projection.
+
+## Promotion Ladder
+
+| Level | Boundary |
+| --- | --- |
+| L0 | read-only |
+| L1 | draft-only |
+| L2 | proposal-only |
+| L3 | sandbox-write |
+| L4 | test-run |
+| L5 | PR-preview |
+| L6 | PR-create with approval |
+| L7 | merge-request with approval |
+| L8 | live connector read |
+| L9 | live connector write |
 
 ## Verification
 

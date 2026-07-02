@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from gateway.capability_maturity import CapabilityRegistryMaturityProjector
+from capability_levels.ladder import promotion_level_projection
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityRegistryEntry,
     GovernedCapabilityRecord,
@@ -114,6 +115,7 @@ def _capability_passport(
     rollback_status = _rollback_status(entry, governed)
     blocked_actions = _blocked_actions(entry, governed, assessment_payload, rollback_status)
     operator_status = _operator_status(entry, governed, assessment_payload, rollback_status)
+    promotion_profile = promotion_level_projection(entry, governed)
 
     return {
         "passport_id": f"capability_passport.{entry.capability_id}.foundation.v1",
@@ -125,6 +127,7 @@ def _capability_passport(
         "certification_status": entry.certification_status.value,
         "current_unlock_level": assessment.maturity_level,
         "unlock_label": assessment.maturity_label,
+        **promotion_profile,
         "operator_status": operator_status,
         "allowed_actions": _allowed_actions(entry, governed),
         "allowed_tools": list(governed.allowed_tools),
@@ -321,6 +324,7 @@ def _summary(passports: list[dict[str, Any]]) -> dict[str, Any]:
         "passport_count": len(passports),
         "family_counts": _counts(passports, "family"),
         "unlock_level_counts": {level: _counts(passports, "current_unlock_level").get(level, 0) for level in MATURITY_LEVELS},
+        "promotion_level_counts": {f"L{level}": _counts(passports, "current_promotion_level").get(f"L{level}", 0) for level in range(10)},
         "operator_status_counts": {
             status: _counts(passports, "operator_status").get(status, 0)
             for status in OPERATOR_STATUSES

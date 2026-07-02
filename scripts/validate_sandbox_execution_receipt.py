@@ -41,6 +41,8 @@ REQUIRED_FIELDS = (
     "returncode",
     "network_disabled",
     "read_only_rootfs",
+    "capabilities_dropped",
+    "seccomp_profile_applied",
     "workspace_mount",
     "forbidden_effects_observed",
     "verification_status",
@@ -155,6 +157,15 @@ def _receipt_errors(
         errors.append("network_disabled_not_true")
     if receipt.get("read_only_rootfs") is not True:
         errors.append("read_only_rootfs_not_true")
+    if receipt.get("capabilities_dropped") is not True:
+        errors.append("capabilities_dropped_not_true")
+    seccomp_profile = str(receipt.get("seccomp_profile_applied", "")).strip()
+    if not seccomp_profile:
+        errors.append("seccomp_profile_applied_empty")
+    elif seccomp_profile.lower() == "unconfined":
+        errors.append("seccomp_profile_unconfined")
+    elif "," in seccomp_profile or any(ord(character) < 32 for character in seccomp_profile):
+        errors.append("seccomp_profile_invalid")
     if receipt.get("workspace_mount") != "/workspace":
         errors.append("workspace_mount_not_workspace")
     if receipt.get("forbidden_effects_observed") is not False:

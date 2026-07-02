@@ -145,10 +145,15 @@ def _action_for(adapter_id: str, blocker: str) -> AdapterClosureAction:
                 "--browser-sandbox-evidence .change_assurance/browser_sandbox_evidence.json --strict"
             ),
             (
+                "run_wsl_browser_sandbox_evidence.py_windows_launcher",
                 "linux_rootless_docker_runner_attestation",
                 "browser_sandbox_evidence.json",
                 "sandbox_execution_receipt_validation",
                 "browser_sandbox_evidence_validation",
+                "sandbox_capabilities_dropped_attestation",
+                "sandbox_seccomp_profile_attestation",
+                "sandbox_profile_isolation_consistency",
+                "sandbox_isolation_summary_consistency",
                 "browser_live_receipt.json",
             ),
         )

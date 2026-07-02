@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:causal-repair-service-receipt:1",
+  "title": "CausalRepairServiceReceipt",
+  "description": "Proof-only receipt for reusable causal repair failure classification and repair proposal generation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "receipt_id",
+    "service_id",
+    "capability_id",
+    "service_status",
+    "solver_outcome",
+    "live_execution_enabled",
+    "repair_execution_performed",
+    "case_count",
+    "cases",
+    "blocked_effects",
+    "source_refs",
+    "receipt_hash"
+  ],
+  "properties": {
+    "schema_ref": {"type": "string", "const": "urn:mullusi:schema:causal-repair-service-receipt:1"},
+    "receipt_id": {"type": "string", "const": "causal_repair_service.foundation.v1"},
+    "service_id": {"type": "string", "const": "mcoi.causal_repair.service"},
+    "capability_id": {"type": "string", "const": "govern.causal_repair.service"},
+    "service_status": {"type": "string", "const": "planned_no_effect"},
+    "solver_outcome": {"type": "string", "enum": ["AwaitingEvidence", "GovernanceBlocked"]},
+    "live_execution_enabled": {"type": "boolean", "const": false},
+    "repair_execution_performed": {"type": "boolean", "const": false},
+    "case_count": {"type": "integer", "minimum": 7},
+    "cases": {
+      "type": "array",
+      "minItems": 7,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/repair_case"}
+    },
+    "blocked_effects": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "repair_execute",
+          "file_write",
+          "branch_push",
+          "pull_request_create",
+          "merge",
+          "deploy",
+          "connector_call",
+          "external_write",
+          "live_execution"
+        ]
+      }
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["builder", "repair_engine"],
+      "properties": {
+        "builder": {"type": "string", "const": "mcoi/causal_repair/service.py"},
+        "repair_engine": {"type": "string", "const": "mcoi/mcoi_runtime/core/causal_repair.py"}
+      }
+    },
+    "receipt_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "$defs": {
+    "repair_case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "failure_id",
+        "detected",
+        "cause_class",
+        "severity",
+        "effect_class",
+        "reversibility_class",
+        "repair_strategy",
+        "rollback_or_compensation_proof",
+        "proposal"
+      ],
+      "properties": {
+        "failure_id": {
+          "type": "string",
+          "enum": [
+            "failed_patch_plan",
+            "failed_test",
+            "stale_evidence",
+            "missing_approval",
+            "rollback_impossible",
+            "ci_failure",
+            "unsafe_browser_evidence"
+          ]
+        },
+        "detected": {"type": "boolean", "const": true},
+        "cause_class": {"type": "string", "minLength": 1, "maxLength": 120},
+        "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+        "effect_class": {
+          "type": "string",
+          "enum": [
+            "read_only",
+            "internal_reversible",
+            "internal_versioned",
+            "external_mutation",
+            "user_visible",
+            "financial_or_legal",
+            "public_irreversible",
+            "physical_world"
+          ]
+        },
+        "reversibility_class": {
+          "type": "string",
+          "enum": [
+            "read_only",
+            "exact_rollback",
+            "version_restore",
+            "semantic_compensation",
+            "reconcile_required",
+            "human_escalation",
+            "forbidden"
+          ]
+        },
+        "repair_strategy": {
+          "type": "string",
+          "enum": [
+            "none_required",
+            "exact_rollback",
+            "version_restore",
+            "semantic_compensation",
+            "reconcile_then_decide",
+            "quarantine",
+            "escalate",
+            "forbid"
+          ]
+        },
+        "rollback_or_compensation_proof": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "rollback_claim_allowed",
+            "compensation_claim_allowed",
+            "required_evidence",
+            "execution_performed"
+          ],
+          "properties": {
+            "status": {"type": "string", "enum": ["proof_required", "blocked_until_evidence"]},
+            "rollback_claim_allowed": {"type": "boolean"},
+            "compensation_claim_allowed": {"type": "boolean"},
+            "required_evidence": {
+              "type": "array",
+              "minItems": 3,
+              "items": {"type": "string", "minLength": 1, "maxLength": 120}
+            },
+            "execution_performed": {"type": "boolean", "const": false}
+          }
+        },
+        "proposal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["next_action", "approval_required", "proof_state", "operator_outcome"],
+          "properties": {
+            "next_action": {"type": "string", "minLength": 1, "maxLength": 260},
+            "approval_required": {"type": "boolean"},
+            "proof_state": {"type": "string", "minLength": 1, "maxLength": 120},
+            "operator_outcome": {
+              "type": "string",
+              "enum": ["AwaitingEvidence", "GovernanceBlocked"]
+            }
+          }
+        }
+      }
+    }
+  }
+}

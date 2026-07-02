@@ -41,8 +41,8 @@ The current expected aggregate plan contains:
 
 | Measure | Value |
 | --- | ---: |
-| Total closure actions | 10 |
-| Approval-required actions | 8 |
+| Total closure actions | 6 |
+| Approval-required actions | 6 |
 | Source plan types | `adapter`, `deployment`, and `portfolio` |
 | Current readiness level | `pilot-governed-core` |
 
@@ -67,9 +67,11 @@ For GitHub-hosted live adapter evidence, use the manual
 `Capability Adapter Live Evidence` workflow. The workflow can target `all`,
 `browser`, `document`, `voice`, or `email-calendar`. Browser evidence runs on
 GitHub-hosted Ubuntu, builds a minimal local `mullu-agent-runner:latest` sandbox
-probe image, validates the sandbox receipt, and then emits the browser live
-receipt. Document evidence emits the parser-family receipt without external
-effects. Voice evidence expects `MULLU_VOICE_PROBE_AUDIO_B64` as a repository
+probe image, validates the sandbox receipt, validates capability-drop and
+seccomp evidence, checks sandbox-profile and isolation-summary consistency,
+and then emits the browser live receipt. Document evidence emits the
+parser-family receipt without external effects. Voice evidence expects
+`MULLU_VOICE_PROBE_AUDIO_B64` as a repository
 secret containing the approved audio sample bytes encoded with base64.
 Email/calendar evidence expects `EMAIL_CALENDAR_CONNECTOR_TOKEN` as a
 repository secret for a read-only probe. The workflow decodes audio only inside
@@ -86,6 +88,18 @@ the handoff preflight can pass: `OPENAI_API_KEY`,
 `MULLU_DNS_PROVIDER`,
 `MULLU_RUNTIME_WITNESS_SECRET`, `MULLU_RUNTIME_CONFORMANCE_SECRET`,
 `MULLU_DEPLOYMENT_WITNESS_SECRET`, and `MULLU_AUTHORITY_OPERATOR_SECRET`.
+
+On a Windows control-studio host, collect browser sandbox evidence through WSL
+instead of running the producer directly on Windows:
+
+```powershell
+python scripts\run_wsl_browser_sandbox_evidence.py --distro Ubuntu --user root --strict --json
+python scripts\run_wsl_browser_sandbox_evidence.py --print-command --json
+```
+
+The direct Windows producer remains expected to emit
+`browser_sandbox_runner_linux_only`; that blocker is not a browser closure
+failure when the WSL/Linux evidence lane is still pending.
 
 ## Algorithm
 
@@ -179,7 +193,12 @@ python scripts\collect_capability_adapter_evidence.py --strict --output .change_
 ```
 
 The browser adapter evidence is not closed unless `.change_assurance\capability_adapter_evidence.json` preserves both `browser-sandbox-evidence-*` and `sandbox-receipt-*` refs from the browser live receipt.
-The generic sandbox receipt gate must also report `valid=true`; it proves the nested worker receipt still has no network, read-only rootfs, `/workspace` mount, no forbidden effects, and no workspace mutation.
+The generic sandbox receipt gate must also report `valid=true`; it proves the
+nested worker receipt still has no network, read-only rootfs, dropped Linux
+capabilities, applied seccomp profile, `/workspace` mount, no forbidden
+effects, and no workspace mutation. The browser-specific sandbox evidence gate
+must also prove the `sandbox_profile` and `isolation` envelope fields match the
+nested receipt before the browser live receipt can pass.
 
 14. Publish deployment witness only after approval:
 

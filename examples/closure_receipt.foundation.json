@@ -1,0 +1,59 @@
+{
+  "artifacts": {
+    "capability_closure_plan": "capability_closure_plan.foundation.json",
+    "closure_receipt": "closure_receipt.foundation.json",
+    "missing_evidence_refs": "missing_evidence_refs.foundation.json",
+    "next_approval_action": "next_approval_action.foundation.json"
+  },
+  "causal_trace": [
+    "Read capability debt report runtime projection.",
+    "Selected one deterministic closure lane.",
+    "Emitted missing approval and evidence refs.",
+    "Emitted next approval proof step.",
+    "Stopped before live execution or mutation authority."
+  ],
+  "closure_claim": "not_closed",
+  "closure_receipt_id": "closure_receipt.email.send.with_approval.c5f9c7e2cfed5122.foundation.v1",
+  "closure_receipt_is_not_execution_authority": true,
+  "effect_boundary": {
+    "branch_push_performed": false,
+    "capability_live_execution_performed": false,
+    "connector_mutation_performed": false,
+    "external_write_performed": false,
+    "merge_performed": false,
+    "production_claim_made": false,
+    "pull_request_created": false,
+    "target_repository_file_write_performed": false,
+    "target_repository_mutation_authorized": false
+  },
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
+  "proof_state": "Unknown",
+  "schema_version": 1,
+  "selected_capability_id": "email.send.with_approval",
+  "selected_debt_id": "email.send.with_approval.approval.missing_governed_approval",
+  "source_refs": {
+    "debt_report_id": "capability_debt_report.foundation.v1",
+    "debt_row_id": "capability_debt.email.send.with_approval.foundation.v1",
+    "evidence_passport_id": "evidence_passport.email.send.with_approval.foundation.v1",
+    "evidence_passport_set_id": "evidence_passports.foundation.v1",
+    "gate_registry_id": "gate_template_registry.foundation.v1",
+    "passport_set_id": "capability_passports.foundation.v1",
+    "promotion_path_set_id": "sandbox_to_live_promotion_paths.foundation.v1",
+    "selected_debt_id": "email.send.with_approval.approval.missing_governed_approval"
+  },
+  "status": "AwaitingEvidence",
+  "validators": [
+    {
+      "command": "python scripts/validate_capability_closure_runner.py --strict",
+      "required_for_closure": true,
+      "validator_id": "capability_closure_runner_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_capability_closure_runner.py tests/test_validate_capability_closure_runner.py -q",
+      "required_for_closure": true,
+      "validator_id": "capability_closure_runner_tests"
+    }
+  ]
+}

@@ -53,10 +53,21 @@ def test_browser_sandbox_evidence_uses_rootless_runner_receipt(tmp_path: Path) -
     assert payload["receipt"]["verification_status"] == "passed"
     assert payload["receipt"]["network_disabled"] is True
     assert payload["receipt"]["read_only_rootfs"] is True
+    assert payload["receipt"]["capabilities_dropped"] is True
+    assert payload["receipt"]["seccomp_profile_applied"]
     assert payload["receipt"]["workspace_mount"] == "/workspace"
     assert payload["receipt"]["changed_file_count"] == 0
     assert payload["receipt"]["changed_file_refs"] == []
+    assert payload["sandbox_profile"]["seccomp_profile"] == payload["receipt"]["seccomp_profile_applied"]
+    assert payload["isolation"]["network_disabled"] is True
+    assert payload["isolation"]["read_only_rootfs"] is True
+    assert payload["isolation"]["capabilities_dropped"] is True
+    assert payload["isolation"]["seccomp_profile_applied"] == payload["receipt"]["seccomp_profile_applied"]
+    assert payload["isolation"]["changed_file_refs"] == []
     assert "--read-only" in captured["argv"]
+    assert "--cap-drop" in captured["argv"]
+    assert "ALL" in captured["argv"]
+    assert any(str(item).startswith("seccomp=") for item in captured["argv"])
     assert captured["shell"] is False
     assert captured["timeout"] == 120
 
