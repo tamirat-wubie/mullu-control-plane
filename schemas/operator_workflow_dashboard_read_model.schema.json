@@ -46,24 +46,42 @@
     "source_projections": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["local_workflow_receipt", "workflow_status", "safe_local_action", "capability_passports", "closure_packet"],
+      "required": [
+        "local_workflow_receipt",
+        "workflow_status",
+        "safe_local_action",
+        "capability_passports",
+        "closure_packet",
+        "safe_local_action_rehearsal",
+        "causal_repair"
+      ],
       "properties": {
         "local_workflow_receipt": {"type": "string", "minLength": 1, "maxLength": 260},
         "workflow_status": {"type": "string", "const": "operator_developer_workflow_status.read_model"},
         "safe_local_action": {"type": "string", "const": "operator_safe_local_action.read_model"},
         "capability_passports": {"type": "string", "const": "capability_passports.foundation.v1"},
-        "closure_packet": {"type": "string", "const": "local_developer_workflow_v1.closure_packet"}
+        "closure_packet": {"type": "string", "const": "local_developer_workflow_v1.closure_packet"},
+        "safe_local_action_rehearsal": {"type": "string", "const": "safe_local_action_rehearsal.foundation.v1"},
+        "causal_repair": {"type": "string", "const": "causal_repair_service.foundation.v1"}
       }
     },
     "promotion_filters": {"$ref": "#/$defs/promotion_filters"},
     "source_refs": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["builder", "local_workflow_receipt", "closure_packet"],
+      "required": [
+        "builder",
+        "local_workflow_receipt",
+        "closure_packet",
+        "safe_local_action_rehearsal",
+        "causal_repair"
+      ],
       "properties": {
         "builder": {"type": "string", "const": "gateway/operator_workflow_dashboard.py"},
         "local_workflow_receipt": {"type": "string", "minLength": 1, "maxLength": 260},
-        "closure_packet": {"type": "string", "minLength": 1, "maxLength": 260}
+        "closure_packet": {"type": "string", "minLength": 1, "maxLength": 260},
+        "safe_local_action_rehearsal": {"type": "string", "minLength": 1, "maxLength": 260},
+        "causal_repair": {"type": "string", "minLength": 1, "maxLength": 260}
       }
     },
     "dashboard_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
@@ -84,6 +102,8 @@
         "approval_needed",
         "approval",
         "closure_packet",
+        "safe_local_action_rehearsal",
+        "causal_repair",
         "source_ref"
       ],
       "properties": {
@@ -102,6 +122,8 @@
         "approval_needed": {"type": "boolean"},
         "approval": {"$ref": "#/$defs/approval"},
         "closure_packet": {"$ref": "#/$defs/closure_packet"},
+        "safe_local_action_rehearsal": {"$ref": "#/$defs/safe_local_action_rehearsal"},
+        "causal_repair": {"$ref": "#/$defs/causal_repair"},
         "source_ref": {"type": "string", "minLength": 1, "maxLength": 260}
       }
     },
@@ -383,6 +405,150 @@
         "command_id": {"type": "string", "minLength": 1, "maxLength": 120},
         "effect": {"type": "string", "minLength": 1, "maxLength": 120},
         "execution_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "safe_local_action_rehearsal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "linked",
+        "source_ref",
+        "receipt_id",
+        "capability_id",
+        "rehearsal_status",
+        "solver_outcome",
+        "selected_action",
+        "scenario_count",
+        "scenario_refs",
+        "approval",
+        "proof_boundary",
+        "blocked_effects",
+        "receipt_hash",
+        "live_execution_enabled",
+        "execution_performed",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "linked": {"type": "boolean"},
+        "source_ref": {"type": "string", "minLength": 1, "maxLength": 260},
+        "receipt_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "capability_id": {"type": "string", "const": "govern.safe_local_action.rehearsal"},
+        "rehearsal_status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "solver_outcome": {"type": "string", "minLength": 1, "maxLength": 120},
+        "selected_action": {"$ref": "#/$defs/rehearsal_selected_action"},
+        "scenario_count": {"type": "integer", "minimum": 0, "maximum": 16},
+        "scenario_refs": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"$ref": "#/$defs/rehearsal_scenario_ref"}
+        },
+        "approval": {"$ref": "#/$defs/rehearsal_approval"},
+        "proof_boundary": {"$ref": "#/$defs/rehearsal_proof_boundary"},
+        "blocked_effects": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "receipt_hash": {"type": "string", "maxLength": 64},
+        "live_execution_enabled": {"type": "boolean", "const": false},
+        "execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "rehearsal_selected_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task", "next_action", "current_gate"],
+      "properties": {
+        "task": {"type": "string", "minLength": 1, "maxLength": 160},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 260},
+        "current_gate": {"type": "string", "minLength": 1, "maxLength": 120}
+      }
+    },
+    "rehearsal_scenario_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenario_id", "status", "mutation_performed"],
+      "properties": {
+        "scenario_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "mutation_performed": {"type": "boolean", "const": false}
+      }
+    },
+    "rehearsal_approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_for_live_execution", "approval_status", "approval_performed"],
+      "properties": {
+        "required_for_live_execution": {"type": "boolean", "const": true},
+        "approval_status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "approval_performed": {"type": "boolean", "const": false}
+      }
+    },
+    "rehearsal_proof_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rehearsal_is_not_execution_proof", "post_execution_evidence_required"],
+      "properties": {
+        "rehearsal_is_not_execution_proof": {"type": "boolean", "const": true},
+        "post_execution_evidence_required": {"type": "boolean", "const": true}
+      }
+    },
+    "causal_repair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "linked",
+        "source_ref",
+        "receipt_id",
+        "service_id",
+        "service_status",
+        "solver_outcome",
+        "case_count",
+        "high_severity_cases",
+        "next_actions",
+        "blocked_effects",
+        "receipt_hash",
+        "live_execution_enabled",
+        "repair_execution_performed"
+      ],
+      "properties": {
+        "linked": {"type": "boolean"},
+        "source_ref": {"type": "string", "minLength": 1, "maxLength": 260},
+        "receipt_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "service_id": {"type": "string", "const": "mcoi.causal_repair.service"},
+        "service_status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "solver_outcome": {"type": "string", "minLength": 1, "maxLength": 120},
+        "case_count": {"type": "integer", "minimum": 0, "maximum": 32},
+        "high_severity_cases": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "next_actions": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"$ref": "#/$defs/causal_repair_next_action"}
+        },
+        "blocked_effects": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {"type": "string", "minLength": 1, "maxLength": 80}
+        },
+        "receipt_hash": {"type": "string", "maxLength": 64},
+        "live_execution_enabled": {"type": "boolean", "const": false},
+        "repair_execution_performed": {"type": "boolean", "const": false}
+      }
+    },
+    "causal_repair_next_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["failure_id", "operator_outcome", "next_action", "execution_performed"],
+      "properties": {
+        "failure_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "operator_outcome": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 260},
+        "execution_performed": {"type": "boolean", "const": false}
       }
     }
   }
