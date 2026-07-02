@@ -1108,7 +1108,11 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
     operator_developer_workflow_status_entry = entries[
         "operator-developer-workflow-status-read-model"
     ]
+    operator_workflow_dashboard_entry = entries[
+        "operator-workflow-dashboard-read-model"
+    ]
     sandbox_to_pr_entry = entries["sandbox-to-pr-preparation-packet"]
+    safe_local_action_rehearsal_entry = entries["safe-local-action-rehearsal-receipt"]
     sandbox_attachment_entry = entries["developer-workflow-sandbox-receipt-attachment-packet"]
     sandbox_receipt_bundle_entry = entries["developer-workflow-sandbox-receipt-bundle"]
 
@@ -1153,9 +1157,25 @@ def test_protocol_manifest_indexes_collaboration_case() -> None:
         "urn:mullusi:schema:operator-developer-workflow-status-read-model:1"
     )
     assert operator_developer_workflow_status_entry["surface"] == "operator"
+    assert (
+        operator_workflow_dashboard_entry["path"]
+        == "schemas/operator_workflow_dashboard_read_model.schema.json"
+    )
+    assert operator_workflow_dashboard_entry["urn"] == (
+        "urn:mullusi:schema:operator-workflow-dashboard-read-model:1"
+    )
+    assert operator_workflow_dashboard_entry["surface"] == "operator"
     assert sandbox_to_pr_entry["path"] == "schemas/sandbox_to_pr_preparation_packet.schema.json"
     assert sandbox_to_pr_entry["urn"] == "urn:mullusi:schema:sandbox-to-pr-preparation-packet:1"
     assert sandbox_to_pr_entry["surface"] == "operator"
+    assert (
+        safe_local_action_rehearsal_entry["path"]
+        == "schemas/safe_local_action_rehearsal_receipt.schema.json"
+    )
+    assert safe_local_action_rehearsal_entry["urn"] == (
+        "urn:mullusi:schema:safe-local-action-rehearsal-receipt:1"
+    )
+    assert safe_local_action_rehearsal_entry["surface"] == "governance"
     assert sandbox_attachment_entry["path"] == "schemas/developer_workflow_sandbox_receipt_attachment_packet.schema.json"
     assert sandbox_attachment_entry["urn"] == (
         "urn:mullusi:schema:developer-workflow-sandbox-receipt-attachment-packet:1"
@@ -3282,6 +3302,49 @@ def test_protocol_manifest_rejects_missing_capability_adapter_closure_plan_entry
     assert "manifest missing public schemas" in errors[0]
     assert "capability_adapter_closure_plan.schema.json" in errors[0]
     assert "schemas/" in errors[0]
+
+
+def test_protocol_manifest_indexes_capability_closure_runner_contracts() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+
+    assert validate_protocol_manifest(manifest) == []
+    assert entries["capability-closure-plan"]["path"] == "schemas/capability_closure_plan.schema.json"
+    assert entries["capability-closure-plan"]["urn"] == "urn:mullusi:schema:capability-closure-plan:1"
+    assert entries["capability-closure-plan"]["surface"] == "capability"
+    assert entries["missing-evidence-refs"]["path"] == "schemas/missing_evidence_refs.schema.json"
+    assert entries["missing-evidence-refs"]["urn"] == "urn:mullusi:schema:missing-evidence-refs:1"
+    assert entries["missing-evidence-refs"]["surface"] == "evidence"
+    assert entries["next-approval-action"]["path"] == "schemas/next_approval_action.schema.json"
+    assert entries["next-approval-action"]["urn"] == "urn:mullusi:schema:next-approval-action:1"
+    assert entries["next-approval-action"]["surface"] == "approval"
+    assert entries["closure-receipt"]["path"] == "schemas/closure_receipt.schema.json"
+    assert entries["closure-receipt"]["urn"] == "urn:mullusi:schema:closure-receipt:1"
+    assert entries["closure-receipt"]["surface"] == "capability"
+
+
+def test_protocol_manifest_indexes_patch_proposal_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+
+    assert validate_protocol_manifest(manifest) == []
+    assert entries["software-dev-patch-proposal"]["path"] == "schemas/software_dev_patch_proposal.schema.json"
+    assert entries["software-dev-patch-proposal"]["urn"] == "urn:mullusi:schema:software-dev-patch-proposal:1"
+    assert entries["software-dev-patch-proposal"]["surface"] == "software_dev"
+
+
+def test_protocol_manifest_indexes_causal_repair_service_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+
+    assert validate_protocol_manifest(manifest) == []
+    assert entries["causal-repair-service-receipt"]["path"] == (
+        "schemas/causal_repair_service_receipt.schema.json"
+    )
+    assert entries["causal-repair-service-receipt"]["urn"] == (
+        "urn:mullusi:schema:causal-repair-service-receipt:1"
+    )
+    assert entries["causal-repair-service-receipt"]["surface"] == "governance"
 
 
 def test_protocol_manifest_rejects_missing_promotion_environment_bindings_entry() -> None:

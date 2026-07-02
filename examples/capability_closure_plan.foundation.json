@@ -1,0 +1,87 @@
+{
+  "blocked_effects": [
+    "live_execution",
+    "connector_mutation",
+    "external_write",
+    "target_repository_mutation",
+    "branch_push",
+    "pull_request_create",
+    "merge",
+    "production_claim"
+  ],
+  "closure_lane": {
+    "current_gate": "gate.approval.required",
+    "lane_id": "capability_closure.email.send.with_approval.approval",
+    "lane_type": "approval",
+    "missing_ref_count": 6,
+    "next_required_proof_step": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
+    "outcome": "AwaitingEvidence",
+    "proof_state": "Unknown"
+  },
+  "live_execution_enabled": false,
+  "mode": "foundation",
+  "next_action": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
+  "plan_id": "capability_closure_plan.email.send.with_approval.approval.foundation.v1",
+  "plan_is_not_execution_authority": true,
+  "schema_version": 1,
+  "selected_capability_id": "email.send.with_approval",
+  "selected_capability_name": "Send email with approval",
+  "selected_category": "approval",
+  "selected_debt_id": "email.send.with_approval.approval.missing_governed_approval",
+  "selected_debt_item": {
+    "category": "approval",
+    "debt_id": "email.send.with_approval.approval.missing_governed_approval",
+    "description": "missing governed approval",
+    "fix": "collect governed approval evidence: gate.approval.required, approval_decision_receipt, approval_chain, approval_refs, actor_id, separation_of_duty",
+    "missing_refs": [
+      "gate.approval.required",
+      "approval_decision_receipt",
+      "approval_chain",
+      "approval_refs",
+      "actor_id",
+      "separation_of_duty"
+    ],
+    "severity": "high"
+  },
+  "selected_family": "communication",
+  "selection_policy": {
+    "fallback_order": [
+      "severity",
+      "category",
+      "capability_id",
+      "debt_id"
+    ],
+    "policy_id": "capability_closure.selection.foundation.v1",
+    "preferred_capability_ids": [
+      "email.send.with_approval",
+      "browser.submit",
+      "software_dev.pr_candidate.prepare",
+      "software_dev.change.run",
+      "software_dev.github_patch_plan.draft"
+    ],
+    "preferred_category": "approval",
+    "selection_reason": "preferred_approval_lane"
+  },
+  "source_refs": {
+    "debt_report_id": "capability_debt_report.foundation.v1",
+    "debt_row_id": "capability_debt.email.send.with_approval.foundation.v1",
+    "evidence_passport_id": "evidence_passport.email.send.with_approval.foundation.v1",
+    "evidence_passport_set_id": "evidence_passports.foundation.v1",
+    "gate_registry_id": "gate_template_registry.foundation.v1",
+    "passport_set_id": "capability_passports.foundation.v1",
+    "promotion_path_set_id": "sandbox_to_live_promotion_paths.foundation.v1",
+    "selected_debt_id": "email.send.with_approval.approval.missing_governed_approval"
+  },
+  "validators": [
+    {
+      "command": "python scripts/validate_capability_closure_runner.py --strict",
+      "required_for_closure": true,
+      "validator_id": "capability_closure_runner_validator"
+    },
+    {
+      "command": "python -m pytest tests/test_capability_closure_runner.py tests/test_validate_capability_closure_runner.py -q",
+      "required_for_closure": true,
+      "validator_id": "capability_closure_runner_tests"
+    }
+  ]
+}

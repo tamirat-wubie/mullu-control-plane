@@ -128,6 +128,7 @@ def test_runbook_keeps_status_mutation_evidence_gated() -> None:
     assert "inspect `/authority/responsibility`" in runbook_text
     assert "<gateway_url>/health" in runbook_text
     assert "produce_browser_sandbox_evidence.py" in runbook_text
+    assert "run_wsl_browser_sandbox_evidence.py" in runbook_text
     assert "validate_sandbox_execution_receipt.py" in runbook_text
     assert "validate_browser_sandbox_evidence.py" in runbook_text
     assert "The generic sandbox receipt gate must also report `valid=true`" in runbook_text

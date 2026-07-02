@@ -98,6 +98,59 @@ def test_validate_browser_sandbox_evidence_rejects_workspace_mutation(tmp_path: 
     assert "changed_file_refs_not_empty" in result.detail
 
 
+def test_validate_browser_sandbox_evidence_rejects_missing_deeper_isolation(
+    tmp_path: Path,
+) -> None:
+    evidence_path = tmp_path / "browser-sandbox-evidence.json"
+    produce_browser_sandbox_evidence(
+        output_path=evidence_path,
+        workspace_root=tmp_path,
+        runner=_sandbox_success_runner,
+        platform_system=lambda: "Linux",
+    )
+    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    payload["receipt"]["capabilities_dropped"] = False
+    payload["receipt"]["seccomp_profile_applied"] = "unconfined"
+    payload["sandbox_profile"]["drop_all_capabilities"] = False
+    payload["sandbox_profile"]["seccomp_profile"] = "unconfined"
+    payload["isolation"]["capabilities_dropped"] = False
+    payload["isolation"]["seccomp_profile_applied"] = "unconfined"
+    evidence_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_browser_sandbox_evidence(evidence_path)
+
+    assert result.valid is False
+    assert result.status == "failed"
+    assert result.blockers == ("browser_sandbox_evidence_invalid",)
+    assert "capabilities_dropped_not_true" in result.detail
+    assert "seccomp_profile_unconfined" in result.detail
+    assert "sandbox_profile_drop_all_capabilities_not_true" in result.detail
+
+
+def test_validate_browser_sandbox_evidence_rejects_isolation_summary_mismatch(
+    tmp_path: Path,
+) -> None:
+    evidence_path = tmp_path / "browser-sandbox-evidence.json"
+    produce_browser_sandbox_evidence(
+        output_path=evidence_path,
+        workspace_root=tmp_path,
+        runner=_sandbox_success_runner,
+        platform_system=lambda: "Linux",
+    )
+    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    payload["isolation"]["network_disabled"] = False
+    payload["sandbox_profile"]["network"] = "bridge"
+    evidence_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_browser_sandbox_evidence(evidence_path)
+
+    assert result.valid is False
+    assert result.status == "failed"
+    assert result.blockers == ("browser_sandbox_evidence_invalid",)
+    assert "sandbox_profile_network_not_none" in result.detail
+    assert "isolation_network_disabled_mismatch" in result.detail
+
+
 def test_validate_browser_sandbox_evidence_cli_outputs_json(tmp_path: Path, capsys) -> None:
     evidence_path = tmp_path / "browser-sandbox-evidence.json"
     produce_browser_sandbox_evidence(

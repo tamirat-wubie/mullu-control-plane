@@ -53,6 +53,10 @@ def test_adapter_closure_plan_maps_blockers_to_actions(tmp_path: Path) -> None:
     assert "--capability-prefix browser." in actions_by_blocker["browser_live_evidence_missing"].command
     assert "validate_browser_sandbox_evidence.py" in actions_by_blocker["browser_live_evidence_missing"].command
     assert (
+        "run_wsl_browser_sandbox_evidence.py_windows_launcher"
+        in actions_by_blocker["browser_live_evidence_missing"].evidence_required
+    )
+    assert (
         "linux_rootless_docker_runner_attestation"
         in actions_by_blocker["browser_live_evidence_missing"].evidence_required
     )
@@ -63,6 +67,22 @@ def test_adapter_closure_plan_maps_blockers_to_actions(tmp_path: Path) -> None:
     )
     assert (
         "browser_sandbox_evidence_validation"
+        in actions_by_blocker["browser_live_evidence_missing"].evidence_required
+    )
+    assert (
+        "sandbox_capabilities_dropped_attestation"
+        in actions_by_blocker["browser_live_evidence_missing"].evidence_required
+    )
+    assert (
+        "sandbox_seccomp_profile_attestation"
+        in actions_by_blocker["browser_live_evidence_missing"].evidence_required
+    )
+    assert (
+        "sandbox_profile_isolation_consistency"
+        in actions_by_blocker["browser_live_evidence_missing"].evidence_required
+    )
+    assert (
+        "sandbox_isolation_summary_consistency"
         in actions_by_blocker["browser_live_evidence_missing"].evidence_required
     )
     assert (

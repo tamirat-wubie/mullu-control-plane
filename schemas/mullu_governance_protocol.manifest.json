@@ -575,6 +575,18 @@
       "urn": "urn:mullusi:schema:capability-adapter-closure-plan:1"
     },
     {
+      "path": "schemas/capability_closure_plan.schema.json",
+      "schema_id": "capability-closure-plan",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:capability-closure-plan:1"
+    },
+    {
+      "path": "schemas/causal_repair_service_receipt.schema.json",
+      "schema_id": "causal-repair-service-receipt",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:causal-repair-service-receipt:1"
+    },
+    {
       "path": "schemas/capability_candidate.schema.json",
       "schema_id": "capability-candidate",
       "surface": "capability",
@@ -603,6 +615,24 @@
       "schema_id": "capability-control-system",
       "surface": "capability",
       "urn": "urn:mullusi:schema:capability-control-system:1"
+    },
+    {
+      "path": "schemas/closure_receipt.schema.json",
+      "schema_id": "closure-receipt",
+      "surface": "capability",
+      "urn": "urn:mullusi:schema:closure-receipt:1"
+    },
+    {
+      "path": "schemas/missing_evidence_refs.schema.json",
+      "schema_id": "missing-evidence-refs",
+      "surface": "evidence",
+      "urn": "urn:mullusi:schema:missing-evidence-refs:1"
+    },
+    {
+      "path": "schemas/next_approval_action.schema.json",
+      "schema_id": "next-approval-action",
+      "surface": "approval",
+      "urn": "urn:mullusi:schema:next-approval-action:1"
     },
     {
       "path": "schemas/capability_friction_control.schema.json",
@@ -1931,10 +1961,22 @@
       "urn": "urn:mullusi:schema:operator-developer-workflow-status-read-model:1"
     },
     {
+      "path": "schemas/operator_workflow_dashboard_read_model.schema.json",
+      "schema_id": "operator-workflow-dashboard-read-model",
+      "surface": "operator",
+      "urn": "urn:mullusi:schema:operator-workflow-dashboard-read-model:1"
+    },
+    {
       "path": "schemas/sandbox_to_pr_preparation_packet.schema.json",
       "schema_id": "sandbox-to-pr-preparation-packet",
       "surface": "operator",
       "urn": "urn:mullusi:schema:sandbox-to-pr-preparation-packet:1"
+    },
+    {
+      "path": "schemas/safe_local_action_rehearsal_receipt.schema.json",
+      "schema_id": "safe-local-action-rehearsal-receipt",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:safe-local-action-rehearsal-receipt:1"
     },
     {
       "path": "schemas/developer_workflow_sandbox_receipt_attachment_packet.schema.json",
@@ -1971,6 +2013,12 @@
       "schema_id": "pr-preparation-approval-packet",
       "surface": "operator",
       "urn": "urn:mullusi:schema:pr-preparation-approval-packet:1"
+    },
+    {
+      "path": "schemas/software_dev_patch_proposal.schema.json",
+      "schema_id": "software-dev-patch-proposal",
+      "surface": "software_dev",
+      "urn": "urn:mullusi:schema:software-dev-patch-proposal:1"
     },
     {
       "path": "schemas/local_pr_candidate_packet.schema.json",

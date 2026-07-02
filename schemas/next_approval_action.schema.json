@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:next-approval-action:1",
+  "title": "Next Approval Action",
+  "description": "Read-only next approval proof step for a selected capability closure lane.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "approval_action_id",
+    "mode",
+    "approval_action_is_not_execution_authority",
+    "live_execution_enabled",
+    "selected_capability_id",
+    "selected_debt_id",
+    "source_refs",
+    "approval_required",
+    "approval_gate_ids",
+    "required_approval_receipts",
+    "required_approval_inputs",
+    "missing_approval_refs",
+    "next_required_proof_step",
+    "operator_review_required",
+    "execution_after_approval_allowed",
+    "blocked_until_refs_present",
+    "proof_validator_command"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "approval_action_id": { "$ref": "#/$defs/identifier" },
+    "mode": { "type": "string", "const": "foundation" },
+    "approval_action_is_not_execution_authority": { "type": "boolean", "const": true },
+    "live_execution_enabled": { "type": "boolean", "const": false },
+    "selected_capability_id": { "$ref": "#/$defs/identifier" },
+    "selected_debt_id": { "$ref": "#/$defs/identifier" },
+    "source_refs": { "$ref": "#/$defs/source_refs" },
+    "approval_required": { "type": "boolean" },
+    "approval_gate_ids": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "required_approval_receipts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "required_approval_inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "missing_approval_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "next_required_proof_step": { "type": "string", "minLength": 1, "maxLength": 640 },
+    "operator_review_required": { "type": "boolean" },
+    "execution_after_approval_allowed": { "type": "boolean", "const": false },
+    "blocked_until_refs_present": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "proof_validator_command": { "type": "string", "minLength": 1, "maxLength": 260 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 260,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 320 },
+      "required": [
+        "debt_report_id",
+        "debt_row_id",
+        "selected_debt_id",
+        "evidence_passport_id"
+      ]
+    }
+  }
+}

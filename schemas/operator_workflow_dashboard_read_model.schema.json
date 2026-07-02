@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:operator-workflow-dashboard-read-model:1",
+  "title": "OperatorWorkflowDashboardReadModel",
+  "description": "Projection-only operator dashboard row model that unifies local workflow status, receipts, safe local action, rollback, and approval boundary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "read_model_id",
+    "projection_only",
+    "execution_performed",
+    "external_effects_allowed",
+    "dashboard_id",
+    "mode",
+    "task_count",
+    "blocked_effects",
+    "rows",
+    "promotion_filters",
+    "source_projections",
+    "source_refs",
+    "dashboard_hash"
+  ],
+  "properties": {
+    "schema_ref": {"type": "string", "const": "urn:mullusi:schema:operator-workflow-dashboard-read-model:1"},
+    "read_model_id": {"type": "string", "const": "operator_workflow_dashboard.read_model"},
+    "projection_only": {"type": "boolean", "const": true},
+    "execution_performed": {"type": "boolean", "const": false},
+    "external_effects_allowed": {"type": "boolean", "const": false},
+    "dashboard_id": {"type": "string", "const": "operator_workflow_dashboard.foundation.v1"},
+    "mode": {"type": "string", "const": "local_lab"},
+    "task_count": {"type": "integer", "minimum": 1, "maximum": 16},
+    "blocked_effects": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 80}
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {"$ref": "#/$defs/dashboard_row"}
+    },
+    "source_projections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["local_workflow_receipt", "workflow_status", "safe_local_action", "capability_passports"],
+      "properties": {
+        "local_workflow_receipt": {"type": "string", "minLength": 1, "maxLength": 260},
+        "workflow_status": {"type": "string", "const": "operator_developer_workflow_status.read_model"},
+        "safe_local_action": {"type": "string", "const": "operator_safe_local_action.read_model"},
+        "capability_passports": {"type": "string", "const": "capability_passports.foundation.v1"}
+      }
+    },
+    "promotion_filters": {"$ref": "#/$defs/promotion_filters"},
+    "source_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["builder", "local_workflow_receipt"],
+      "properties": {
+        "builder": {"type": "string", "const": "gateway/operator_workflow_dashboard.py"},
+        "local_workflow_receipt": {"type": "string", "minLength": 1, "maxLength": 260}
+      }
+    },
+    "dashboard_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "$defs": {
+    "dashboard_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task",
+        "status",
+        "current_gate",
+        "missing_evidence",
+        "next_action",
+        "risk",
+        "receipts",
+        "rollback",
+        "approval_needed",
+        "approval",
+        "source_ref"
+      ],
+      "properties": {
+        "task": {"type": "string", "minLength": 1, "maxLength": 160},
+        "status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "current_gate": {"$ref": "#/$defs/current_gate"},
+        "missing_evidence": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 180}
+        },
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 260},
+        "risk": {"type": "string", "minLength": 1, "maxLength": 160},
+        "receipts": {"$ref": "#/$defs/receipts"},
+        "rollback": {"$ref": "#/$defs/rollback"},
+        "approval_needed": {"type": "boolean"},
+        "approval": {"$ref": "#/$defs/approval"},
+        "source_ref": {"type": "string", "minLength": 1, "maxLength": 260}
+      }
+    },
+    "promotion_filters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ladder_id",
+        "source_ref",
+        "capability_count",
+        "level_counts",
+        "levels",
+        "filter_is_not_execution_authority",
+        "live_execution_enabled",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "ladder_id": {"type": "string", "const": "mullu.capability_promotion_ladder.v1"},
+        "source_ref": {"type": "string", "minLength": 1, "maxLength": 160},
+        "capability_count": {"type": "integer", "minimum": 1, "maximum": 1000},
+        "level_counts": {"$ref": "#/$defs/promotion_level_counts"},
+        "levels": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {"$ref": "#/$defs/promotion_filter_level"}
+        },
+        "filter_is_not_execution_authority": {"type": "boolean", "const": true},
+        "live_execution_enabled": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "promotion_level_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["L0", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9"],
+      "properties": {
+        "L0": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "L1": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "L2": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "L3": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "L4": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "L5": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "L6": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "L7": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "L8": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "L9": {"type": "integer", "minimum": 0, "maximum": 1000}
+      }
+    },
+    "promotion_filter_level": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level_id",
+        "level_number",
+        "level_name",
+        "summary",
+        "capability_count",
+        "requires_operator_approval",
+        "requires_receipt",
+        "requires_rollback",
+        "requires_live_witness",
+        "filter_query",
+        "filter_is_not_execution_authority",
+        "live_execution_enabled"
+      ],
+      "properties": {
+        "level_id": {"type": "string", "pattern": "^L[0-9]$"},
+        "level_number": {"type": "integer", "minimum": 0, "maximum": 9},
+        "level_name": {
+          "type": "string",
+          "enum": [
+            "read-only",
+            "draft-only",
+            "proposal-only",
+            "sandbox-write",
+            "test-run",
+            "pr-preview",
+            "pr-create-with-approval",
+            "merge-request-with-approval",
+            "live-connector-read",
+            "live-connector-write"
+          ]
+        },
+        "summary": {"type": "string", "minLength": 1, "maxLength": 220},
+        "capability_count": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "requires_operator_approval": {"type": "boolean"},
+        "requires_receipt": {"type": "boolean"},
+        "requires_rollback": {"type": "boolean"},
+        "requires_live_witness": {"type": "boolean"},
+        "filter_query": {"type": "string", "pattern": "^current_promotion_level == 'L[0-9]'$"},
+        "filter_is_not_execution_authority": {"type": "boolean", "const": true},
+        "live_execution_enabled": {"type": "boolean", "const": false}
+      }
+    },
+    "current_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_id",
+        "stage_type",
+        "status",
+        "evidence",
+        "projection_only",
+        "execution_performed",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "stage_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "stage_type": {"type": "string", "enum": ["skill_execution", "approval_gate", "observation", "communication", "wait_for_event"]},
+        "status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "evidence": {"type": "string", "minLength": 1, "maxLength": 260},
+        "projection_only": {"type": "boolean", "const": true},
+        "execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "receipts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "completed",
+        "required",
+        "receipt_hash",
+        "receipt_groups",
+        "source_ref",
+        "execution_performed",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "status": {"type": "string", "enum": ["pending", "complete"]},
+        "completed": {"type": "integer", "minimum": 0, "maximum": 16},
+        "required": {"type": "integer", "minimum": 0, "maximum": 16},
+        "receipt_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "receipt_groups": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 120}
+        },
+        "source_ref": {"type": "string", "minLength": 1, "maxLength": 260},
+        "execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "status",
+        "command_count",
+        "executed",
+        "execution_performed",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "required": {"type": "boolean"},
+        "status": {"type": "string", "enum": ["required_not_executed", "not_required"]},
+        "command_count": {"type": "integer", "minimum": 0, "maximum": 16},
+        "executed": {"type": "boolean", "const": false},
+        "execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "needed",
+        "status",
+        "gate",
+        "approval_boundary",
+        "performed",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "needed": {"type": "boolean"},
+        "status": {"type": "string", "minLength": 1, "maxLength": 80},
+        "gate": {"type": "string", "minLength": 1, "maxLength": 120},
+        "approval_boundary": {"type": "string", "minLength": 1, "maxLength": 120},
+        "performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    }
+  }
+}

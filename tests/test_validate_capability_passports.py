@@ -71,10 +71,16 @@ def test_capability_passports_project_email_draft_and_send_gates() -> None:
     draft = _passport_by_capability(payload, "email.draft")
     send = _passport_by_capability(payload, "email.send.with_approval")
 
+    assert draft["current_promotion_level"] == "L1"
+    assert draft["promotion_level_name"] == "draft-only"
     assert draft["operator_status"] == "Live action disabled"
     assert "prepare_draft" in draft["allowed_actions"]
     assert "gate.receipt.append" in draft["required_gates"]
     assert "terminal_closure_certificate" in draft["required_receipts"]
+    assert send["current_promotion_level"] == "L9"
+    assert send["promotion_level_name"] == "live-connector-write"
+    assert send["promotion_requires_operator_approval"] is True
+    assert send["promotion_requires_live_witness"] is True
     assert send["operator_status"] == "Live action disabled"
     assert "gate.approval.required" in send["required_gates"]
     assert "execute_without_approval" in send["blocked_actions"]
@@ -86,13 +92,38 @@ def test_capability_passports_project_financial_maturity_status() -> None:
     balance = _passport_by_capability(payload, "financial.balance_check")
     payment = _passport_by_capability(payload, "financial.send_payment")
 
+    assert balance["current_promotion_level"] == "L8"
+    assert balance["promotion_level_name"] == "live-connector-read"
     assert balance["current_unlock_level"] in {"C3", "C4", "C5", "C6", "C7"}
     assert balance["passport_is_not_execution_authority"] is True
+    assert payment["current_promotion_level"] == "L9"
+    assert payment["promotion_required_gates"] == [
+        "gate.connector.lease",
+        "gate.approval.required",
+        "gate.evidence.verification",
+        "gate.receipt.append",
+        "gate.rollback.required",
+    ]
     assert payment["current_unlock_level"] == "C6"
     assert payment["production_ready"] is True
     assert payment["operator_status"] == "Needs approval"
     assert payment["rollback_status"]["status"] == "compensation_only"
     assert "gate.approval.required" in payment["required_gates"]
+
+
+def test_capability_passports_project_software_developer_promotion_ladder() -> None:
+    payload = build_capability_passports()
+    repo_map = _passport_by_capability(payload, "software_dev.repo_map.read")
+    patch_plan = _passport_by_capability(payload, "software_dev.github_patch_plan.draft")
+    change_run = _passport_by_capability(payload, "software_dev.change.run")
+    pr_candidate = _passport_by_capability(payload, "software_dev.pr_candidate.prepare")
+
+    assert repo_map["current_promotion_level"] == "L0"
+    assert patch_plan["current_promotion_level"] == "L1"
+    assert change_run["current_promotion_level"] == "L4"
+    assert pr_candidate["current_promotion_level"] == "L5"
+    assert pr_candidate["promotion_requires_rollback"] is True
+    assert payload["summary"]["promotion_level_counts"]["L5"] >= 1
 
 
 def test_capability_passports_reject_missing_capability_passport(tmp_path: Path) -> None:
@@ -117,6 +148,8 @@ def test_capability_passports_reject_authority_overclaim(tmp_path: Path) -> None
     payload = _default_payload()
     passport = _passport_by_capability(payload, "email.send.with_approval")
     passport["passport_is_not_execution_authority"] = False
+    passport["promotion_level_is_not_execution_authority"] = False
+    passport["promotion_required_gates"] = ["gate.receipt.append"]
     passport["blocked_actions"] = ["message_sent_without_approval"]
     passport["required_gates"] = ["gate.receipt.append"]
 
@@ -125,6 +158,8 @@ def test_capability_passports_reject_authority_overclaim(tmp_path: Path) -> None
 
     assert validation.ok is False
     assert "passport_is_not_execution_authority must be true" in serialized_errors
+    assert "promotion_level_is_not_execution_authority must be true" in serialized_errors
+    assert "promotion_required_gates must match ladder" in serialized_errors
     assert "missing base gates" in serialized_errors
     assert "must block terminal success overclaim" in serialized_errors
 

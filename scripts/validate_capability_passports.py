@@ -30,6 +30,11 @@ for import_root in (REPO_ROOT, MCOI_ROOT):
         sys.path.insert(0, str(import_root))
 
 from mcoi_runtime.app.capability_passports import build_capability_passports  # noqa: E402
+from capability_levels.ladder import (  # noqa: E402
+    CAPABILITY_PROMOTION_LADDER_ID,
+    default_capability_promotion_ladder,
+    validate_capability_promotion_ladder,
+)
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 
@@ -133,6 +138,8 @@ def _validate_passport_set(
         errors.append(f"{label}: passport_set_is_not_execution_authority must be true")
     if passports.get("live_execution_enabled") is not False:
         errors.append(f"{label}: live_execution_enabled must be false")
+    ladder_errors = validate_capability_promotion_ladder()
+    errors.extend(f"{label}: {error}" for error in ladder_errors)
     _validate_validators(passports, errors, label)
 
     passport_entries = passports.get("passports")
@@ -174,6 +181,9 @@ def _validate_passport_set(
             errors.append(f"{label}: summary.approval_required_count must match gate count")
         if summary.get("receipt_required_count") != sum(1 for passport in passport_entries if passport.get("required_receipts")):
             errors.append(f"{label}: summary.receipt_required_count must match passports")
+        expected_promotion_counts = _promotion_counts(passport_entries)
+        if summary.get("promotion_level_counts") != expected_promotion_counts:
+            errors.append(f"{label}: summary.promotion_level_counts must match passports")
     else:
         errors.append(f"{label}: summary must be an object")
 
@@ -182,6 +192,7 @@ def _validate_passport(passport: dict[str, Any], errors: list[str], label: str) 
     capability_id = str(passport.get("capability_id", "<missing>"))
     if passport.get("passport_is_not_execution_authority") is not True:
         errors.append(f"{label}: {capability_id} passport_is_not_execution_authority must be true")
+    _validate_promotion_profile(passport, errors, label, capability_id)
 
     required_gates = set(_string_list(passport.get("required_gates")))
     missing_base_gates = sorted(REQUIRED_BASE_GATES - required_gates)
@@ -212,6 +223,41 @@ def _validate_passport(passport: dict[str, Any], errors: list[str], label: str) 
         errors.append(f"{label}: {capability_id} production-ready passport cannot be Live action disabled")
 
 
+def _validate_promotion_profile(
+    passport: dict[str, Any],
+    errors: list[str],
+    label: str,
+    capability_id: str,
+) -> None:
+    if passport.get("promotion_ladder_id") != CAPABILITY_PROMOTION_LADDER_ID:
+        errors.append(f"{label}: {capability_id} promotion_ladder_id mismatch")
+    if passport.get("promotion_level_is_not_execution_authority") is not True:
+        errors.append(f"{label}: {capability_id} promotion_level_is_not_execution_authority must be true")
+    level_number = passport.get("promotion_level_number")
+    level_id = passport.get("current_promotion_level")
+    levels = {level.level: level for level in default_capability_promotion_ladder()}
+    if not isinstance(level_number, int) or isinstance(level_number, bool) or level_number not in levels:
+        errors.append(f"{label}: {capability_id} promotion_level_number invalid")
+        return
+    expected_level = levels[level_number]
+    if level_id != expected_level.level_id:
+        errors.append(f"{label}: {capability_id} current_promotion_level must match promotion_level_number")
+    if passport.get("promotion_level_name") != expected_level.name:
+        errors.append(f"{label}: {capability_id} promotion_level_name must match ladder")
+    if passport.get("promotion_required_gates") != list(expected_level.required_gates):
+        errors.append(f"{label}: {capability_id} promotion_required_gates must match ladder")
+    if passport.get("promotion_required_evidence") != list(expected_level.required_evidence):
+        errors.append(f"{label}: {capability_id} promotion_required_evidence must match ladder")
+    if passport.get("promotion_requires_operator_approval") is not expected_level.requires_operator_approval:
+        errors.append(f"{label}: {capability_id} promotion approval flag must match ladder")
+    if passport.get("promotion_requires_receipt") is not expected_level.requires_receipt:
+        errors.append(f"{label}: {capability_id} promotion receipt flag must match ladder")
+    if passport.get("promotion_requires_rollback") is not expected_level.requires_rollback:
+        errors.append(f"{label}: {capability_id} promotion rollback flag must match ladder")
+    if passport.get("promotion_requires_live_witness") is not expected_level.requires_live_witness:
+        errors.append(f"{label}: {capability_id} promotion live witness flag must match ladder")
+
+
 def _validate_validators(passports: dict[str, Any], errors: list[str], label: str) -> None:
     validators = passports.get("validators")
     if not isinstance(validators, list):
@@ -239,6 +285,16 @@ def _gate_count(passports: list[Any], gate: str) -> int:
         for passport in passports
         if isinstance(passport, dict) and gate in _string_list(passport.get("required_gates"))
     )
+
+
+def _promotion_counts(passports: list[Any]) -> dict[str, int]:
+    counts = {f"L{level}": 0 for level in range(10)}
+    for passport in passports:
+        if isinstance(passport, dict):
+            level_id = str(passport.get("current_promotion_level", ""))
+            if level_id in counts:
+                counts[level_id] += 1
+    return counts
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
