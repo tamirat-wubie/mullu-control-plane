@@ -40,6 +40,14 @@ from .command_preview_packet import (
     validate_local_developer_workflow_pr_command_preview_packet,
     write_local_developer_workflow_pr_command_preview_packet,
 )
+from .pr_admission_packet import (
+    PR_ADMISSION_PACKET_FILENAME,
+    PR_ADMISSION_PACKET_ID,
+    LocalDeveloperWorkflowPrAdmissionPacketError,
+    build_local_developer_workflow_pr_admission_packet,
+    validate_local_developer_workflow_pr_admission_packet,
+    write_local_developer_workflow_pr_admission_packet,
+)
 
 __all__ = [
     "ARTIFACT_FILENAMES",
@@ -61,6 +69,12 @@ __all__ = [
     "build_local_developer_workflow_pr_command_preview_packet",
     "validate_local_developer_workflow_pr_command_preview_packet",
     "write_local_developer_workflow_pr_command_preview_packet",
+    "PR_ADMISSION_PACKET_FILENAME",
+    "PR_ADMISSION_PACKET_ID",
+    "LocalDeveloperWorkflowPrAdmissionPacketError",
+    "build_local_developer_workflow_pr_admission_packet",
+    "validate_local_developer_workflow_pr_admission_packet",
+    "write_local_developer_workflow_pr_admission_packet",
 ]
 __all__ += [
     "BLOCKED_EXTERNAL_EFFECTS",
