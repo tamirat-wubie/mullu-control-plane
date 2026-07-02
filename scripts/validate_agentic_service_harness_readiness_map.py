@@ -1710,7 +1710,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(live-producer): add review submission receipt emission preflight",
+        "harness(live-producer): add review submission receipt append admission preflight",
     )
     positions: list[int] = []
     for marker in sequence_markers:
