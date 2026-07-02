@@ -47,6 +47,43 @@ REQUIRED_WITNESS_KINDS = (
     "secret_handoff",
     "rollback_proof",
 )
+GOVERNED_WITNESS_COLLECTION = (
+    {
+        "witness_kind": "operator_approval",
+        "requirements_evidence_ref": "approval://operator-live-producer-approval-required",
+        "governed_artifact_ref": "examples/agentic_service_harness_live_producer_operator_approval_request.local.json",
+        "validator_id": "agentic-service-harness-live-producer-operator-approval-request",
+        "validator_command": "python scripts/validate_agentic_service_harness_live_producer_operator_approval_request.py",
+    },
+    {
+        "witness_kind": "effect_receipt",
+        "requirements_evidence_ref": "receipt://agentic-service-harness/live-producer-effect-receipt-required",
+        "governed_artifact_ref": "examples/agentic_service_harness_live_producer_effect_receipt_preflight.local.json",
+        "validator_id": "agentic-service-harness-live-producer-effect-receipt-preflight",
+        "validator_command": "python scripts/validate_agentic_service_harness_live_producer_effect_receipt_preflight.py",
+    },
+    {
+        "witness_kind": "external_adapter_evidence",
+        "requirements_evidence_ref": "evidence://agentic-service-harness/external-adapter-live-evidence-required",
+        "governed_artifact_ref": "examples/agentic_service_harness_live_producer_external_adapter_evidence_preflight.local.json",
+        "validator_id": "agentic-service-harness-live-producer-external-adapter-evidence-preflight",
+        "validator_command": "python scripts/validate_agentic_service_harness_live_producer_external_adapter_evidence_preflight.py",
+    },
+    {
+        "witness_kind": "secret_handoff",
+        "requirements_evidence_ref": "secret-handoff://agentic-service-harness/live-producer-required",
+        "governed_artifact_ref": "examples/agentic_service_harness_live_producer_secret_handoff_preflight.local.json",
+        "validator_id": "agentic-service-harness-live-producer-secret-handoff-preflight",
+        "validator_command": "python scripts/validate_agentic_service_harness_live_producer_secret_handoff_preflight.py",
+    },
+    {
+        "witness_kind": "rollback_proof",
+        "requirements_evidence_ref": "rollback://agentic-service-harness/live-producer-required",
+        "governed_artifact_ref": "examples/agentic_service_harness_live_producer_rollback_proof_preflight.local.json",
+        "validator_id": "agentic-service-harness-live-producer-rollback-proof-preflight",
+        "validator_command": "python scripts/validate_agentic_service_harness_live_producer_rollback_proof_preflight.py",
+    },
+)
 
 
 class AgenticServiceHarnessLiveProducerWitnessRequirements:
@@ -94,6 +131,7 @@ def project_admission_gate_to_witness_requirements(
             "read_only": True,
         },
         "witnesses": _witnesses(required_evidence),
+        "governed_witness_collection": _governed_witness_collection(),
         "authority_denials": {
             **{flag_name: False for flag_name in FALSE_AUTHORITY_FLAGS},
             "live_execution_authorized": False,
@@ -137,6 +175,23 @@ def _witnesses(required_evidence: Mapping[str, Any]) -> list[dict[str, Any]]:
             evidence_ref=str(required_evidence.get("rollback_plan_ref", "")),
             next_action="Produce rollback proof before live producer admission.",
         ),
+    ]
+
+
+def _governed_witness_collection() -> list[dict[str, Any]]:
+    return [
+        {
+            "collection_id": f"collection.{entry['witness_kind']}",
+            "witness_kind": entry["witness_kind"],
+            "requirements_evidence_ref": entry["requirements_evidence_ref"],
+            "governed_artifact_ref": entry["governed_artifact_ref"],
+            "validator_id": entry["validator_id"],
+            "validator_command": entry["validator_command"],
+            "status": "AwaitingEvidence",
+            "authority_granted": False,
+            "blocks_live_producer": True,
+        }
+        for entry in GOVERNED_WITNESS_COLLECTION
     ]
 
 
