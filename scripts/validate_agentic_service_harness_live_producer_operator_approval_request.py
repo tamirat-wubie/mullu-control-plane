@@ -39,6 +39,8 @@ from gateway.agentic_service_harness_live_producer_operator_approval import (  #
 )
 from gateway.agentic_service_harness_live_producer_witness_requirements import (  # noqa: E402
     FALSE_AUTHORITY_FLAGS,
+    GOVERNED_WITNESS_COLLECTION,
+    WITNESS_REQUIREMENTS_ID,
 )
 from scripts.validate_agentic_service_harness_live_producer_witness_requirements import (  # noqa: E402
     validate_live_producer_witness_requirements,
@@ -115,13 +117,18 @@ def validate_live_producer_operator_approval_request(
 
     if schema and fixture:
         errors.extend(f"{_path_label(fixture_path)}: {error}" for error in _validate_schema_instance(schema, fixture))
-        _validate_request_semantics(fixture, errors, _path_label(fixture_path))
+        _validate_request_semantics(fixture, witness_requirements, errors, _path_label(fixture_path))
     if schema and produced_request:
         errors.extend(
             f"produced operator approval request: {error}"
             for error in _validate_schema_instance(schema, produced_request)
         )
-        _validate_request_semantics(produced_request, errors, "produced operator approval request")
+        _validate_request_semantics(
+            produced_request,
+            witness_requirements,
+            errors,
+            "produced operator approval request",
+        )
     if fixture and produced_request:
         _validate_fixture_matches_produced(fixture, produced_request, errors)
 
@@ -142,6 +149,7 @@ def validate_live_producer_operator_approval_request(
 
 def _validate_request_semantics(
     request: Mapping[str, Any],
+    witness_requirements: Mapping[str, Any],
     errors: list[str],
     label: str,
 ) -> None:
@@ -165,6 +173,7 @@ def _validate_request_semantics(
             errors.append(f"{label}: {field_name} must be {expected_value!r}")
     if not request.get("requested_evidence_ref"):
         errors.append(f"{label}: requested_evidence_ref required")
+    _validate_governed_collection_binding(request, witness_requirements, errors, label)
     _validate_scope(request, errors, label)
     _validate_approval_request(request, errors, label)
     _validate_remaining_witnesses(request, errors, label)
@@ -260,6 +269,7 @@ def _validate_fixture_matches_produced(
         "source_admission_gate_ref",
         "witness_kind",
         "requested_evidence_ref",
+        "governed_collection_binding",
         "approval_status",
         "approval_collected",
         "authority_granted",
@@ -273,6 +283,78 @@ def _validate_fixture_matches_produced(
     for field_name in comparable_fields:
         if fixture.get(field_name) != produced_request.get(field_name):
             errors.append(f"fixture does not match produced operator approval request field: {field_name}")
+
+
+def _validate_governed_collection_binding(
+    request: Mapping[str, Any],
+    witness_requirements: Mapping[str, Any],
+    errors: list[str],
+    label: str,
+) -> None:
+    binding = _mapping(request.get("governed_collection_binding"))
+    if not binding:
+        errors.append(f"{label}: governed_collection_binding must be an object")
+        return
+    source_entry = _find_collection_entry(witness_requirements, OPERATOR_APPROVAL_WITNESS_KIND)
+    expected_entry = _expected_collection_entry(OPERATOR_APPROVAL_WITNESS_KIND)
+    expected_values = {
+        "binding_id": "binding.operator_approval.governed_witness_collection",
+        "collection_id": "collection.operator_approval",
+        "witness_kind": OPERATOR_APPROVAL_WITNESS_KIND,
+        "requirements_evidence_ref": source_entry.get(
+            "requirements_evidence_ref",
+            expected_entry.get("requirements_evidence_ref", ""),
+        ),
+        "governed_artifact_ref": source_entry.get(
+            "governed_artifact_ref",
+            expected_entry.get("governed_artifact_ref", ""),
+        ),
+        "validator_id": source_entry.get("validator_id", expected_entry.get("validator_id", "")),
+        "validator_command": source_entry.get(
+            "validator_command",
+            expected_entry.get("validator_command", ""),
+        ),
+        "source_requirements_ref": f"requirements://{WITNESS_REQUIREMENTS_ID}",
+        "request_id": OPERATOR_APPROVAL_REQUEST_ID,
+        "request_artifact_ref": "examples/agentic_service_harness_live_producer_operator_approval_request.local.json",
+        "request_validator_id": OPERATOR_APPROVAL_REQUEST_ID,
+        "request_validator_command": "python scripts/validate_agentic_service_harness_live_producer_operator_approval_request.py",
+        "binding_status": "AwaitingEvidence",
+        "collection_status": "AwaitingEvidence",
+        "authority_granted": False,
+        "blocks_live_producer": True,
+        "approval_collected": False,
+        "live_execution_authorized": False,
+    }
+    for field_name, expected_value in expected_values.items():
+        if binding.get(field_name) != expected_value:
+            errors.append(f"{label}: governed_collection_binding.{field_name} mismatch")
+    if source_entry and binding.get("collection_status") != source_entry.get("status"):
+        errors.append(f"{label}: governed_collection_binding.collection_status must match source status")
+    if source_entry and binding.get("authority_granted") != source_entry.get("authority_granted"):
+        errors.append(f"{label}: governed_collection_binding.authority_granted must match source collection")
+    if source_entry and binding.get("blocks_live_producer") != source_entry.get("blocks_live_producer"):
+        errors.append(f"{label}: governed_collection_binding.blocks_live_producer must match source collection")
+    artifact_ref = binding.get("governed_artifact_ref")
+    if isinstance(artifact_ref, str) and not (REPO_ROOT / artifact_ref).is_file():
+        errors.append(f"{label}: governed_collection_binding.governed_artifact_ref must exist")
+
+
+def _find_collection_entry(requirements: Mapping[str, Any], witness_kind: str) -> Mapping[str, Any]:
+    collection = requirements.get("governed_witness_collection")
+    if not isinstance(collection, list):
+        return {}
+    for entry in collection:
+        if isinstance(entry, Mapping) and entry.get("witness_kind") == witness_kind:
+            return entry
+    return {}
+
+
+def _expected_collection_entry(witness_kind: str) -> Mapping[str, Any]:
+    for entry in GOVERNED_WITNESS_COLLECTION:
+        if entry.get("witness_kind") == witness_kind:
+            return entry
+    return {}
 
 
 def _validate_secret_surface(payload: Any, errors: list[str], label: str) -> None:

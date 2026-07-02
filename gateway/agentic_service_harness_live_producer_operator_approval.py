@@ -18,6 +18,7 @@ from typing import Any, Mapping
 
 from gateway.agentic_service_harness_live_producer_witness_requirements import (
     FALSE_AUTHORITY_FLAGS,
+    GOVERNED_WITNESS_COLLECTION,
     REQUIRED_WITNESS_KINDS,
     WITNESS_REQUIREMENTS_ID,
     AgenticServiceHarnessLiveProducerWitnessRequirements,
@@ -76,6 +77,7 @@ def project_witness_requirements_to_operator_approval_request(
         "source_admission_gate_ref": str(requirements.get("source_admission_gate_ref", "")),
         "witness_kind": OPERATOR_APPROVAL_WITNESS_KIND,
         "requested_evidence_ref": str(operator_witness.get("evidence_ref", "")),
+        "governed_collection_binding": _governed_collection_binding(requirements),
         "approval_status": "AwaitingEvidence",
         "approval_collected": False,
         "authority_granted": False,
@@ -139,6 +141,56 @@ def _remaining_witnesses(requirements: Mapping[str, Any]) -> list[dict[str, Any]
             }
         )
     return remaining
+
+
+def _governed_collection_binding(requirements: Mapping[str, Any]) -> dict[str, Any]:
+    collection_entry = _find_collection_entry(requirements, OPERATOR_APPROVAL_WITNESS_KIND)
+    expected_entry = _expected_collection_entry(OPERATOR_APPROVAL_WITNESS_KIND)
+    artifact_ref = str(collection_entry.get("governed_artifact_ref", expected_entry.get("governed_artifact_ref", "")))
+    validator_id = str(collection_entry.get("validator_id", expected_entry.get("validator_id", "")))
+    validator_command = str(collection_entry.get("validator_command", expected_entry.get("validator_command", "")))
+    return {
+        "binding_id": "binding.operator_approval.governed_witness_collection",
+        "collection_id": str(collection_entry.get("collection_id", "collection.operator_approval")),
+        "witness_kind": OPERATOR_APPROVAL_WITNESS_KIND,
+        "requirements_evidence_ref": str(
+            collection_entry.get(
+                "requirements_evidence_ref",
+                expected_entry.get("requirements_evidence_ref", ""),
+            )
+        ),
+        "governed_artifact_ref": artifact_ref,
+        "validator_id": validator_id,
+        "validator_command": validator_command,
+        "source_requirements_ref": f"requirements://{WITNESS_REQUIREMENTS_ID}",
+        "request_id": OPERATOR_APPROVAL_REQUEST_ID,
+        "request_artifact_ref": "examples/agentic_service_harness_live_producer_operator_approval_request.local.json",
+        "request_validator_id": OPERATOR_APPROVAL_REQUEST_VALIDATOR["validator_id"],
+        "request_validator_command": OPERATOR_APPROVAL_REQUEST_VALIDATOR["command"],
+        "binding_status": "AwaitingEvidence",
+        "collection_status": "AwaitingEvidence",
+        "authority_granted": False,
+        "blocks_live_producer": True,
+        "approval_collected": False,
+        "live_execution_authorized": False,
+    }
+
+
+def _find_collection_entry(requirements: Mapping[str, Any], witness_kind: str) -> Mapping[str, Any]:
+    collection = requirements.get("governed_witness_collection")
+    if not isinstance(collection, list):
+        return {}
+    for entry in collection:
+        if isinstance(entry, Mapping) and entry.get("witness_kind") == witness_kind:
+            return entry
+    return {}
+
+
+def _expected_collection_entry(witness_kind: str) -> Mapping[str, Any]:
+    for entry in GOVERNED_WITNESS_COLLECTION:
+        if entry.get("witness_kind") == witness_kind:
+            return entry
+    return {}
 
 
 def _find_witness(requirements: Mapping[str, Any], witness_kind: str) -> Mapping[str, Any]:

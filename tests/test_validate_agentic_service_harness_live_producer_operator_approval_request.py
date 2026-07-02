@@ -59,6 +59,9 @@ def test_live_producer_operator_approval_request_accept_default_fixture() -> Non
     assert produced_request["approval_status"] == "AwaitingEvidence"
     assert produced_request["approval_collected"] is False
     assert produced_request["authority_granted"] is False
+    assert produced_request["governed_collection_binding"]["collection_id"] == "collection.operator_approval"
+    assert produced_request["governed_collection_binding"]["binding_status"] == "AwaitingEvidence"
+    assert produced_request["governed_collection_binding"]["authority_granted"] is False
 
 
 def test_live_producer_operator_approval_request_projects_witness_requirements() -> None:
@@ -70,6 +73,16 @@ def test_live_producer_operator_approval_request_projects_witness_requirements()
     assert produced_request["request_id"] == OPERATOR_APPROVAL_REQUEST_ID
     assert produced_request["witness_kind"] == OPERATOR_APPROVAL_WITNESS_KIND
     assert produced_request["requested_evidence_ref"] == "approval://operator-live-producer-approval-required"
+    assert (
+        produced_request["governed_collection_binding"]["requirements_evidence_ref"]
+        == produced_request["requested_evidence_ref"]
+    )
+    assert (
+        produced_request["governed_collection_binding"]["governed_artifact_ref"]
+        == "examples/agentic_service_harness_live_producer_operator_approval_request.local.json"
+    )
+    assert produced_request["governed_collection_binding"]["approval_collected"] is False
+    assert produced_request["governed_collection_binding"]["live_execution_authorized"] is False
     assert tuple(witness["witness_kind"] for witness in remaining_witnesses) == REMAINING_WITNESS_KINDS
     assert all(witness["status"] == "AwaitingEvidence" for witness in remaining_witnesses)
     assert all(witness["blocks_live_producer"] is True for witness in remaining_witnesses)
@@ -113,6 +126,36 @@ def test_live_producer_operator_approval_request_rejects_live_authority(tmp_path
     assert produced_request["approval_request"]["live_execution_authorized_after_response"] is False
 
 
+def test_live_producer_operator_approval_request_rejects_collection_binding_drift(tmp_path: Path) -> None:
+    request = _default_request()
+    request["governed_collection_binding"]["requirements_evidence_ref"] = (
+        "approval://operator-live-producer-untracked"
+    )
+    request["governed_collection_binding"]["governed_artifact_ref"] = (
+        "examples/agentic_service_harness_live_producer_effect_receipt_preflight.local.json"
+    )
+    request["governed_collection_binding"]["binding_status"] = "SolvedVerified"
+    request["governed_collection_binding"]["authority_granted"] = True
+    request["governed_collection_binding"]["approval_collected"] = True
+    request["governed_collection_binding"]["live_execution_authorized"] = True
+    request_path = tmp_path / "operator-approval-request.json"
+    request_path.write_text(json.dumps(request), encoding="utf-8")
+
+    validation, produced_request = validate_live_producer_operator_approval_request(fixture_path=request_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "governed_collection_binding.requirements_evidence_ref mismatch" in serialized_errors
+    assert "governed_collection_binding.governed_artifact_ref mismatch" in serialized_errors
+    assert "governed_collection_binding.binding_status mismatch" in serialized_errors
+    assert "governed_collection_binding.authority_granted mismatch" in serialized_errors
+    assert "governed_collection_binding.approval_collected mismatch" in serialized_errors
+    assert "governed_collection_binding.live_execution_authorized mismatch" in serialized_errors
+    assert produced_request["governed_collection_binding"]["authority_granted"] is False
+    assert produced_request["governed_collection_binding"]["approval_collected"] is False
+    assert produced_request["governed_collection_binding"]["live_execution_authorized"] is False
+
+
 def test_live_producer_operator_approval_request_rejects_mutation_route_ref(tmp_path: Path) -> None:
     request = _default_request()
     request["requested_evidence_ref"] = "POST /api/v1/harness/live-producer/approval"
@@ -152,3 +195,4 @@ def test_live_producer_operator_approval_request_cli_json_reports_valid(capsys) 
     assert payload["ok"] is True
     assert payload["remaining_witness_count"] == len(REMAINING_WITNESS_KINDS)
     assert payload["produced_request"]["approval_collected"] is False
+    assert payload["produced_request"]["governed_collection_binding"]["blocks_live_producer"] is True
