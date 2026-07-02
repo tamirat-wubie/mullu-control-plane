@@ -668,6 +668,9 @@ jobs:
       - name: Run repository boundary guard tests
         run: python -m pytest tests/test_check_repository_boundary.py -q
 
+      - name: Run local workflow closure tests
+        run: python -m pytest tests/test_capability_closure_runner.py tests/test_causal_repair_service.py tests/test_local_developer_workflow_v1.py tests/test_operator_workflow_dashboard.py tests/test_patch_proposal_draft.py tests/test_run_wsl_browser_sandbox_evidence.py tests/test_safe_local_action_rehearsal.py tests/test_validate_capability_closure_runner.py -q
+
       - name: Run test-coverage contract tests
         # Enforce the test-execution coverage invariants in CI: the MCOI shard
         # inventory (every mcoi/tests file is in exactly one shard) and the

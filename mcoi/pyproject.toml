@@ -63,4 +63,4 @@ asyncio_mode = "auto"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["mcoi_runtime*", "capability_closure*", "software_dev*", "govern*", "causal_repair*", "capability_levels*"]
+include = ["mcoi_runtime*"]
