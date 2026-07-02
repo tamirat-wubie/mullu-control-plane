@@ -64,6 +64,12 @@ Build from existing workflow artifacts:
 python scripts/build_local_developer_workflow_closure_packet.py --strict
 ```
 
+Run the local developer workflow and emit the closure packet automatically:
+
+```powershell
+python scripts/run_local_developer_workflow_v1.py --strict
+```
+
 Build workflow artifacts first if they are absent:
 
 ```powershell
@@ -74,6 +80,12 @@ Validate a packet:
 
 ```powershell
 python scripts/validate_local_developer_workflow_closure_packet.py --strict
+```
+
+Validate the full workflow and require the closure packet:
+
+```powershell
+python scripts/validate_local_developer_workflow_v1.py --require-closure-packet --strict
 ```
 
 ## Non-Authority Boundary

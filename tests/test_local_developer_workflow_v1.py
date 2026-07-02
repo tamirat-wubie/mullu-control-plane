@@ -152,6 +152,8 @@ def test_local_developer_workflow_v1_cli_writes_json(tmp_path: Path, capsys: pyt
     assert payload["ok"] is True
     assert payload["status"] == "AwaitingEvidence"
     assert sorted(payload["artifact_paths"]) == sorted(ARTIFACT_FILENAMES)
+    assert payload["closure_packet_status"] == "AwaitingEvidence"
+    assert Path(payload["closure_packet_path"]).exists()
 
 
 def test_local_developer_workflow_v1_validator_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -176,6 +178,8 @@ def test_local_developer_workflow_v1_validator_cli(tmp_path: Path, capsys: pytes
         str(paths["approval_request"]),
         "--pr-command-preview",
         str(paths["pr_command_preview"]),
+        "--closure-packet",
+        str(tmp_path / CLOSURE_PACKET_FILENAME),
         "--output",
         str(output_path),
         "--strict",
@@ -187,6 +191,7 @@ def test_local_developer_workflow_v1_validator_cli(tmp_path: Path, capsys: pytes
     assert exit_code == 0
     assert payload["ok"] is True
     assert saved["status"] == "AwaitingEvidence"
+    assert saved["closure_packet_status"] == "not_present"
 
 
 def test_foundation_workflow_composition_descriptor_is_valid() -> None:
