@@ -367,7 +367,7 @@ edits, provenance, and verification.
 Before relying on this instruction file for governed work, run:
 
 ```powershell
-python scripts/run_workspace_governance_checks.py --max-workers 8 --per-check-timeout-seconds 120
+python scripts/run_workspace_governance_checks.py --max-workers 8 --per-check-timeout-seconds 180
 ```
 
 Full workspace preflight runs use a workspace-local lock to prevent concurrent full preflights from racing shared validation artifacts. Use named `--check` or shard options for focused validation lanes. Use `--max-workers 1` only when sequential debugging is required.
@@ -387,13 +387,13 @@ python scripts/validate_workspace_governance_witness.py
 For automation, the governance preflight can emit a JSON receipt:
 
 ```powershell
-python scripts/run_workspace_governance_checks.py --json --max-workers 8 --per-check-timeout-seconds 120
+python scripts/run_workspace_governance_checks.py --json --max-workers 8 --per-check-timeout-seconds 180
 ```
 
 To persist the same receipt to a governed workspace-local JSON file, use:
 
 ```powershell
-python scripts/run_workspace_governance_checks.py --json --max-workers 8 --per-check-timeout-seconds 120 --receipt-path .tmp/workspace-governance-preflight-receipt.json
+python scripts/run_workspace_governance_checks.py --json --max-workers 8 --per-check-timeout-seconds 180 --receipt-path .tmp/workspace-governance-preflight-receipt.json
 ```
 
 Saved preflight receipts are validated with:
