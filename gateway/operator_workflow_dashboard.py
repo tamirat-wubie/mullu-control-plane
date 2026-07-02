@@ -1,7 +1,8 @@
 """Operator workflow dashboard projection.
 
 Purpose: unify local workflow receipt, workflow status, and safe-local action
-    projections into one operator-facing read model.
+    projections into one operator-facing read model, including the local
+    workflow closure packet when present.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: gateway command-spine hashing, local Developer Workflow receipt
     read-model builder, capability promotion ladder, and JSON schema
@@ -42,6 +43,7 @@ from capability_levels.ladder import (  # noqa: E402
     CAPABILITY_PROMOTION_LADDER_ID,
     default_capability_promotion_ladder,
 )
+from software_dev.local_developer_workflow_v1.closure_packet import CLOSURE_PACKET_FILENAME  # noqa: E402
 from mcoi_runtime.app.capability_passports import build_capability_passports  # noqa: E402
 
 
@@ -49,6 +51,7 @@ SCHEMA_REF = "urn:mullusi:schema:operator-workflow-dashboard-read-model:1"
 READ_MODEL_ID = "operator_workflow_dashboard.read_model"
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "operator_workflow_dashboard_read_model.schema.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "operator_workflow_dashboard.read_model.generated.json"
+DEFAULT_CLOSURE_PACKET = REPO_ROOT / ".change_assurance" / CLOSURE_PACKET_FILENAME
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +74,8 @@ def build_operator_workflow_dashboard_read_model(
     *,
     local_workflow_receipt: Mapping[str, Any],
     local_workflow_source_ref: str,
+    closure_packet: Mapping[str, Any] | None = None,
+    closure_packet_source_ref: str = "absent",
     capability_passports: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return a projection-only operator workflow dashboard read model."""
@@ -96,6 +101,10 @@ def build_operator_workflow_dashboard_read_model(
     approval = _approval_summary(local_workflow_receipt, workflow_status, current_gate, operator_controls)
     rollback = _rollback_summary(receipt_card)
     receipts = _receipt_summary(receipt_card, local_workflow_source_ref)
+    closure_packet_summary = _closure_packet_summary(
+        closure_packet=closure_packet,
+        source_ref=closure_packet_source_ref,
+    )
     row = {
         "task": str(local_workflow_receipt.get("task") or "Mullu Developer Workflow v1"),
         "status": str(local_workflow_receipt.get("status") or "AwaitingEvidence"),
@@ -107,6 +116,7 @@ def build_operator_workflow_dashboard_read_model(
         "rollback": rollback,
         "approval_needed": approval["needed"],
         "approval": approval,
+        "closure_packet": closure_packet_summary,
         "source_ref": local_workflow_source_ref,
     }
     dashboard = {
@@ -126,10 +136,12 @@ def build_operator_workflow_dashboard_read_model(
             "workflow_status": "operator_developer_workflow_status.read_model",
             "safe_local_action": "operator_safe_local_action.read_model",
             "capability_passports": "capability_passports.foundation.v1",
+            "closure_packet": "local_developer_workflow_v1.closure_packet",
         },
         "source_refs": {
             "builder": "gateway/operator_workflow_dashboard.py",
             "local_workflow_receipt": local_workflow_source_ref,
+            "closure_packet": closure_packet_source_ref,
         },
         "dashboard_hash": "",
     }
@@ -171,6 +183,7 @@ def validate_operator_workflow_dashboard_read_model(
         rollback = _mapping(row.get("rollback"))
         approval = _mapping(row.get("approval"))
         current_gate = _mapping(row.get("current_gate"))
+        closure_packet = _mapping(row.get("closure_packet"))
         if receipts.get("execution_performed") is not False:
             errors.append(f"rows[{index}].receipts_execution_performed_must_be_false")
         if rollback.get("executed") is not False:
@@ -179,6 +192,26 @@ def validate_operator_workflow_dashboard_read_model(
             errors.append(f"rows[{index}].approval_performed_must_be_false")
         if current_gate.get("execution_performed") is not False:
             errors.append(f"rows[{index}].current_gate_execution_performed_must_be_false")
+        if closure_packet.get("execution_performed") is not False:
+            errors.append(f"rows[{index}].closure_packet_execution_performed_must_be_false")
+        if closure_packet.get("external_effects_allowed") is not False:
+            errors.append(f"rows[{index}].closure_packet_external_effects_must_be_false")
+        closure_gate = _mapping(closure_packet.get("current_gate"))
+        closure_approval = _mapping(closure_packet.get("approval_boundary"))
+        closure_rollback = _mapping(closure_packet.get("rollback"))
+        if closure_gate.get("execution_performed") is not False:
+            errors.append(f"rows[{index}].closure_packet_current_gate_execution_must_be_false")
+        if closure_approval.get("approval_performed") is not False:
+            errors.append(f"rows[{index}].closure_packet_approval_performed_must_be_false")
+        if closure_rollback.get("rollback_executed") is not False:
+            errors.append(f"rows[{index}].closure_packet_rollback_executed_must_be_false")
+        raw_command_preview_refs = closure_packet.get("command_preview_refs", ())
+        if isinstance(raw_command_preview_refs, list):
+            for command_index, command_ref in enumerate(raw_command_preview_refs):
+                if isinstance(command_ref, Mapping) and command_ref.get("execution_allowed") is not False:
+                    errors.append(
+                        f"rows[{index}].closure_packet_command_preview[{command_index}]_execution_must_be_false"
+                    )
     promotion_filters = _mapping(dashboard.get("promotion_filters"))
     if promotion_filters.get("filter_is_not_execution_authority") is not True:
         errors.append("promotion_filters_must_not_be_execution_authority")
@@ -380,6 +413,136 @@ def _approval_summary(
     }
 
 
+def _closure_packet_summary(
+    *,
+    closure_packet: Mapping[str, Any] | None,
+    source_ref: str,
+) -> dict[str, Any]:
+    if closure_packet is None:
+        return {
+            "linked": False,
+            "source_ref": source_ref,
+            "packet_id": "absent",
+            "status": "absent",
+            "solver_outcome": "AwaitingEvidence",
+            "current_gate": {
+                "gate_id": "closure_packet_absent",
+                "gate_type": "observation",
+                "status": "missing",
+                "projection_only": True,
+                "execution_performed": False,
+            },
+            "missing_evidence_refs": ["local_workflow_closure_packet"],
+            "next_required_proof_step": "run local workflow closure packet builder",
+            "approval_boundary": {
+                "approval_request_id": "none",
+                "approval_required": False,
+                "approval_status": "not_requested",
+                "approval_performed": False,
+                "approval_does_not_authorize_execution": True,
+            },
+            "rollback": {
+                "required": False,
+                "strategy": "none",
+                "rollback_executed": False,
+                "execution_performed": False,
+            },
+            "command_preview_refs": [],
+            "packet_hash": "",
+            "projection_only": True,
+            "execution_performed": False,
+            "external_effects_allowed": False,
+        }
+
+    _validate_closure_packet_boundary(closure_packet)
+    current_gate = _mapping(closure_packet.get("current_gate"))
+    approval_boundary = _mapping(closure_packet.get("approval_boundary"))
+    rollback = _mapping(closure_packet.get("rollback"))
+    command_preview_refs = []
+    raw_command_preview = closure_packet.get("command_preview", ())
+    if isinstance(raw_command_preview, list):
+        for command_preview in raw_command_preview:
+            if not isinstance(command_preview, Mapping):
+                continue
+            command_preview_refs.append(
+                {
+                    "command_id": str(command_preview.get("command_id") or "unknown"),
+                    "effect": str(command_preview.get("effect") or "unknown"),
+                    "execution_allowed": False,
+                }
+            )
+    raw_missing_evidence_refs = closure_packet.get("missing_evidence_refs", ())
+    if not isinstance(raw_missing_evidence_refs, list):
+        raw_missing_evidence_refs = []
+    return {
+        "linked": True,
+        "source_ref": source_ref,
+        "packet_id": str(closure_packet.get("packet_id") or "unknown"),
+        "status": str(closure_packet.get("status") or "AwaitingEvidence"),
+        "solver_outcome": str(closure_packet.get("solver_outcome") or "AwaitingEvidence"),
+        "current_gate": {
+            "gate_id": str(current_gate.get("gate_id") or "unknown"),
+            "gate_type": str(current_gate.get("gate_type") or "observation"),
+            "status": str(current_gate.get("status") or "AwaitingEvidence"),
+            "projection_only": True,
+            "execution_performed": False,
+        },
+        "missing_evidence_refs": [str(item) for item in raw_missing_evidence_refs if str(item).strip()][:8],
+        "next_required_proof_step": str(
+            closure_packet.get("next_required_proof_step") or "collect missing closure evidence"
+        ),
+        "approval_boundary": {
+            "approval_request_id": str(approval_boundary.get("approval_request_id") or "unknown"),
+            "approval_required": approval_boundary.get("approval_required") is True,
+            "approval_status": str(approval_boundary.get("approval_status") or "pending"),
+            "approval_performed": False,
+            "approval_does_not_authorize_execution": True,
+        },
+        "rollback": {
+            "required": rollback.get("required") is True,
+            "strategy": str(rollback.get("strategy") or "none"),
+            "rollback_executed": False,
+            "execution_performed": False,
+        },
+        "command_preview_refs": command_preview_refs[:8],
+        "packet_hash": str(closure_packet.get("packet_hash") or ""),
+        "projection_only": True,
+        "execution_performed": False,
+        "external_effects_allowed": False,
+    }
+
+
+def _validate_closure_packet_boundary(closure_packet: Mapping[str, Any]) -> None:
+    if closure_packet.get("projection_only") is not True:
+        raise ValueError("closure_packet_projection_only_must_be_true")
+    if closure_packet.get("packet_is_not_execution_authority") is not True:
+        raise ValueError("closure_packet_must_not_be_execution_authority")
+    if closure_packet.get("execution_performed") is not False:
+        raise ValueError("closure_packet_execution_must_be_false")
+    if closure_packet.get("external_effects_allowed") is not False:
+        raise ValueError("closure_packet_external_effects_must_be_false")
+    if closure_packet.get("live_execution_enabled") is not False:
+        raise ValueError("closure_packet_live_execution_must_be_false")
+    current_gate = _mapping(closure_packet.get("current_gate"))
+    if current_gate.get("execution_performed") is not False:
+        raise ValueError("closure_packet_current_gate_execution_must_be_false")
+    approval_boundary = _mapping(closure_packet.get("approval_boundary"))
+    if approval_boundary.get("approval_performed") is not False:
+        raise ValueError("closure_packet_approval_performed_must_be_false")
+    if approval_boundary.get("approval_does_not_authorize_execution") is not True:
+        raise ValueError("closure_packet_approval_must_not_authorize_execution")
+    rollback = _mapping(closure_packet.get("rollback"))
+    if rollback.get("rollback_executed") is not False:
+        raise ValueError("closure_packet_rollback_executed_must_be_false")
+    if rollback.get("execution_performed") is not False:
+        raise ValueError("closure_packet_rollback_execution_must_be_false")
+    raw_command_preview = closure_packet.get("command_preview", ())
+    if isinstance(raw_command_preview, list):
+        for command_preview in raw_command_preview:
+            if isinstance(command_preview, Mapping) and command_preview.get("execution_allowed") is not False:
+                raise ValueError("closure_packet_command_preview_execution_must_be_false")
+
+
 def _load_local_workflow_receipt(path: Path | None) -> tuple[dict[str, Any], str]:
     if path is not None:
         read_model = _load_json_object(path)
@@ -398,6 +561,14 @@ def _load_local_workflow_receipt(path: Path | None) -> tuple[dict[str, Any], str
         control_tower_status_receipt=control_tower_receipt,
         control_tower_source_ref=control_tower_source_ref,
     ), "<generated-local-workflow-receipt-read-model>"
+
+
+def _load_closure_packet(path: Path | None) -> tuple[dict[str, Any] | None, str]:
+    if path is None or not path.exists():
+        return None, "absent"
+    closure_packet = _load_json_object(path)
+    _validate_closure_packet_boundary(closure_packet)
+    return closure_packet, _path_label(path)
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
@@ -431,6 +602,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(description="Build unified operator workflow dashboard.")
     parser.add_argument("--local-workflow-receipt", default="", help="Optional local workflow receipt read-model path.")
+    parser.add_argument(
+        "--closure-packet",
+        default=str(DEFAULT_CLOSURE_PACKET),
+        help="Optional local developer workflow closure packet path.",
+    )
     parser.add_argument("--schema", default=str(DEFAULT_SCHEMA))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--json", action="store_true")
@@ -447,9 +623,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         local_workflow_receipt, source_ref = _load_local_workflow_receipt(
             Path(args.local_workflow_receipt) if args.local_workflow_receipt else None
         )
+        closure_packet, closure_packet_source_ref = _load_closure_packet(
+            Path(args.closure_packet) if args.closure_packet else None
+        )
         dashboard = build_operator_workflow_dashboard_read_model(
             local_workflow_receipt=local_workflow_receipt,
             local_workflow_source_ref=source_ref,
+            closure_packet=closure_packet,
+            closure_packet_source_ref=closure_packet_source_ref,
         )
         written_path = write_operator_workflow_dashboard_read_model(dashboard, output_path)
         validation = validate_operator_workflow_dashboard_read_model(

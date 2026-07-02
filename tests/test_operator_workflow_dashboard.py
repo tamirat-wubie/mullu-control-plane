@@ -13,6 +13,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from gateway.operator_workflow_dashboard import (
     FORBIDDEN_EFFECTS,
     build_operator_workflow_dashboard_read_model,
@@ -97,6 +99,63 @@ def _local_receipt(*, readiness_status: str = "awaiting_external_pr_approval") -
     )
 
 
+def _closure_packet() -> dict[str, object]:
+    packet: dict[str, object] = {
+        "packet_id": "local_developer_workflow_v1.closure_packet.foundation.v1",
+        "workflow_id": "mullu_developer_workflow.v1",
+        "workflow_run_id": "operator_dashboard_closure_packet_test",
+        "status": "AwaitingEvidence",
+        "solver_outcome": "AwaitingEvidence",
+        "projection_only": True,
+        "packet_is_not_execution_authority": True,
+        "execution_performed": False,
+        "external_effects_allowed": False,
+        "live_execution_enabled": False,
+        "current_gate": {
+            "gate_id": "approval_handoff",
+            "gate_type": "approval_gate",
+            "status": "AwaitingEvidence",
+            "projection_only": True,
+            "execution_performed": False,
+        },
+        "missing_evidence_refs": ["approval://external-pr", "proof://command-preview"],
+        "next_required_proof_step": "collect external PR approval witness",
+        "approval_boundary": {
+            "approval_request_id": "approval://external-pr",
+            "approval_required": True,
+            "approval_status": "pending",
+            "approval_performed": False,
+            "approval_does_not_authorize_execution": True,
+            "allowed_decisions": ["approve", "defer", "reject"],
+            "blocked_after_approval": ["branch_push", "pr_create", "merge"],
+        },
+        "rollback": {
+            "required": True,
+            "strategy": "delete generated artifacts and discard branch-local changes",
+            "rollback_executed": False,
+            "execution_performed": False,
+        },
+        "receipts": {"closure_receipt": "proof://closure"},
+        "test_plan": {"commands": ["python -m pytest tests/test_operator_workflow_dashboard.py -q"]},
+        "command_preview": [
+            {
+                "command_id": "pr_preview",
+                "effect": "pr_create_preview",
+                "command": "gh pr create --draft --dry-run",
+                "execution_allowed": False,
+            }
+        ],
+        "operator_dashboard": {"status": "AwaitingEvidence"},
+        "blocked_effects": ["file_write", "branch_push", "pr_create", "merge"],
+        "effect_boundary": {"local_only": True},
+        "validators": ["operator_workflow_dashboard"],
+        "source_refs": {"builder": "mcoi/software_dev/local_developer_workflow_v1/closure_packet.py"},
+        "causal_trace": ["test packet"],
+        "packet_hash": "b" * 64,
+    }
+    return packet
+
+
 def test_operator_workflow_dashboard_exposes_requested_columns() -> None:
     dashboard = build_operator_workflow_dashboard_read_model(
         local_workflow_receipt=_local_receipt(),
@@ -119,6 +178,8 @@ def test_operator_workflow_dashboard_exposes_requested_columns() -> None:
     assert row["receipts"]["completed"] == 4
     assert row["rollback"]["required"] is True
     assert row["approval_needed"] is True
+    assert row["closure_packet"]["linked"] is False
+    assert row["closure_packet"]["execution_performed"] is False
     assert dashboard["promotion_filters"]["ladder_id"] == "mullu.capability_promotion_ladder.v1"
     assert dashboard["promotion_filters"]["filter_is_not_execution_authority"] is True
     assert dashboard["promotion_filters"]["live_execution_enabled"] is False
@@ -149,6 +210,9 @@ def test_operator_workflow_dashboard_forbids_effect_authority() -> None:
     assert row["rollback"]["executed"] is False
     assert row["approval"]["performed"] is False
     assert row["current_gate"]["execution_performed"] is False
+    assert row["closure_packet"]["current_gate"]["execution_performed"] is False
+    assert row["closure_packet"]["approval_boundary"]["approval_performed"] is False
+    assert row["closure_packet"]["rollback"]["rollback_executed"] is False
     assert row["approval"]["external_effects_allowed"] is False
     assert dashboard["promotion_filters"]["external_effects_allowed"] is False
     assert all(
@@ -178,6 +242,62 @@ def test_operator_workflow_dashboard_validator_rejects_overclaim_and_hash_drift(
     assert "dashboard_hash_mismatch" in serialized_errors
 
 
+def test_operator_workflow_dashboard_ingests_closure_packet_projection() -> None:
+    dashboard = build_operator_workflow_dashboard_read_model(
+        local_workflow_receipt=_local_receipt(),
+        local_workflow_source_ref="local-workflow-receipt.json",
+        closure_packet=_closure_packet(),
+        closure_packet_source_ref="closure-packet.json",
+    )
+    validation = validate_operator_workflow_dashboard_read_model(dashboard=dashboard)
+    closure_packet = dashboard["rows"][0]["closure_packet"]
+
+    assert validation.ok is True
+    assert closure_packet["linked"] is True
+    assert closure_packet["source_ref"] == "closure-packet.json"
+    assert closure_packet["status"] == "AwaitingEvidence"
+    assert closure_packet["current_gate"]["gate_id"] == "approval_handoff"
+    assert closure_packet["missing_evidence_refs"] == ["approval://external-pr", "proof://command-preview"]
+    assert closure_packet["next_required_proof_step"] == "collect external PR approval witness"
+    assert closure_packet["approval_boundary"]["approval_required"] is True
+    assert closure_packet["approval_boundary"]["approval_performed"] is False
+    assert closure_packet["rollback"]["required"] is True
+    assert closure_packet["rollback"]["rollback_executed"] is False
+    assert closure_packet["command_preview_refs"] == [
+        {"command_id": "pr_preview", "effect": "pr_create_preview", "execution_allowed": False}
+    ]
+    assert dashboard["source_refs"]["closure_packet"] == "closure-packet.json"
+    assert dashboard["source_projections"]["closure_packet"] == "local_developer_workflow_v1.closure_packet"
+
+
+def test_operator_workflow_dashboard_rejects_closure_packet_effect_overclaims() -> None:
+    packet = _closure_packet()
+    packet["execution_performed"] = True
+
+    with pytest.raises(ValueError, match="closure_packet_execution_must_be_false"):
+        build_operator_workflow_dashboard_read_model(
+            local_workflow_receipt=_local_receipt(),
+            local_workflow_source_ref="local-workflow-receipt.json",
+            closure_packet=packet,
+            closure_packet_source_ref="closure-packet.json",
+        )
+
+    dashboard = build_operator_workflow_dashboard_read_model(
+        local_workflow_receipt=_local_receipt(),
+        local_workflow_source_ref="local-workflow-receipt.json",
+        closure_packet=_closure_packet(),
+        closure_packet_source_ref="closure-packet.json",
+    )
+    dashboard["rows"][0]["closure_packet"]["command_preview_refs"][0]["execution_allowed"] = True
+
+    validation = validate_operator_workflow_dashboard_read_model(dashboard=dashboard)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "rows[0].closure_packet_command_preview[0]_execution_must_be_false" in serialized_errors
+    assert "dashboard_hash_mismatch" in serialized_errors
+
+
 def test_operator_workflow_dashboard_cli_writes_json(tmp_path: Path, capsys) -> None:
     output_path = tmp_path / "operator-workflow-dashboard.json"
 
@@ -191,6 +311,27 @@ def test_operator_workflow_dashboard_cli_writes_json(tmp_path: Path, capsys) -> 
     assert dashboard["external_effects_allowed"] is False
     assert dashboard["promotion_filters"]["levels"][8]["level_name"] == "live-connector-read"
     assert '"operator_workflow_dashboard.read_model"' in captured.out
+
+
+def test_operator_workflow_dashboard_cli_accepts_closure_packet(tmp_path: Path, capsys) -> None:
+    output_path = tmp_path / "operator-workflow-dashboard.json"
+    closure_packet_path = tmp_path / "closure-packet.json"
+    closure_packet_path.write_text(json.dumps(_closure_packet()), encoding="utf-8")
+
+    exit_code = main([
+        "--closure-packet",
+        str(closure_packet_path),
+        "--output",
+        str(output_path),
+        "--json",
+    ])
+    captured = capsys.readouterr()
+    dashboard = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert dashboard["rows"][0]["closure_packet"]["linked"] is True
+    assert dashboard["rows"][0]["closure_packet"]["current_gate"]["gate_id"] == "approval_handoff"
+    assert '"local_developer_workflow_v1.closure_packet"' in captured.out
 
 
 def test_operator_workflow_dashboard_cli_rejects_invalid_local_receipt(tmp_path: Path, capsys) -> None:
