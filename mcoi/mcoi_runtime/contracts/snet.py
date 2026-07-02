@@ -173,7 +173,10 @@ def _freeze_metadata_value(value: object, field_name: str) -> object:
 
 
 def _require_metadata_scalar(value: object, field_name: str) -> object:
-    if value is None or type(value) in (str, bool, int):
+    if type(value) is str:
+        _require_visible_text_characters(value, field_name)
+        return value
+    if value is None or type(value) in (bool, int):
         return value
     if type(value) is float:
         if not math.isfinite(value):
