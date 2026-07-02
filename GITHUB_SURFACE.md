@@ -1,7 +1,7 @@
 <!--
-Purpose: Versioned witness for GitHub repository metadata.
-Governance scope: proprietary repository description, topics, latest release, and
-  required proprietary-status documents.
+Purpose: Versioned witness for quiet GitHub repository metadata.
+Governance scope: repository description, topics, latest release, and required
+  repository-status documents.
 Dependencies: STATUS.md, DEPLOYMENT_STATUS.md, docs/52_mullu_governance_protocol.md,
   scripts/validate_public_repository_surface.py.
 Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
@@ -11,23 +11,13 @@ Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
 # GitHub Surface Witness
 
 **Repository:** `tamirat-wubie/mullu-control-plane`
-**Expected description:** `Proprietary Mullusi symbolic intelligence control plane - multi-tenant governed orchestration with budget enforcement, audit trails, and policy-driven governance`
+**Public surface mode:** `quiet`
+**Expected description:** `(none)`
 **Expected latest release:** `v3.13.3`
 
 ## Required Topics
 
-| Topic |
-|---|
-| `audit-trail` |
-| `budget-enforcement` |
-| `fastapi` |
-| `governance` |
-| `llm` |
-| `multi-tenant` |
-| `orchestration` |
-| `python` |
-| `rust` |
-| `symbolic-intelligence` |
+No repository topics are required while quiet mode is active.
 
 ## Required Proprietary Documents
 

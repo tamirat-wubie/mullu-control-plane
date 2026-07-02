@@ -214,9 +214,12 @@ DEPLOYMENT_MATRIX_REQUIRED_LITERALS: tuple[str, ...] = (
 PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
     "GITHUB_SURFACE.md": (
         "GitHub Surface Witness",
-        "Proprietary Mullusi symbolic intelligence control plane",
+        "Public surface mode",
+        "quiet",
+        "Expected description",
+        "(none)",
         "v3.13.3",
-        "symbolic-intelligence",
+        "No repository topics are required while quiet mode is active.",
         "docs/00_platform_overview.md",
         "docs/PRODUCT_BOUNDARY.md",
         "docs/52_mullu_governance_protocol.md",
@@ -477,6 +480,18 @@ PUBLIC_NAMING_RELEASE_SURFACE_LITERALS: dict[str, tuple[str, ...]] = {
         "paid public launch",
     ),
 }
+
+QUIET_PUBLIC_README_REQUIRED_LITERALS: tuple[str, ...] = (
+    "# Repository Notice",
+    "Public documentation is intentionally minimized at this time.",
+    "This repository is not accepting public use, issues, or external contributions.",
+    "See `LICENSE` for usage terms.",
+)
+
+
+def is_quiet_public_readme(content: str) -> bool:
+    """Return true when README.md is intentionally minimized for public quiet mode."""
+    return "Public documentation is intentionally minimized at this time." in content
 
 SOURCE_HYGIENE_GLOBS: tuple[str, ...] = ("*.py", "*.rs", "*.toml", "*.yml", "*.yaml")
 IGNORED_SOURCE_DIR_SEGMENTS: tuple[str, ...] = (
@@ -845,6 +860,18 @@ def validate_public_naming_release_surface_links() -> list[str]:
             errors.append(f"{relative_path}: missing public naming release surface")
             continue
         content = path.read_text(encoding="utf-8")
+        if relative_path == "README.md" and is_quiet_public_readme(content):
+            missing_quiet_literals = tuple(
+                literal
+                for literal in QUIET_PUBLIC_README_REQUIRED_LITERALS
+                if literal not in content
+            )
+            if missing_quiet_literals:
+                errors.append(
+                    f"{relative_path}: missing quiet public README literals "
+                    f"{list(missing_quiet_literals)}"
+                )
+            continue
         missing_literals = tuple(
             literal for literal in required_literals if literal not in content
         )

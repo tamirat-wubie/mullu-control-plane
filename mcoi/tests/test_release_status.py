@@ -943,7 +943,7 @@ def test_validate_public_surface_document_texts_rejects_missing_anchor() -> None
     assert any("DEPLOYMENT_STATUS.md missing deployment witness alignment anchors" in error for error in errors)
     assert any("docs/00_platform_overview.md missing from public-surface documents" in error for error in errors)
     assert any("docs/PRODUCT_BOUNDARY.md missing from public-surface documents" in error for error in errors)
-    assert any("symbolic intelligence" in error for error in errors)
+    assert any("No repository topics are required while quiet mode is active." in error for error in errors)
 
 
 def test_validate_release_metadata_texts_rejects_mismatch() -> None:
