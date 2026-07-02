@@ -110,6 +110,7 @@ REQUIRED_VALIDATORS = (
     "python scripts/validate_agentic_service_harness_live_producer_effect_receipt_packet.py",
     "python scripts/validate_agentic_service_harness_live_producer_external_adapter_evidence_packet.py",
     "python scripts/validate_agentic_service_harness_live_producer_secret_handoff_packet.py",
+    "python scripts/validate_agentic_service_harness_live_producer_rollback_proof_packet.py",
     "python scripts/validate_agentic_service_harness_authority_transitions.py",
 )
 REQUIRED_FIXTURE_SURFACES = (

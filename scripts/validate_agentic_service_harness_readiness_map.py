@@ -1710,7 +1710,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(live-producer): mint rollback proof packet artifact",
+        "harness(live-producer): request live producer execution authority",
     )
     positions: list[int] = []
     for marker in sequence_markers:

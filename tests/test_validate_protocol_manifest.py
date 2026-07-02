@@ -248,6 +248,21 @@ def test_protocol_manifest_indexes_agentic_service_harness_live_producer_secret_
     assert packet_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_live_producer_rollback_proof_packet() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    packet_entry = entries["agentic-service-harness-live-producer-rollback-proof-packet"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert packet_entry["path"] == (
+        "schemas/agentic_service_harness_live_producer_rollback_proof_packet.schema.json"
+    )
+    assert packet_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-live-producer-rollback-proof-packet:1"
+    )
+    assert packet_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_concrete_filesystem_write_evidence_candidate() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

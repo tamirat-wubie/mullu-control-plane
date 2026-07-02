@@ -1,0 +1,140 @@
+{
+  "packet_id": "agentic-service-harness-live-producer-rollback-proof-packet",
+  "schema_version": 1,
+  "generated_at": "2026-07-02T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "packet_status": "blocked_awaiting_rollback_proof_components",
+  "source_preflight_ref": "examples/agentic_service_harness_live_producer_rollback_proof_preflight.local.json",
+  "source_preflight_status": "AwaitingEvidence",
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "live_effect_observed": false,
+  "effect_receipt_collected": false,
+  "external_adapter_integrated": false,
+  "adapter_credentials_present": false,
+  "adapter_credentials_serialized": false,
+  "secret_values_present": false,
+  "secret_values_read": false,
+  "secret_values_serialized": false,
+  "secret_values_printed": false,
+  "rollback_executed": false,
+  "recovery_verified": false,
+  "authority_granted": false,
+  "terminal_closure": false,
+  "required_components": [
+    {
+      "component_id": "rollback_proof_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/rollback-proof",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "rollback_plan_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/rollback-plan",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "state_snapshot_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/state-snapshot",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "inverse_delta_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/inverse-delta",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "replay_receipt_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/replay-receipt",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "recovery_verification_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/recovery-verification",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "secret_handoff_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/rollback-secret-handoff-linkage",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    }
+  ],
+  "missing_evidence": [
+    {
+      "evidence_id": "rollback_proof_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "rollback_plan_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "state_snapshot_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "inverse_delta_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "replay_receipt_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "recovery_verification_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "secret_handoff_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    }
+  ],
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-rollback-proof-packet",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_rollback_proof_packet.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect a governed rollback proof, rollback plan, state snapshot, inverse delta, replay receipt, recovery verification, and secret handoff linkage before changing this packet status."
+}
