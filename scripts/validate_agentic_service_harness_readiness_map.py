@@ -1710,7 +1710,7 @@ def _validate_github_pr_terminal_closure_ready(
 
 def _validate_next_pr_sequence(map_text: str, errors: list[str]) -> None:
     sequence_markers = (
-        "harness(live-producer): bind operator response to approval collection",
+        "harness(live-producer): bind evidence packet intake to response collection",
     )
     positions: list[int] = []
     for marker in sequence_markers:

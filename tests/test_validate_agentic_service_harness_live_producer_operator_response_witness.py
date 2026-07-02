@@ -59,6 +59,12 @@ def test_live_producer_operator_response_witness_accept_default_fixture() -> Non
     assert produced_witness["response_status"] == "AwaitingEvidence"
     assert produced_witness["response_record_collected"] is False
     assert produced_witness["approval_satisfied"] is False
+    assert (
+        produced_witness["approval_request_collection_binding"]["source_binding_id"]
+        == "binding.operator_approval.governed_witness_collection"
+    )
+    assert produced_witness["approval_request_collection_binding"]["response_record_collected"] is False
+    assert produced_witness["approval_request_collection_binding"]["live_execution_authorized"] is False
 
 
 def test_live_producer_operator_response_witness_projects_approval_request() -> None:
@@ -69,6 +75,16 @@ def test_live_producer_operator_response_witness_projects_approval_request() -> 
     assert request_validation.ok is True
     assert produced_witness["response_witness_id"] == OPERATOR_RESPONSE_WITNESS_ID
     assert produced_witness["response_kind"] == OPERATOR_RESPONSE_MISSING_KIND
+    assert (
+        produced_witness["approval_request_collection_binding"]["source_requirements_evidence_ref"]
+        == approval_request["governed_collection_binding"]["requirements_evidence_ref"]
+    )
+    assert (
+        produced_witness["approval_request_collection_binding"]["source_governed_artifact_ref"]
+        == approval_request["governed_collection_binding"]["governed_artifact_ref"]
+    )
+    assert produced_witness["approval_request_collection_binding"]["approval_satisfied"] is False
+    assert produced_witness["approval_request_collection_binding"]["blocks_live_producer"] is True
     assert tuple(witness["witness_kind"] for witness in witnesses) == REQUIRED_WITNESS_KINDS
     assert all(witness["status"] == "AwaitingEvidence" for witness in witnesses)
     assert all(witness["authority_granted"] is False for witness in witnesses)
@@ -130,6 +146,37 @@ def test_live_producer_operator_response_witness_rejects_live_authority(tmp_path
     assert produced_witness["operator_response"]["live_execution_authorized_after_response"] is False
 
 
+def test_live_producer_operator_response_witness_rejects_collection_binding_drift(tmp_path: Path) -> None:
+    witness = _default_witness()
+    binding = witness["approval_request_collection_binding"]
+    binding["source_requirements_evidence_ref"] = "approval://operator-live-producer-untracked"
+    binding["source_governed_artifact_ref"] = (
+        "examples/agentic_service_harness_live_producer_effect_receipt_preflight.local.json"
+    )
+    binding["binding_status"] = "SolvedVerified"
+    binding["response_record_collected"] = True
+    binding["approval_satisfied"] = True
+    binding["authority_granted"] = True
+    binding["live_execution_authorized"] = True
+    witness_path = tmp_path / "operator-response-witness.json"
+    witness_path.write_text(json.dumps(witness), encoding="utf-8")
+
+    validation, produced_witness = validate_live_producer_operator_response_witness(fixture_path=witness_path)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "approval_request_collection_binding.source_requirements_evidence_ref mismatch" in serialized_errors
+    assert "approval_request_collection_binding.source_governed_artifact_ref mismatch" in serialized_errors
+    assert "approval_request_collection_binding.binding_status mismatch" in serialized_errors
+    assert "approval_request_collection_binding.response_record_collected mismatch" in serialized_errors
+    assert "approval_request_collection_binding.approval_satisfied mismatch" in serialized_errors
+    assert "approval_request_collection_binding.authority_granted mismatch" in serialized_errors
+    assert "approval_request_collection_binding.live_execution_authorized mismatch" in serialized_errors
+    assert produced_witness["approval_request_collection_binding"]["response_record_collected"] is False
+    assert produced_witness["approval_request_collection_binding"]["approval_satisfied"] is False
+    assert produced_witness["approval_request_collection_binding"]["authority_granted"] is False
+
+
 def test_live_producer_operator_response_witness_rejects_mutation_route_ref(tmp_path: Path) -> None:
     witness = _default_witness()
     witness["operator_response"]["response_record_ref"] = "POST /api/v1/harness/live-producer/approval"
@@ -169,3 +216,4 @@ def test_live_producer_operator_response_witness_cli_json_reports_valid(capsys) 
     assert payload["ok"] is True
     assert payload["witness_count"] == len(REQUIRED_WITNESS_KINDS)
     assert payload["produced_witness"]["approval_satisfied"] is False
+    assert payload["produced_witness"]["approval_request_collection_binding"]["blocks_live_producer"] is True

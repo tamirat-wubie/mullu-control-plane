@@ -730,7 +730,7 @@ def test_readiness_map_rejects_missing_current_next_pr_marker(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(live-producer): bind operator response to approval collection`",
+            "1. `harness(live-producer): bind evidence packet intake to response collection`",
             "1. `harness(live-producer): request live producer execution authority`",
         ),
         encoding="utf-8",
@@ -741,7 +741,7 @@ def test_readiness_map_rejects_missing_current_next_pr_marker(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(live-producer): bind operator response to approval collection"
+        "missing next PR marker: harness(live-producer): bind evidence packet intake to response collection"
         in serialized_errors
     )
 

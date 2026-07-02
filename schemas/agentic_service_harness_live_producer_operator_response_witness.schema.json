@@ -15,6 +15,7 @@
     "source_admission_gate_ref",
     "witness_kind",
     "requested_evidence_ref",
+    "approval_request_collection_binding",
     "response_status",
     "response_kind",
     "response_record_collected",
@@ -66,6 +67,9 @@
     },
     "requested_evidence_ref": {
       "$ref": "#/$defs/evidence_ref"
+    },
+    "approval_request_collection_binding": {
+      "$ref": "#/$defs/approval_request_collection_binding"
     },
     "response_status": {
       "type": "string",
@@ -252,6 +256,119 @@
         "evidence_ref": { "$ref": "#/$defs/evidence_ref" },
         "blocks_live_producer": { "type": "boolean", "const": true },
         "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "approval_request_collection_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_id",
+        "source_binding_id",
+        "source_collection_id",
+        "source_witness_kind",
+        "source_requirements_evidence_ref",
+        "source_governed_artifact_ref",
+        "source_validator_id",
+        "source_validator_command",
+        "source_approval_request_ref",
+        "source_approval_request_id",
+        "source_request_artifact_ref",
+        "source_request_validator_id",
+        "source_request_validator_command",
+        "response_witness_id",
+        "response_witness_ref",
+        "response_validator_id",
+        "response_validator_command",
+        "binding_status",
+        "source_binding_status",
+        "source_collection_status",
+        "response_status",
+        "approval_collected",
+        "response_record_collected",
+        "approval_satisfied",
+        "authority_granted",
+        "live_execution_authorized",
+        "blocks_live_producer"
+      ],
+      "properties": {
+        "binding_id": {
+          "type": "string",
+          "const": "binding.operator_response.approval_request_collection"
+        },
+        "source_binding_id": {
+          "type": "string",
+          "const": "binding.operator_approval.governed_witness_collection"
+        },
+        "source_collection_id": {
+          "type": "string",
+          "const": "collection.operator_approval"
+        },
+        "source_witness_kind": {
+          "type": "string",
+          "const": "operator_approval"
+        },
+        "source_requirements_evidence_ref": {
+          "type": "string",
+          "const": "approval://operator-live-producer-approval-required"
+        },
+        "source_governed_artifact_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_live_producer_operator_approval_request.local.json"
+        },
+        "source_validator_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-operator-approval-request"
+        },
+        "source_validator_command": {
+          "type": "string",
+          "const": "python scripts/validate_agentic_service_harness_live_producer_operator_approval_request.py"
+        },
+        "source_approval_request_ref": {
+          "type": "string",
+          "const": "approval-request://agentic-service-harness-live-producer-operator-approval-request"
+        },
+        "source_approval_request_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-operator-approval-request"
+        },
+        "source_request_artifact_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_live_producer_operator_approval_request.local.json"
+        },
+        "source_request_validator_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-operator-approval-request"
+        },
+        "source_request_validator_command": {
+          "type": "string",
+          "const": "python scripts/validate_agentic_service_harness_live_producer_operator_approval_request.py"
+        },
+        "response_witness_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-operator-response-witness"
+        },
+        "response_witness_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_live_producer_operator_response_witness.local.json"
+        },
+        "response_validator_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-operator-response-witness"
+        },
+        "response_validator_command": {
+          "type": "string",
+          "const": "python scripts/validate_agentic_service_harness_live_producer_operator_response_witness.py"
+        },
+        "binding_status": { "type": "string", "const": "AwaitingEvidence" },
+        "source_binding_status": { "type": "string", "const": "AwaitingEvidence" },
+        "source_collection_status": { "type": "string", "const": "AwaitingEvidence" },
+        "response_status": { "type": "string", "const": "AwaitingEvidence" },
+        "approval_collected": { "type": "boolean", "const": false },
+        "response_record_collected": { "type": "boolean", "const": false },
+        "approval_satisfied": { "type": "boolean", "const": false },
+        "authority_granted": { "type": "boolean", "const": false },
+        "live_execution_authorized": { "type": "boolean", "const": false },
+        "blocks_live_producer": { "type": "boolean", "const": true }
       }
     },
     "authority_denials": {
