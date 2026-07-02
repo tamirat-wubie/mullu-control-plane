@@ -425,6 +425,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-effect-receipt-packet:1"
     },
     {
+      "path": "schemas/agentic_service_harness_live_producer_external_adapter_evidence_packet.schema.json",
+      "schema_id": "agentic-service-harness-live-producer-external-adapter-evidence-packet",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-external-adapter-evidence-packet:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_live_producer_operator_approval_request.schema.json",
       "schema_id": "agentic-service-harness-live-producer-operator-approval-request",
       "surface": "runtime",

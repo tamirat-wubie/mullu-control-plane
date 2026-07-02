@@ -1,0 +1,135 @@
+{
+  "packet_id": "agentic-service-harness-live-producer-external-adapter-evidence-packet",
+  "schema_version": 1,
+  "generated_at": "2026-07-02T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "packet_status": "blocked_awaiting_external_adapter_evidence_components",
+  "source_preflight_ref": "examples/agentic_service_harness_live_producer_external_adapter_evidence_preflight.local.json",
+  "source_preflight_status": "AwaitingEvidence",
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "external_adapter_integrated": false,
+  "adapter_credentials_present": false,
+  "adapter_credentials_serialized": false,
+  "network_egress_opened": false,
+  "signed_dispatch_collected": false,
+  "live_adapter_probe_executed": false,
+  "authority_granted": false,
+  "terminal_closure": false,
+  "required_components": [
+    {
+      "component_id": "external_adapter_evidence_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/external-adapter-evidence",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "provider_identity_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/provider-identity",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "adapter_descriptor_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/adapter-descriptor",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "capability_scope_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/capability-scope",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "egress_policy_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/egress-policy",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "redaction_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/external-adapter-redaction-proof",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "effect_receipt_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/effect-receipt-linkage",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    }
+  ],
+  "missing_evidence": [
+    {
+      "evidence_id": "external_adapter_evidence_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "provider_identity_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "adapter_descriptor_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "capability_scope_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "egress_policy_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "redaction_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "effect_receipt_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    }
+  ],
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-external-adapter-evidence-packet",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_external_adapter_evidence_packet.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect redacted provider identity, adapter descriptor, capability scope, egress policy, evidence redaction proof, signed dispatch evidence, and effect receipt linkage before changing this packet status."
+}

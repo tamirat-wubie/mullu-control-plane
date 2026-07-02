@@ -1,5 +1,5 @@
 {
-  "check_count": 337,
+  "check_count": 338,
   "checks": [
     {
       "args": [
@@ -1781,6 +1781,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER EXTERNAL ADAPTER EVIDENCE PREFLIGHT VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_live_producer_external_adapter_evidence_packet.py"
+      ],
+      "name": "agentic_service_harness_live_producer_external_adapter_evidence_packet",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER EXTERNAL ADAPTER EVIDENCE PACKET VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },

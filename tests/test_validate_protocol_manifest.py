@@ -216,6 +216,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_filesystem_write_admi
     assert write_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_live_producer_external_adapter_packet() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    packet_entry = entries[
+        "agentic-service-harness-live-producer-external-adapter-evidence-packet"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert packet_entry["path"] == (
+        "schemas/agentic_service_harness_live_producer_external_adapter_evidence_packet.schema.json"
+    )
+    assert packet_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-live-producer-external-adapter-evidence-packet:1"
+    )
+    assert packet_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_concrete_filesystem_write_evidence_candidate() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
