@@ -732,7 +732,10 @@ REQUIRED_GITHUB_PR_TERMINAL_CLOSURE_TERMS = (
     "GitHub PR terminal closure generic continuation rejection command-preview decision contract binding PR",
     "agentic_service_harness_github_pr_terminal_closure_generic_continuation_rejection",
     "command-preview decision contract evidence",
+    "command-preview certificate candidate evidence capsule",
     "command-preview operator approval gate evidence",
+    "source argument vector template",
+    "source placeholder refs",
     "actual-diff decision contract evidence",
     "source decision contract binding id/ref",
     "command-preview-bound generic rejection evidence",
@@ -1579,7 +1582,7 @@ def _validate_github_pr_terminal_closure_ready(
         )
 
     generic_rejection_row = re.search(
-        r"^\| GitHub PR terminal closure generic continuation rejection command-preview decision contract binding PR \| READY \| .+command-preview decision contract evidence.+actual-diff decision contract evidence.+source decision contract binding id/ref.+redacted command preview.+actual-diff operator approval gate evidence.+Generic continuation remains rejected.+terminal closure authority is granted\. \|$",
+        r"^\| GitHub PR terminal closure generic continuation rejection command-preview decision contract binding PR \| READY \| .+command-preview decision contract evidence.+command-preview certificate candidate evidence capsule.+actual-diff decision contract evidence.+source decision contract binding id/ref.+redacted command preview.+source argument vector template.+source placeholder refs.+actual-diff operator approval gate evidence.+Generic continuation remains rejected.+terminal closure authority is granted\. \|$",
         map_text,
         re.MULTILINE,
     )

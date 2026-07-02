@@ -114,6 +114,40 @@ def test_github_pr_terminal_closure_generic_continuation_rejection_rejects_comma
     assert "command_preview_decision_contract_evidence.command_preview_bound must be true" in serialized_errors
 
 
+def test_github_pr_terminal_closure_generic_continuation_rejection_rejects_command_preview_certificate_candidate_capsule_drift() -> None:
+    payload = validator.build_mutated_generic_continuation_rejection(
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_certificate_candidate_evidence__source_binding_id="other_terminal_witness",
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_certificate_candidate_evidence__source_command_preview_ref=(
+            "examples/other-command-preview.json"
+        ),
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_certificate_candidate_evidence__source_argument_vector_template=[
+            "gh",
+            "pr",
+            "create",
+            "--body",
+            "leaked",
+        ],
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_certificate_candidate_evidence__source_terminal_closure_certificate_collected=True,
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_certificate_candidate_evidence__source_authority_granted=True,
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_certificate_candidate_evidence__candidate_consumes_command_preview_terminal_closure_certificate_evidence=False,
+        continuation_rejection__command_preview_decision_contract_evidence__command_preview_certificate_candidate_evidence__terminal_closure_remains_blocked=False,
+    )
+
+    errors: list[str] = []
+    validator._validate_terminal_closure_generic_continuation_rejection_semantics(
+        payload, _source_contract(), errors, "mutated"
+    )
+    serialized_errors = "\n".join(errors)
+
+    assert "command_preview_certificate_candidate_evidence.source_binding_id expected" in serialized_errors
+    assert "command_preview_certificate_candidate_evidence.source_command_preview_ref expected" in serialized_errors
+    assert "command_preview_certificate_candidate_evidence.source_argument_vector_template expected" in serialized_errors
+    assert "command_preview_certificate_candidate_evidence.source_terminal_closure_certificate_collected must be false" in serialized_errors
+    assert "command_preview_certificate_candidate_evidence.source_authority_granted must be false" in serialized_errors
+    assert "command_preview_certificate_candidate_evidence.candidate_consumes_command_preview_terminal_closure_certificate_evidence must be true" in serialized_errors
+    assert "command_preview_certificate_candidate_evidence.terminal_closure_remains_blocked must be true" in serialized_errors
+
+
 def test_github_pr_terminal_closure_generic_continuation_rejection_rejects_actual_diff_decision_contract_drift() -> None:
     payload = validator.build_mutated_generic_continuation_rejection(
         continuation_rejection__actual_diff_decision_contract_evidence__source_decision_contract_binding_id="other_binding",
