@@ -233,6 +233,32 @@ def test_protocol_manifest_indexes_agentic_service_harness_live_producer_externa
     assert packet_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_inceptadive_live_producer_readiness_binding() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    binding_entry = entries["inceptadive-live-producer-readiness-binding"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert binding_entry["path"] == "schemas/inceptadive_live_producer_readiness_binding.schema.json"
+    assert binding_entry["urn"] == "urn:mullusi:schema:inceptadive-live-producer-readiness-binding:1"
+    assert binding_entry["surface"] == "governance"
+
+
+def test_protocol_manifest_indexes_agentic_service_harness_live_producer_secret_handoff_packet() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    packet_entry = entries["agentic-service-harness-live-producer-secret-handoff-packet"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert packet_entry["path"] == (
+        "schemas/agentic_service_harness_live_producer_secret_handoff_packet.schema.json"
+    )
+    assert packet_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-live-producer-secret-handoff-packet:1"
+    )
+    assert packet_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_concrete_filesystem_write_evidence_candidate() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

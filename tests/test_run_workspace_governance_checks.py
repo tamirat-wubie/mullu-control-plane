@@ -184,6 +184,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_live_producer_evidence_packet_intake",
         "agentic_service_harness_live_producer_effect_receipt_packet",
         "agentic_service_harness_live_producer_external_adapter_evidence_packet",
+        "agentic_service_harness_live_producer_secret_handoff_packet",
         "foundation_mode",
         "foundation_local_proof_thread",
         "evidence_ledger_foundation_source",
@@ -301,6 +302,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_receipt_store_authority_witness",
         "universal_symbol_kernel",
         "inceptadive_external_effect_adapter_readiness",
+        "inceptadive_live_producer_readiness_binding",
         "sdlc_artifact_validation",
         "sdlc_route_validation",
         "sdlc_state_machine_validation",
@@ -778,6 +780,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_live_producer_external_adapter_evidence_packet",
+        "agentic_service_harness_live_producer_secret_handoff_packet",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_secret_handoff_packet",
         "foundation_operator_readiness_boundary",
     )
     assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")
@@ -1102,6 +1108,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["inceptadive_external_effect_adapter_readiness"][1:] == (
         "scripts/validate_inceptadive_external_effect_adapter_readiness.py",
+    )
+    assert args_by_name["inceptadive_live_producer_readiness_binding"][1:] == (
+        "scripts/validate_inceptadive_live_producer_readiness_binding.py",
     )
     assert args_by_name["sdlc_artifact_validation"][1:] == (
         "scripts/validate_sdlc_artifact.py",

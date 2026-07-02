@@ -431,6 +431,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-external-adapter-evidence-packet:1"
     },
     {
+      "path": "schemas/agentic_service_harness_live_producer_secret_handoff_packet.schema.json",
+      "schema_id": "agentic-service-harness-live-producer-secret-handoff-packet",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-secret-handoff-packet:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_live_producer_operator_approval_request.schema.json",
       "schema_id": "agentic-service-harness-live-producer-operator-approval-request",
       "surface": "runtime",
@@ -1671,6 +1677,12 @@
       "schema_id": "inceptadive-external-effect-adapter-readiness",
       "surface": "governance",
       "urn": "urn:mullusi:schema:inceptadive-external-effect-adapter-readiness:1"
+    },
+    {
+      "path": "schemas/inceptadive_live_producer_readiness_binding.schema.json",
+      "schema_id": "inceptadive-live-producer-readiness-binding",
+      "surface": "governance",
+      "urn": "urn:mullusi:schema:inceptadive-live-producer-readiness-binding:1"
     },
     {
       "path": "schemas/intelligence_coordination_episode_receipt.schema.json",

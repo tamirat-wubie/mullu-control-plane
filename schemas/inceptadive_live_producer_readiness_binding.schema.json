@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:inceptadive-live-producer-readiness-binding:1",
+  "title": "InceptaDive Live Producer Readiness Binding",
+  "description": "No-effect binding that proves InceptaDive external-effect adapter readiness and the Agentic Service Harness live-producer evidence packets remain aligned in AwaitingEvidence before any live execution authority exists.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "binding_status",
+    "binding_decision",
+    "planning_only",
+    "read_only",
+    "live_producer_implemented",
+    "external_effect_adapter_implemented",
+    "live_effect_observed",
+    "effect_receipt_collected",
+    "external_adapter_evidence_collected",
+    "authority_granted",
+    "terminal_closure",
+    "source_bindings",
+    "source_statuses",
+    "blocked_evidence",
+    "authority_denials",
+    "effect_boundary",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "binding_id": {
+      "type": "string",
+      "const": "inceptadive-live-producer-readiness-binding"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "binding_status": {
+      "type": "string",
+      "const": "blocked_awaiting_live_producer_and_inceptadive_readiness_evidence"
+    },
+    "binding_decision": {
+      "type": "string",
+      "const": "block_external_effect_execution_until_all_bound_packets_are_verified_and_authorized"
+    },
+    "planning_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "live_producer_implemented": { "type": "boolean", "const": false },
+    "external_effect_adapter_implemented": { "type": "boolean", "const": false },
+    "live_effect_observed": { "type": "boolean", "const": false },
+    "effect_receipt_collected": { "type": "boolean", "const": false },
+    "external_adapter_evidence_collected": { "type": "boolean", "const": false },
+    "authority_granted": { "type": "boolean", "const": false },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "source_bindings": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/source_binding" },
+      "uniqueItems": true
+    },
+    "source_statuses": { "$ref": "#/$defs/source_statuses" },
+    "blocked_evidence": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": { "$ref": "#/$defs/blocked_evidence_item" },
+      "uniqueItems": true
+    },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/#-]*$"
+    },
+    "source_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "source_ref",
+        "validator_command",
+        "status",
+        "blocks_external_effect_execution",
+        "authority_granted"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "enum": [
+            "inceptadive_external_effect_adapter_readiness",
+            "agentic_service_harness_live_producer_evidence_packet_intake",
+            "agentic_service_harness_live_producer_effect_receipt_packet",
+            "agentic_service_harness_live_producer_external_adapter_evidence_packet"
+          ]
+        },
+        "source_ref": { "$ref": "#/$defs/identifier" },
+        "validator_command": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "blocks_external_effect_execution": { "type": "boolean", "const": true },
+        "authority_granted": { "type": "boolean", "const": false }
+      }
+    },
+    "source_statuses": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inceptadive_readiness",
+        "live_producer_evidence_intake",
+        "live_producer_effect_receipt_packet",
+        "live_producer_external_adapter_evidence_packet"
+      ],
+      "properties": {
+        "inceptadive_readiness": { "type": "string", "const": "AwaitingEvidence" },
+        "live_producer_evidence_intake": { "type": "string", "const": "AwaitingEvidence" },
+        "live_producer_effect_receipt_packet": { "type": "string", "const": "AwaitingEvidence" },
+        "live_producer_external_adapter_evidence_packet": {
+          "type": "string",
+          "const": "AwaitingEvidence"
+        }
+      }
+    },
+    "blocked_evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_id", "status", "blocks_external_effect_execution"],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "enum": [
+            "phi_gov_authority_receipt_ref",
+            "uao_admission_receipt_ref",
+            "dry_run_probe_receipt_ref",
+            "redaction_receipt_ref",
+            "rollback_recovery_receipt_ref",
+            "signed_dispatch_receipt_ref"
+          ]
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "blocks_external_effect_execution": { "type": "boolean", "const": true }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "external_effect_execution_authorized",
+        "live_producer_execution_authorized",
+        "connector_dispatch_authority",
+        "provider_mutation_authority",
+        "credential_read_authority",
+        "credential_serialization_authority",
+        "runtime_state_write_authority",
+        "terminal_closure_authority"
+      ],
+      "properties": {
+        "external_effect_execution_authorized": { "type": "boolean", "const": false },
+        "live_producer_execution_authorized": { "type": "boolean", "const": false },
+        "connector_dispatch_authority": { "type": "boolean", "const": false },
+        "provider_mutation_authority": { "type": "boolean", "const": false },
+        "credential_read_authority": { "type": "boolean", "const": false },
+        "credential_serialization_authority": { "type": "boolean", "const": false },
+        "runtime_state_write_authority": { "type": "boolean", "const": false },
+        "terminal_closure_authority": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_policy",
+        "mutation_routes_admitted",
+        "provider_calls_allowed",
+        "external_state_writes_allowed",
+        "runtime_state_writes_allowed",
+        "secret_values_allowed",
+        "raw_payload_retention_allowed"
+      ],
+      "properties": {
+        "network_policy": { "type": "string", "const": "none" },
+        "mutation_routes_admitted": { "type": "boolean", "const": false },
+        "provider_calls_allowed": { "type": "boolean", "const": false },
+        "external_state_writes_allowed": { "type": "boolean", "const": false },
+        "runtime_state_writes_allowed": { "type": "boolean", "const": false },
+        "secret_values_allowed": { "type": "boolean", "const": false },
+        "raw_payload_retention_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": {
+          "type": "string",
+          "const": "inceptadive-live-producer-readiness-binding"
+        },
+        "command": {
+          "type": "string",
+          "const": "python scripts/validate_inceptadive_live_producer_readiness_binding.py"
+        },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}
