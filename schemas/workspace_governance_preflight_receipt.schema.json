@@ -215,6 +215,7 @@
             "agentic_service_harness_live_producer_execution_authority_review_intake_preflight",
             "agentic_service_harness_live_producer_execution_authority_review_intake_evidence_digest_packet",
             "agentic_service_harness_live_producer_execution_authority_review_submission_admission_preflight",
+            "agentic_service_harness_live_producer_execution_authority_review_submission_receipt_contract",
             "foundation_operator_readiness_boundary",
             "foundation_solo_daily_loop_boundary",
             "foundation_learning_path_boundary",
