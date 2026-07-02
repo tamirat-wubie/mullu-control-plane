@@ -413,6 +413,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-rollback-proof-preflight:1"
     },
     {
+      "path": "schemas/agentic_service_harness_live_producer_evidence_packet_intake.schema.json",
+      "schema_id": "agentic-service-harness-live-producer-evidence-packet-intake",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-evidence-packet-intake:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_live_producer_operator_approval_request.schema.json",
       "schema_id": "agentic-service-harness-live-producer-operator-approval-request",
       "surface": "runtime",
