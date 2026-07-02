@@ -918,6 +918,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "agentic_service_harness_live_producer_evidence_packet_intake",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_live_producer_evidence_packet_intake.py",
+            ),
+        ),
+        CheckCommand(
             "foundation_operator_readiness_boundary",
             (python_executable, "scripts/validate_foundation_operator_readiness_boundary.py"),
         ),

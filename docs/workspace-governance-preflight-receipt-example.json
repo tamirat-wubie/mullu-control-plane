@@ -1,5 +1,5 @@
 {
-  "check_count": 335,
+  "check_count": 336,
   "checks": [
     {
       "args": [
@@ -1807,6 +1807,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER ROLLBACK PROOF PREFLIGHT VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_live_producer_evidence_packet_intake.py"
+      ],
+      "name": "agentic_service_harness_live_producer_evidence_packet_intake",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER EVIDENCE PACKET INTAKE VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
