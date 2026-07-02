@@ -340,6 +340,23 @@ def test_protocol_manifest_indexes_agentic_service_harness_live_producer_executi
     assert packet_entry["surface"] == "runtime"
 
 
+def test_protocol_manifest_indexes_agentic_service_harness_live_producer_execution_authority_review_submission_admission_preflight() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    preflight_entry = entries[
+        "agentic-service-harness-live-producer-execution-authority-review-submission-admission-preflight"
+    ]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert preflight_entry["path"] == (
+        "schemas/agentic_service_harness_live_producer_execution_authority_review_submission_admission_preflight.schema.json"
+    )
+    assert preflight_entry["urn"] == (
+        "urn:mullusi:schema:agentic-service-harness-live-producer-execution-authority-review-submission-admission-preflight:1"
+    )
+    assert preflight_entry["surface"] == "runtime"
+
+
 def test_protocol_manifest_indexes_agentic_service_harness_concrete_filesystem_write_evidence_candidate() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
