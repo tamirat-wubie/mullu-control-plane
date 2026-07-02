@@ -730,7 +730,7 @@ def test_readiness_map_rejects_missing_current_next_pr_marker(
     map_path = tmp_path / "readiness-map.md"
     map_path.write_text(
         map_text.replace(
-            "1. `harness(live-producer): add redacted live authority review intake preflight`",
+            "1. `harness(live-producer): add live authority review intake evidence digest packet`",
             "1. `harness(live-producer): blocked marker drift`",
         ),
         encoding="utf-8",
@@ -741,7 +741,7 @@ def test_readiness_map_rejects_missing_current_next_pr_marker(
 
     assert validation.ok is False
     assert (
-        "missing next PR marker: harness(live-producer): add redacted live authority review intake preflight"
+        "missing next PR marker: harness(live-producer): add live authority review intake evidence digest packet"
         in serialized_errors
     )
 

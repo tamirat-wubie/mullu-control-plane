@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness-live-producer-execution-authority-review-intake-preflight:1",
+  "title": "Agentic Service Harness Live Producer Execution Authority Review Intake Preflight",
+  "description": "No-effect preflight for future redacted live authority review intake. The preflight binds the review input contract while keeping review route admission, input collection, review submission, live execution, connector calls, receipt append, runtime writes, credential access, mutation routes, and terminal closure denied.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "preflight_id",
+    "schema_version",
+    "generated_at",
+    "solver_outcome",
+    "preflight_status",
+    "source_review_input_contract_ref",
+    "source_review_input_contract_status",
+    "planning_only",
+    "read_only",
+    "redaction_policy_ready",
+    "review_route_admitted",
+    "input_collection_started",
+    "input_collection_complete",
+    "review_submitted",
+    "live_producer_implemented",
+    "live_execution_authorized",
+    "authority_granted",
+    "terminal_closure",
+    "source_review_input_contract_binding",
+    "redacted_intake_requirements",
+    "missing_intake_requirements",
+    "redaction_policy",
+    "authority_denials",
+    "effect_boundary",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "preflight_id": {
+      "type": "string",
+      "const": "agentic-service-harness-live-producer-execution-authority-review-intake-preflight"
+    },
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": { "type": "string", "const": "AwaitingEvidence" },
+    "preflight_status": {
+      "type": "string",
+      "const": "blocked_awaiting_redacted_live_authority_review_intake"
+    },
+    "source_review_input_contract_ref": {
+      "type": "string",
+      "const": "examples/agentic_service_harness_live_producer_execution_authority_review_input_contract.awaiting_evidence.json"
+    },
+    "source_review_input_contract_status": {
+      "type": "string",
+      "const": "blocked_awaiting_live_authority_review_inputs"
+    },
+    "planning_only": { "type": "boolean", "const": true },
+    "read_only": { "type": "boolean", "const": true },
+    "redaction_policy_ready": { "type": "boolean", "const": true },
+    "review_route_admitted": { "type": "boolean", "const": false },
+    "input_collection_started": { "type": "boolean", "const": false },
+    "input_collection_complete": { "type": "boolean", "const": false },
+    "review_submitted": { "type": "boolean", "const": false },
+    "live_producer_implemented": { "type": "boolean", "const": false },
+    "live_execution_authorized": { "type": "boolean", "const": false },
+    "authority_granted": { "type": "boolean", "const": false },
+    "terminal_closure": { "type": "boolean", "const": false },
+    "source_review_input_contract_binding": { "$ref": "#/$defs/source_review_input_contract_binding" },
+    "redacted_intake_requirements": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": { "$ref": "#/$defs/redacted_intake_requirement" },
+      "uniqueItems": true
+    },
+    "missing_intake_requirements": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": { "$ref": "#/$defs/missing_intake_requirement" },
+      "uniqueItems": true
+    },
+    "redaction_policy": { "$ref": "#/$defs/redaction_policy" },
+    "authority_denials": { "$ref": "#/$defs/authority_denials" },
+    "effect_boundary": { "$ref": "#/$defs/effect_boundary" },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": { "$ref": "#/$defs/validator_ref" }
+    },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "review_input_id": {
+      "type": "string",
+      "enum": [
+        "admission_gate_review_input",
+        "operator_approval_review_input",
+        "effect_receipt_review_input",
+        "external_adapter_review_input",
+        "secret_handoff_review_input",
+        "rollback_proof_review_input",
+        "uao_admission_review_input",
+        "life_meaning_judgment_review_input",
+        "temporal_lease_review_input"
+      ]
+    },
+    "source_review_input_contract_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_contract_id",
+        "source_contract_ref",
+        "source_validator_command",
+        "source_status",
+        "source_blocks_live_execution",
+        "source_review_route_admitted"
+      ],
+      "properties": {
+        "source_contract_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-execution-authority-review-input-contract"
+        },
+        "source_contract_ref": {
+          "type": "string",
+          "const": "examples/agentic_service_harness_live_producer_execution_authority_review_input_contract.awaiting_evidence.json"
+        },
+        "source_validator_command": {
+          "type": "string",
+          "const": "python scripts/validate_agentic_service_harness_live_producer_execution_authority_review_input_contract.py"
+        },
+        "source_status": {
+          "type": "string",
+          "const": "blocked_awaiting_live_authority_review_inputs"
+        },
+        "source_blocks_live_execution": { "type": "boolean", "const": true },
+        "source_review_route_admitted": { "type": "boolean", "const": false }
+      }
+    },
+    "redacted_intake_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_id",
+        "source_review_input_id",
+        "required_redacted_input_ref",
+        "status",
+        "raw_value_allowed",
+        "secret_value_allowed",
+        "credential_value_allowed",
+        "accepted_for_review",
+        "blocks_live_execution"
+      ],
+      "properties": {
+        "input_id": { "$ref": "#/$defs/review_input_id" },
+        "source_review_input_id": { "$ref": "#/$defs/review_input_id" },
+        "required_redacted_input_ref": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^future://agentic-service-harness/live-producer/review-intake/redacted/[A-Za-z0-9._:/#-]+$"
+        },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "raw_value_allowed": { "type": "boolean", "const": false },
+        "secret_value_allowed": { "type": "boolean", "const": false },
+        "credential_value_allowed": { "type": "boolean", "const": false },
+        "accepted_for_review": { "type": "boolean", "const": false },
+        "blocks_live_execution": { "type": "boolean", "const": true }
+      }
+    },
+    "missing_intake_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_id", "status", "blocks_live_execution"],
+      "properties": {
+        "input_id": { "$ref": "#/$defs/review_input_id" },
+        "status": { "type": "string", "const": "AwaitingEvidence" },
+        "blocks_live_execution": { "type": "boolean", "const": true }
+      }
+    },
+    "redaction_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "operator_identity_pseudonym_required",
+        "digest_refs_required",
+        "raw_payload_allowed",
+        "raw_payload_retention_allowed",
+        "secret_values_allowed",
+        "credential_values_allowed",
+        "mutation_routes_allowed",
+        "allowed_fields"
+      ],
+      "properties": {
+        "policy_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-redacted-review-intake-policy"
+        },
+        "operator_identity_pseudonym_required": { "type": "boolean", "const": true },
+        "digest_refs_required": { "type": "boolean", "const": true },
+        "raw_payload_allowed": { "type": "boolean", "const": false },
+        "raw_payload_retention_allowed": { "type": "boolean", "const": false },
+        "secret_values_allowed": { "type": "boolean", "const": false },
+        "credential_values_allowed": { "type": "boolean", "const": false },
+        "mutation_routes_allowed": { "type": "boolean", "const": false },
+        "allowed_fields": {
+          "type": "array",
+          "minItems": 6,
+          "items": {
+            "type": "string",
+            "enum": [
+              "input_id",
+              "source_review_input_id",
+              "redacted_summary_ref",
+              "evidence_digest_ref",
+              "operator_scope_ref",
+              "created_at"
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "authority_denials": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_route_admitted",
+        "review_submitted",
+        "input_collection_started",
+        "input_collection_complete",
+        "ui_created",
+        "mutation_endpoints_admitted",
+        "external_adapter_integrated",
+        "connector_call_enabled",
+        "branch_write_enabled",
+        "pull_request_creation_enabled",
+        "deployment_enabled",
+        "dns_mutation_enabled",
+        "secret_mutation_enabled",
+        "destructive_operation_enabled",
+        "runtime_state_written",
+        "receipt_store_append_enabled",
+        "live_execution_authorized"
+      ],
+      "properties": {
+        "review_route_admitted": { "type": "boolean", "const": false },
+        "review_submitted": { "type": "boolean", "const": false },
+        "input_collection_started": { "type": "boolean", "const": false },
+        "input_collection_complete": { "type": "boolean", "const": false },
+        "ui_created": { "type": "boolean", "const": false },
+        "mutation_endpoints_admitted": { "type": "boolean", "const": false },
+        "external_adapter_integrated": { "type": "boolean", "const": false },
+        "connector_call_enabled": { "type": "boolean", "const": false },
+        "branch_write_enabled": { "type": "boolean", "const": false },
+        "pull_request_creation_enabled": { "type": "boolean", "const": false },
+        "deployment_enabled": { "type": "boolean", "const": false },
+        "dns_mutation_enabled": { "type": "boolean", "const": false },
+        "secret_mutation_enabled": { "type": "boolean", "const": false },
+        "destructive_operation_enabled": { "type": "boolean", "const": false },
+        "runtime_state_written": { "type": "boolean", "const": false },
+        "receipt_store_append_enabled": { "type": "boolean", "const": false },
+        "live_execution_authorized": { "type": "boolean", "const": false }
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "network_policy",
+        "provider_calls_allowed",
+        "mutation_routes_admitted",
+        "external_state_writes_allowed",
+        "runtime_state_writes_allowed",
+        "receipt_store_append_allowed",
+        "secret_values_allowed",
+        "raw_payload_retention_allowed"
+      ],
+      "properties": {
+        "network_policy": { "type": "string", "const": "none" },
+        "provider_calls_allowed": { "type": "boolean", "const": false },
+        "mutation_routes_admitted": { "type": "boolean", "const": false },
+        "external_state_writes_allowed": { "type": "boolean", "const": false },
+        "runtime_state_writes_allowed": { "type": "boolean", "const": false },
+        "receipt_store_append_allowed": { "type": "boolean", "const": false },
+        "secret_values_allowed": { "type": "boolean", "const": false },
+        "raw_payload_retention_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validator_id", "command", "required_for_closure"],
+      "properties": {
+        "validator_id": {
+          "type": "string",
+          "const": "agentic-service-harness-live-producer-execution-authority-review-intake-preflight"
+        },
+        "command": {
+          "type": "string",
+          "const": "python scripts/validate_agentic_service_harness_live_producer_execution_authority_review_intake_preflight.py"
+        },
+        "required_for_closure": { "type": "boolean", "const": true }
+      }
+    }
+  }
+}

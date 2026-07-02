@@ -1,0 +1,105 @@
+{
+  "preflight_id": "agentic-service-harness-live-producer-execution-authority-review-intake-preflight",
+  "schema_version": 1,
+  "generated_at": "2026-07-02T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "preflight_status": "blocked_awaiting_redacted_live_authority_review_intake",
+  "source_review_input_contract_ref": "examples/agentic_service_harness_live_producer_execution_authority_review_input_contract.awaiting_evidence.json",
+  "source_review_input_contract_status": "blocked_awaiting_live_authority_review_inputs",
+  "planning_only": true,
+  "read_only": true,
+  "redaction_policy_ready": true,
+  "review_route_admitted": false,
+  "input_collection_started": false,
+  "input_collection_complete": false,
+  "review_submitted": false,
+  "live_producer_implemented": false,
+  "live_execution_authorized": false,
+  "authority_granted": false,
+  "terminal_closure": false,
+  "source_review_input_contract_binding": {
+    "source_contract_id": "agentic-service-harness-live-producer-execution-authority-review-input-contract",
+    "source_contract_ref": "examples/agentic_service_harness_live_producer_execution_authority_review_input_contract.awaiting_evidence.json",
+    "source_validator_command": "python scripts/validate_agentic_service_harness_live_producer_execution_authority_review_input_contract.py",
+    "source_status": "blocked_awaiting_live_authority_review_inputs",
+    "source_blocks_live_execution": true,
+    "source_review_route_admitted": false
+  },
+  "redacted_intake_requirements": [
+    { "input_id": "admission_gate_review_input", "source_review_input_id": "admission_gate_review_input", "required_redacted_input_ref": "future://agentic-service-harness/live-producer/review-intake/redacted/admission-gate-satisfaction", "status": "AwaitingEvidence", "raw_value_allowed": false, "secret_value_allowed": false, "credential_value_allowed": false, "accepted_for_review": false, "blocks_live_execution": true },
+    { "input_id": "operator_approval_review_input", "source_review_input_id": "operator_approval_review_input", "required_redacted_input_ref": "future://agentic-service-harness/live-producer/review-intake/redacted/operator-approval-evidence", "status": "AwaitingEvidence", "raw_value_allowed": false, "secret_value_allowed": false, "credential_value_allowed": false, "accepted_for_review": false, "blocks_live_execution": true },
+    { "input_id": "effect_receipt_review_input", "source_review_input_id": "effect_receipt_review_input", "required_redacted_input_ref": "future://agentic-service-harness/live-producer/review-intake/redacted/effect-receipt-packet-evidence", "status": "AwaitingEvidence", "raw_value_allowed": false, "secret_value_allowed": false, "credential_value_allowed": false, "accepted_for_review": false, "blocks_live_execution": true },
+    { "input_id": "external_adapter_review_input", "source_review_input_id": "external_adapter_review_input", "required_redacted_input_ref": "future://agentic-service-harness/live-producer/review-intake/redacted/external-adapter-evidence-packet-evidence", "status": "AwaitingEvidence", "raw_value_allowed": false, "secret_value_allowed": false, "credential_value_allowed": false, "accepted_for_review": false, "blocks_live_execution": true },
+    { "input_id": "secret_handoff_review_input", "source_review_input_id": "secret_handoff_review_input", "required_redacted_input_ref": "future://agentic-service-harness/live-producer/review-intake/redacted/secret-handoff-packet-evidence", "status": "AwaitingEvidence", "raw_value_allowed": false, "secret_value_allowed": false, "credential_value_allowed": false, "accepted_for_review": false, "blocks_live_execution": true },
+    { "input_id": "rollback_proof_review_input", "source_review_input_id": "rollback_proof_review_input", "required_redacted_input_ref": "future://agentic-service-harness/live-producer/review-intake/redacted/rollback-proof-packet-evidence", "status": "AwaitingEvidence", "raw_value_allowed": false, "secret_value_allowed": false, "credential_value_allowed": false, "accepted_for_review": false, "blocks_live_execution": true },
+    { "input_id": "uao_admission_review_input", "source_review_input_id": "uao_admission_review_input", "required_redacted_input_ref": "future://agentic-service-harness/live-producer/review-intake/redacted/uao-admission-evidence", "status": "AwaitingEvidence", "raw_value_allowed": false, "secret_value_allowed": false, "credential_value_allowed": false, "accepted_for_review": false, "blocks_live_execution": true },
+    { "input_id": "life_meaning_judgment_review_input", "source_review_input_id": "life_meaning_judgment_review_input", "required_redacted_input_ref": "future://agentic-service-harness/live-producer/review-intake/redacted/life-meaning-judgment-evidence", "status": "AwaitingEvidence", "raw_value_allowed": false, "secret_value_allowed": false, "credential_value_allowed": false, "accepted_for_review": false, "blocks_live_execution": true },
+    { "input_id": "temporal_lease_review_input", "source_review_input_id": "temporal_lease_review_input", "required_redacted_input_ref": "future://agentic-service-harness/live-producer/review-intake/redacted/temporal-lease-evidence", "status": "AwaitingEvidence", "raw_value_allowed": false, "secret_value_allowed": false, "credential_value_allowed": false, "accepted_for_review": false, "blocks_live_execution": true }
+  ],
+  "missing_intake_requirements": [
+    { "input_id": "admission_gate_review_input", "status": "AwaitingEvidence", "blocks_live_execution": true },
+    { "input_id": "operator_approval_review_input", "status": "AwaitingEvidence", "blocks_live_execution": true },
+    { "input_id": "effect_receipt_review_input", "status": "AwaitingEvidence", "blocks_live_execution": true },
+    { "input_id": "external_adapter_review_input", "status": "AwaitingEvidence", "blocks_live_execution": true },
+    { "input_id": "secret_handoff_review_input", "status": "AwaitingEvidence", "blocks_live_execution": true },
+    { "input_id": "rollback_proof_review_input", "status": "AwaitingEvidence", "blocks_live_execution": true },
+    { "input_id": "uao_admission_review_input", "status": "AwaitingEvidence", "blocks_live_execution": true },
+    { "input_id": "life_meaning_judgment_review_input", "status": "AwaitingEvidence", "blocks_live_execution": true },
+    { "input_id": "temporal_lease_review_input", "status": "AwaitingEvidence", "blocks_live_execution": true }
+  ],
+  "redaction_policy": {
+    "policy_id": "agentic-service-harness-live-producer-redacted-review-intake-policy",
+    "operator_identity_pseudonym_required": true,
+    "digest_refs_required": true,
+    "raw_payload_allowed": false,
+    "raw_payload_retention_allowed": false,
+    "secret_values_allowed": false,
+    "credential_values_allowed": false,
+    "mutation_routes_allowed": false,
+    "allowed_fields": [
+      "input_id",
+      "source_review_input_id",
+      "redacted_summary_ref",
+      "evidence_digest_ref",
+      "operator_scope_ref",
+      "created_at"
+    ]
+  },
+  "authority_denials": {
+    "review_route_admitted": false,
+    "review_submitted": false,
+    "input_collection_started": false,
+    "input_collection_complete": false,
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "receipt_store_append_enabled": false,
+    "connector_call_enabled": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "network_policy": "none",
+    "provider_calls_allowed": false,
+    "mutation_routes_admitted": false,
+    "external_state_writes_allowed": false,
+    "runtime_state_writes_allowed": false,
+    "receipt_store_append_allowed": false,
+    "secret_values_allowed": false,
+    "raw_payload_retention_allowed": false
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-execution-authority-review-intake-preflight",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_execution_authority_review_intake_preflight.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Keep redacted live authority review intake blocked until route admission, operator-scoped intake, redacted evidence digests, UAO admission, temporal lease, rollback proof, and no-secret-value boundaries are independently satisfied."
+}
