@@ -332,6 +332,9 @@ def test_operator_workflow_dashboard_exposes_requested_columns() -> None:
     assert row["safe_local_action_rehearsal"]["execution_performed"] is False
     assert row["causal_repair"]["linked"] is False
     assert row["causal_repair"]["repair_execution_performed"] is False
+    assert row["readiness_lane"]["lane_status"] == "awaiting_closure_packet"
+    assert row["readiness_lane"]["primary_blocker"] == "local_workflow_closure_packet"
+    assert row["readiness_lane"]["execution_authority_granted"] is False
     assert dashboard["promotion_filters"]["ladder_id"] == "mullu.capability_promotion_ladder.v1"
     assert dashboard["promotion_filters"]["filter_is_not_execution_authority"] is True
     assert dashboard["promotion_filters"]["live_execution_enabled"] is False
@@ -369,6 +372,10 @@ def test_operator_workflow_dashboard_forbids_effect_authority() -> None:
     assert row["safe_local_action_rehearsal"]["approval"]["approval_performed"] is False
     assert row["causal_repair"]["live_execution_enabled"] is False
     assert row["causal_repair"]["repair_execution_performed"] is False
+    assert row["readiness_lane"]["projection_only"] is True
+    assert row["readiness_lane"]["live_execution_enabled"] is False
+    assert row["readiness_lane"]["external_effects_allowed"] is False
+    assert row["readiness_lane"]["readiness_is_not_execution_authority"] is True
     assert row["approval"]["external_effects_allowed"] is False
     assert dashboard["promotion_filters"]["external_effects_allowed"] is False
     assert all(
@@ -386,6 +393,7 @@ def test_operator_workflow_dashboard_validator_rejects_overclaim_and_hash_drift(
     dashboard["blocked_effects"].remove("deploy")
     dashboard["promotion_filters"]["live_execution_enabled"] = True
     dashboard["promotion_filters"]["levels"][0]["filter_is_not_execution_authority"] = False
+    dashboard["rows"][0]["readiness_lane"]["execution_authority_granted"] = True
 
     validation = validate_operator_workflow_dashboard_read_model(dashboard=dashboard)
     serialized_errors = json.dumps(validation.errors, sort_keys=True)
@@ -395,6 +403,7 @@ def test_operator_workflow_dashboard_validator_rejects_overclaim_and_hash_drift(
     assert "blocked_effect_missing:deploy" in serialized_errors
     assert "promotion_filters_live_execution_must_be_false" in serialized_errors
     assert "promotion_filter[L0].must_not_be_execution_authority" in serialized_errors
+    assert "rows[0].readiness_lane_must_not_grant_execution_authority" in serialized_errors
     assert "dashboard_hash_mismatch" in serialized_errors
 
 
@@ -482,8 +491,64 @@ def test_operator_workflow_dashboard_ingests_rehearsal_and_repair_receipts() -> 
     assert repair["case_count"] == 2
     assert repair["high_severity_cases"] == ["failed_test", "rollback_impossible"]
     assert repair["next_actions"][1]["operator_outcome"] == "GovernanceBlocked"
+    assert row["readiness_lane"]["linked_receipts"] == {
+        "closure_packet": False,
+        "safe_local_action_rehearsal": True,
+        "causal_repair": True,
+    }
+    assert row["readiness_lane"]["lane_status"] == "blocked_by_causal_repair"
+    assert row["readiness_lane"]["operator_outcome"] == "GovernanceBlocked"
     assert dashboard["source_refs"]["safe_local_action_rehearsal"] == "safe-local-action-rehearsal.json"
     assert dashboard["source_refs"]["causal_repair"] == "causal-repair.json"
+
+
+def test_operator_workflow_dashboard_readiness_lane_orders_proof_blockers() -> None:
+    dashboard = build_operator_workflow_dashboard_read_model(
+        local_workflow_receipt=_local_receipt(),
+        local_workflow_source_ref="local-workflow-receipt.json",
+        closure_packet=_closure_packet(),
+        closure_packet_source_ref="closure-packet.json",
+        rehearsal_receipt=_rehearsal_receipt(),
+        rehearsal_receipt_source_ref="safe-local-action-rehearsal.json",
+        causal_repair_receipt=_causal_repair_receipt(),
+        causal_repair_receipt_source_ref="causal-repair.json",
+    )
+    validation = validate_operator_workflow_dashboard_read_model(dashboard=dashboard)
+    lane = dashboard["rows"][0]["readiness_lane"]
+
+    assert validation.ok is True
+    assert lane["lane_id"] == "operator_workflow_dashboard.readiness_lane.foundation.v1"
+    assert lane["lane_status"] == "blocked_by_causal_repair"
+    assert lane["proof_state"] == "Fail(repair_requires_governance)"
+    assert lane["operator_outcome"] == "GovernanceBlocked"
+    assert lane["primary_blocker"] == "rollback_impossible"
+    assert lane["current_gate_id"] == "test_gate"
+    assert lane["linked_receipts"] == {
+        "closure_packet": True,
+        "safe_local_action_rehearsal": True,
+        "causal_repair": True,
+    }
+    assert "approval://external-pr" in lane["required_evidence_refs"]
+    assert "causal_repair:rollback_impossible" in lane["required_evidence_refs"]
+    assert lane["readiness_is_not_execution_authority"] is True
+    assert lane["execution_authority_granted"] is False
+
+
+def test_operator_workflow_dashboard_readiness_lane_rejects_link_drift() -> None:
+    dashboard = build_operator_workflow_dashboard_read_model(
+        local_workflow_receipt=_local_receipt(),
+        local_workflow_source_ref="local-workflow-receipt.json",
+        closure_packet=_closure_packet(),
+        closure_packet_source_ref="closure-packet.json",
+    )
+    dashboard["rows"][0]["readiness_lane"]["linked_receipts"]["closure_packet"] = False
+
+    validation = validate_operator_workflow_dashboard_read_model(dashboard=dashboard)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "rows[0].readiness_lane_closure_link_mismatch" in serialized_errors
+    assert "dashboard_hash_mismatch" in serialized_errors
 
 
 def test_operator_workflow_dashboard_rejects_rehearsal_and_repair_overclaims() -> None:

@@ -120,6 +120,14 @@ def build_operator_workflow_dashboard_read_model(
         causal_repair_receipt=causal_repair_receipt,
         source_ref=causal_repair_receipt_source_ref,
     )
+    readiness_lane = _readiness_lane(
+        current_gate=current_gate,
+        missing_evidence=missing_evidence,
+        approval=approval,
+        closure_packet=closure_packet_summary,
+        rehearsal=rehearsal_summary,
+        causal_repair=causal_repair_summary,
+    )
     row = {
         "task": str(local_workflow_receipt.get("task") or "Mullu Developer Workflow v1"),
         "status": str(local_workflow_receipt.get("status") or "AwaitingEvidence"),
@@ -134,6 +142,7 @@ def build_operator_workflow_dashboard_read_model(
         "closure_packet": closure_packet_summary,
         "safe_local_action_rehearsal": rehearsal_summary,
         "causal_repair": causal_repair_summary,
+        "readiness_lane": readiness_lane,
         "source_ref": local_workflow_source_ref,
     }
     dashboard = {
@@ -207,6 +216,7 @@ def validate_operator_workflow_dashboard_read_model(
         closure_packet = _mapping(row.get("closure_packet"))
         rehearsal = _mapping(row.get("safe_local_action_rehearsal"))
         causal_repair = _mapping(row.get("causal_repair"))
+        readiness_lane = _mapping(row.get("readiness_lane"))
         if receipts.get("execution_performed") is not False:
             errors.append(f"rows[{index}].receipts_execution_performed_must_be_false")
         if rollback.get("executed") is not False:
@@ -257,6 +267,21 @@ def validate_operator_workflow_dashboard_read_model(
             for action_index, action_ref in enumerate(raw_repair_actions):
                 if isinstance(action_ref, Mapping) and action_ref.get("execution_performed") is not False:
                     errors.append(f"rows[{index}].causal_repair_next_action[{action_index}]_execution_must_be_false")
+        if readiness_lane.get("projection_only") is not True:
+            errors.append(f"rows[{index}].readiness_lane_projection_only_must_be_true")
+        if readiness_lane.get("execution_authority_granted") is not False:
+            errors.append(f"rows[{index}].readiness_lane_must_not_grant_execution_authority")
+        if readiness_lane.get("live_execution_enabled") is not False:
+            errors.append(f"rows[{index}].readiness_lane_live_execution_must_be_false")
+        if readiness_lane.get("external_effects_allowed") is not False:
+            errors.append(f"rows[{index}].readiness_lane_external_effects_must_be_false")
+        linked_receipts = _mapping(readiness_lane.get("linked_receipts"))
+        if linked_receipts.get("closure_packet") != closure_packet.get("linked"):
+            errors.append(f"rows[{index}].readiness_lane_closure_link_mismatch")
+        if linked_receipts.get("safe_local_action_rehearsal") != rehearsal.get("linked"):
+            errors.append(f"rows[{index}].readiness_lane_rehearsal_link_mismatch")
+        if linked_receipts.get("causal_repair") != causal_repair.get("linked"):
+            errors.append(f"rows[{index}].readiness_lane_causal_repair_link_mismatch")
     promotion_filters = _mapping(dashboard.get("promotion_filters"))
     if promotion_filters.get("filter_is_not_execution_authority") is not True:
         errors.append("promotion_filters_must_not_be_execution_authority")
@@ -456,6 +481,123 @@ def _approval_summary(
         "performed": False,
         "external_effects_allowed": False,
     }
+
+
+def _readiness_lane(
+    *,
+    current_gate: Mapping[str, Any],
+    missing_evidence: Sequence[str],
+    approval: Mapping[str, Any],
+    closure_packet: Mapping[str, Any],
+    rehearsal: Mapping[str, Any],
+    causal_repair: Mapping[str, Any],
+) -> dict[str, Any]:
+    required_evidence_refs = _readiness_required_evidence_refs(
+        missing_evidence=missing_evidence,
+        closure_packet=closure_packet,
+        rehearsal=rehearsal,
+        causal_repair=causal_repair,
+    )
+    blocked_repair_action = _first_governance_blocked_repair_action(causal_repair)
+    if blocked_repair_action:
+        lane_status = "blocked_by_causal_repair"
+        proof_state = "Fail(repair_requires_governance)"
+        operator_outcome = "GovernanceBlocked"
+        primary_blocker = str(blocked_repair_action.get("failure_id") or "causal_repair")
+        next_action = str(blocked_repair_action.get("next_action") or "inspect causal repair blocker")
+    elif closure_packet.get("linked") is not True:
+        lane_status = "awaiting_closure_packet"
+        proof_state = "AwaitingEvidence"
+        operator_outcome = "AwaitingEvidence"
+        primary_blocker = "local_workflow_closure_packet"
+        next_action = str(closure_packet.get("next_required_proof_step") or "run local workflow closure packet builder")
+    elif rehearsal.get("linked") is not True:
+        lane_status = "awaiting_rehearsal_receipt"
+        proof_state = "AwaitingEvidence"
+        operator_outcome = "AwaitingEvidence"
+        primary_blocker = "safe_local_action_rehearsal_receipt"
+        next_action = "run safe local action rehearsal"
+    elif causal_repair.get("linked") is not True:
+        lane_status = "awaiting_causal_repair_receipt"
+        proof_state = "AwaitingEvidence"
+        operator_outcome = "AwaitingEvidence"
+        primary_blocker = "causal_repair_service_receipt"
+        next_action = "run causal repair service receipt projection"
+    elif approval.get("needed") is True and approval.get("performed") is not True:
+        lane_status = "awaiting_approval_evidence"
+        proof_state = "AwaitingEvidence"
+        operator_outcome = "AwaitingEvidence"
+        primary_blocker = str(approval.get("approval_boundary") or "approval_boundary")
+        next_action = "collect approval receipt; approval display does not authorize execution"
+    elif required_evidence_refs:
+        lane_status = "awaiting_evidence"
+        proof_state = "AwaitingEvidence"
+        operator_outcome = "AwaitingEvidence"
+        primary_blocker = required_evidence_refs[0]
+        next_action = "collect missing evidence refs for the current gate"
+    else:
+        lane_status = "ready_for_review_only_handoff"
+        proof_state = "SolvedUnverified"
+        operator_outcome = "SolvedUnverified"
+        primary_blocker = "none"
+        next_action = "review dashboard lane; live execution remains blocked"
+
+    return {
+        "lane_id": "operator_workflow_dashboard.readiness_lane.foundation.v1",
+        "lane_status": lane_status,
+        "proof_state": proof_state,
+        "operator_outcome": operator_outcome,
+        "primary_blocker": primary_blocker,
+        "current_gate_id": str(current_gate.get("stage_id") or "unknown"),
+        "next_action": next_action,
+        "required_evidence_refs": required_evidence_refs[:12],
+        "linked_receipts": {
+            "closure_packet": closure_packet.get("linked") is True,
+            "safe_local_action_rehearsal": rehearsal.get("linked") is True,
+            "causal_repair": causal_repair.get("linked") is True,
+        },
+        "readiness_is_not_execution_authority": True,
+        "projection_only": True,
+        "execution_authority_granted": False,
+        "live_execution_enabled": False,
+        "external_effects_allowed": False,
+    }
+
+
+def _readiness_required_evidence_refs(
+    *,
+    missing_evidence: Sequence[str],
+    closure_packet: Mapping[str, Any],
+    rehearsal: Mapping[str, Any],
+    causal_repair: Mapping[str, Any],
+) -> list[str]:
+    evidence_refs: list[str] = []
+    if closure_packet.get("linked") is not True:
+        evidence_refs.append("local_workflow_closure_packet")
+    if rehearsal.get("linked") is not True:
+        evidence_refs.append("safe_local_action_rehearsal_receipt")
+    if causal_repair.get("linked") is not True:
+        evidence_refs.append("causal_repair_service_receipt")
+    for repair_action in causal_repair.get("next_actions", ()):
+        if isinstance(repair_action, Mapping):
+            failure_id = str(repair_action.get("failure_id") or "")
+            if failure_id:
+                evidence_refs.append(f"causal_repair:{failure_id}")
+    raw_closure_refs = closure_packet.get("missing_evidence_refs", ())
+    if isinstance(raw_closure_refs, list):
+        evidence_refs.extend(str(item) for item in raw_closure_refs if str(item).strip())
+    evidence_refs.extend(str(item) for item in missing_evidence if str(item).strip())
+    return list(dict.fromkeys(evidence_refs))
+
+
+def _first_governance_blocked_repair_action(causal_repair: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    raw_actions = causal_repair.get("next_actions", ())
+    if not isinstance(raw_actions, list):
+        return None
+    for action in raw_actions:
+        if isinstance(action, Mapping) and action.get("operator_outcome") == "GovernanceBlocked":
+            return action
+    return None
 
 
 def _closure_packet_summary(

@@ -104,6 +104,7 @@
         "closure_packet",
         "safe_local_action_rehearsal",
         "causal_repair",
+        "readiness_lane",
         "source_ref"
       ],
       "properties": {
@@ -124,6 +125,7 @@
         "closure_packet": {"$ref": "#/$defs/closure_packet"},
         "safe_local_action_rehearsal": {"$ref": "#/$defs/safe_local_action_rehearsal"},
         "causal_repair": {"$ref": "#/$defs/causal_repair"},
+        "readiness_lane": {"$ref": "#/$defs/readiness_lane"},
         "source_ref": {"type": "string", "minLength": 1, "maxLength": 260}
       }
     },
@@ -549,6 +551,67 @@
         "operator_outcome": {"type": "string", "minLength": 1, "maxLength": 120},
         "next_action": {"type": "string", "minLength": 1, "maxLength": 260},
         "execution_performed": {"type": "boolean", "const": false}
+      }
+    },
+    "readiness_lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane_id",
+        "lane_status",
+        "proof_state",
+        "operator_outcome",
+        "primary_blocker",
+        "current_gate_id",
+        "next_action",
+        "required_evidence_refs",
+        "linked_receipts",
+        "readiness_is_not_execution_authority",
+        "projection_only",
+        "execution_authority_granted",
+        "live_execution_enabled",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "lane_id": {"type": "string", "const": "operator_workflow_dashboard.readiness_lane.foundation.v1"},
+        "lane_status": {
+          "type": "string",
+          "enum": [
+            "awaiting_closure_packet",
+            "awaiting_rehearsal_receipt",
+            "awaiting_causal_repair_receipt",
+            "blocked_by_causal_repair",
+            "awaiting_approval_evidence",
+            "awaiting_evidence",
+            "ready_for_review_only_handoff"
+          ]
+        },
+        "proof_state": {"type": "string", "minLength": 1, "maxLength": 120},
+        "operator_outcome": {"type": "string", "minLength": 1, "maxLength": 120},
+        "primary_blocker": {"type": "string", "minLength": 1, "maxLength": 160},
+        "current_gate_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "next_action": {"type": "string", "minLength": 1, "maxLength": 260},
+        "required_evidence_refs": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {"type": "string", "minLength": 1, "maxLength": 180}
+        },
+        "linked_receipts": {"$ref": "#/$defs/readiness_linked_receipts"},
+        "readiness_is_not_execution_authority": {"type": "boolean", "const": true},
+        "projection_only": {"type": "boolean", "const": true},
+        "execution_authority_granted": {"type": "boolean", "const": false},
+        "live_execution_enabled": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "readiness_linked_receipts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["closure_packet", "safe_local_action_rehearsal", "causal_repair"],
+      "properties": {
+        "closure_packet": {"type": "boolean"},
+        "safe_local_action_rehearsal": {"type": "boolean"},
+        "causal_repair": {"type": "boolean"}
       }
     }
   }

@@ -19,6 +19,10 @@ The dashboard is a single operator read model:
 local workflow receipt projection
   -> workflow status projection
   -> safe local action projection
+  -> local workflow closure packet projection
+  -> safe local action rehearsal receipt projection
+  -> causal repair receipt projection
+  -> readiness lane projection
   -> capability promotion ladder filters
   -> operator workflow dashboard row
 ```
@@ -41,9 +45,28 @@ Receipts
 Rollback
 Approval needed
 Promotion filter
+Readiness lane
 ```
 
 The default generated row represents `Mullu Developer Workflow v1`.
+
+The readiness lane is a compact no-effect routing summary. It reports:
+
+```text
+lane status
+proof state
+operator outcome
+primary blocker
+current gate id
+next action
+required evidence refs
+linked receipt refs
+```
+
+It is not execution authority. The schema requires
+`readiness_is_not_execution_authority=true`,
+`execution_authority_granted=false`, `live_execution_enabled=false`, and
+`external_effects_allowed=false`.
 
 ## Promotion Filters
 
