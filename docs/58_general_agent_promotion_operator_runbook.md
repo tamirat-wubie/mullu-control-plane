@@ -63,6 +63,19 @@ portfolio review actions.
 
 Secrets must be bound through the governed worker or deployment secret store. Do not print secret values in receipts, logs, status files, or closure plans.
 
+Before live adapter execution, emit the provider credential binding receipt.
+This command consumes `OPENAI_API_KEY` and `EMAIL_CALENDAR_CONNECTOR_TOKEN`
+from the process environment when they exist, records only name/presence
+status, and never serializes values. Add `--install-github-secrets
+--github-repo tamirat-wubie/mullu-governed-swarm` only when the current
+process already has the real credential values and GitHub Actions secret
+installation is the intended target.
+
+```powershell
+python scripts\bind_general_agent_provider_credentials.py --github-repo tamirat-wubie/mullu-governed-swarm --output .change_assurance\general_agent_provider_credential_binding_receipt.json --json
+python scripts\validate_general_agent_provider_credential_binding_receipt.py --receipt .change_assurance\general_agent_provider_credential_binding_receipt.json --json
+```
+
 For GitHub-hosted live adapter evidence, use the manual
 `Capability Adapter Live Evidence` workflow. The workflow can target `all`,
 `browser`, `document`, `voice`, or `email-calendar`. Browser evidence runs on
