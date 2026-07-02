@@ -156,6 +156,154 @@ def _closure_packet() -> dict[str, object]:
     return packet
 
 
+def _rehearsal_receipt() -> dict[str, object]:
+    return {
+        "schema_ref": "urn:mullusi:schema:safe-local-action-rehearsal-receipt:1",
+        "receipt_id": "safe_local_action_rehearsal.foundation.v1",
+        "capability_id": "govern.safe_local_action.rehearsal",
+        "rehearsal_status": "rehearsed_no_effect",
+        "solver_outcome": "SolvedUnverified",
+        "rehearsal_is_not_execution_proof": True,
+        "post_execution_evidence_required": True,
+        "live_execution_enabled": False,
+        "selected_action": {
+            "task": "Mullu Developer Workflow v1",
+            "next_action": "approve or defer external PR execution",
+            "current_gate": "approval_handoff",
+            "risk": "external repository write",
+            "source_ref": "operator-dashboard.json",
+        },
+        "scenarios": [
+            {
+                "scenario_id": "simulate_file_write",
+                "sequence": 1,
+                "label": "workspace file write preview",
+                "status": "rehearsed",
+                "target": "Mullu Developer Workflow v1",
+                "current_gate": "approval_handoff",
+                "expected_live_evidence": [
+                    "approved_live_execution_ref",
+                    "post_execution_observation_receipt",
+                    "rollback_or_compensation_receipt",
+                ],
+                "proof_limit": "simulation_is_not_execution_proof",
+                "proof_only": True,
+                "mutation_performed": False,
+                "external_effects_allowed": False,
+            }
+        ],
+        "effect_boundary": {
+            "file_write_allowed": False,
+            "branch_push_allowed": False,
+            "pull_request_create_allowed": False,
+            "merge_allowed": False,
+            "rollback_execute_allowed": False,
+            "deploy_allowed": False,
+            "connector_call_allowed": False,
+            "external_write_allowed": False,
+            "live_execution_allowed": False,
+        },
+        "approval": {
+            "required_for_live_execution": True,
+            "approval_status": "not_requested",
+            "approval_performed": False,
+            "approval_ref": "absent",
+        },
+        "blocked_effects": [
+            "file_write",
+            "branch_push",
+            "pull_request_create",
+            "merge",
+            "rollback_execute",
+            "deploy",
+            "connector_call",
+            "external_write",
+            "live_execution",
+        ],
+        "source_refs": {
+            "operator_workflow_dashboard": "operator-dashboard.json",
+            "builder": "mcoi/govern/safe_local_action_rehearsal/runner.py",
+        },
+        "receipt_hash": "c" * 64,
+    }
+
+
+def _causal_repair_receipt() -> dict[str, object]:
+    return {
+        "schema_ref": "urn:mullusi:schema:causal-repair-service-receipt:1",
+        "receipt_id": "causal_repair_service.foundation.v1",
+        "service_id": "mcoi.causal_repair.service",
+        "capability_id": "govern.causal_repair.service",
+        "service_status": "planned_no_effect",
+        "solver_outcome": "AwaitingEvidence",
+        "live_execution_enabled": False,
+        "repair_execution_performed": False,
+        "case_count": 2,
+        "cases": [
+            {
+                "failure_id": "failed_test",
+                "detected": True,
+                "cause_class": "verification_failure",
+                "severity": "high",
+                "effect_class": "internal_reversible",
+                "reversibility_class": "exact_rollback",
+                "repair_strategy": "exact_rollback",
+                "rollback_or_compensation_proof": {
+                    "status": "proof_required",
+                    "rollback_claim_allowed": True,
+                    "compensation_claim_allowed": False,
+                    "required_evidence": ["test_failure_receipt", "failing_assertion", "rollback_plan"],
+                    "execution_performed": False,
+                },
+                "proposal": {
+                    "next_action": "bind failing assertion, test receipt, and rollback plan before repair execution",
+                    "approval_required": False,
+                    "proof_state": "AwaitingEvidence",
+                    "operator_outcome": "AwaitingEvidence",
+                },
+            },
+            {
+                "failure_id": "rollback_impossible",
+                "detected": True,
+                "cause_class": "repair_authority_gap",
+                "severity": "critical",
+                "effect_class": "public_irreversible",
+                "reversibility_class": "forbidden",
+                "repair_strategy": "forbid",
+                "rollback_or_compensation_proof": {
+                    "status": "blocked_until_evidence",
+                    "rollback_claim_allowed": False,
+                    "compensation_claim_allowed": False,
+                    "required_evidence": ["accepted_risk_record", "compensation_plan", "operator_escalation_ref"],
+                    "execution_performed": False,
+                },
+                "proposal": {
+                    "next_action": "halt repair execution and escalate accepted-risk plus compensation authority",
+                    "approval_required": True,
+                    "proof_state": "Fail(repair_forbidden_without_compensation_authority)",
+                    "operator_outcome": "GovernanceBlocked",
+                },
+            },
+        ],
+        "blocked_effects": [
+            "repair_execute",
+            "file_write",
+            "branch_push",
+            "pull_request_create",
+            "merge",
+            "deploy",
+            "connector_call",
+            "external_write",
+            "live_execution",
+        ],
+        "source_refs": {
+            "builder": "mcoi/causal_repair/service.py",
+            "repair_engine": "mcoi/mcoi_runtime/core/causal_repair.py",
+        },
+        "receipt_hash": "d" * 64,
+    }
+
+
 def test_operator_workflow_dashboard_exposes_requested_columns() -> None:
     dashboard = build_operator_workflow_dashboard_read_model(
         local_workflow_receipt=_local_receipt(),
@@ -180,6 +328,10 @@ def test_operator_workflow_dashboard_exposes_requested_columns() -> None:
     assert row["approval_needed"] is True
     assert row["closure_packet"]["linked"] is False
     assert row["closure_packet"]["execution_performed"] is False
+    assert row["safe_local_action_rehearsal"]["linked"] is False
+    assert row["safe_local_action_rehearsal"]["execution_performed"] is False
+    assert row["causal_repair"]["linked"] is False
+    assert row["causal_repair"]["repair_execution_performed"] is False
     assert dashboard["promotion_filters"]["ladder_id"] == "mullu.capability_promotion_ladder.v1"
     assert dashboard["promotion_filters"]["filter_is_not_execution_authority"] is True
     assert dashboard["promotion_filters"]["live_execution_enabled"] is False
@@ -213,6 +365,10 @@ def test_operator_workflow_dashboard_forbids_effect_authority() -> None:
     assert row["closure_packet"]["current_gate"]["execution_performed"] is False
     assert row["closure_packet"]["approval_boundary"]["approval_performed"] is False
     assert row["closure_packet"]["rollback"]["rollback_executed"] is False
+    assert row["safe_local_action_rehearsal"]["live_execution_enabled"] is False
+    assert row["safe_local_action_rehearsal"]["approval"]["approval_performed"] is False
+    assert row["causal_repair"]["live_execution_enabled"] is False
+    assert row["causal_repair"]["repair_execution_performed"] is False
     assert row["approval"]["external_effects_allowed"] is False
     assert dashboard["promotion_filters"]["external_effects_allowed"] is False
     assert all(
@@ -298,6 +454,62 @@ def test_operator_workflow_dashboard_rejects_closure_packet_effect_overclaims() 
     assert "dashboard_hash_mismatch" in serialized_errors
 
 
+def test_operator_workflow_dashboard_ingests_rehearsal_and_repair_receipts() -> None:
+    dashboard = build_operator_workflow_dashboard_read_model(
+        local_workflow_receipt=_local_receipt(),
+        local_workflow_source_ref="local-workflow-receipt.json",
+        rehearsal_receipt=_rehearsal_receipt(),
+        rehearsal_receipt_source_ref="safe-local-action-rehearsal.json",
+        causal_repair_receipt=_causal_repair_receipt(),
+        causal_repair_receipt_source_ref="causal-repair.json",
+    )
+    validation = validate_operator_workflow_dashboard_read_model(dashboard=dashboard)
+    row = dashboard["rows"][0]
+    rehearsal = row["safe_local_action_rehearsal"]
+    repair = row["causal_repair"]
+
+    assert validation.ok is True
+    assert rehearsal["linked"] is True
+    assert rehearsal["source_ref"] == "safe-local-action-rehearsal.json"
+    assert rehearsal["rehearsal_status"] == "rehearsed_no_effect"
+    assert rehearsal["scenario_count"] == 1
+    assert rehearsal["scenario_refs"] == [
+        {"scenario_id": "simulate_file_write", "status": "rehearsed", "mutation_performed": False}
+    ]
+    assert rehearsal["proof_boundary"]["rehearsal_is_not_execution_proof"] is True
+    assert repair["linked"] is True
+    assert repair["source_ref"] == "causal-repair.json"
+    assert repair["case_count"] == 2
+    assert repair["high_severity_cases"] == ["failed_test", "rollback_impossible"]
+    assert repair["next_actions"][1]["operator_outcome"] == "GovernanceBlocked"
+    assert dashboard["source_refs"]["safe_local_action_rehearsal"] == "safe-local-action-rehearsal.json"
+    assert dashboard["source_refs"]["causal_repair"] == "causal-repair.json"
+
+
+def test_operator_workflow_dashboard_rejects_rehearsal_and_repair_overclaims() -> None:
+    rehearsal_receipt = _rehearsal_receipt()
+    rehearsal_receipt["scenarios"][0]["mutation_performed"] = True
+
+    with pytest.raises(ValueError, match="rehearsal_scenario_mutation_must_be_false"):
+        build_operator_workflow_dashboard_read_model(
+            local_workflow_receipt=_local_receipt(),
+            local_workflow_source_ref="local-workflow-receipt.json",
+            rehearsal_receipt=rehearsal_receipt,
+            rehearsal_receipt_source_ref="safe-local-action-rehearsal.json",
+        )
+
+    causal_repair_receipt = _causal_repair_receipt()
+    causal_repair_receipt["repair_execution_performed"] = True
+
+    with pytest.raises(ValueError, match="causal_repair_execution_must_be_false"):
+        build_operator_workflow_dashboard_read_model(
+            local_workflow_receipt=_local_receipt(),
+            local_workflow_source_ref="local-workflow-receipt.json",
+            causal_repair_receipt=causal_repair_receipt,
+            causal_repair_receipt_source_ref="causal-repair.json",
+        )
+
+
 def test_operator_workflow_dashboard_cli_writes_json(tmp_path: Path, capsys) -> None:
     output_path = tmp_path / "operator-workflow-dashboard.json"
 
@@ -332,6 +544,32 @@ def test_operator_workflow_dashboard_cli_accepts_closure_packet(tmp_path: Path, 
     assert dashboard["rows"][0]["closure_packet"]["linked"] is True
     assert dashboard["rows"][0]["closure_packet"]["current_gate"]["gate_id"] == "approval_handoff"
     assert '"local_developer_workflow_v1.closure_packet"' in captured.out
+
+
+def test_operator_workflow_dashboard_cli_accepts_rehearsal_and_repair_receipts(tmp_path: Path, capsys) -> None:
+    output_path = tmp_path / "operator-workflow-dashboard.json"
+    rehearsal_path = tmp_path / "safe-local-action-rehearsal.json"
+    repair_path = tmp_path / "causal-repair.json"
+    rehearsal_path.write_text(json.dumps(_rehearsal_receipt()), encoding="utf-8")
+    repair_path.write_text(json.dumps(_causal_repair_receipt()), encoding="utf-8")
+
+    exit_code = main([
+        "--safe-local-action-rehearsal",
+        str(rehearsal_path),
+        "--causal-repair",
+        str(repair_path),
+        "--output",
+        str(output_path),
+        "--json",
+    ])
+    captured = capsys.readouterr()
+    dashboard = json.loads(output_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert dashboard["rows"][0]["safe_local_action_rehearsal"]["linked"] is True
+    assert dashboard["rows"][0]["causal_repair"]["linked"] is True
+    assert '"safe_local_action_rehearsal.foundation.v1"' in captured.out
+    assert '"causal_repair_service.foundation.v1"' in captured.out
 
 
 def test_operator_workflow_dashboard_cli_rejects_invalid_local_receipt(tmp_path: Path, capsys) -> None:
