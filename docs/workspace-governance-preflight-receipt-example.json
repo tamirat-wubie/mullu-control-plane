@@ -1,5 +1,5 @@
 {
-  "check_count": 339,
+  "check_count": 340,
   "checks": [
     {
       "args": [
@@ -1859,6 +1859,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER SECRET HANDOFF PACKET VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_live_producer_rollback_proof_packet.py"
+      ],
+      "name": "agentic_service_harness_live_producer_rollback_proof_packet",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER ROLLBACK PROOF PACKET VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
