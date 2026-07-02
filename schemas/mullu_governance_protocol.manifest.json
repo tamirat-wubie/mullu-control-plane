@@ -1679,12 +1679,6 @@
       "urn": "urn:mullusi:schema:inceptadive-external-effect-adapter-readiness:1"
     },
     {
-      "path": "schemas/inceptadive_live_producer_readiness_binding.schema.json",
-      "schema_id": "inceptadive-live-producer-readiness-binding",
-      "surface": "governance",
-      "urn": "urn:mullusi:schema:inceptadive-live-producer-readiness-binding:1"
-    },
-    {
       "path": "schemas/intelligence_coordination_episode_receipt.schema.json",
       "schema_id": "intelligence-coordination-episode-receipt",
       "surface": "coordination",

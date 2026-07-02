@@ -398,7 +398,6 @@
             "universal_symbol_receipt_store_authority_witness",
             "universal_symbol_kernel",
             "inceptadive_external_effect_adapter_readiness",
-            "inceptadive_live_producer_readiness_binding",
             "sdlc_artifact_validation",
             "sdlc_route_validation",
             "sdlc_state_machine_validation",

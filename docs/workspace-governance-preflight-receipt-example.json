@@ -1,5 +1,5 @@
 {
-  "check_count": 340,
+  "check_count": 339,
   "checks": [
     {
       "args": [
@@ -4378,19 +4378,6 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "INCEPTADIVE EXTERNAL EFFECT ADAPTER READINESS VALID\n",
-      "termination_reason": "completed",
-      "termination_signal": null
-    },
-    {
-      "args": [
-        "C:\\Python313\\python.exe",
-        "scripts/validate_inceptadive_live_producer_readiness_binding.py"
-      ],
-      "name": "inceptadive_live_producer_readiness_binding",
-      "passed": true,
-      "return_code": 0,
-      "stderr": "",
-      "stdout": "INCEPTADIVE LIVE PRODUCER READINESS BINDING VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },

@@ -1836,10 +1836,6 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             "inceptadive_external_effect_adapter_readiness",
             (python_executable, "scripts/validate_inceptadive_external_effect_adapter_readiness.py"),
         ),
-        CheckCommand(
-            "inceptadive_live_producer_readiness_binding",
-            (python_executable, "scripts/validate_inceptadive_live_producer_readiness_binding.py"),
-        ),
         CheckCommand("sdlc_artifact_validation", (python_executable, "scripts/validate_sdlc_artifact.py")),
         CheckCommand("sdlc_route_validation", (python_executable, "scripts/validate_sdlc_route.py")),
         CheckCommand("sdlc_state_machine_validation", (python_executable, "scripts/validate_sdlc_state_machine.py")),

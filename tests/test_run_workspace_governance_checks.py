@@ -302,7 +302,6 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "universal_symbol_receipt_store_authority_witness",
         "universal_symbol_kernel",
         "inceptadive_external_effect_adapter_readiness",
-        "inceptadive_live_producer_readiness_binding",
         "sdlc_artifact_validation",
         "sdlc_route_validation",
         "sdlc_state_machine_validation",
@@ -1108,9 +1107,6 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["inceptadive_external_effect_adapter_readiness"][1:] == (
         "scripts/validate_inceptadive_external_effect_adapter_readiness.py",
-    )
-    assert args_by_name["inceptadive_live_producer_readiness_binding"][1:] == (
-        "scripts/validate_inceptadive_live_producer_readiness_binding.py",
     )
     assert args_by_name["sdlc_artifact_validation"][1:] == (
         "scripts/validate_sdlc_artifact.py",
