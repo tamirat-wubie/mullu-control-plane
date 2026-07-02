@@ -61,6 +61,10 @@ def test_runbook_names_required_closure_artifacts_and_counts() -> None:
     assert "MULLU_GATEWAY_DNS_TARGET" in runbook_text
     assert "MULLU_GATEWAY_DNS_RECORD_TYPE" in runbook_text
     assert "MULLU_DNS_PROVIDER" in runbook_text
+    assert "bind_general_agent_provider_credentials.py" in runbook_text
+    assert "validate_general_agent_provider_credential_binding_receipt.py" in runbook_text
+    assert ".change_assurance\\general_agent_provider_credential_binding_receipt.json" in runbook_text
+    assert "--install-github-secrets" in runbook_text
     assert "collect_gateway_dns_resolution_receipt.py" in runbook_text
     assert "validate_gateway_dns_resolution_receipt.py" in runbook_text
     assert ".change_assurance\\gateway_dns_resolution_receipt.json" in runbook_text
