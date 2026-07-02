@@ -36,6 +36,10 @@ from software_dev.local_developer_workflow_v1.closure_packet import (  # noqa: E
     CLOSURE_PACKET_FILENAME,
     validate_local_developer_workflow_closure_packet,
 )
+from software_dev.local_developer_workflow_v1.command_preview_packet import (  # noqa: E402
+    COMMAND_PREVIEW_PACKET_FILENAME,
+    validate_local_developer_workflow_pr_command_preview_packet,
+)
 
 
 DEFAULT_ARTIFACTS = {
@@ -44,6 +48,7 @@ DEFAULT_ARTIFACTS = {
 }
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "local_developer_workflow_v1_validation.json"
 DEFAULT_CLOSURE_PACKET = REPO_ROOT / ".change_assurance" / CLOSURE_PACKET_FILENAME
+DEFAULT_COMMAND_PREVIEW_PACKET = REPO_ROOT / ".change_assurance" / COMMAND_PREVIEW_PACKET_FILENAME
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -58,7 +63,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--approval-request", default=str(DEFAULT_ARTIFACTS["approval_request"]))
     parser.add_argument("--pr-command-preview", default=str(DEFAULT_ARTIFACTS["pr_command_preview"]))
     parser.add_argument("--closure-packet", default=str(DEFAULT_CLOSURE_PACKET))
+    parser.add_argument("--command-preview-packet", default=str(DEFAULT_COMMAND_PREVIEW_PACKET))
     parser.add_argument("--require-closure-packet", action="store_true")
+    parser.add_argument("--require-command-preview-packet", action="store_true")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--build-if-missing", action="store_true")
     parser.add_argument("--strict", action="store_true")
@@ -85,6 +92,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     errors = list(validation.errors)
     closure_packet_path = Path(args.closure_packet)
     closure_status = "not_present"
+    closure_packet = None
     if closure_packet_path.exists():
         closure_packet = _load_json_object(closure_packet_path)
         closure_validation = validate_local_developer_workflow_closure_packet(
@@ -97,12 +105,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         errors.extend(f"closure_packet:{error}" for error in closure_validation.errors)
     elif args.require_closure_packet:
         errors.append(f"closure_packet_missing:{closure_packet_path}")
+    command_preview_packet_path = Path(args.command_preview_packet)
+    command_preview_packet_status = "not_present"
+    if command_preview_packet_path.exists():
+        command_preview_packet = _load_json_object(command_preview_packet_path)
+        command_preview_validation = validate_local_developer_workflow_pr_command_preview_packet(
+            packet=command_preview_packet,
+            artifacts=artifacts,
+            closure_packet=closure_packet,
+            artifact_paths=artifact_paths,
+            packet_path=command_preview_packet_path,
+            closure_packet_path=closure_packet_path,
+        )
+        command_preview_packet_status = command_preview_validation.status
+        errors.extend(f"command_preview_packet:{error}" for error in command_preview_validation.errors)
+    elif args.require_command_preview_packet:
+        errors.append(f"command_preview_packet_missing:{command_preview_packet_path}")
     ok = validation.ok and not errors
     output_payload = validation.as_dict()
     output_payload["ok"] = ok
     output_payload["errors"] = errors
     output_payload["closure_packet_path"] = str(closure_packet_path)
     output_payload["closure_packet_status"] = closure_status
+    output_payload["command_preview_packet_path"] = str(command_preview_packet_path)
+    output_payload["command_preview_packet_status"] = command_preview_packet_status
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(
         json.dumps(output_payload, indent=2, sort_keys=True) + "\n",

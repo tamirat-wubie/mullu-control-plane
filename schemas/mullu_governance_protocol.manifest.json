@@ -2057,6 +2057,12 @@
       "urn": "urn:mullusi:schema:pr-preparation-approval-packet:1"
     },
     {
+      "path": "schemas/local_developer_workflow_pr_command_preview_packet.schema.json",
+      "schema_id": "local-developer-workflow-pr-command-preview-packet",
+      "surface": "software_dev",
+      "urn": "urn:mullusi:schema:local-developer-workflow-pr-command-preview-packet:1"
+    },
+    {
       "path": "schemas/software_dev_patch_proposal.schema.json",
       "schema_id": "software-dev-patch-proposal",
       "surface": "software_dev",

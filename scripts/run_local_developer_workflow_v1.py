@@ -46,6 +46,12 @@ from software_dev.local_developer_workflow_v1.closure_packet import (  # noqa: E
     validate_local_developer_workflow_closure_packet,
     write_local_developer_workflow_closure_packet,
 )
+from software_dev.local_developer_workflow_v1.command_preview_packet import (  # noqa: E402
+    COMMAND_PREVIEW_PACKET_FILENAME,
+    build_local_developer_workflow_pr_command_preview_packet,
+    validate_local_developer_workflow_pr_command_preview_packet,
+    write_local_developer_workflow_pr_command_preview_packet,
+)
 
 
 DEFAULT_OUTPUT_DIR = REPO_ROOT / ".change_assurance"
@@ -65,6 +71,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--target-branch", default=DEFAULT_TARGET_BRANCH)
     parser.add_argument("--candidate-branch", default=DEFAULT_CANDIDATE_BRANCH)
     parser.add_argument("--skip-closure-packet", action="store_true")
+    parser.add_argument("--skip-command-preview-packet", action="store_true")
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -96,6 +103,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     closure_packet_path = None
     closure_validation = None
+    command_preview_packet_path = None
+    command_preview_validation = None
+    closure_packet = None
     if not args.skip_closure_packet:
         closure_packet = build_local_developer_workflow_closure_packet(
             artifacts=artifacts,
@@ -111,10 +121,35 @@ def main(argv: Sequence[str] | None = None) -> int:
             artifact_paths=written_paths,
             packet_path=closure_packet_path,
         )
-    ok = validation.ok and (closure_validation.ok if closure_validation is not None else True)
+    if not args.skip_command_preview_packet:
+        command_preview_packet = build_local_developer_workflow_pr_command_preview_packet(
+            artifacts=artifacts,
+            closure_packet=closure_packet,
+            artifact_paths=written_paths,
+            closure_packet_path=closure_packet_path or Path("<generated>"),
+        )
+        command_preview_packet_path = write_local_developer_workflow_pr_command_preview_packet(
+            command_preview_packet,
+            Path(args.output_dir) / COMMAND_PREVIEW_PACKET_FILENAME,
+        )
+        command_preview_validation = validate_local_developer_workflow_pr_command_preview_packet(
+            packet=command_preview_packet,
+            artifacts=artifacts,
+            closure_packet=closure_packet,
+            artifact_paths=written_paths,
+            packet_path=command_preview_packet_path,
+            closure_packet_path=closure_packet_path or Path("<generated>"),
+        )
+    ok = (
+        validation.ok
+        and (closure_validation.ok if closure_validation is not None else True)
+        and (command_preview_validation.ok if command_preview_validation is not None else True)
+    )
     errors = list(validation.errors)
     if closure_validation is not None:
         errors.extend(f"closure_packet:{error}" for error in closure_validation.errors)
+    if command_preview_validation is not None:
+        errors.extend(f"command_preview_packet:{error}" for error in command_preview_validation.errors)
     output = {
         "ok": ok,
         "errors": errors,
@@ -124,6 +159,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         },
         "closure_packet_path": str(closure_packet_path) if closure_packet_path is not None else "",
         "closure_packet_status": closure_validation.status if closure_validation is not None else "skipped",
+        "command_preview_packet_path": (
+            str(command_preview_packet_path) if command_preview_packet_path is not None else ""
+        ),
+        "command_preview_packet_status": (
+            command_preview_validation.status if command_preview_validation is not None else "skipped"
+        ),
         "status": validation.status,
     }
     if args.json:
