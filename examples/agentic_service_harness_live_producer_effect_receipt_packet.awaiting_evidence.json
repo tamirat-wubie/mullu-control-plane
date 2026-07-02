@@ -1,0 +1,120 @@
+{
+  "packet_id": "agentic-service-harness-live-producer-effect-receipt-packet",
+  "schema_version": 1,
+  "generated_at": "2026-07-02T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "packet_status": "blocked_awaiting_effect_receipt_components",
+  "source_preflight_ref": "examples/agentic_service_harness_live_producer_effect_receipt_preflight.local.json",
+  "source_preflight_status": "AwaitingEvidence",
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "live_effect_observed": false,
+  "effect_receipt_collected": false,
+  "authority_granted": false,
+  "terminal_closure": false,
+  "required_components": [
+    {
+      "component_id": "admitted_action_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/admitted-action",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "effect_receipt_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/effect-receipt",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "effect_hash_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/effect-hash",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "effect_reconciliation_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/effect-reconciliation",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "rollback_link_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/rollback-link",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "component_id": "redaction_ref",
+      "required_ref": "future://agentic-service-harness/live-producer/redaction-proof",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    }
+  ],
+  "missing_evidence": [
+    {
+      "evidence_id": "admitted_action_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "effect_receipt_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "effect_hash_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "effect_reconciliation_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "rollback_link_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    },
+    {
+      "evidence_id": "redaction_ref",
+      "status": "AwaitingEvidence",
+      "blocks_live_producer": true
+    }
+  ],
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-effect-receipt-packet",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_effect_receipt_packet.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect an admitted live producer action, effect receipt, effect hash, reconciliation record, rollback link, and redaction proof before changing this packet status."
+}

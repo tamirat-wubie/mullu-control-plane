@@ -1,5 +1,5 @@
 {
-  "check_count": 336,
+  "check_count": 337,
   "checks": [
     {
       "args": [
@@ -1820,6 +1820,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER EVIDENCE PACKET INTAKE VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_live_producer_effect_receipt_packet.py"
+      ],
+      "name": "agentic_service_harness_live_producer_effect_receipt_packet",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER EFFECT RECEIPT PACKET VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
