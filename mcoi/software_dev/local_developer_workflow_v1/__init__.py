@@ -24,6 +24,14 @@ from .runner import (
     validate_local_developer_workflow_v1_artifacts,
     write_local_developer_workflow_v1_artifacts,
 )
+from .closure_packet import (
+    CLOSURE_PACKET_FILENAME,
+    CLOSURE_PACKET_ID,
+    LocalDeveloperWorkflowClosurePacketError,
+    build_local_developer_workflow_closure_packet,
+    validate_local_developer_workflow_closure_packet,
+    write_local_developer_workflow_closure_packet,
+)
 
 __all__ = [
     "ARTIFACT_FILENAMES",
@@ -33,6 +41,12 @@ __all__ = [
     "collect_git_repository_status",
     "validate_local_developer_workflow_v1_artifacts",
     "write_local_developer_workflow_v1_artifacts",
+    "CLOSURE_PACKET_FILENAME",
+    "CLOSURE_PACKET_ID",
+    "LocalDeveloperWorkflowClosurePacketError",
+    "build_local_developer_workflow_closure_packet",
+    "validate_local_developer_workflow_closure_packet",
+    "write_local_developer_workflow_closure_packet",
 ]
 __all__ += [
     "BLOCKED_EXTERNAL_EFFECTS",

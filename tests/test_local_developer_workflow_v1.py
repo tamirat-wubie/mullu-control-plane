@@ -30,6 +30,14 @@ from software_dev.local_developer_workflow_v1.runner import (  # noqa: E402
     validate_local_developer_workflow_v1_artifacts,
     write_local_developer_workflow_v1_artifacts,
 )
+from software_dev.local_developer_workflow_v1.closure_packet import (  # noqa: E402
+    CLOSURE_PACKET_FILENAME,
+    CLOSURE_PACKET_ID,
+    LocalDeveloperWorkflowClosurePacketError,
+    build_local_developer_workflow_closure_packet,
+    validate_local_developer_workflow_closure_packet,
+    write_local_developer_workflow_closure_packet,
+)
 from software_dev.local_developer_workflow_v1.composition import (  # noqa: E402
     BLOCKED_EXTERNAL_EFFECTS,
     COMPOSITION_WORKFLOW_ID,
@@ -39,7 +47,9 @@ from software_dev.local_developer_workflow_v1.composition import (  # noqa: E402
     validate_foundation_workflow_composition,
 )
 from mcoi_runtime.contracts.workflow import StageType  # noqa: E402
+from scripts.build_local_developer_workflow_closure_packet import main as build_closure_packet_main  # noqa: E402
 from scripts.run_local_developer_workflow_v1 import main as run_main  # noqa: E402
+from scripts.validate_local_developer_workflow_closure_packet import main as validate_closure_packet_main  # noqa: E402
 from scripts.validate_local_developer_workflow_v1 import main as validate_main  # noqa: E402
 
 
@@ -229,3 +239,107 @@ def test_foundation_workflow_composition_rejects_terminal_halt_drift() -> None:
     assert validation.ok is False
     assert "terminal_stage_must_wait_for_event" in serialized_errors
     assert validation.terminal_stage_id == TERMINAL_WAIT_STAGE_ID
+
+
+def test_local_developer_workflow_closure_packet_summarizes_next_proof_step() -> None:
+    artifacts = build_local_developer_workflow_v1_artifacts(
+        repo_root=_ROOT,
+        repo_status=FIXTURE_REPO_STATUS,
+    )
+    packet = build_local_developer_workflow_closure_packet(artifacts=artifacts)
+    validation = validate_local_developer_workflow_closure_packet(packet=packet, artifacts=artifacts)
+
+    assert validation.ok is True
+    assert packet["packet_id"] == CLOSURE_PACKET_ID
+    assert packet["projection_only"] is True
+    assert packet["execution_performed"] is False
+    assert packet["external_effects_allowed"] is False
+    assert packet["current_gate"]["gate_type"] == "approval_gate"
+    assert packet["approval_boundary"]["approval_status"] == "pending"
+    assert packet["approval_boundary"]["approval_does_not_authorize_execution"] is True
+    assert packet["missing_evidence_refs"]
+    assert "collect review-only operator decision" in packet["next_required_proof_step"]
+    assert packet["rollback"]["rollback_executed"] is False
+    assert all(command["execution_allowed"] is False for command in packet["command_preview"])
+
+
+def test_local_developer_workflow_closure_packet_rejects_authority_overclaim() -> None:
+    artifacts = build_local_developer_workflow_v1_artifacts(
+        repo_root=_ROOT,
+        repo_status=FIXTURE_REPO_STATUS,
+    )
+    packet = build_local_developer_workflow_closure_packet(artifacts=artifacts)
+    packet["execution_performed"] = True
+    packet["approval_boundary"]["approval_performed"] = True
+    packet["rollback"]["rollback_executed"] = True
+    packet["command_preview"][0]["execution_allowed"] = True
+
+    validation = validate_local_developer_workflow_closure_packet(packet=packet, artifacts=artifacts)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.ok is False
+    assert "execution_performed_must_be_false" in serialized_errors
+    assert "approval_performed_must_be_false" in serialized_errors
+    assert "rollback_executed_must_be_false" in serialized_errors
+    assert "command_preview[0]_execution_allowed_must_be_false" in serialized_errors
+    assert "packet_hash_mismatch" in serialized_errors
+
+
+def test_local_developer_workflow_closure_packet_rejects_dashboard_overclaim() -> None:
+    artifacts = build_local_developer_workflow_v1_artifacts(
+        repo_root=_ROOT,
+        repo_status=FIXTURE_REPO_STATUS,
+    )
+
+    with pytest.raises(LocalDeveloperWorkflowClosurePacketError, match="operator_dashboard_execution_must_be_false"):
+        build_local_developer_workflow_closure_packet(
+            artifacts=artifacts,
+            operator_dashboard={
+                "projection_only": True,
+                "execution_performed": True,
+                "external_effects_allowed": False,
+                "rows": [],
+            },
+        )
+
+
+def test_local_developer_workflow_closure_packet_cli_builds_and_validates(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    artifacts = build_local_developer_workflow_v1_artifacts(
+        repo_root=_ROOT,
+        repo_status=FIXTURE_REPO_STATUS,
+    )
+    write_local_developer_workflow_v1_artifacts(artifacts, tmp_path)
+    packet_path = tmp_path / CLOSURE_PACKET_FILENAME
+
+    build_exit = build_closure_packet_main([
+        "--artifact-dir",
+        str(tmp_path),
+        "--output",
+        str(packet_path),
+        "--strict",
+        "--json",
+    ])
+    build_payload = json.loads(capsys.readouterr().out)
+    validate_exit = validate_closure_packet_main([
+        "--artifact-dir",
+        str(tmp_path),
+        "--packet",
+        str(packet_path),
+        "--output",
+        str(tmp_path / "closure-packet-validation.json"),
+        "--strict",
+        "--json",
+    ])
+    validate_payload = json.loads(capsys.readouterr().out)
+    packet = json.loads(packet_path.read_text(encoding="utf-8"))
+
+    assert build_exit == 0
+    assert validate_exit == 0
+    assert build_payload["ok"] is True
+    assert validate_payload["ok"] is True
+    assert packet["packet_id"] == CLOSURE_PACKET_ID
+    assert packet["status"] == "AwaitingEvidence"
+    assert packet["operator_dashboard"]["linked"] is False
