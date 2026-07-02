@@ -73,6 +73,7 @@ def project_operator_approval_request_to_operator_response_witness(
         "source_admission_gate_ref": str(request.get("source_admission_gate_ref", "")),
         "witness_kind": OPERATOR_APPROVAL_WITNESS_KIND,
         "requested_evidence_ref": requested_evidence_ref,
+        "approval_request_collection_binding": _approval_request_collection_binding(request),
         "response_status": "AwaitingEvidence",
         "response_kind": OPERATOR_RESPONSE_MISSING_KIND,
         "response_record_collected": False,
@@ -142,6 +143,39 @@ def _witnesses_after_response(request: Mapping[str, Any]) -> list[dict[str, Any]
             }
         )
     return witnesses
+
+
+def _approval_request_collection_binding(request: Mapping[str, Any]) -> dict[str, Any]:
+    source_binding = _mapping(request.get("governed_collection_binding"))
+    return {
+        "binding_id": "binding.operator_response.approval_request_collection",
+        "source_binding_id": str(source_binding.get("binding_id", "")),
+        "source_collection_id": str(source_binding.get("collection_id", "")),
+        "source_witness_kind": str(source_binding.get("witness_kind", "")),
+        "source_requirements_evidence_ref": str(source_binding.get("requirements_evidence_ref", "")),
+        "source_governed_artifact_ref": str(source_binding.get("governed_artifact_ref", "")),
+        "source_validator_id": str(source_binding.get("validator_id", "")),
+        "source_validator_command": str(source_binding.get("validator_command", "")),
+        "source_approval_request_ref": f"approval-request://{OPERATOR_APPROVAL_REQUEST_ID}",
+        "source_approval_request_id": OPERATOR_APPROVAL_REQUEST_ID,
+        "source_request_artifact_ref": str(source_binding.get("request_artifact_ref", "")),
+        "source_request_validator_id": str(source_binding.get("request_validator_id", "")),
+        "source_request_validator_command": str(source_binding.get("request_validator_command", "")),
+        "response_witness_id": OPERATOR_RESPONSE_WITNESS_ID,
+        "response_witness_ref": "examples/agentic_service_harness_live_producer_operator_response_witness.local.json",
+        "response_validator_id": OPERATOR_RESPONSE_WITNESS_VALIDATOR["validator_id"],
+        "response_validator_command": OPERATOR_RESPONSE_WITNESS_VALIDATOR["command"],
+        "binding_status": "AwaitingEvidence",
+        "source_binding_status": str(source_binding.get("binding_status", "")),
+        "source_collection_status": str(source_binding.get("collection_status", "")),
+        "response_status": "AwaitingEvidence",
+        "approval_collected": False,
+        "response_record_collected": False,
+        "approval_satisfied": False,
+        "authority_granted": False,
+        "live_execution_authorized": False,
+        "blocks_live_producer": True,
+    }
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
