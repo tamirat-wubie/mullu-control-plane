@@ -46,22 +46,24 @@
     "source_projections": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["local_workflow_receipt", "workflow_status", "safe_local_action", "capability_passports"],
+      "required": ["local_workflow_receipt", "workflow_status", "safe_local_action", "capability_passports", "closure_packet"],
       "properties": {
         "local_workflow_receipt": {"type": "string", "minLength": 1, "maxLength": 260},
         "workflow_status": {"type": "string", "const": "operator_developer_workflow_status.read_model"},
         "safe_local_action": {"type": "string", "const": "operator_safe_local_action.read_model"},
-        "capability_passports": {"type": "string", "const": "capability_passports.foundation.v1"}
+        "capability_passports": {"type": "string", "const": "capability_passports.foundation.v1"},
+        "closure_packet": {"type": "string", "const": "local_developer_workflow_v1.closure_packet"}
       }
     },
     "promotion_filters": {"$ref": "#/$defs/promotion_filters"},
     "source_refs": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["builder", "local_workflow_receipt"],
+      "required": ["builder", "local_workflow_receipt", "closure_packet"],
       "properties": {
         "builder": {"type": "string", "const": "gateway/operator_workflow_dashboard.py"},
-        "local_workflow_receipt": {"type": "string", "minLength": 1, "maxLength": 260}
+        "local_workflow_receipt": {"type": "string", "minLength": 1, "maxLength": 260},
+        "closure_packet": {"type": "string", "minLength": 1, "maxLength": 260}
       }
     },
     "dashboard_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
@@ -81,6 +83,7 @@
         "rollback",
         "approval_needed",
         "approval",
+        "closure_packet",
         "source_ref"
       ],
       "properties": {
@@ -98,6 +101,7 @@
         "rollback": {"$ref": "#/$defs/rollback"},
         "approval_needed": {"type": "boolean"},
         "approval": {"$ref": "#/$defs/approval"},
+        "closure_packet": {"$ref": "#/$defs/closure_packet"},
         "source_ref": {"type": "string", "minLength": 1, "maxLength": 260}
       }
     },
@@ -282,6 +286,103 @@
         "approval_boundary": {"type": "string", "minLength": 1, "maxLength": 120},
         "performed": {"type": "boolean", "const": false},
         "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "closure_packet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "linked",
+        "source_ref",
+        "packet_id",
+        "status",
+        "solver_outcome",
+        "current_gate",
+        "missing_evidence_refs",
+        "next_required_proof_step",
+        "approval_boundary",
+        "rollback",
+        "command_preview_refs",
+        "packet_hash",
+        "projection_only",
+        "execution_performed",
+        "external_effects_allowed"
+      ],
+      "properties": {
+        "linked": {"type": "boolean"},
+        "source_ref": {"type": "string", "minLength": 1, "maxLength": 260},
+        "packet_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "solver_outcome": {"type": "string", "minLength": 1, "maxLength": 120},
+        "current_gate": {"$ref": "#/$defs/closure_current_gate"},
+        "missing_evidence_refs": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"type": "string", "minLength": 1, "maxLength": 180}
+        },
+        "next_required_proof_step": {"type": "string", "minLength": 1, "maxLength": 260},
+        "approval_boundary": {"$ref": "#/$defs/closure_approval_boundary"},
+        "rollback": {"$ref": "#/$defs/closure_rollback"},
+        "command_preview_refs": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"$ref": "#/$defs/closure_command_preview_ref"}
+        },
+        "packet_hash": {"type": "string", "maxLength": 64},
+        "projection_only": {"type": "boolean", "const": true},
+        "execution_performed": {"type": "boolean", "const": false},
+        "external_effects_allowed": {"type": "boolean", "const": false}
+      }
+    },
+    "closure_current_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate_id", "gate_type", "status", "projection_only", "execution_performed"],
+      "properties": {
+        "gate_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "gate_type": {"type": "string", "minLength": 1, "maxLength": 80},
+        "status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "projection_only": {"type": "boolean", "const": true},
+        "execution_performed": {"type": "boolean", "const": false}
+      }
+    },
+    "closure_approval_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_request_id",
+        "approval_required",
+        "approval_status",
+        "approval_performed",
+        "approval_does_not_authorize_execution"
+      ],
+      "properties": {
+        "approval_request_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "approval_required": {"type": "boolean"},
+        "approval_status": {"type": "string", "minLength": 1, "maxLength": 120},
+        "approval_performed": {"type": "boolean", "const": false},
+        "approval_does_not_authorize_execution": {"type": "boolean", "const": true}
+      }
+    },
+    "closure_rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "strategy", "rollback_executed", "execution_performed"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "strategy": {"type": "string", "minLength": 1, "maxLength": 180},
+        "rollback_executed": {"type": "boolean", "const": false},
+        "execution_performed": {"type": "boolean", "const": false}
+      }
+    },
+    "closure_command_preview_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_id", "effect", "execution_allowed"],
+      "properties": {
+        "command_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "effect": {"type": "string", "minLength": 1, "maxLength": 120},
+        "execution_allowed": {"type": "boolean", "const": false}
       }
     }
   }
