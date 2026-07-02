@@ -68,6 +68,23 @@ It is not execution authority. The schema requires
 `execution_authority_granted=false`, `live_execution_enabled=false`, and
 `external_effects_allowed=false`.
 
+## Next-Action Packet
+
+The dashboard readiness lane can be projected into a compact next-action
+handoff packet:
+
+```text
+operator workflow dashboard
+  -> readiness lane
+  -> operator workflow next-action packet
+```
+
+The packet carries the current lane status, proof state, operator outcome,
+primary blocker, current gate, required evidence refs, linked receipt flags,
+approval display state, and blocked effects. It is still projection-only and
+does not perform approval, create files, push branches, create PRs, merge,
+deploy, call connectors, or grant live execution.
+
 ## Promotion Filters
 
 The dashboard also exposes read-only promotion filters for the canonical
@@ -122,15 +139,23 @@ Generate the dashboard artifact:
 python gateway/operator_workflow_dashboard.py --json
 ```
 
+Generate the next-action handoff packet from a dashboard artifact:
+
+```powershell
+python scripts/build_operator_workflow_next_action_packet.py --dashboard .change_assurance/operator_workflow_dashboard.read_model.generated.json --json
+```
+
 Default output:
 
 ```text
 .change_assurance/operator_workflow_dashboard.read_model.generated.json
+.change_assurance/operator_workflow_next_action_packet.generated.json
 ```
 
 Run focused validation:
 
 ```powershell
+python -m pytest tests/test_build_operator_workflow_next_action_packet.py -q
 python -m pytest tests/test_operator_workflow_dashboard.py -q
 python scripts/validate_protocol_manifest.py
 python scripts/validate_schemas.py
