@@ -82,6 +82,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_non_empty_diff_receipt_admission_preflight",
         "agentic_service_harness_filesystem_write_admission_preflight",
         "agentic_service_harness_non_empty_diff_file_summary_receipt",
+        "agentic_service_harness_filesystem_write_non_empty_diff_evidence_candidate",
         "agentic_service_harness_github_pr_admission_preflight",
         "agentic_service_harness_github_pr_operator_approval_request",
         "agentic_service_harness_github_pr_operator_response_witness",
@@ -375,6 +376,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "agentic_service_harness_non_empty_diff_file_summary_receipt",
+        "agentic_service_harness_filesystem_write_non_empty_diff_evidence_candidate",
+    )
+    assert_ordered(
+        "agentic_service_harness_filesystem_write_non_empty_diff_evidence_candidate",
         "agentic_service_harness_github_pr_admission_preflight",
     )
     assert_ordered(

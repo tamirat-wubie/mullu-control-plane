@@ -1,0 +1,98 @@
+{
+  "receipt_id": "agentic_service_harness_filesystem_write_non_empty_diff_evidence_candidate",
+  "schema_version": 1,
+  "generated_at": "2026-07-02T00:00:00Z",
+  "solver_outcome": "SolvedVerified",
+  "candidate_status": "candidate_evidence_collected_without_authority_promotion",
+  "source_filesystem_write_admission_preflight_ref": "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json",
+  "source_non_empty_diff_file_summary_receipt_ref": "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json",
+  "scope": {
+    "project_id": "project-agentic-service-harness",
+    "task_id": "task.branchwrite",
+    "run_id": "run.branchwrite",
+    "sandbox_id": "sandbox.branchwrite",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "repository_slug": "tamirat-wubie/mullu-control-plane",
+    "mode": "branch_write",
+    "foundation_phase": "foundation_filesystem_write_non_empty_diff_evidence_candidate",
+    "candidate_only": true,
+    "authority_promotion_allowed": false
+  },
+  "source_receipts": {
+    "filesystem_write_admission_preflight_ref": "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json",
+    "non_empty_diff_file_summary_receipt_ref": "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json",
+    "filesystem_write_admission_preflight_verified": true,
+    "non_empty_diff_file_summary_receipt_verified": true,
+    "source_admissions_remain_blocked": true
+  },
+  "write_evidence_candidate": {
+    "candidate_write_id": "filesystem-write-non-empty-diff-candidate-001",
+    "confined_workspace_ref": "evidence://workspace-write-authority/confined-branch-workspace",
+    "write_intent_ref": "evidence://filesystem-write-intent/governance-fixture-only",
+    "candidate_file_classification": "governance_fixture_only",
+    "candidate_changed_file_count": 1,
+    "changed_file_refs": [
+      "evidence://filesystem-write-non-empty-diff-candidate/changed-file-001"
+    ],
+    "diff_refs": [
+      "evidence://filesystem-write-non-empty-diff-candidate/redacted-diff-001"
+    ],
+    "redacted_diff_bundle_ref": "digest://redacted-filesystem-write-non-empty-diff-bundle",
+    "diff_bundle_hash_ref": "hash://filesystem-write-non-empty-diff-candidate",
+    "cleanup_receipt_ref": "receipt://sandbox-cleanup-branchwrite",
+    "rollback_plan_ref": "evidence://filesystem-write-rollback-plan",
+    "raw_diff_body_serialized": false,
+    "raw_file_content_serialized": false,
+    "absolute_paths_allowed": false,
+    "parent_traversal_allowed": false,
+    "secret_paths_allowed": false,
+    "production_paths_allowed": false
+  },
+  "effect_reconciliation": {
+    "expected_effect": "one redacted governance fixture diff summary exists",
+    "observed_effect": "one redacted governance fixture diff summary exists",
+    "expected_observed_match": true,
+    "forbidden_effects_checked": true,
+    "unresolved_reconciliation": false
+  },
+  "authority_denials": {
+    "branch_write_authority_promoted": false,
+    "workspace_write_authority_promoted": false,
+    "filesystem_write_authority_promoted": false,
+    "raw_diff_body_stored": false,
+    "raw_file_content_stored": false,
+    "receipt_store_append_enabled": false,
+    "runtime_state_write_enabled": false,
+    "connector_calls_enabled": false,
+    "mutation_route_enabled": false,
+    "pr_creation_enabled": false,
+    "secret_values_serialized": false,
+    "terminal_closure": false
+  },
+  "redaction_policy": {
+    "secret_redaction_required": true,
+    "diff_redaction_required": true,
+    "redaction_evidence_ref": "evidence://redaction-policy-for-file-change-collection",
+    "raw_secret_value_storage_allowed": false,
+    "raw_output_storage_allowed": false
+  },
+  "receipt_refs": {
+    "filesystem_write_non_empty_diff_evidence_candidate_schema": "schemas/agentic_service_harness_filesystem_write_non_empty_diff_evidence_candidate.schema.json",
+    "filesystem_write_admission_preflight_example": "examples/agentic_service_harness_filesystem_write_admission_preflight.foundation.json",
+    "non_empty_diff_file_summary_receipt_example": "examples/agentic_service_harness_non_empty_diff_file_summary_receipt.foundation.json",
+    "receipt_store_write_path_ref": "evidence://receipt-store-write-path-for-filesystem-write",
+    "cleanup_receipt_ref": "receipt://sandbox-cleanup-branchwrite",
+    "rollback_plan_ref": "evidence://filesystem-write-rollback-plan",
+    "uao_filesystem_write_evidence_candidate_ref": "evidence://uao-filesystem-write-non-empty-diff-evidence-candidate"
+  },
+  "validators": [
+    {
+      "validator_id": "filesystem_write_non_empty_diff_evidence_candidate",
+      "command": "python scripts/validate_agentic_service_harness_filesystem_write_non_empty_diff_evidence_candidate.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Bind the blocked non-empty diff file summary receipt to this concrete filesystem-write non-empty diff evidence candidate; keep receipt-store append, PR creation, raw diff bodies, raw file content, connector calls, mutation routes, secrets, authority promotion, and terminal closure blocked until terminal certificate evidence exists.",
+  "receipt_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}
