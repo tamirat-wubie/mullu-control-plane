@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-ref-absence-closure-review:1",
+  "title": "Personal Assistant Ref Absence Closure Review",
+  "description": "No-effect AwaitingEvidence review over a blocked explicit decision value-ref verification result absence closure packet.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ref_absence_closure_review_id",
+    "generated_at",
+    "governed",
+    "source_projection",
+    "source_ref_absence_closure_packet_id",
+    "ref_absence_closure_review_state",
+    "decision",
+    "outcome",
+    "review_state",
+    "review_items",
+    "blocking_reasons",
+    "receipt",
+    "effect_boundary",
+    "private_payload_policy",
+    "summary",
+    "assurance",
+    "metadata"
+  ],
+  "properties": {
+    "ref_absence_closure_review_id": {"type": "string", "pattern": "^pa_ref_absence_closure_review_[a-z0-9][a-z0-9_:-]*$"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "governed": {"const": true},
+    "source_projection": {"const": "personal_assistant_ref_absence_closure_packet"},
+    "source_ref_absence_closure_packet_id": {"$ref": "#/$defs/non_empty_text"},
+    "ref_absence_closure_review_state": {"const": "closure_review_blocked_awaiting_verification_results"},
+    "decision": {"const": "blocked"},
+    "outcome": {"const": "AwaitingEvidence"},
+    "review_state": {"$ref": "#/$defs/review_state"},
+    "review_items": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/review_item"}},
+    "blocking_reasons": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/non_empty_text"}},
+    "receipt": {"type": "object"},
+    "effect_boundary": {"$ref": "#/$defs/effect_boundary"},
+    "private_payload_policy": {"$ref": "#/$defs/private_payload_policy"},
+    "summary": {"$ref": "#/$defs/summary"},
+    "assurance": {"$ref": "#/$defs/assurance"},
+    "metadata": {"$ref": "#/$defs/metadata"}
+  },
+  "$defs": {
+    "non_empty_text": {"type": "string", "minLength": 1},
+    "ref_name": {"enum": ["operator_decision_value_ref", "operator_identity_ref", "operator_signature_ref", "operator_reapproval_decision_receipt_ref"]},
+    "review_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["can_close_review", "can_close_source_packet", "can_close_verifier_execution", "can_close_authority_grant", "can_close_terminal_readiness", "reviewed_obligation_count", "pending_evidence_obligation_count", "missing_verification_result_count", "blocking_reason_count"],
+      "properties": {
+        "can_close_review": {"const": false},
+        "can_close_source_packet": {"const": false},
+        "can_close_verifier_execution": {"const": false},
+        "can_close_authority_grant": {"const": false},
+        "can_close_terminal_readiness": {"const": false},
+        "reviewed_obligation_count": {"const": 4},
+        "pending_evidence_obligation_count": {"const": 4},
+        "missing_verification_result_count": {"const": 4},
+        "blocking_reason_count": {"const": 4}
+      }
+    },
+    "review_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["review_item_id", "ref_name", "source_obligation_id", "submitted_ref_uri", "review_result", "blocking_reason", "required_next_evidence", "reviewed", "pending", "verification_result_present", "verified", "accepted", "bound", "stored", "grants_authority", "grants_verifier_execution"],
+      "properties": {
+        "review_item_id": {"$ref": "#/$defs/non_empty_text"},
+        "ref_name": {"$ref": "#/$defs/ref_name"},
+        "source_obligation_id": {"$ref": "#/$defs/non_empty_text"},
+        "submitted_ref_uri": {"type": "string", "pattern": "^evidence://personal-assistant/operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-submitted/.+$"},
+        "review_result": {"const": "blocked_missing_governed_verification_result"},
+        "blocking_reason": {"$ref": "#/$defs/non_empty_text"},
+        "required_next_evidence": {"const": "governed_verification_result"},
+        "reviewed": {"const": true},
+        "pending": {"const": true},
+        "verification_result_present": {"const": false},
+        "verified": {"const": false},
+        "accepted": {"const": false},
+        "bound": {"const": false},
+        "stored": {"const": false},
+        "grants_authority": {"const": false},
+        "grants_verifier_execution": {"const": false}
+      }
+    },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "closure_review_allowed": {"const": true},
+        "source_closure_packet_projection_allowed": {"const": true},
+        "pending_evidence_obligation_review_allowed": {"const": true},
+        "review_recorded": {"const": true},
+        "terminal_closure_claimed": {"const": false},
+        "closure_satisfied": {"const": false},
+        "review_satisfied": {"const": false},
+        "verification_result_present": {"const": false},
+        "explicit_decision_value_refs_verified": {"const": false},
+        "explicit_decision_value_refs_accepted": {"const": false},
+        "explicit_decision_value_refs_bound": {"const": false},
+        "explicit_decision_value_refs_stored": {"const": false},
+        "operator_value_record_created": {"const": false},
+        "operator_decision_value_present": {"const": false},
+        "verifier_execution_allowed": {"const": false},
+        "authority_granted": {"const": false},
+        "live_connector_execution_allowed": {"const": false},
+        "connector_mutation_allowed": {"const": false},
+        "memory_write_allowed": {"const": false},
+        "deployment_mutation_allowed": {"const": false},
+        "nested_mind_live_activation_allowed": {"const": false},
+        "public_readiness_claim_allowed": {"const": false}
+      }
+    },
+    "private_payload_policy": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "raw_private_payload_serialized": {"const": false},
+        "secret_values_serialized": {"const": false},
+        "review_projection": {"const": "closure_packet_summary_only"},
+        "source_closure_packet_projection": {"const": "blocked_status_only"},
+        "operator_decision_value_projection": {"const": "absent"},
+        "verifier_result_payload_projection": {"const": "absent"}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "reviewed_obligation_count": {"const": 4},
+        "pending_evidence_obligation_count": {"const": 4},
+        "missing_verification_result_count": {"const": 4},
+        "blocking_reason_count": {"const": 4},
+        "verification_result_present_count": {"const": 0},
+        "verified_ref_count": {"const": 0},
+        "accepted_ref_count": {"const": 0},
+        "bound_ref_count": {"const": 0},
+        "stored_ref_count": {"const": 0},
+        "authority_grant_count": {"const": 0},
+        "verifier_execution_grant_count": {"const": 0}
+      }
+    },
+    "assurance": {"type": "object", "additionalProperties": true, "properties": {"outcome": {"const": "AwaitingEvidence"}, "review_only": {"const": true}, "terminal_closure_claimed": {"const": false}, "verification_result_present": {"const": false}, "explicit_decision_value_refs_verified": {"const": false}, "authority_granted": {"const": false}}},
+    "metadata": {"type": "object", "additionalProperties": true, "properties": {"runtime_boundary": {"const": "closure_review_blocked_awaiting_verification_results"}, "review_only": {"const": true}, "terminal_closure_claimed": {"const": false}, "authority_granted": {"const": false}}}
+  }
+}

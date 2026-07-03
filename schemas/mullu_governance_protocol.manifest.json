@@ -2555,6 +2555,12 @@
       "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-verification-result-absence-status-closure-packet:1"
     },
     {
+      "path": "schemas/pa_ref_absence_closure_review.schema.json",
+      "schema_id": "personal-assistant-ref-absence-closure-review",
+      "surface": "personal-assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-ref-absence-closure-review:1"
+    },
+    {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
       "schema_id": "personal-assistant-foundation-closure-packet",
       "surface": "assistant",
