@@ -320,6 +320,7 @@ jobs:
       - name: Validate proof coverage matrix
         run: |
           python scripts/validate_worker_receipt_ledger_read_model.py
+          python scripts/validate_read_only_worker_runtime_status_read_model.py
           python scripts/validate_readiness_waiver_review_packet.py
           python scripts/validate_browser_observation_receipt.py
           python scripts/validate_trusted_capture_evidence_packet.py
@@ -746,7 +747,7 @@ jobs:
         run: python -m pytest tests/test_validate_read_only_worker_receipt_append_witness.py tests/test_validate_read_only_worker_terminal_closure_witness.py -q
 
       - name: Run worker runtime enablement witness tests
-        run: python -m pytest tests/test_validate_read_only_worker_runtime_enablement_witness.py tests/test_emit_read_only_worker_runtime_enablement_operator_input_request.py tests/test_validate_read_only_worker_runtime_enablement_operator_input_request.py tests/test_validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py tests/test_validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py tests/test_validate_read_only_worker_runtime_enablement_review_packet.py tests/test_validate_read_only_worker_runtime_enablement_evidence_acceptance_gate.py tests/test_validate_read_only_worker_runtime_enablement_admission_gate.py tests/test_validate_read_only_worker_runtime_enablement_promotion_decision.py tests/test_validate_read_only_worker_runtime_foundation_closure_summary.py tests/test_validate_read_only_worker_runtime_disablement_rollback_plan.py tests/test_validate_read_only_worker_trusted_runtime_clock_receipt.py tests/test_validate_read_only_worker_operator_runtime_enablement_approval_ref.py -q
+        run: python -m pytest tests/test_validate_read_only_worker_runtime_enablement_witness.py tests/test_emit_read_only_worker_runtime_enablement_operator_input_request.py tests/test_validate_read_only_worker_runtime_enablement_operator_input_request.py tests/test_validate_read_only_worker_runtime_enablement_evidence_request_status_ledger.py tests/test_validate_read_only_worker_runtime_enablement_submitted_evidence_refs.py tests/test_validate_read_only_worker_runtime_enablement_review_packet.py tests/test_validate_read_only_worker_runtime_enablement_evidence_acceptance_gate.py tests/test_validate_read_only_worker_runtime_enablement_admission_gate.py tests/test_validate_read_only_worker_runtime_enablement_promotion_decision.py tests/test_validate_read_only_worker_runtime_foundation_closure_summary.py tests/test_validate_read_only_worker_runtime_status_read_model.py tests/test_validate_read_only_worker_runtime_disablement_rollback_plan.py tests/test_validate_read_only_worker_trusted_runtime_clock_receipt.py tests/test_validate_read_only_worker_operator_runtime_enablement_approval_ref.py -q
 
       - name: Upload SDLC validation receipt
         uses: actions/upload-artifact@v6

@@ -1,0 +1,51 @@
+{
+  "acceptance_tests": [
+    "python scripts/validate_read_only_worker_runtime_status_read_model.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_status_read_model.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py -k runtime_status_read_model -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "affected_surfaces": [
+    "read_only_worker_runtime_status_read_model",
+    "read_only_worker_runtime_foundation_closure_summary",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "causal_decision_trace_ref": "trace://sdlc/runtime-status-read-model/20260702",
+  "constraints": [
+    "Read model must consume the Foundation closure summary.",
+    "Read model must distinguish Foundation closure from live runtime terminal closure.",
+    "Evidence acceptance may be visible, but runtime admission, promotion, enablement, dispatch, worker invocation, receipt emission, receipt append, connector authority, filesystem writes, network access, secret serialization, and success claims remain denied.",
+    "Projection must be fixture-derived and must not invoke live runtime.",
+    "Mfidel atomicity must be preserved."
+  ],
+  "evidence_required": [
+    "schemas/read_only_worker_runtime_status_read_model.schema.json",
+    "examples/read_only_worker_runtime_status_read_model.foundation.json",
+    "scripts/validate_read_only_worker_runtime_status_read_model.py",
+    "tests/test_validate_read_only_worker_runtime_status_read_model.py"
+  ],
+  "non_goals": [
+    "Do not grant runtime authority.",
+    "Do not claim live terminal closure.",
+    "Do not dispatch or invoke a worker.",
+    "Do not emit or append runtime receipts.",
+    "Do not serialize raw secret values."
+  ],
+  "problem_statement": "After closing the read-only worker runtime chain for Foundation Mode, the operator still needed a direct read-only status projection that answers whether runtime is intentionally closed or still incomplete.",
+  "receipt_ref": "examples/read_only_worker_runtime_status_read_model.foundation.json",
+  "request_id": "runtime_status_read_model_20260702",
+  "requirement_id": "sdlc_req_runtime_status_read_model_20260702",
+  "risk_class": "high",
+  "success_criteria": [
+    "Status read model validates as SolvedVerified with proof_state Pass through its source closure summary.",
+    "Status read model reports evidence accepted for Foundation review while runtime admission and promotion remain denied.",
+    "Runtime enablement, dispatch, receipt append, and live terminal closure counts remain zero.",
+    "Focused validator, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks pass."
+  ],
+  "uao_ref": "uao://local-foundation/runtime-status-read-model/20260702"
+}

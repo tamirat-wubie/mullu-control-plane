@@ -2898,6 +2898,17 @@ def test_protocol_manifest_indexes_read_only_worker_runtime_foundation_closure_s
     assert summary_entry["surface"] == "worker"
 
 
+def test_protocol_manifest_indexes_read_only_worker_runtime_status_read_model_contract() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    read_model_entry = entries["read-only-worker-runtime-status-read-model"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert read_model_entry["path"] == "schemas/read_only_worker_runtime_status_read_model.schema.json"
+    assert read_model_entry["urn"] == "urn:mullusi:schema:read-only-worker-runtime-status-read-model:1"
+    assert read_model_entry["surface"] == "worker"
+
+
 def test_protocol_manifest_indexes_read_only_worker_operator_runtime_enablement_approval_ref_contract() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

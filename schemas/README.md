@@ -201,6 +201,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `read_only_worker_runtime_enablement_admission_gate.schema.json` | Runtime admission gate consuming accepted read-only worker evidence while keeping runtime denied |
 | `read_only_worker_runtime_enablement_promotion_decision.schema.json` | Runtime promotion decision that denies read-only worker runtime promotion under Foundation Mode |
 | `read_only_worker_runtime_foundation_closure_summary.schema.json` | Foundation Mode closure summary for the read-only worker runtime chain with live runtime blocked |
+| `read_only_worker_runtime_status_read_model.schema.json` | Read-only Foundation Mode status projection for the worker runtime chain: evidence accepted, admission denied, promotion denied, closure complete |
 | `read_only_worker_runtime_disablement_rollback_plan.schema.json` | Review-only runtime disablement rollback plan evidence for read-only worker runtime enablement |
 | `read_only_worker_operator_runtime_enablement_approval_ref.schema.json` | Review-only operator approval reference evidence for read-only worker runtime enablement |
 | `read_only_worker_trusted_runtime_clock_receipt.schema.json` | Review-only trusted runtime clock evidence for read-only worker runtime enablement |
