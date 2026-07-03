@@ -1248,6 +1248,52 @@ def test_direct_snet_contracts_reject_non_json_metadata_value_drift() -> None:
     assert "\"metadata\":{\"flags\":[true,null,3,0.5,\"ok\"],\"nested\":{\"score\":1}}" in valid_symbol.to_json()
 
 
+def test_direct_snet_contracts_reject_metadata_scalar_hidden_text_drift() -> None:
+    with pytest.raises(ValueError, match="metadata.note"):
+        SNetSymbol(symbol_id="symbol:1", label="Seed", metadata={"note": "Seed\u200bvalue"})
+    with pytest.raises(ValueError, match="metadata.outer.inner"):
+        SNetSymbol(
+            symbol_id="symbol:2",
+            label="Seed",
+            metadata={"outer": {"inner": "Seed\u200dvalue"}},
+        )
+    with pytest.raises(ValueError, match=r"metadata.items\[0\]"):
+        SNetSymbol(symbol_id="symbol:3", label="Seed", metadata={"items": ["Seed\nvalue"]})
+    with pytest.raises(ValueError, match="metadata.source"):
+        SNetAnswer(
+            answer_id="answer:1",
+            question_id="question:1",
+            raw_answer="Seed",
+            ascii_folded_answer="seed",
+            confidence=0.5,
+            metadata={"source": "Seed\u2028value"},
+        )
+
+    valid_symbol = SNetSymbol(
+        symbol_id="symbol:4",
+        label="Seed",
+        metadata={
+            "empty": "",
+            "fidel": "\u1200",
+            "items": ["value \u1200"],
+            "padded": " Seed value ",
+        },
+    )
+    valid_answer = SNetAnswer(
+        answer_id="answer:2",
+        question_id="question:2",
+        raw_answer="Seed",
+        ascii_folded_answer="seed",
+        confidence=0.5,
+        metadata={"note": "Seed value \u1200"},
+    )
+
+    assert valid_symbol.metadata["empty"] == ""
+    assert valid_symbol.metadata["padded"] == " Seed value "
+    assert valid_symbol.metadata["items"] == ("value \u1200",)
+    assert valid_answer.metadata["note"] == "Seed value \u1200"
+
+
 def test_direct_snet_contracts_reject_text_shape_drift() -> None:
     with pytest.raises(ValueError, match="label"):
         SNetSymbol(symbol_id="symbol:1", label=SNetWHType.WHAT)
