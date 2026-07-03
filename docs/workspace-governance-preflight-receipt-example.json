@@ -1,5 +1,5 @@
 {
-  "check_count": 348,
+  "check_count": 349,
   "checks": [
     {
       "args": [
@@ -1976,6 +1976,19 @@
       "return_code": 0,
       "stderr": "",
       "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER EXECUTION AUTHORITY REVIEW SUBMISSION RECEIPT EMISSION PREFLIGHT VALID\n",
+      "termination_reason": "completed",
+      "termination_signal": null
+    },
+    {
+      "args": [
+        "C:\\Python313\\python.exe",
+        "scripts/validate_agentic_service_harness_live_producer_execution_authority_review_submission_receipt_append_admission_preflight.py"
+      ],
+      "name": "agentic_service_harness_live_producer_execution_authority_review_submission_receipt_append_admission_preflight",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "AGENTIC SERVICE HARNESS LIVE PRODUCER EXECUTION AUTHORITY REVIEW SUBMISSION RECEIPT APPEND ADMISSION PREFLIGHT VALID\n",
       "termination_reason": "completed",
       "termination_signal": null
     },
