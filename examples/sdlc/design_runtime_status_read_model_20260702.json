@@ -1,0 +1,52 @@
+{
+  "affected_modules": [
+    "read_only_worker_runtime_status_read_model",
+    "read_only_worker_runtime_foundation_closure_summary",
+    "workspace_governance_protocol_manifest",
+    "worker_contract_docs",
+    "ci_worker_witness_tests"
+  ],
+  "architecture_summary": "Add a read-only Foundation Mode status read model that consumes the runtime closure summary and exposes the operator-facing state: evidence accepted, admission denied, promotion denied, live runtime blocked, and Foundation closure complete.",
+  "data_model_changes": [
+    "Introduce a status read-model schema and fixture with explicit projection scope, operator status, runtime status, authority denials, chain refs, evidence refs, and reconciled counts.",
+    "Preserve the source Foundation closure summary while adding a concise operator-facing projection.",
+    "Register the schema in the protocol manifest, schema index, CI worker lane, docs, and SDLC artifacts."
+  ],
+  "design_id": "sdlc_design_runtime_status_read_model_20260702",
+  "implementation_plan": [
+    "Add status read-model schema, fixture, validator, and focused tests.",
+    "Register the schema in the protocol manifest and CI worker runtime enablement lane.",
+    "Update worker docs, schema README, gap register, platform overview, and SDLC artifacts.",
+    "Run focused validator, focused pytest, protocol manifest validation, SDLC artifact validation, schema validation, and whitespace checks."
+  ],
+  "invariants": [
+    "Read model is projection-only and does not execute runtime.",
+    "Foundation closure is not live terminal closure.",
+    "Live runtime remains blocked.",
+    "Runtime admission, promotion, enablement, dispatch, worker invocation, receipt emission, receipt append, and success claims remain denied.",
+    "The status answer is derived from the Foundation closure summary."
+  ],
+  "requirement_id": "sdlc_req_runtime_status_read_model_20260702",
+  "rollback_plan": [
+    "Remove status read-model schema, fixture, validator, tests, manifest entry, CI inclusion, docs updates, and SDLC artifacts.",
+    "Restore the worker runtime chain to relying directly on the Foundation closure summary."
+  ],
+  "schema_changes": [
+    "schemas/read_only_worker_runtime_status_read_model.schema.json",
+    "schemas/mullu_governance_protocol.manifest.json",
+    "schemas/README.md"
+  ],
+  "test_plan": [
+    "python scripts/validate_read_only_worker_runtime_status_read_model.py --json",
+    "python -m pytest tests/test_validate_read_only_worker_runtime_status_read_model.py -q",
+    "python -m pytest tests/test_validate_protocol_manifest.py -k runtime_status_read_model -q",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_schemas.py",
+    "git diff --check"
+  ],
+  "tradeoffs": [
+    "The slice adds an operator projection without runtime authority.",
+    "Future live runtime authority still requires a separate non-Foundation thread."
+  ]
+}

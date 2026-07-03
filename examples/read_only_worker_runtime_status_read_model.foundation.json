@@ -1,0 +1,80 @@
+{
+  "authority_denials": {
+    "connector_authority_allowed": false,
+    "external_network_allowed": false,
+    "filesystem_write_allowed": false,
+    "mfidel_atomicity_preserved": true,
+    "receipt_append_allowed": false,
+    "runtime_admission_allowed": false,
+    "runtime_dispatch_allowed": false,
+    "runtime_enablement_allowed": false,
+    "runtime_promotion_allowed": false,
+    "runtime_receipt_emission_allowed": false,
+    "secret_values_serialized": false,
+    "success_claim_allowed": false,
+    "terminal_live_closure_allowed": false,
+    "worker_invocation_allowed": false
+  },
+  "chain_refs": [
+    "examples/read_only_worker_runtime_enablement_witness.foundation.json",
+    "examples/read_only_worker_runtime_enablement_evidence_request_status_ledger.foundation.json",
+    "examples/read_only_worker_runtime_enablement_submitted_evidence_refs.foundation.json",
+    "examples/read_only_worker_runtime_enablement_review_packet.foundation.json",
+    "examples/read_only_worker_runtime_disablement_rollback_plan.foundation.json",
+    "examples/read_only_worker_trusted_runtime_clock_receipt.foundation.json",
+    "examples/read_only_worker_operator_runtime_enablement_approval_ref.foundation.json",
+    "examples/read_only_worker_runtime_enablement_evidence_acceptance_gate.foundation.json",
+    "examples/read_only_worker_runtime_enablement_admission_gate.foundation.json",
+    "examples/read_only_worker_runtime_enablement_promotion_decision.foundation.json",
+    "examples/read_only_worker_runtime_foundation_closure_summary.foundation.json",
+    "docs/80_read_only_worker_binding_contract.md"
+  ],
+  "evidence_refs": [
+    "schemas/read_only_worker_runtime_status_read_model.schema.json",
+    "examples/read_only_worker_runtime_status_read_model.foundation.json",
+    "scripts/validate_read_only_worker_runtime_status_read_model.py",
+    "tests/test_validate_read_only_worker_runtime_status_read_model.py",
+    "examples/read_only_worker_runtime_foundation_closure_summary.foundation.json",
+    "scripts/validate_read_only_worker_runtime_foundation_closure_summary.py",
+    "schemas/read_only_worker_runtime_foundation_closure_summary.schema.json",
+    "docs/80_read_only_worker_binding_contract.md"
+  ],
+  "next_action": "No runtime action in Foundation Mode; open a separate non-Foundation authority thread only if live runtime is explicitly requested.",
+  "operator_status": {
+    "foundation_closure_complete": true,
+    "headline": "Foundation Mode worker runtime is closed with live runtime blocked.",
+    "live_runtime_blocked": true,
+    "proof_state": "Pass",
+    "solver_outcome": "SolvedVerified",
+    "status_reason": "Evidence is accepted for the Foundation proof thread, but admission, promotion, enablement, dispatch, invocation, and receipt writes remain denied."
+  },
+  "projection_scope": {
+    "fixture_projection": true,
+    "live_runtime_observed": false,
+    "projection_mode": "FOUNDATION_STATUS_PROJECTION",
+    "raw_secret_values_included": false,
+    "source_fixture_read_performed": true,
+    "source_runtime_invocation_performed": false
+  },
+  "read_model_id": "read-only-worker-runtime-status-read-model-foundation",
+  "read_model_version": "read_only_worker_runtime_status_read_model.v1",
+  "runtime_status": {
+    "evidence_acceptance_state": "accepted_for_foundation_review",
+    "receipt_append_state": "denied",
+    "runtime_admission_state": "denied",
+    "runtime_dispatch_state": "denied",
+    "runtime_enablement_state": "not_executed",
+    "runtime_promotion_state": "denied_foundation_mode",
+    "terminal_closure_state": "foundation_closed_not_live_terminal_closure"
+  },
+  "source_closure_summary_ref": "examples/read_only_worker_runtime_foundation_closure_summary.foundation.json",
+  "summary": {
+    "accepted_evidence_ref_count": 12,
+    "blocked_authority_count": 13,
+    "chain_ref_count": 12,
+    "receipt_append_count": 0,
+    "runtime_dispatch_count": 0,
+    "runtime_enablement_count": 0,
+    "terminal_live_closure_count": 0
+  }
+}
