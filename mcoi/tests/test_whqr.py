@@ -48,6 +48,7 @@ from mcoi_runtime.whqr.equivalence import (
 )
 from mcoi_runtime.whqr.evaluator import WHQREvaluationContext, evaluate
 from mcoi_runtime.whqr.governance import build_guard_verdict, build_policy_decision
+from mcoi_runtime.whqr.replay import build_whqr_replay_binding_from_metadata
 from mcoi_runtime.whqr.static_checks import validate_static
 
 
@@ -1118,6 +1119,60 @@ def test_semantic_equivalence_rejects_malformed_replay_tree() -> None:
         semantic_fingerprint(forged)
     with pytest.raises(ValueError, match="WHQR replay"):
         assert_replay_equivalent(original, forged)
+
+
+def test_replay_binding_builder_binds_verified_canonical_metadata() -> None:
+    document = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    metadata = {
+        "whqr_canonical_json": document.canonical_json(),
+        "whqr_canonical_hash": document.canonical_hash(),
+        "whqr_semantics_hash": document.semantics_hash,
+        "whqr_version": document.whqr_version,
+    }
+
+    binding = build_whqr_replay_binding_from_metadata(metadata, context_label="test closure")
+
+    assert binding is not None
+    assert binding["replay_ref"] == f"whqr://replay/{document.canonical_hash()}"
+    assert binding["canonical_hash"] == document.canonical_hash()
+    assert binding["semantics_hash"] == document.semantics_hash
+    assert binding["version"] == document.whqr_version
+
+
+def test_replay_binding_builder_treats_fully_absent_metadata_as_legacy() -> None:
+    binding = build_whqr_replay_binding_from_metadata({}, context_label="test closure")
+
+    assert binding is None
+
+
+def test_replay_binding_builder_rejects_partial_or_tampered_metadata() -> None:
+    document = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    metadata = {
+        "whqr_canonical_json": document.canonical_json(),
+        "whqr_canonical_hash": document.canonical_hash(),
+        "whqr_semantics_hash": document.semantics_hash,
+        "whqr_version": document.whqr_version,
+    }
+    partial_metadata = dict(metadata)
+    partial_metadata.pop("whqr_canonical_json")
+    tampered_metadata = dict(metadata)
+    tampered_metadata["whqr_canonical_json"] = tampered_metadata["whqr_canonical_json"].replace(
+        "payment_request",
+        "delete_file",
+    )
+    semantic_mismatch = dict(metadata)
+    semantic_mismatch["whqr_semantics_hash"] = "sha256:" + ("0" * 64)
+    version_mismatch = dict(metadata)
+    version_mismatch["whqr_version"] = "9.9.9"
+
+    with pytest.raises(ValueError, match="requires WHQR canonical replay document"):
+        build_whqr_replay_binding_from_metadata(partial_metadata, context_label="test closure")
+    with pytest.raises(ValueError, match="WHQR replay document is invalid"):
+        build_whqr_replay_binding_from_metadata(tampered_metadata, context_label="test closure")
+    with pytest.raises(ValueError, match="WHQR semantics hash mismatch"):
+        build_whqr_replay_binding_from_metadata(semantic_mismatch, context_label="test closure")
+    with pytest.raises(ValueError, match="WHQR version mismatch"):
+        build_whqr_replay_binding_from_metadata(version_mismatch, context_label="test closure")
 
 
 def test_static_checks_pass_for_complete_acyclic_tree() -> None:

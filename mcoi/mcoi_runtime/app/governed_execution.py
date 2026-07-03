@@ -27,7 +27,6 @@ from mcoi_runtime.contracts.execution import ExecutionResult
 from mcoi_runtime.contracts.mil import MILProgram
 from mcoi_runtime.contracts.policy import PolicyDecision
 from mcoi_runtime.contracts.simulation import RiskLevel
-from mcoi_runtime.contracts.whqr import WHQRDocument
 from mcoi_runtime.core.mil_dispatcher_bridge import dispatch_verified_mil
 from mcoi_runtime.core.mil_static_verifier import MILStaticReport, verify_mil_program
 from mcoi_runtime.core.universal_action_kernel import (
@@ -38,6 +37,10 @@ from mcoi_runtime.core.universal_action_kernel import (
     build_universal_action_orchestration_record,
 )
 from mcoi_runtime.whqr.mil_compiler import compile_mil_from_policy_decision
+from mcoi_runtime.whqr.replay import (
+    WHQR_REPLAY_BINDING_FIELDS,
+    build_whqr_replay_binding_from_metadata,
+)
 
 # Module-level counter for unique intent IDs (avoids collision with fixed clocks)
 _intent_counter: list[int] = [0]
@@ -118,9 +121,6 @@ _UAO_RECEIPT_KINDS = frozenset(
 _UAO_BASE_REQUIRED_RECEIPT_KINDS = frozenset({"trace", "admission", "closure"})
 _UAO_ALLOW_REQUIRED_RECEIPT_KINDS = _UAO_BASE_REQUIRED_RECEIPT_KINDS | frozenset(
     {"execution", "reconciliation"}
-)
-_WHQR_REPLAY_BINDING_FIELDS = frozenset(
-    {"replay_ref", "canonical_hash", "semantics_hash", "version"}
 )
 _UAO_RECEIPT_TIER_BY_KIND = {
     "trace": frozenset({"R1"}),
@@ -1542,49 +1542,13 @@ def _universal_action_whqr_replay_binding(
     certificate = result.terminal_certificate
     if certificate is None:
         return None
-    metadata = certificate.metadata
-    canonical_json = metadata.get("whqr_canonical_json")
-    canonical_hash = metadata.get("whqr_canonical_hash")
-    semantics_hash = metadata.get("whqr_semantics_hash")
-    whqr_version = metadata.get("whqr_version")
-    if (
-        canonical_json is None
-        and canonical_hash is None
-        and semantics_hash is None
-        and whqr_version is None
-    ):
-        return None
-    if not isinstance(canonical_json, str) or not canonical_json:
-        raise RuntimeCoreInvariantError(
-            "universal action detail requires WHQR canonical replay document"
-        )
-    if not isinstance(canonical_hash, str) or not canonical_hash:
-        raise RuntimeCoreInvariantError(
-            "universal action detail requires WHQR canonical hash"
-        )
     try:
-        document = WHQRDocument.from_canonical_json(
-            canonical_json,
-            expected_canonical_hash=canonical_hash,
+        return build_whqr_replay_binding_from_metadata(
+            certificate.metadata,
+            context_label="universal action detail",
         )
     except ValueError as exc:
-        raise RuntimeCoreInvariantError(
-            "universal action detail WHQR replay document is invalid"
-        ) from exc
-    if semantics_hash is not None and semantics_hash != document.semantics_hash:
-        raise RuntimeCoreInvariantError(
-            "universal action detail WHQR semantics hash mismatch"
-        )
-    if whqr_version is not None and whqr_version != document.whqr_version:
-        raise RuntimeCoreInvariantError(
-            "universal action detail WHQR version mismatch"
-        )
-    return {
-        "replay_ref": f"whqr://replay/{canonical_hash}",
-        "canonical_hash": canonical_hash,
-        "semantics_hash": document.semantics_hash,
-        "version": document.whqr_version,
-    }
+        raise RuntimeCoreInvariantError(str(exc)) from exc
 
 
 def _universal_action_reconciliation_ref(result: UniversalActionResult) -> str:
@@ -1643,7 +1607,7 @@ def _normalized_whqr_replay_binding(value: Any) -> dict[str, str] | None:
         return None
     if not value:
         return {}
-    if set(value) != _WHQR_REPLAY_BINDING_FIELDS:
+    if set(value) != WHQR_REPLAY_BINDING_FIELDS:
         return None
     replay_ref = value.get("replay_ref")
     canonical_hash = value.get("canonical_hash")

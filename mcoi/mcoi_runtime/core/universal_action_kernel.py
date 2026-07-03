@@ -80,7 +80,6 @@ from mcoi_runtime.contracts.verification import (
     VerificationResult,
     VerificationStatus,
 )
-from mcoi_runtime.contracts.whqr import WHQRDocument
 from mcoi_runtime.contracts.world_state import WorldStateSnapshot
 from mcoi_runtime.contracts.solver_outcome import SolverOutcome
 from mcoi_runtime.core.causal_repair import (
@@ -125,6 +124,7 @@ from mcoi_runtime.core.repair_template_registry import (
 from mcoi_runtime.core.simulation import SimulationEngine
 from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
 from mcoi_runtime.core.world_state import WorldStateEngine
+from mcoi_runtime.whqr.replay import build_whqr_replay_binding_from_metadata
 
 
 _BLOCKING_SIMULATION_VERDICTS = frozenset(
@@ -3734,43 +3734,13 @@ def _uao_record_whqr_replay_binding(result: UniversalActionResult) -> dict[str, 
     certificate = result.terminal_certificate
     if certificate is None:
         return None
-    metadata = certificate.metadata
-    canonical_json = metadata.get("whqr_canonical_json")
-    canonical_hash = metadata.get("whqr_canonical_hash")
-    semantics_hash = metadata.get("whqr_semantics_hash")
-    whqr_version = metadata.get("whqr_version")
-    if (
-        canonical_json is None
-        and canonical_hash is None
-        and semantics_hash is None
-        and whqr_version is None
-    ):
-        return None
-    if not isinstance(canonical_json, str) or not canonical_json:
-        raise RuntimeCoreInvariantError(
-            "UAO closure requires WHQR canonical replay document"
-        )
-    if not isinstance(canonical_hash, str) or not canonical_hash:
-        raise RuntimeCoreInvariantError("UAO closure requires WHQR canonical hash")
     try:
-        document = WHQRDocument.from_canonical_json(
-            canonical_json,
-            expected_canonical_hash=canonical_hash,
+        return build_whqr_replay_binding_from_metadata(
+            certificate.metadata,
+            context_label="UAO closure",
         )
     except ValueError as exc:
-        raise RuntimeCoreInvariantError(
-            "UAO closure WHQR replay document is invalid"
-        ) from exc
-    if semantics_hash is not None and semantics_hash != document.semantics_hash:
-        raise RuntimeCoreInvariantError("UAO closure WHQR semantics hash mismatch")
-    if whqr_version is not None and whqr_version != document.whqr_version:
-        raise RuntimeCoreInvariantError("UAO closure WHQR version mismatch")
-    return {
-        "replay_ref": f"whqr://replay/{canonical_hash}",
-        "canonical_hash": canonical_hash,
-        "semantics_hash": document.semantics_hash,
-        "version": document.whqr_version,
-    }
+        raise RuntimeCoreInvariantError(str(exc)) from exc
 
 
 def _uao_record_pipeline_stages(
