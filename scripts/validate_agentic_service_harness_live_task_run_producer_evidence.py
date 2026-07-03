@@ -119,6 +119,7 @@ REQUIRED_VALIDATORS = (
     "python scripts/validate_agentic_service_harness_live_producer_execution_authority_review_submission_admission_preflight.py",
     "python scripts/validate_agentic_service_harness_live_producer_execution_authority_review_submission_receipt_contract.py",
     "python scripts/validate_agentic_service_harness_live_producer_execution_authority_review_submission_receipt_emission_preflight.py",
+    "python scripts/validate_agentic_service_harness_live_producer_execution_authority_review_submission_receipt_append_admission_preflight.py",
     "python scripts/validate_agentic_service_harness_authority_transitions.py",
 )
 REQUIRED_FIXTURE_SURFACES = (

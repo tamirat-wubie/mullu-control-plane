@@ -491,6 +491,12 @@
       "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-execution-authority-review-submission-receipt-emission-preflight:1"
     },
     {
+      "path": "schemas/agentic_service_harness_live_producer_execution_authority_review_submission_receipt_append_admission_preflight.schema.json",
+      "schema_id": "agentic-service-harness-live-producer-execution-authority-review-submission-receipt-append-admission-preflight",
+      "surface": "runtime",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-execution-authority-review-submission-receipt-append-admission-preflight:1"
+    },
+    {
       "path": "schemas/agentic_service_harness_live_producer_operator_approval_request.schema.json",
       "schema_id": "agentic-service-harness-live-producer-operator-approval-request",
       "surface": "runtime",
@@ -2547,6 +2553,12 @@
       "schema_id": "personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-verification-result-absence-status-closure-packet",
       "surface": "personal-assistant",
       "urn": "urn:mullusi:schema:personal-assistant-operator-reapproval-decision-receipt-value-binding-record-verifier-execution-decision-value-record-value-explicit-decision-value-ref-verification-result-absence-status-closure-packet:1"
+    },
+    {
+      "path": "schemas/pa_ref_absence_closure_review.schema.json",
+      "schema_id": "personal-assistant-ref-absence-closure-review",
+      "surface": "personal-assistant",
+      "urn": "urn:mullusi:schema:personal-assistant-ref-absence-closure-review:1"
     },
     {
       "path": "schemas/personal_assistant_foundation_closure_packet.schema.json",
